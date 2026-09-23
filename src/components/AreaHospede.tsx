@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MeusDadosCadastrais } from './MeusDadosCadastrais';
 import { MinhasReservasHospede } from './MinhasReservasHospede';
 import { PedidosRecepcaoHospede } from './PedidosRecepcaoHospede';
-import { hospedesService, quartosService, usuariosService } from '../services/supabaseService';
+import { hospedesService, quartosService, usuariosService, currentHotelService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
+import { DEFAULT_CONFIG, HotelConfigData } from './ConfiguracoesHotel';
 
 export interface AreaHospedeProps {
   userRole?: string; // 'administrador' | 'hospede' | 'recepcao' | 'financeiro' | etc.
@@ -63,7 +64,8 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
   const hasAccess = normalizedRole === 'administrador' || normalizedRole === 'admin' || normalizedRole === 'hospede' || normalizedRole === 'hóspede';
 
   // Estados de navegação e UI
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'pedidos' | 'minhas-reservas' | 'dados-cadastrais' | 'enderecos' | 'seguranca' | 'consumo'>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'pedidos' | 'minhas-reservas' | 'horarios' | 'dados-cadastrais' | 'enderecos' | 'seguranca' | 'consumo'>('dashboard');
+  const [hotelConfig, setHotelConfig] = useState<HotelConfigData>(DEFAULT_CONFIG);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isPixModalOpen, setIsPixModalOpen] = useState(false);
@@ -151,6 +153,48 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
       window.history.replaceState({}, '', '/minhaconta');
     }
   }, []);
+
+  // Carrega e sincroniza em tempo real as configurações de horários do hotel
+  useEffect(() => {
+    const carregarConfigHotel = () => {
+      try {
+        const hotelId = perfil?.hotelId || currentHotelService.getCurrentHotel()?.id || 'default';
+        const saved = localStorage.getItem(`hotelnozap_config_hotel_${hotelId}`);
+        if (saved) {
+          setHotelConfig({ ...DEFAULT_CONFIG, ...JSON.parse(saved) });
+        } else {
+          const savedDefault = localStorage.getItem('hotelnozap_config_hotel_default');
+          if (savedDefault) {
+            setHotelConfig({ ...DEFAULT_CONFIG, ...JSON.parse(savedDefault) });
+          } else {
+            setHotelConfig(DEFAULT_CONFIG);
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar horários do hotel na Área do Hóspede:', e);
+      }
+    };
+
+    carregarConfigHotel();
+
+    const handleConfigChange = (e: any) => {
+      if (e?.detail) {
+        setHotelConfig(prev => ({ ...prev, ...e.detail }));
+      } else {
+        carregarConfigHotel();
+      }
+    };
+
+    window.addEventListener('hotel_config_atualizado', handleConfigChange);
+    window.addEventListener('storage', handleConfigChange);
+    window.addEventListener('hotel_changed', carregarConfigHotel);
+
+    return () => {
+      window.removeEventListener('hotel_config_atualizado', handleConfigChange);
+      window.removeEventListener('storage', handleConfigChange);
+      window.removeEventListener('hotel_changed', carregarConfigHotel);
+    };
+  }, [perfil?.hotelId]);
 
   useEffect(() => {
     carregarPerfilReal();
@@ -551,6 +595,18 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveSubTab('horarios')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                activeSubTab === 'horarios'
+                  ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <span className={`material-symbols-outlined text-xl ${activeSubTab === 'horarios' ? 'text-emerald-400' : 'text-slate-400'}`}>schedule</span>
+              <span>Horários & Hotel</span>
+            </button>
+
+            <button
               onClick={() => setActiveSubTab('dados-cadastrais')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 activeSubTab === 'dados-cadastrais'
@@ -720,6 +776,13 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">calendar_month</span>
                     Minhas Reservas
+                  </button>
+                  <button
+                    onClick={() => { setActiveSubTab('horarios'); setIsMobileDrawerOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                  >
+                    <span className="material-symbols-outlined text-emerald-400 text-lg">schedule</span>
+                    Horários & Hotel
                   </button>
                   <button
                     onClick={() => { setActiveSubTab('dados-cadastrais'); setIsMobileDrawerOpen(false); }}
@@ -904,6 +967,186 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     <span className="material-symbols-outlined text-base">chat</span>
                     {perfil?.temCheckinAtivo ? 'Falar com Recepção (WhatsApp)' : 'Consultar Reservas & Tarifas'}
                   </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ================================================================= */}
+          {/* CARDS DE HORÁRIOS & COMODIDADES (CHECK-IN/OUT, CAFÉ, SILÊNCIO, LAZER) */}
+          {/* ================================================================= */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100/70 text-emerald-800 flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-lg">schedule</span>
+                </div>
+                <div>
+                  <h3 className="text-sm lg:text-base font-extrabold text-slate-900 tracking-tight">
+                    Horários & Comodidades da Estadia
+                  </h3>
+                  <p className="text-[11px] lg:text-xs text-slate-500">
+                    Horários oficiais configurados pelo hotel para seu conforto e tranquilidade
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveSubTab('horarios')}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Ver detalhes completos</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+              {/* Card 1: Entrada e Saída (Check-in/Out) */}
+              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <span className="material-symbols-outlined text-lg">hotel</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900">Entrada e Saída</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Check-in/Out
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-emerald-600 text-sm">login</span>
+                        Horário de check-in
+                      </span>
+                      <strong className="text-sm font-black text-slate-900 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200">
+                        {hotelConfig.checkInHorario}
+                      </strong>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-amber-600 text-sm">logout</span>
+                        Horário de check-out
+                      </span>
+                      <strong className="text-sm font-black text-slate-900 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200">
+                        {hotelConfig.checkOutHorario}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-xs text-emerald-600">timelapse</span>
+                  <span>Tolerância de saída: <strong>{hotelConfig.toleranciaCheckOutMinutos} min</strong></span>
+                </div>
+              </div>
+
+              {/* Card 2: Café da Manhã */}
+              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <span className="material-symbols-outlined text-lg">bakery_dining</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900">Café da Manhã</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      Incluso
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] text-slate-500">Buffet servido no restaurante:</div>
+                    <div className="text-xl lg:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                      <span>{hotelConfig.cafeInicio}</span>
+                      <span className="text-xs font-semibold text-slate-400">às</span>
+                      <span>{hotelConfig.cafeFim}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-xs text-amber-600">restaurant</span>
+                  <span>Buffet completo de café da manhã</span>
+                </div>
+              </div>
+
+              {/* Card 3: Horário de Silêncio */}
+              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <span className="material-symbols-outlined text-lg">volume_off</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900">Horário de Silêncio</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      Repouso
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] text-slate-500">Período de repouso nos quartos:</div>
+                    <div className="text-xl lg:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                      <span>{hotelConfig.silencioInicio}</span>
+                      <span className="text-xs font-semibold text-slate-400">às</span>
+                      <span>{hotelConfig.silencioFim}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-xs text-indigo-600">bedtime</span>
+                  <span>Respeito ao descanso de todos</span>
+                </div>
+              </div>
+
+              {/* Card 4: Recepção & Lazer */}
+              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <span className="material-symbols-outlined text-lg">concierge</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900">Recepção & Lazer</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                      {hotelConfig.recepcao24Horas ? '24 Horas' : 'Comodidades'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-teal-600 text-sm">support_agent</span>
+                        Recepção
+                      </span>
+                      <strong className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-200">
+                        {hotelConfig.recepcao24Horas ? '24 Horas Disponível' : `${hotelConfig.recepcaoInicio} - ${hotelConfig.recepcaoFim}`}
+                      </strong>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-emerald-600 text-sm">pool</span>
+                        Piscina & Lazer
+                      </span>
+                      <strong className="text-xs font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200">
+                        {hotelConfig.lazerInicio} às {hotelConfig.lazerFim}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-xs text-teal-600">verified</span>
+                  <span>Acesso livre para os hóspedes</span>
                 </div>
               </div>
             </div>
@@ -1195,34 +1438,49 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                 {/* Card de Horários & Serviços do Hotel */}
                 <div className="bg-gradient-to-br from-emerald-950 to-[#003400] rounded-2xl text-white p-6 shadow-md border border-emerald-900">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-2 mb-3">
-                    <span className="material-symbols-outlined text-lg">info</span>
-                    Horários da Pousada
-                  </h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-lg">info</span>
+                      Horários do Hotel
+                    </h4>
+                    <span className="text-[10px] bg-emerald-800/60 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-700/60 font-medium">
+                      Oficial
+                    </span>
+                  </div>
                   <div className="space-y-3 text-xs">
                     <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                      <span className="text-slate-200">Café da Manhã Incluso:</span>
-                      <span className="font-bold text-white">07:00 às 10:30</span>
+                      <span className="text-slate-200">Entrada (Check-in):</span>
+                      <span className="font-bold text-white">A partir das {hotelConfig.checkInHorario}</span>
                     </div>
                     <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                      <span className="text-slate-200">Piscina & Bar Tropical:</span>
-                      <span className="font-bold text-white">09:00 às 22:00</span>
+                      <span className="text-slate-200">Saída (Check-out):</span>
+                      <span className="font-bold text-white">Até às {hotelConfig.checkOutHorario}</span>
                     </div>
                     <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                      <span className="text-slate-200">Room Service (Cardápio):</span>
-                      <span className="font-bold text-white">11:00 às 23:00</span>
+                      <span className="text-slate-200">Café da Manhã:</span>
+                      <span className="font-bold text-amber-300">{hotelConfig.cafeInicio} às {hotelConfig.cafeFim}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="text-slate-200">Horário de Silêncio:</span>
+                      <span className="font-bold text-indigo-300">{hotelConfig.silencioInicio} às {hotelConfig.silencioFim}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="text-slate-200">Área de Lazer / Piscina:</span>
+                      <span className="font-bold text-white">{hotelConfig.lazerInicio} às {hotelConfig.lazerFim}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-200">Recepção & Portaria:</span>
-                      <span className="font-bold text-emerald-300">24 Horas Disponível</span>
+                      <span className="text-slate-200">Recepção:</span>
+                      <span className="font-bold text-emerald-300">
+                        {hotelConfig.recepcao24Horas ? '24 Horas Disponível' : `${hotelConfig.recepcaoInicio} às ${hotelConfig.recepcaoFim}`}
+                      </span>
                     </div>
                   </div>
                   <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
                     <span className="text-slate-300">
-                      Ramal da Recepção: <strong>9</strong>
+                      Tolerância Check-out: <strong>{hotelConfig.toleranciaCheckOutMinutos} min</strong>
                     </span>
-                    <button onClick={() => showToast('Cardápio Digital carregado com sucesso!')} className="text-emerald-300 font-bold hover:underline flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">menu_book</span> Cardápio Digital
+                    <button onClick={() => setActiveSubTab('horarios')} className="text-emerald-300 font-bold hover:underline flex items-center gap-1 cursor-pointer">
+                      <span className="material-symbols-outlined text-sm">open_in_new</span> Ver regras
                     </button>
                   </div>
                 </div>
@@ -1256,6 +1514,310 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               userEmail={perfil?.email || userEmail}
               onNavigateBack={() => setActiveSubTab('dashboard')}
             />
+          )}
+
+          {/* ================================================================= */}
+          {/* ABA: HORÁRIOS & COMODIDADES DO HOTEL                              */}
+          {/* ================================================================= */}
+          {activeSubTab === 'horarios' && (
+            <div className="space-y-6 max-w-5xl animate-in fade-in duration-200">
+              {/* Cabeçalho da Aba */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setActiveSubTab('dashboard')}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                    title="Voltar para a Visão Geral"
+                  >
+                    <span className="material-symbols-outlined text-lg">arrow_back</span>
+                  </button>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-emerald-600">schedule</span>
+                      Horários & Informações do Hotel
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Consulte os horários oficiais, refeições, lazer e normas de convivência da sua estadia
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
+                      `Olá! Sou o hóspede ${perfil?.nome || userName} e gostaria de tirar uma dúvida sobre os horários e serviços do hotel.`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all"
+                  >
+                    <span className="material-symbols-outlined text-sm">chat</span>
+                    Falar com a Recepção
+                  </a>
+                </div>
+              </div>
+
+              {/* Grid com os 4 Cards Principais */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 1. Entrada e Saída */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-xl">hotel</span>
+                        </div>
+                        <span className="text-sm font-bold text-slate-900">Entrada & Saída</span>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Check-in/Out
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-[11px] text-slate-400 font-medium">Horário de Check-in:</div>
+                        <div className="text-base font-extrabold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                          <span className="material-symbols-outlined text-emerald-600 text-base">login</span>
+                          A partir das {hotelConfig.checkInHorario}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[11px] text-slate-400 font-medium">Horário de Check-out:</div>
+                        <div className="text-base font-extrabold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                          <span className="material-symbols-outlined text-amber-600 text-base">logout</span>
+                          Até às {hotelConfig.checkOutHorario}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-emerald-600">timelapse</span>
+                    <span>Tolerância de <strong>{hotelConfig.toleranciaCheckOutMinutos} minutos</strong> sem taxa</span>
+                  </div>
+                </div>
+
+                {/* 2. Café da Manhã */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-xl">bakery_dining</span>
+                        </div>
+                        <span className="text-sm font-bold text-slate-900">Café da Manhã</span>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                        Incluso
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] text-slate-400 font-medium">Buffet Completo:</div>
+                      <div className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                        <span>{hotelConfig.cafeInicio}</span>
+                        <span className="text-sm font-semibold text-slate-400">às</span>
+                        <span>{hotelConfig.cafeFim}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Pães artesanais, bolos, frios, frutas frescas, sucos naturais e café colonial servidos no restaurante principal.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-amber-600">restaurant</span>
+                    <span>Salão de Refeições Principal</span>
+                  </div>
+                </div>
+
+                {/* 3. Horário de Silêncio */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-xl">volume_off</span>
+                        </div>
+                        <span className="text-sm font-bold text-slate-900">Horário de Silêncio</span>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        Repouso
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] text-slate-400 font-medium">Período Noturno:</div>
+                      <div className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                        <span>{hotelConfig.silencioInicio}</span>
+                        <span className="text-sm font-semibold text-slate-400">às</span>
+                        <span>{hotelConfig.silencioFim}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Para o bem-estar e repouso de todos os hóspedes, é vedado o uso de aparelhos de som e barulho excessivo nos corredores.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-indigo-600">bedtime</span>
+                    <span>Tranquilidade nos quartos</span>
+                  </div>
+                </div>
+
+                {/* 4. Recepção & Lazer */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-xl">concierge</span>
+                        </div>
+                        <span className="text-sm font-bold text-slate-900">Recepção & Lazer</span>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                        {hotelConfig.recepcao24Horas ? '24 Horas' : 'Comodidades'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-[11px] text-slate-400 font-medium">Atendimento da Recepção:</div>
+                        <div className="text-sm font-extrabold text-teal-800 bg-teal-50 px-2 py-1 rounded-lg border border-teal-200 mt-0.5 inline-block">
+                          {hotelConfig.recepcao24Horas ? '24 Horas por dia' : `${hotelConfig.recepcaoInicio} às ${hotelConfig.recepcaoFim}`}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[11px] text-slate-400 font-medium">Área de Lazer & Piscina:</div>
+                        <div className="text-base font-black text-slate-900 flex items-center gap-1 mt-0.5">
+                          <span className="material-symbols-outlined text-emerald-600 text-base">pool</span>
+                          {hotelConfig.lazerInicio} às {hotelConfig.lazerFim}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-teal-600">verified</span>
+                    <span>Toalhas disponíveis na recepção</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção Complementar: Regras & Políticas da Propriedade */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Card de Regras Gerais */}
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-lg">policy</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900">Políticas & Regras da Estadia</h4>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                      <span className="material-symbols-outlined text-emerald-600 text-base mt-0.5">pets</span>
+                      <div>
+                        <strong className="text-slate-800">Animais de Estimação (Pet Friendly):</strong>
+                        <p className="text-slate-600 mt-0.5">
+                          {hotelConfig.permitePet === 'sim'
+                            ? 'São permitidos animais de estimação.'
+                            : hotelConfig.permitePet === 'sob_consulta'
+                            ? 'Permitido mediante consulta prévia com a administração.'
+                            : 'Não são permitidos animais de estimação.'}
+                          {hotelConfig.taxaPet > 0 && ` (Taxa de limpeza: R$ ${hotelConfig.taxaPet.toFixed(2).replace('.', ',')})`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                      <span className="material-symbols-outlined text-red-600 text-base mt-0.5">smoke_free</span>
+                      <div>
+                        <strong className="text-slate-800">Ambiente Livre de Fumo:</strong>
+                        <p className="text-slate-600 mt-0.5">
+                          {hotelConfig.proibidoFumar
+                            ? 'É estritamente proibido fumar nos quartos e dependências internas fechadas do hotel (Lei Federal antifumo).'
+                            : 'Fumo permitido apenas em áreas externas abertas e demarcadas.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                      <span className="material-symbols-outlined text-blue-600 text-base mt-0.5">assignment_return</span>
+                      <div>
+                        <strong className="text-slate-800">Política de Cancelamento:</strong>
+                        <p className="text-slate-600 mt-0.5">
+                          {hotelConfig.politicaCancelamentoTexto || 'Cancelamento flexível até 7 dias antes do check-in.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {hotelConfig.regrasGeraisTexto && (
+                      <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-200/60 text-slate-700">
+                        <strong className="text-emerald-900 block mb-1">Orientações de Convivência:</strong>
+                        <p className="text-[11px] leading-relaxed text-slate-600">{hotelConfig.regrasGeraisTexto}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card de Informações e Suporte */}
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-lg">support_agent</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900">Atendimento & Apoio ao Hóspede</h4>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                        <span className="text-slate-600 font-medium">Wi-Fi de Alta Velocidade:</span>
+                        <strong className="text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                          {perfil?.hotelWifi || 'HotelNoZap_VIP'}
+                        </strong>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                        <span className="text-slate-600 font-medium">Ramal da Recepção no Quarto:</span>
+                        <strong className="text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                          Ramal 9
+                        </strong>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                        <span className="text-slate-600 font-medium">Privacidade & LGPD:</span>
+                        <span className="text-emerald-700 font-bold flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">verified</span>
+                          Conforme Lei 13.709/18
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <button
+                      onClick={() => setActiveSubTab('pedidos')}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-base text-emerald-400">room_service</span>
+                      <span>Solicitar Serviço de Quarto / Toalhas</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveSubTab('dashboard')}
+                      className="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                    >
+                      Voltar ao Painel Principal
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* ================================================================= */}

@@ -52,7 +52,7 @@ export interface HotelConfigData {
   mpMaxInstallments: string;
 }
 
-const DEFAULT_CONFIG: HotelConfigData = {
+export const DEFAULT_CONFIG: HotelConfigData = {
   checkInHorario: '14:00',
   checkOutHorario: '12:00',
   toleranciaCheckOutMinutos: 30,
