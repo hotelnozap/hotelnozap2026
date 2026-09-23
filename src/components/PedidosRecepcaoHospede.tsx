@@ -83,11 +83,6 @@ export const PedidosRecepcaoHospede: React.FC<PedidosRecepcaoHospedeProps> = ({
     }
   }, [categoriasDisponiveis, selectedCategoryTab]);
 
-  // Estado do formulário de pedido personalizado
-  const [sectorSelect, setSectorSelect] = useState('Governança & Arrumação');
-  const [customText, setCustomText] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // Mensagem Toast de Notificação
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -179,24 +174,6 @@ export const PedidosRecepcaoHospede: React.FC<PedidosRecepcaoHospedeProps> = ({
     showToast(`🛎️ Solicitação enviada! A recepção do hotel recebeu seu pedido de "${itemName}".`);
   };
 
-  // Handler para Pedido Personalizado
-  const handleCustomSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customText.trim()) return;
-
-    if (!temCheckin) {
-      showToast('⚠️ É necessário ter um check-in ativo no hotel para enviar solicitações.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setTimeout(() => {
-      handleQuickRequest(`${sectorSelect}: ${customText}`, sectorSelect);
-      setCustomText('');
-      setIsSubmitting(false);
-    }, 800);
-  };
-
   // Cálculos dinâmicos de KPIs
   const emAndamentoCount = temCheckin ? historicoPedidos.filter(p => p.status === 'Em Preparo / Rota' || p.status === 'Em Rota').length : 0;
   const concluidosCount = temCheckin ? historicoPedidos.filter(p => p.status === 'Entregue' || p.status === 'Concluído').length : 0;
@@ -275,13 +252,15 @@ export const PedidosRecepcaoHospede: React.FC<PedidosRecepcaoHospedeProps> = ({
               </button>
             )}
 
-            <a
-              href="#custom-request-box"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs md:text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[20px]">add</span>
-              <span>Novo Pedido</span>
-            </a>
+            {temCheckin && (
+              <a
+                href="#solicitacao-rapida-box"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs md:text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">add</span>
+                <span>Novo Pedido</span>
+              </a>
+            )}
           </div>
         </div>
 
@@ -383,7 +362,7 @@ export const PedidosRecepcaoHospede: React.FC<PedidosRecepcaoHospedeProps> = ({
 
         {/* 3. CATÁLOGO DE SOLICITAÇÃO RÁPIDA (1 CLIQUE) - EXCLUSIVO PARA QUEM TEM CHECK-IN ATIVO */}
         {temCheckin && (
-          <div className="space-y-4">
+          <div id="solicitacao-rapida-box" className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
               <div>
                 <h2 className="text-lg md:text-xl font-black text-slate-900">Solicitação Rápida (1 Clique)</h2>
@@ -489,21 +468,24 @@ export const PedidosRecepcaoHospede: React.FC<PedidosRecepcaoHospedeProps> = ({
           </div>
         )}
 
-        {/* 4. HISTÓRICO RECENTE & 5. PEDIDO PERSONALIZADO (DUAS COLUNAS: 8 COLS + 4 COLS) */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 items-start">
-          {/* HISTÓRICO DE PEDIDOS RECENTES (8 COLS) */}
-          <div className="xl:col-span-8 bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm flex flex-col gap-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-base md:text-lg font-extrabold text-slate-900">Histórico de Pedidos Recentes</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Acompanhe a linha do tempo do atendimento do seu quarto em tempo real.</p>
-              </div>
-              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                Atualizado agora
-              </span>
+        {/* 4. HISTÓRICO DE PEDIDOS RECENTES (LARGURA TOTAL) */}
+        <div className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm flex flex-col gap-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-base md:text-lg font-extrabold text-slate-900">Histórico de Pedidos Recentes</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Acompanhe a linha do tempo do atendimento do seu quarto em tempo real.</p>
             </div>
+            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              Atualizado agora
+            </span>
+          </div>
 
-            {/* Lista de Pedidos */}
+          {/* Lista de Pedidos */}
+          {historicoPedidos.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-xs md:text-sm">
+              Nenhum pedido realizado nesta estadia até o momento.
+            </div>
+          ) : (
             <div className="flex flex-col gap-3">
               {historicoPedidos.map((pedido) => (
                 <div
@@ -551,65 +533,7 @@ export const PedidosRecepcaoHospede: React.FC<PedidosRecepcaoHospedeProps> = ({
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* 5. PEDIDO PERSONALIZADO OU OBSERVAÇÃO ESPECIAL (4 COLS) */}
-          <div className="xl:col-span-4 bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm flex flex-col gap-4" id="custom-request-box">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-              <div className="w-9 h-9 rounded-xl bg-[#003400] text-white flex items-center justify-center">
-                <span className="material-symbols-outlined text-[20px]">edit_note</span>
-              </div>
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900">Pedido Personalizado</h3>
-                <p className="text-xs text-slate-500">Alguma preferência ou instrução específica?</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleCustomSubmit} className="flex flex-col gap-4 mt-1 text-xs md:text-sm">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1.5">Setor de Atendimento</label>
-                <select
-                  value={sectorSelect}
-                  onChange={(e) => setSectorSelect(e.target.value)}
-                  className="w-full bg-slate-50 text-slate-800 border border-slate-300 rounded-xl p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                >
-                  <option value="Governança & Arrumação">Governança & Arrumação</option>
-                  <option value="Recepção & Concierge">Recepção & Concierge</option>
-                  <option value="Frigobar & Gastronomia">Frigobar & Gastronomia</option>
-                  <option value="Manutenção Técnica">Manutenção Técnica</option>
-                  <option value="Transporte de Bagagem">Transporte de Bagagem / Bellboy</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1.5">Descreva sua Solicitação</label>
-                <textarea
-                  value={customText}
-                  onChange={(e) => setCustomText(e.target.value)}
-                  className="w-full bg-slate-50 text-slate-800 border border-slate-300 rounded-xl p-3.5 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none bg-white"
-                  placeholder="Ex: Por favor, enviar 2 travesseiros antialérgicos e agendar arrumação para as 15h..."
-                  rows={4}
-                  required
-                ></textarea>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
-                <span className="material-symbols-outlined text-emerald-700 text-xl">schedule</span>
-                <span className="text-xs text-slate-600 leading-tight">
-                  Horário de preferência: <strong>Imediato (fila rápida)</strong>. Se preferir outro horário, mencione acima.
-                </span>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting || !customText.trim()}
-                className="w-full py-3 px-4 rounded-xl bg-[#003400] hover:bg-[#002600] disabled:opacity-50 text-white font-bold text-xs md:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">send</span>
-                <span>{isSubmitting ? 'Enviando...' : 'Enviar para a Recepção'}</span>
-              </button>
-            </form>
-          </div>
+          )}
         </div>
       </div>
 
