@@ -458,7 +458,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 font-sans text-slate-800 antialiased flex flex-col lg:flex-row overflow-x-hidden">
+    <div className="min-h-screen w-full bg-slate-50 font-sans text-slate-800 antialiased flex flex-col lg:flex-row relative">
       {/* TOAST SYSTEM NOTIFICATION */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 bg-[#003400] text-white px-5 py-3 rounded-2xl shadow-2xl border border-emerald-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-top duration-200">
@@ -468,10 +468,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* SIDEBAR DESKTOP (Degradê #003400 a #000000 Padrão Oficial do Sistema)     */}
+      {/* SIDEBAR DESKTOP (Fixa no Padrão Oficial dos Perfis de Hotéis)             */}
       {/* ========================================================================= */}
-      <aside className="hidden lg:flex w-72 bg-gradient-to-b from-[#003400] to-[#000000] text-white flex-col justify-between shrink-0 shadow-2xl z-30 sticky top-0 h-screen">
-        <div>
+      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-screen w-72 bg-gradient-to-b from-[#003400] to-[#000000] text-white justify-between shrink-0 shadow-2xl z-40 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar">
           {/* Topo: Marca & Info do Hotel */}
           <div className="p-6 border-b border-white/10 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -606,7 +606,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
         </div>
 
         {/* Rodapé da Sidebar: Usuário + Opções de Painel e Logout */}
-        <div className="p-4 border-t border-white/10 bg-black/30 space-y-2">
+        <div className="p-4 border-t border-white/10 bg-black/30 space-y-2 shrink-0 mt-auto">
           {/* Perfil */}
           <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/5">
             <div className="relative">
@@ -646,7 +646,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
       {/* ========================================================================= */}
       {/* ESTRUTURA PRINCIPAL MOBILE + DESKTOP                                       */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-72 bg-slate-50 min-h-screen">
         
         {/* CABEÇALHO MOBILE (390px / Dispositivos móveis) */}
         <header className="lg:hidden sticky top-0 z-40 bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3.5 shadow-md flex items-center justify-between">
