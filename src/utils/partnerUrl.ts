@@ -11,6 +11,21 @@ export const getAppBaseUrl = (): string => {
   return import.meta.env?.VITE_APP_BASE_URL || 'https://app.hotelnozap.com.br';
 };
 
+/**
+ * Retorna o link oficial para login / painel administrativo corporativo.
+ * Em localhost retorna /paineladmin ou http://localhost:5173/paineladmin.
+ * Em produção retorna https://app.hotelnozap.com.br/
+ */
+export const getAppLoginUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return '/paineladmin';
+    }
+  }
+  return 'https://app.hotelnozap.com.br/';
+};
+
 export const getPartnerReferralLink = (coupon?: string): string => {
   const code = (coupon || 'HOTELNOZAP').trim();
   const baseUrl = getAppBaseUrl();

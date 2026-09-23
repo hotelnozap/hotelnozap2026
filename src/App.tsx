@@ -373,7 +373,7 @@ export const App: React.FC = () => {
     setCurrentUserRole('');
     setIsUserMenuOpen(false);
     setIsMobileMenuOpen(false);
-    window.history.pushState({}, '', '/paineladmin');
+    window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
     setActiveTab('login');
   };
 
@@ -745,8 +745,12 @@ export const App: React.FC = () => {
           setActiveTab('landingpage');
         }}
         onNavigateToLogin={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('login');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
         }}
       />
     );
@@ -764,8 +768,12 @@ export const App: React.FC = () => {
           setActiveTab('landingpage');
         }}
         onNavigateToLogin={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('login');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
         }}
       />
     );
@@ -778,12 +786,20 @@ export const App: React.FC = () => {
     return (
       <LandingPage
         onNavigateToLogin={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('login');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
         }}
         onNavigateToSystem={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('dashboard');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('dashboard');
+          }
         }}
         onNavigateToNovoHotel={() => {
           window.history.pushState({}, '', '/lp/lpnovohotel');
@@ -810,8 +826,12 @@ export const App: React.FC = () => {
           setActiveTab('catalogo-hoteis');
         }}
         onNavigateToLogin={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('login');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
         }}
         onNavigateToMinhaConta={() => {
           window.history.pushState({}, '', '/minhaconta');
@@ -853,8 +873,12 @@ export const App: React.FC = () => {
           setActiveTab('catalogo-hoteis');
         }}
         onNavigateToLogin={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('login');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
         }}
         onNavigateToRoom={(quarto) => {
           setSelectedQuartoForPage(quarto);
@@ -868,8 +892,12 @@ export const App: React.FC = () => {
     return (
       <CatalogoHoteis 
         onNavigateToLogin={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('login');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
         }}
         onNavigateToHotel={(hotel) => {
           setSelectedHotelForPage(hotel);
@@ -891,12 +919,20 @@ export const App: React.FC = () => {
         userName={localStorage.getItem('hotelnozap_user_name') || 'Hóspede'}
         userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
         onNavigateToSystem={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('dashboard');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
+            setActiveTab('dashboard');
+          }
         }}
         onNavigateToLogin={() => {
-          window.history.pushState({}, '', '/paineladmin');
-          setActiveTab('login');
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
+            setActiveTab('login');
+          }
         }}
         onLogout={async () => {
           try {
@@ -987,7 +1023,7 @@ export const App: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    window.history.pushState({}, '', '/paineladmin');
+                    window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
                     setActiveTab('dashboard');
                   }}
                   className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors"
@@ -999,7 +1035,7 @@ export const App: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   await handleLogout();
-                  window.history.pushState({}, '', '/paineladmin');
+                  window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
                   setActiveTab('login');
                 }}
                 className="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors shadow-sm"
@@ -1021,7 +1057,7 @@ export const App: React.FC = () => {
         currentUserRole={currentUserRole}
         activeHotel={activeHotel}
         onNavigateBack={isAdminUser ? () => {
-          window.history.pushState({}, '', '/paineladmin');
+          window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
           setActiveTab('admin-dashboard');
         } : undefined}
         onLogout={() => handleLogout()}

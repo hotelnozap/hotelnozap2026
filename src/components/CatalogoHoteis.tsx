@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { hoteisService, reservasService, quartosService, ComodidadeCategoria } from '../services/supabaseService';
 import { Hotel } from './CadastroHoteis';
 import { webhookN8nService } from '../services/webhookN8nService';
+import { getAppLoginUrl } from '../utils/partnerUrl';
 
 export interface PublicHotel {
   id: string;
@@ -641,7 +642,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                           if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
                             window.location.href = '/minhaconta';
                           } else {
-                            window.location.href = '/paineladmin';
+                            window.location.href = getAppLoginUrl();
                           }
                         }}
                         className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
@@ -675,13 +676,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                   const savedRole = (localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
                   const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
                   if (savedEmail && (savedRole.includes('hotel') || savedRole.includes('gerente') || savedRole.includes('admin') || savedRole.includes('super'))) {
-                    window.location.href = '/paineladmin';
+                    window.location.href = getAppLoginUrl();
                     return;
                   }
                   if (onNavigateToLogin) {
                     onNavigateToLogin();
                   } else {
-                    window.location.href = '/paineladmin';
+                    window.location.href = getAppLoginUrl();
                   }
                 }}
                 className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-[#006c49] hover:bg-[#005438] text-white text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0"
@@ -1509,7 +1510,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           <div className="flex items-center gap-6 text-slate-400 font-medium">
             <button onClick={() => setIsLocationModalOpen(true)} className="hover:text-white transition-colors">Trocar Destino</button>
             <button onClick={() => window.open('https://wa.me/5581998765432', '_blank')} className="hover:text-white transition-colors">Suporte WhatsApp</button>
-            <button onClick={() => { if (onNavigateToLogin) onNavigateToLogin(); else window.location.href = '/paineladmin'; }} className="hover:text-white transition-colors">Área do Hoteleiro</button>
+            <button onClick={() => { if (onNavigateToLogin) onNavigateToLogin(); else window.location.href = getAppLoginUrl(); }} className="hover:text-white transition-colors">Área do Hoteleiro</button>
           </div>
         </div>
       </footer>

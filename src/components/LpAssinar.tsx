@@ -3,6 +3,7 @@ import { maskCnpj, maskPhone, maskCep, maskCpf, isValidCpf, isValidCnpj, getCpfV
 import { fetchAddressByCep } from '../utils/viacep';
 import { hoteisService, planosService, usuariosService, parceirosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
+import { getAppLoginUrl } from '../utils/partnerUrl';
 
 interface LpAssinarProps {
   onNavigateToLP?: () => void;
@@ -203,8 +204,11 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   };
 
   const goToPainelAdmin = () => {
-    window.history.pushState({}, '', '/paineladmin');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    if (onNavigateToLogin) {
+      onNavigateToLogin();
+    } else {
+      window.location.href = getAppLoginUrl();
+    }
   };
 
   const handleSubmit = async () => {

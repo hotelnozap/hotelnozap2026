@@ -3,6 +3,7 @@ import { PublicHotel } from './CatalogoHoteis';
 import { hoteisService, quartosService, tiposQuartosService, currentHotelService, comodidadesService, ComodidadeCategoria } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { webhookN8nService } from '../services/webhookN8nService';
+import { getAppLoginUrl } from '../utils/partnerUrl';
 
 export const slugify = (str: string): string => {
   return str
@@ -1124,7 +1125,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                 type="button"
                 onClick={() => {
                   if (onNavigateToLogin) onNavigateToLogin();
-                  else window.location.href = '/paineladmin';
+                  else window.location.href = getAppLoginUrl();
                 }}
                 style={{ backgroundColor: '#B9CC01' }}
                 className="px-5 py-3 rounded-xl text-[#003400] font-black text-xs shadow-md hover:brightness-95 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
@@ -1251,7 +1252,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               >
                 Suporte WhatsApp
               </button>
-              <button onClick={() => { if (onNavigateToLogin) onNavigateToLogin(); else window.location.href = '/paineladmin'; }} className="hover:text-white transition-colors cursor-pointer">Área do Hoteleiro</button>
+              <button onClick={() => { if (onNavigateToLogin) onNavigateToLogin(); else window.location.href = getAppLoginUrl(); }} className="hover:text-white transition-colors cursor-pointer">Área do Hoteleiro</button>
             </div>
           </div>
         </div>

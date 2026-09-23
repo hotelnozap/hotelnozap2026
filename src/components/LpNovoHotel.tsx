@@ -3,6 +3,7 @@ import { maskCnpj, maskPhone, maskCep, maskCpf, isValidCpf, isValidCnpj, getCpfV
 import { fetchAddressByCep } from '../utils/viacep';
 import { hoteisService, planosService, usuariosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
+import { getAppLoginUrl } from '../utils/partnerUrl';
 
 interface LpNovoHotelProps {
   onNavigateToLP?: () => void;
@@ -161,8 +162,11 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   };
 
   const goToPainelAdmin = () => {
-    window.history.pushState({}, '', '/paineladmin');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    if (onNavigateToLogin) {
+      onNavigateToLogin();
+    } else {
+      window.location.href = getAppLoginUrl();
+    }
   };
 
   const handleSubmit = async () => {
