@@ -4,7 +4,7 @@ import { MinhasReservasHospede } from './MinhasReservasHospede';
 import { PedidosRecepcaoHospede } from './PedidosRecepcaoHospede';
 import { hospedesService, quartosService, usuariosService, currentHotelService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
-import { DEFAULT_CONFIG, HotelConfigData } from './ConfiguracoesHotel';
+import { DEFAULT_CONFIG, HotelConfigData, loadHotelConfigFromStorage } from './ConfiguracoesHotel';
 
 export interface AreaHospedeProps {
   userRole?: string; // 'administrador' | 'hospede' | 'recepcao' | 'financeiro' | etc.
@@ -156,43 +156,61 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
   // Carrega e sincroniza em tempo real as configurações de horários do hotel
   useEffect(() => {
-    const carregarConfigHotel = () => {
-      try {
-        const hotelId = perfil?.hotelId || currentHotelService.getCurrentHotel()?.id || 'default';
-        const saved = localStorage.getItem(`hotelnozap_config_hotel_${hotelId}`);
-        if (saved) {
-          setHotelConfig({ ...DEFAULT_CONFIG, ...JSON.parse(saved) });
-        } else {
-          const savedDefault = localStorage.getItem('hotelnozap_config_hotel_default');
-          if (savedDefault) {
-            setHotelConfig({ ...DEFAULT_CONFIG, ...JSON.parse(savedDefault) });
-          } else {
-            setHotelConfig(DEFAULT_CONFIG);
-          }
-        }
-      } catch (e) {
-        console.warn('Erro ao carregar horários do hotel na Área do Hóspede:', e);
-      }
-    };
+    // 1. Carregamento inicial com suporte a fallback multinível
+    const initialConfig = loadHotelConfigFromStorage(perfil?.hotelId);
+    setHotelConfig(initialConfig);
 
-    carregarConfigHotel();
-
-    const handleConfigChange = (e: any) => {
-      if (e?.detail) {
-        setHotelConfig(prev => ({ ...prev, ...e.detail }));
+    // 2. Manipulador unificado de atualização de estado
+    const handleUpdate = (updated?: any) => {
+      if (updated && typeof updated === 'object' && ('checkInHorario' in updated || 'cafeInicio' in updated)) {
+        setHotelConfig(prev => ({ ...prev, ...updated }));
       } else {
-        carregarConfigHotel();
+        const fresh = loadHotelConfigFromStorage(perfil?.hotelId);
+        setHotelConfig(fresh);
       }
     };
 
-    window.addEventListener('hotel_config_atualizado', handleConfigChange);
-    window.addEventListener('storage', handleConfigChange);
-    window.addEventListener('hotel_changed', carregarConfigHotel);
+    // 3. Listener de CustomEvent na mesma aba
+    const handleCustomEvent = (e: any) => {
+      handleUpdate(e?.detail);
+    };
+    window.addEventListener('hotel_config_atualizado', handleCustomEvent);
+
+    // 4. Listener nativo de storage (quando alterado em qualquer aba do navegador)
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (!e.key || e.key.startsWith('hotelnozap_config_hotel')) {
+        if (e.newValue) {
+          try {
+            handleUpdate(JSON.parse(e.newValue));
+            return;
+          } catch { /* ignore */ }
+        }
+        handleUpdate();
+      }
+    };
+    window.addEventListener('storage', handleStorageEvent);
+
+    // 5. BroadcastChannel para comunicação instantânea e bidirecional entre abas
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel('hotelnozap_hotel_config_channel');
+        bc.onmessage = (event) => {
+          if (event.data) {
+            handleUpdate(event.data);
+          }
+        };
+      } catch { /* ignore */ }
+    }
 
     return () => {
-      window.removeEventListener('hotel_config_atualizado', handleConfigChange);
-      window.removeEventListener('storage', handleConfigChange);
-      window.removeEventListener('hotel_changed', carregarConfigHotel);
+      window.removeEventListener('hotel_config_atualizado', handleCustomEvent);
+      window.removeEventListener('storage', handleStorageEvent);
+      if (bc) {
+        try {
+          bc.close();
+        } catch { /* ignore */ }
+      }
     };
   }, [perfil?.hotelId]);
 

@@ -94,6 +94,76 @@ export const DEFAULT_CONFIG: HotelConfigData = {
   mpMaxInstallments: '12'
 };
 
+export const loadHotelConfigFromStorage = (hotelId?: string): HotelConfigData => {
+  if (typeof window === 'undefined') return DEFAULT_CONFIG;
+  try {
+    // 1. Tenta pelo hotelId específico
+    if (hotelId) {
+      const byId = localStorage.getItem(`hotelnozap_config_hotel_${hotelId}`);
+      if (byId) return { ...DEFAULT_CONFIG, ...JSON.parse(byId) };
+    }
+    // 2. Tenta pelo hotel ativo do currentHotelService
+    const currentH = currentHotelService.getCurrentHotel();
+    if (currentH?.id) {
+      const byCurrent = localStorage.getItem(`hotelnozap_config_hotel_${currentH.id}`);
+      if (byCurrent) return { ...DEFAULT_CONFIG, ...JSON.parse(byCurrent) };
+    }
+    // 3. Tenta pela chave global master
+    const byGlobal = localStorage.getItem('hotelnozap_config_hotel_global');
+    if (byGlobal) return { ...DEFAULT_CONFIG, ...JSON.parse(byGlobal) };
+
+    // 4. Tenta pela chave default
+    const byDefault = localStorage.getItem('hotelnozap_config_hotel_default');
+    if (byDefault) return { ...DEFAULT_CONFIG, ...JSON.parse(byDefault) };
+
+    // 5. Varredura em chaves salvas com prefixo
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('hotelnozap_config_hotel_')) {
+        const val = localStorage.getItem(k);
+        if (val) {
+          try {
+            return { ...DEFAULT_CONFIG, ...JSON.parse(val) };
+          } catch { /* ignore */ }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao carregar configurações do hotel:', err);
+  }
+  return DEFAULT_CONFIG;
+};
+
+export const saveHotelConfigToStorage = (newConfig: HotelConfigData, hotelId?: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const serialized = JSON.stringify(newConfig);
+    const hId = hotelId || currentHotelService.getCurrentHotel()?.id || 'default';
+    
+    // Salva nas chaves específicas e globais
+    localStorage.setItem(`hotelnozap_config_hotel_${hId}`, serialized);
+    localStorage.setItem('hotelnozap_config_hotel_global', serialized);
+    localStorage.setItem('hotelnozap_config_hotel_default', serialized);
+
+    // 1. Dispara evento customizado na mesma janela/aba
+    window.dispatchEvent(new CustomEvent('hotel_config_atualizado', { detail: newConfig }));
+
+    // 2. Dispara evento nativo storage
+    window.dispatchEvent(new Event('storage'));
+
+    // 3. Dispara BroadcastChannel para comunicação instantânea entre abas
+    if ('BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel('hotelnozap_hotel_config_channel');
+        bc.postMessage(newConfig);
+        bc.close();
+      } catch { /* ignore */ }
+    }
+  } catch (err) {
+    console.warn('Erro ao persistir configuração do hotel:', err);
+  }
+};
+
 export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
   initialTab = 'horarios',
   onBackToDashboard
@@ -110,19 +180,12 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
 
   const currentHotel = currentHotelService.getCurrentHotel();
   const hotelId = currentHotel?.id || 'default';
-  const storageKey = `hotelnozap_config_hotel_${hotelId}`;
   const webhookUrl = 'https://api.hotelnozap.com.br/webhooks/mercadopago';
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        setConfig({ ...DEFAULT_CONFIG, ...JSON.parse(saved) });
-      }
-    } catch (e) {
-      console.warn('Erro ao carregar configurações do hotel:', e);
-    }
-  }, [storageKey]);
+    const loaded = loadHotelConfigFromStorage(hotelId);
+    setConfig(loaded);
+  }, [hotelId]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -146,12 +209,11 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
     if (e) e.preventDefault();
     setIsSaving(true);
     try {
-      localStorage.setItem(storageKey, JSON.stringify(config));
-      window.dispatchEvent(new CustomEvent('hotel_config_atualizado', { detail: config }));
+      saveHotelConfigToStorage(config, hotelId);
       setTimeout(() => {
         setIsSaving(false);
-        showToast('Configurações do hotel salvas com sucesso!');
-      }, 500);
+        showToast('Configurações salvas e aplicadas em todo o sistema!');
+      }, 300);
     } catch (err) {
       setIsSaving(false);
       showToast('Erro ao salvar configurações.');
@@ -159,7 +221,12 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
   };
 
   const updateField = <K extends keyof HotelConfigData>(field: K, value: HotelConfigData[K]) => {
-    setConfig(prev => ({ ...prev, [field]: value }));
+    setConfig(prev => {
+      const updated = { ...prev, [field]: value };
+      // Salva de forma automática e imediata no storage e notifica todas as telas
+      saveHotelConfigToStorage(updated, hotelId);
+      return updated;
+    });
   };
 
   return (
