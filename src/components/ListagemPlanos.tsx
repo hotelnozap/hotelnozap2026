@@ -39,20 +39,20 @@ const INITIAL_PLANOS: Plano[] = [
     basePrice: 0.00,
     pricePeriodText: 'Grátis',
     priceSubtitle: 'Acesso gratuito inicial para estabelecimentos importados',
-    roomLimit: 10,
-    roomLimitText: 'Capacidade para até 10 quartos',
+    roomLimit: 0,
+    roomLimitText: 'Sem cadastro de quartos incluso',
     roomExtraPriceText: 'Sem quartos adicionais',
-    whatsappConnections: 1,
-    whatsappConnectionsText: '1 Conexão WhatsApp',
-    whatsappExtraPriceText: 'Sem expansão',
+    whatsappConnections: 0,
+    whatsappConnectionsText: 'Sem conexão WhatsApp inclusa',
+    whatsappExtraPriceText: 'Sem instâncias extras',
     hotelsSubscribersCount: 8,
     status: 'Ativo',
     features: [
       'Plano Gratuito de Entrada (R$ 0,00)',
       'Importado via Google Maps',
       'Página pública do hotel liberada',
-      '1 Conexão WhatsApp',
-      'Capacidade para até 10 quartos'
+      'Sem cadastro de quartos incluso',
+      'Sem conexão WhatsApp inclusa'
     ]
   },
   {
@@ -468,8 +468,8 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
           return {
             ...p,
             ...formData,
-            roomLimitText: `Capacidade para até ${formData.roomLimit} quartos`,
-            whatsappConnectionsText: `${formData.whatsappConnections} Conexão${(formData.whatsappConnections || 1) > 1 ? 'ões' : ''} WhatsApp`
+            roomLimitText: Number(formData.roomLimit) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${formData.roomLimit} quartos`,
+            whatsappConnectionsText: Number(formData.whatsappConnections) === 0 ? 'Sem conexão WhatsApp inclusa' : `${formData.whatsappConnections} Conexão${Number(formData.whatsappConnections) > 1 ? 'ões' : ''} WhatsApp`
           } as Plano;
         }
         return p;
@@ -490,17 +490,17 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
         basePrice: Number(formData.basePrice) || 199.00,
         pricePeriodText: formData.periodicity === 'Anual' ? '/ano' : formData.periodicity === 'Trimestral' ? '/trimestre' : '/mês',
         priceSubtitle: formData.priceSubtitle || 'Cobrança recorrente',
-        roomLimit: Number(formData.roomLimit) || 20,
-        roomLimitText: `Capacidade para até ${formData.roomLimit || 20} quartos`,
+        roomLimit: formData.roomLimit !== undefined && formData.roomLimit !== null ? Number(formData.roomLimit) : 20,
+        roomLimitText: Number(formData.roomLimit) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${formData.roomLimit ?? 20} quartos`,
         roomExtraPriceText: formData.roomExtraPriceText || 'R$ 3,50/adicional',
-        whatsappConnections: Number(formData.whatsappConnections) || 1,
-        whatsappConnectionsText: `${formData.whatsappConnections || 1} Conexão WhatsApp`,
+        whatsappConnections: formData.whatsappConnections !== undefined && formData.whatsappConnections !== null ? Number(formData.whatsappConnections) : 1,
+        whatsappConnectionsText: Number(formData.whatsappConnections) === 0 ? 'Sem conexão WhatsApp inclusa' : `${formData.whatsappConnections ?? 1} Conexão WhatsApp`,
         whatsappExtraPriceText: formData.whatsappExtraPriceText || 'R$ 49,90/adicional',
         hotelsSubscribersCount: 0,
         status: (formData.status as any) || 'Ativo',
         features: formData.features && formData.features.length > 0 ? formData.features : [
-          `Capacidade para até ${formData.roomLimit || 20} quartos`,
-          `${formData.whatsappConnections || 1} Conexão WhatsApp oficial integrada`,
+          Number(formData.roomLimit) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${formData.roomLimit ?? 20} quartos`,
+          Number(formData.whatsappConnections) === 0 ? 'Sem conexão WhatsApp inclusa' : `${formData.whatsappConnections ?? 1} Conexão WhatsApp oficial integrada`,
           'Suporte integrado'
         ]
       };
@@ -1681,20 +1681,30 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                   <label className="block text-xs font-bold text-slate-700 mb-1">Limite Base de Quartos</label>
                   <input
                     type="number"
-                    value={formData.roomLimit || 15}
-                    onChange={(e) => setFormData({ ...formData, roomLimit: parseInt(e.target.value) || 0 })}
+                    min={0}
+                    value={formData.roomLimit !== undefined && formData.roomLimit !== null ? formData.roomLimit : 15}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setFormData({ ...formData, roomLimit: raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0) });
+                    }}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                   />
+                  <span className="text-[11px] text-slate-500">0 = sem quartos inclusos</span>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Conexões WhatsApp Inclusas</label>
                   <input
                     type="number"
-                    value={formData.whatsappConnections || 1}
-                    onChange={(e) => setFormData({ ...formData, whatsappConnections: parseInt(e.target.value) || 1 })}
+                    min={0}
+                    value={formData.whatsappConnections !== undefined && formData.whatsappConnections !== null ? formData.whatsappConnections : 1}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setFormData({ ...formData, whatsappConnections: raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0) });
+                    }}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                   />
+                  <span className="text-[11px] text-slate-500">0 = sem conexão WhatsApp</span>
                 </div>
               </div>
 

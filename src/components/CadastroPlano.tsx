@@ -42,12 +42,16 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
   const [trialDays, setTrialDays] = useState<number>(7);
 
   // Quartos
-  const [baseRooms, setBaseRooms] = useState<number>(planToEdit?.roomLimit || 45);
+  const [baseRooms, setBaseRooms] = useState<number>(
+    planToEdit?.roomLimit !== undefined && planToEdit?.roomLimit !== null ? planToEdit.roomLimit : 45
+  );
   const [allowExtraRooms, setAllowExtraRooms] = useState<boolean>(true);
   const [extraRoomPrice, setExtraRoomPrice] = useState<string>('3,50');
 
   // WhatsApp
-  const [baseWhatsapp, setBaseWhatsapp] = useState<number>(planToEdit?.whatsappConnections || 2);
+  const [baseWhatsapp, setBaseWhatsapp] = useState<number>(
+    planToEdit?.whatsappConnections !== undefined && planToEdit?.whatsappConnections !== null ? planToEdit.whatsappConnections : 2
+  );
   const [allowExtraWa, setAllowExtraWa] = useState<boolean>(true);
   const [extraWaPrice, setExtraWaPrice] = useState<string>('49,90');
 
@@ -67,8 +71,8 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       setStatus(planToEdit.status || 'Ativo');
       setIsFeatured(planToEdit.isFeatured || false);
       setBasePrice(planToEdit.basePrice ? planToEdit.basePrice.toFixed(2).replace('.', ',') : '389,00');
-      setBaseRooms(planToEdit.roomLimit || 45);
-      setBaseWhatsapp(planToEdit.whatsappConnections || 2);
+      setBaseRooms(planToEdit.roomLimit !== undefined && planToEdit.roomLimit !== null ? planToEdit.roomLimit : 45);
+      setBaseWhatsapp(planToEdit.whatsappConnections !== undefined && planToEdit.whatsappConnections !== null ? planToEdit.whatsappConnections : 2);
     }
   }, [planToEdit]);
 
@@ -129,17 +133,17 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
             ? 'Mais recomendado para alta taxa de ocupação'
             : 'Cobrança mensal recorrente via PIX ou Cartão',
         roomLimit: baseRooms,
-        roomLimitText: `Capacidade para até ${baseRooms} quartos`,
+        roomLimitText: baseRooms === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${baseRooms} quartos`,
         roomExtraPriceText: allowExtraRooms ? `R$ ${extraRoomPrice}/adicional` : 'Sem quartos adicionais',
         whatsappConnections: baseWhatsapp,
-        whatsappConnectionsText: `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp simultâneas`,
+        whatsappConnectionsText: baseWhatsapp === 0 ? 'Sem conexão WhatsApp inclusa' : `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp simultâneas`,
         whatsappExtraPriceText: allowExtraWa ? `R$ ${extraWaPrice}/adicional` : 'Inclusas no pacote',
         hotelsSubscribersCount: planToEdit?.hotelsSubscribersCount || 0,
         status,
         isFeatured,
         features: [
-          `Capacidade para até ${baseRooms} quartos`,
-          `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp simultâneas`,
+          baseRooms === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${baseRooms} quartos`,
+          baseWhatsapp === 0 ? 'Sem conexão WhatsApp inclusa' : `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp simultâneas`,
           allowExtraRooms ? `Quartos excedentes: + R$ ${extraRoomPrice} /quarto` : 'Sem quartos excedentes',
           allowExtraWa ? `Instância extra: + R$ ${extraWaPrice} /conexão` : 'Instâncias extras inclusas',
           'Módulo de atendimento & reservas em tempo real'
@@ -348,9 +352,12 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                 <input
                   id="mob-plan-order"
                   type="number"
-                  min={1}
+                  min={0}
                   value={order}
-                  onChange={(e) => setOrder(parseInt(e.target.value, 10) || 1)}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setOrder(raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0));
+                  }}
                   className="w-full h-11 px-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all text-center font-bold"
                 />
               </div>
@@ -474,10 +481,13 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                 <input
                   id="mob-room-limit"
                   type="number"
-                  min={1}
+                  min={0}
                   value={baseRooms}
-                  onChange={(e) => setBaseRooms(parseInt(e.target.value, 10) || 1)}
-                  placeholder="Ex: 45 quartos"
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setBaseRooms(raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0));
+                  }}
+                  placeholder="Ex: 0 quartos (bloqueado)"
                   className="w-full h-11 pl-10 pr-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all font-bold"
                 />
               </div>
@@ -534,10 +544,13 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                 <input
                   id="mob-zap-conn"
                   type="number"
-                  min={1}
+                  min={0}
                   value={baseWhatsapp}
-                  onChange={(e) => setBaseWhatsapp(parseInt(e.target.value, 10) || 1)}
-                  placeholder="Ex: 2 conexões"
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setBaseWhatsapp(raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0));
+                  }}
+                  placeholder="Ex: 0 conexões (bloqueado)"
                   className="w-full h-11 pl-10 pr-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all font-bold"
                 />
               </div>
@@ -799,10 +812,13 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   <input
                     id="desk-plan-order"
                     type="number"
-                    min={1}
+                    min={0}
                     max={99}
                     value={order}
-                    onChange={(e) => setOrder(parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setOrder(raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0));
+                    }}
                     className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm font-bold text-center focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                   />
                 </div>
@@ -965,15 +981,18 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   <input
                     id="desk-base-rooms"
                     type="number"
-                    min={1}
+                    min={0}
                     max={5000}
                     value={baseRooms}
-                    onChange={(e) => setBaseRooms(parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setBaseRooms(raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0));
+                    }}
                     className="w-full h-11 pl-10 pr-16 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm font-bold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                   />
                   <span className="absolute right-3 text-xs text-slate-400 pointer-events-none font-medium">quartos</span>
                 </div>
-                <span className="text-[11px] text-slate-500">Franquia inicial sem custo adicional.</span>
+                <span className="text-[11px] text-slate-500">{baseRooms === 0 ? 'Nenhum quarto incluso (bloqueado para este plano).' : 'Franquia inicial sem custo adicional.'}</span>
               </div>
 
               <div className="md:col-span-4 flex flex-col gap-1.5 justify-center">
@@ -1038,15 +1057,18 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   <input
                     id="desk-base-wa"
                     type="number"
-                    min={1}
+                    min={0}
                     max={100}
                     value={baseWhatsapp}
-                    onChange={(e) => setBaseWhatsapp(parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setBaseWhatsapp(raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0));
+                    }}
                     className="w-full h-11 pl-10 pr-24 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm font-bold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                   />
                   <span className="absolute right-3 text-xs text-slate-400 pointer-events-none font-medium">conexões</span>
                 </div>
-                <span className="text-[11px] text-slate-500">Números operando simultaneamente.</span>
+                <span className="text-[11px] text-slate-500">{baseWhatsapp === 0 ? 'Nenhuma instância inclusa (bloqueado para este plano).' : 'Números operando simultaneamente.'}</span>
               </div>
 
               <div className="md:col-span-4 flex flex-col gap-1.5 justify-center">

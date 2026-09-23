@@ -478,6 +478,21 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isEditMode) {
+      const activeHotel = currentHotelService.getCurrentHotel();
+      const planLower = (activeHotel?.plan || '').toLowerCase();
+      const isFreePlan = planLower.includes('gratis') || planLower.includes('grátis') || planLower.includes('free') || planLower.includes('maps');
+      const capacityLimit = activeHotel?.capacity !== undefined && activeHotel?.capacity !== null ? activeHotel.capacity : (isFreePlan ? 0 : 9999);
+
+      if (capacityLimit === 0 || isFreePlan) {
+        alert(
+          `Plano sem direito a cadastro de quartos!\n\nSeu hotel (${activeHotel?.name || 'Hotel'}) está no plano "${activeHotel?.plan || 'Grátis'}", que não inclui cadastro de quartos (limite: 0).\n\nPara cadastrar quartos, faça o upgrade do seu plano.`
+        );
+        return;
+      }
+    }
+
     const defaultNumber = isEditMode ? editingQuarto!.number : '401';
     const roomData = {
       id: isEditMode ? editingQuarto!.id : Date.now().toString(),

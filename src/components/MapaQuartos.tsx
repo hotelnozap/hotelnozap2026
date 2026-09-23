@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { quartosService, reservasService, destaquesQuartoService, DestaqueQuarto, cleanIconClass } from '../services/supabaseService';
+import { quartosService, reservasService, destaquesQuartoService, DestaqueQuarto, cleanIconClass, currentHotelService } from '../services/supabaseService';
 import { ModalCheckinEntrada } from './ModalCheckinEntrada';
 import { Reserva } from './ListagemReservas';
 
@@ -253,6 +253,25 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   };
 
   const handleOpenNovoQuarto = () => {
+    const activeHotel = currentHotelService.getCurrentHotel();
+    const planLower = (activeHotel?.plan || '').toLowerCase();
+    const isFreePlan = planLower.includes('gratis') || planLower.includes('grátis') || planLower.includes('free') || planLower.includes('maps');
+    const capacityLimit = activeHotel?.capacity !== undefined && activeHotel?.capacity !== null ? activeHotel.capacity : (isFreePlan ? 0 : 9999);
+
+    if (capacityLimit === 0 || isFreePlan) {
+      alert(
+        `Plano sem direito a cadastro de quartos!\n\nSeu hotel (${activeHotel?.name || 'Hotel'}) está no plano "${activeHotel?.plan || 'Grátis'}", que não inclui franquia para cadastro de quartos (limite: 0).\n\nPara cadastrar e gerenciar acomodações no sistema, faça o upgrade do seu plano.`
+      );
+      return;
+    }
+
+    if (rooms.length >= capacityLimit) {
+      alert(
+        `Limite de quartos atingido!\n\nSeu hotel atingiu o limite de ${capacityLimit} quarto(s) definido pelo seu plano ("${activeHotel?.plan}").\n\nPara cadastrar quartos adicionais, faça o upgrade do seu plano.`
+      );
+      return;
+    }
+
     resetRoomForm();
     if (onNavigateToCadastroQuarto) {
       onNavigateToCadastroQuarto();

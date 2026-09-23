@@ -600,12 +600,19 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
             (p.name && planName.toLowerCase().includes(p.name.toLowerCase()))
         );
 
-        if (matched && Number(matched.whatsappConnections) > 0) {
+        if (matched && matched.whatsappConnections !== undefined && matched.whatsappConnections !== null) {
           maxInst = Number(matched.whatsappConnections);
         } else {
           // 3. Heurística padrão pelos nomes dos planos oficiais do sistema
           const pLower = planName.toLowerCase();
           if (
+            pLower.includes('gratis') ||
+            pLower.includes('grátis') ||
+            pLower.includes('free') ||
+            pLower.includes('maps')
+          ) {
+            maxInst = 0;
+          } else if (
             pLower.includes('12 credito') ||
             pLower.includes('12 crédito') ||
             pLower.includes('anual') ||
@@ -634,7 +641,7 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
           ) {
             maxInst = 2;
           } else {
-            maxInst = 1; // 1 Crédito, Grátis, Starter
+            maxInst = 1; // 1 Crédito, Starter
           }
         }
       }
@@ -821,9 +828,15 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
 
     // 🔒 Verificação Rigorosa das Regras do Plano
     if (!hotelPlanInfo.canCreateMore || hotelPlanInfo.currentCount >= hotelPlanInfo.maxInstances) {
-      alert(
-        `Limite do plano atingido!\n\nSeu hotel (${hotelPlanInfo.hotelName}) está no plano "${hotelPlanInfo.planName}", que permite no máximo ${hotelPlanInfo.maxInstances} conexão(ões) simultânea(s) de WhatsApp.\n\nPara cadastrar mais números, faça o upgrade do plano.`
-      );
+      if (hotelPlanInfo.maxInstances === 0) {
+        alert(
+          `Plano sem direito a conexões de WhatsApp!\n\nSeu hotel (${hotelPlanInfo.hotelName}) está no plano "${hotelPlanInfo.planName}", que não inclui conexões de WhatsApp (0 inclusas).\n\nPara cadastrar e conectar instâncias de WhatsApp, faça o upgrade do seu plano.`
+        );
+      } else {
+        alert(
+          `Limite do plano atingido!\n\nSeu hotel (${hotelPlanInfo.hotelName}) está no plano "${hotelPlanInfo.planName}", que permite no máximo ${hotelPlanInfo.maxInstances} conexão(ões) simultânea(s) de WhatsApp.\n\nPara cadastrar mais números, faça o upgrade do plano.`
+        );
+      }
       setIsNovaConexaoOpen(false);
       setIsUpgradeModalOpen(true);
       return;
@@ -1126,7 +1139,7 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
                 title="Limite de instâncias do seu plano atingido. Clique para ver opções de upgrade."
               >
                 <span className="material-symbols-outlined text-xl">lock</span>
-                <span>Limite do Plano ({hotelPlanInfo.currentCount}/{hotelPlanInfo.maxInstances})</span>
+                <span>{hotelPlanInfo.maxInstances === 0 ? 'Sem Conexão no Plano Grátis' : `Limite do Plano (${hotelPlanInfo.currentCount}/${hotelPlanInfo.maxInstances})`}</span>
               </button>
             )}
           </div>
