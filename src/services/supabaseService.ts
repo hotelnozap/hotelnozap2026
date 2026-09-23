@@ -9,8 +9,9 @@ import { RoomTypeData } from '../components/ListagemTiposQuartos';
 import { Reserva } from '../components/ListagemReservas';
 import { caixaService } from './caixaService';
 import { formatPhoneEvolution, maskPhone } from '../utils/masks';
+import { HotelConfigData } from '../types/database';
 
-export type { RoomTypeData, Reserva };
+export type { RoomTypeData, Reserva, HotelConfigData };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Multi-tenant: Hotel Ativo & Gestão por Hotel
@@ -6124,6 +6125,144 @@ export const categoriasHoteisService = {
     }
 
     return { success: true };
+  }
+};
+
+export const hotelConfigService = {
+  // Mapeia do Supabase (snake_case) para o TypeScript (camelCase)
+  mapRowToConfig(row: any): HotelConfigData {
+    return {
+      checkInHorario: row.check_in_horario || '14:00',
+      checkOutHorario: row.check_out_horario || '12:00',
+      toleranciaCheckOutMinutos: Number(row.tolerancia_check_out_minutos) || 30,
+      cafeInicio: row.cafe_inicio || '06:30',
+      cafeFim: row.cafe_fim || '10:00',
+      silencioInicio: row.silencio_inicio || '22:00',
+      silencioFim: row.silencio_fim || '08:00',
+      recepcao24Horas: row.recepcao_24_horas !== false,
+      recepcaoInicio: row.recepcao_inicio || '07:00',
+      recepcaoFim: row.recepcao_fim || '23:00',
+      lazerInicio: row.lazer_inicio || '08:00',
+      lazerFim: row.lazer_fim || '20:00',
+      politicaCancelamento: row.politica_cancelamento || 'flexivel',
+      politicaCancelamentoTexto: row.politica_cancelamento_texto || 'Cancelamento gratuito até 7 dias antes do check-in.',
+      permitePet: row.permite_pet || 'sob_consulta',
+      taxaPet: Number(row.taxa_pet) || 50.0,
+      proibidoFumar: row.proibido_fumar !== false,
+      idadeMinimaCheckin: Number(row.idade_minima_checkin) || 18,
+      permiteVisitantes: row.permite_visitantes !== false,
+      regrasGeraisTexto: row.regras_gerais_texto || 'Prezado hóspede, respeite os horários de silêncio e as áreas de convivência.',
+      dpoNome: row.dpo_nome || 'Encarregado de Privacidade',
+      dpoEmail: row.dpo_email || 'privacidade@hotelnozap.com.br',
+      dpoTelefone: row.dpo_telefone || '(11) 99999-9999',
+      exigirConsentimentoCheckin: row.exigir_consentimento_checkin !== false,
+      prazoRetencaoAnos: Number(row.prazo_retencao_anos) || 5,
+      enviarAvisoPrivacidadeWhatsapp: row.enviar_aviso_privacidade_whatsapp !== false,
+      politicaPrivacidadeTexto: row.politica_privacidade_texto || '',
+      mpEnvironment: row.mp_environment || 'production',
+      mpPublicKey: row.mp_public_key || '',
+      mpAccessToken: row.mp_access_token || '',
+      mpClientId: row.mp_client_id || '',
+      mpClientSecret: row.mp_client_secret || '',
+      mpEnablePix: row.mp_enable_pix !== false,
+      mpEnableCreditCard: row.mp_enable_credit_card !== false,
+      mpEnableBoleto: row.mp_enable_boleto === true,
+      mpMaxInstallments: row.mp_max_installments || '12',
+    };
+  },
+
+  // Mapeia do TypeScript (camelCase) para o Supabase (snake_case)
+  mapConfigToRow(config: HotelConfigData, hotelId: string) {
+    return {
+      hotel_id: hotelId,
+      check_in_horario: config.checkInHorario,
+      check_out_horario: config.checkOutHorario,
+      tolerancia_check_out_minutos: config.toleranciaCheckOutMinutos,
+      cafe_inicio: config.cafeInicio,
+      cafe_fim: config.cafeFim,
+      silencio_inicio: config.silencioInicio,
+      silencio_fim: config.silencioFim,
+      recepcao_24_horas: config.recepcao24Horas,
+      recepcao_inicio: config.recepcaoInicio,
+      recepcao_fim: config.recepcaoFim,
+      lazer_inicio: config.lazerInicio,
+      lazer_fim: config.lazerFim,
+      politica_cancelamento: config.politicaCancelamento,
+      politica_cancelamento_texto: config.politicaCancelamentoTexto,
+      permite_pet: config.permitePet,
+      taxa_pet: config.taxaPet,
+      proibido_fumar: config.proibidoFumar,
+      idade_minima_checkin: config.idadeMinimaCheckin,
+      permite_visitantes: config.permiteVisitantes,
+      regras_gerais_texto: config.regrasGeraisTexto,
+      dpo_nome: config.dpoNome,
+      dpo_email: config.dpoEmail,
+      dpo_telefone: config.dpoTelefone,
+      exigir_consentimento_checkin: config.exigirConsentimentoCheckin,
+      prazo_retencao_anos: config.prazoRetencaoAnos,
+      enviar_aviso_privacidade_whatsapp: config.enviarAvisoPrivacidadeWhatsapp,
+      politica_privacidade_texto: config.politicaPrivacidadeTexto,
+      mp_environment: config.mpEnvironment,
+      mp_public_key: config.mpPublicKey,
+      mp_access_token: config.mpAccessToken,
+      mp_client_id: config.mpClientId,
+      mp_client_secret: config.mpClientSecret,
+      mp_enable_pix: config.mpEnablePix,
+      mp_enable_credit_card: config.mpEnableCreditCard,
+      mp_enable_boleto: config.mpEnableBoleto,
+      mp_max_installments: config.mpMaxInstallments,
+      atualizado_em: new Date().toISOString()
+    };
+  },
+
+  async getConfig(hotelId?: string): Promise<HotelConfigData | null> {
+    try {
+      const hId = resolveHotelDbId(hotelId);
+      if (hId) {
+        const { data, error } = await supabase
+          .from('hotel_configuracoes')
+          .select('*')
+          .eq('hotel_id', hId)
+          .maybeSingle();
+
+        if (data && !error) {
+          return this.mapRowToConfig(data);
+        }
+      }
+      // Fallback para primeiro registro existente no banco
+      const { data: firstRow } = await supabase
+        .from('hotel_configuracoes')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
+      if (firstRow) {
+        return this.mapRowToConfig(firstRow);
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar hotel_configuracoes no Supabase:', e);
+    }
+    return null;
+  },
+
+  async saveConfig(config: HotelConfigData, hotelId?: string): Promise<boolean> {
+    try {
+      const hId = resolveHotelDbId(hotelId);
+      const row = this.mapConfigToRow(config, hId);
+      
+      const { error } = await supabase
+        .from('hotel_configuracoes')
+        .upsert(row, { onConflict: 'hotel_id' });
+
+      if (error) {
+        console.warn('Erro ao salvar hotel_configuracoes no Supabase:', error);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn('Exceção ao salvar hotel_configuracoes no Supabase:', e);
+      return false;
+    }
   }
 };
 

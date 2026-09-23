@@ -269,3 +269,49 @@ export interface Database {
     }
   }
 }
+
+export interface HotelConfigData {
+  // 1. Horários & Estadia
+  checkInHorario: string;
+  checkOutHorario: string;
+  toleranciaCheckOutMinutos: number;
+  cafeInicio: string;
+  cafeFim: string;
+  silencioInicio: string;
+  silencioFim: string;
+  recepcao24Horas: boolean;
+  recepcaoInicio: string;
+  recepcaoFim: string;
+  lazerInicio: string;
+  lazerFim: string;
+
+  // 2. Regras & Políticas
+  politicaCancelamento: 'flexivel' | 'moderada' | 'rigida' | 'personalizada';
+  politicaCancelamentoTexto: string;
+  permitePet: 'sim' | 'nao' | 'sob_consulta';
+  taxaPet: number;
+  proibidoFumar: boolean;
+  idadeMinimaCheckin: number;
+  permiteVisitantes: boolean;
+  regrasGeraisTexto: string;
+
+  // 3. LGPD & Privacidade
+  dpoNome: string;
+  dpoEmail: string;
+  dpoTelefone: string;
+  exigirConsentimentoCheckin: boolean;
+  prazoRetencaoAnos: number;
+  enviarAvisoPrivacidadeWhatsapp: boolean;
+  politicaPrivacidadeTexto: string;
+
+  // 4. Mercado Pago & Checkout
+  mpEnvironment: 'production' | 'sandbox';
+  mpPublicKey: string;
+  mpAccessToken: string;
+  mpClientId: string;
+  mpClientSecret: string;
+  mpEnablePix: boolean;
+  mpEnableCreditCard: boolean;
+  mpEnableBoleto: boolean;
+  mpMaxInstallments: string;
+}

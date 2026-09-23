@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { currentHotelService } from '../services/supabaseService';
+import { currentHotelService, hotelConfigService } from '../services/supabaseService';
 
 export interface ConfiguracoesHotelProps {
   initialTab?: 'horarios' | 'regras' | 'lgpd' | 'mercadopago';
@@ -145,6 +145,11 @@ export const saveHotelConfigToStorage = (newConfig: HotelConfigData, hotelId?: s
     localStorage.setItem('hotelnozap_config_hotel_global', serialized);
     localStorage.setItem('hotelnozap_config_hotel_default', serialized);
 
+    // Salva no banco de dados Supabase de forma assíncrona
+    hotelConfigService.saveConfig(newConfig, hId).catch(err => {
+      console.warn('Aviso ao sincronizar configurações com o Supabase:', err);
+    });
+
     // 1. Dispara evento customizado na mesma janela/aba
     window.dispatchEvent(new CustomEvent('hotel_config_atualizado', { detail: newConfig }));
 
@@ -183,8 +188,19 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
   const webhookUrl = 'https://api.hotelnozap.com.br/webhooks/mercadopago';
 
   useEffect(() => {
+    // 1. Carrega imediatamente do cache local para resposta instantânea
     const loaded = loadHotelConfigFromStorage(hotelId);
     setConfig(loaded);
+
+    // 2. Sincroniza com o Supabase
+    hotelConfigService.getConfig(hotelId).then(dbConfig => {
+      if (dbConfig) {
+        setConfig(dbConfig);
+        const serialized = JSON.stringify(dbConfig);
+        localStorage.setItem(`hotelnozap_config_hotel_${hotelId}`, serialized);
+        localStorage.setItem('hotelnozap_config_hotel_global', serialized);
+      }
+    }).catch(err => console.warn('Aviso Supabase config:', err));
   }, [hotelId]);
 
   const showToast = (msg: string) => {

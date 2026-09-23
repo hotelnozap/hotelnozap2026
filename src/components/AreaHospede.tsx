@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MeusDadosCadastrais } from './MeusDadosCadastrais';
 import { MinhasReservasHospede } from './MinhasReservasHospede';
 import { PedidosRecepcaoHospede } from './PedidosRecepcaoHospede';
-import { hospedesService, quartosService, usuariosService, currentHotelService } from '../services/supabaseService';
+import { hospedesService, quartosService, usuariosService, currentHotelService, hotelConfigService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
-import { DEFAULT_CONFIG, HotelConfigData, loadHotelConfigFromStorage } from './ConfiguracoesHotel';
+import { DEFAULT_CONFIG, HotelConfigData, loadHotelConfigFromStorage, saveHotelConfigToStorage } from './ConfiguracoesHotel';
 
 export interface AreaHospedeProps {
   userRole?: string; // 'administrador' | 'hospede' | 'recepcao' | 'financeiro' | etc.
@@ -154,13 +154,37 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
     }
   }, []);
 
-  // Carrega e sincroniza em tempo real as configurações de horários do hotel
+  // Carrega e sincroniza em tempo real as configurações de horários do hotel (Supabase + Realtime + Storage)
   useEffect(() => {
-    // 1. Carregamento inicial com suporte a fallback multinível
+    // 1. Carregamento inicial rápido do cache local para resposta sem delay
     const initialConfig = loadHotelConfigFromStorage(perfil?.hotelId);
     setHotelConfig(initialConfig);
 
-    // 2. Manipulador unificado de atualização de estado
+    // 2. Busca do Supabase e sincroniza se houver dados cadastrados
+    hotelConfigService.getConfig(perfil?.hotelId).then(dbConfig => {
+      if (dbConfig) {
+        setHotelConfig(dbConfig);
+        saveHotelConfigToStorage(dbConfig, perfil?.hotelId);
+      }
+    }).catch(err => console.warn('Aviso Supabase config:', err));
+
+    // 3. Listener do Supabase Realtime (WebSockets) na tabela hotel_configuracoes
+    const rtChannel = supabase
+      .channel('realtime_hotel_configuracoes_channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'hotel_configuracoes' },
+        (payload: any) => {
+          if (payload?.new) {
+            const mapped = hotelConfigService.mapRowToConfig(payload.new);
+            setHotelConfig(mapped);
+            saveHotelConfigToStorage(mapped, perfil?.hotelId);
+          }
+        }
+      )
+      .subscribe();
+
+    // 4. Manipulador unificado de atualização de estado
     const handleUpdate = (updated?: any) => {
       if (updated && typeof updated === 'object' && ('checkInHorario' in updated || 'cafeInicio' in updated)) {
         setHotelConfig(prev => ({ ...prev, ...updated }));
@@ -170,13 +194,13 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
       }
     };
 
-    // 3. Listener de CustomEvent na mesma aba
+    // 5. Listener de CustomEvent na mesma aba
     const handleCustomEvent = (e: any) => {
       handleUpdate(e?.detail);
     };
     window.addEventListener('hotel_config_atualizado', handleCustomEvent);
 
-    // 4. Listener nativo de storage (quando alterado em qualquer aba do navegador)
+    // 6. Listener nativo de storage (quando alterado em qualquer aba do navegador)
     const handleStorageEvent = (e: StorageEvent) => {
       if (!e.key || e.key.startsWith('hotelnozap_config_hotel')) {
         if (e.newValue) {
@@ -190,7 +214,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
     };
     window.addEventListener('storage', handleStorageEvent);
 
-    // 5. BroadcastChannel para comunicação instantânea e bidirecional entre abas
+    // 7. BroadcastChannel para comunicação instantânea entre abas
     let bc: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       try {
@@ -204,6 +228,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
     }
 
     return () => {
+      supabase.removeChannel(rtChannel);
       window.removeEventListener('hotel_config_atualizado', handleCustomEvent);
       window.removeEventListener('storage', handleStorageEvent);
       if (bc) {
