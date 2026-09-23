@@ -89,6 +89,12 @@ const checkIsAssinarUrl = (pathname: string, search: string, hash: string): bool
   return false;
 };
 
+const isAppDomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname.toLowerCase();
+  return host === 'app.hotelnozap.com.br' || host.startsWith('app.');
+};
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
@@ -109,8 +115,21 @@ export const App: React.FC = () => {
         }
         return (savedRole && savedEmail) ? 'perfil' : 'minhaconta';
       }
-      // Rota raiz / → catálogo de hotéis
-      if (parts.length === 0) return 'catalogo-hoteis';
+      // Rota raiz /: Se for o subdomínio app.hotelnozap.com.br, direciona diretamente para o Login/Painel Admin
+      if (parts.length === 0) {
+        if (isAppDomain()) {
+          const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
+          const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
+          if (savedRole && savedEmail) {
+            const roleLower = savedRole.toLowerCase();
+            if (roleLower.includes('camareira') || roleLower.includes('governanca')) return 'camareira';
+            const isAdm = roleLower.includes('admin') || roleLower.includes('super');
+            return isAdm ? 'admin-dashboard' : 'dashboard';
+          }
+          return 'login';
+        }
+        return 'catalogo-hoteis';
+      }
       if (parts[0] === 'hoteis') {
         if (parts[1] === 'cardapio') return 'cardapio-hotel';
         return parts.length >= 2 ? 'pagina-hotel' : 'catalogo-hoteis';
@@ -186,8 +205,24 @@ export const App: React.FC = () => {
           setActiveTab((savedRole && savedEmail) ? 'perfil' : 'minhaconta');
         }
       } else if (parts.length === 0) {
-        // Rota raiz / → catálogo de hotéis
-        setActiveTab('catalogo-hoteis');
+        // Rota raiz /: Se for o subdomínio app.hotelnozap.com.br, direciona ao Login / Painel
+        if (isAppDomain()) {
+          const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
+          const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
+          if (savedRole && savedEmail) {
+            const roleLower = savedRole.toLowerCase();
+            if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
+              setActiveTab('camareira');
+            } else {
+              const isAdm = roleLower.includes('admin') || roleLower.includes('super');
+              setActiveTab(isAdm ? 'admin-dashboard' : 'dashboard');
+            }
+          } else {
+            setActiveTab('login');
+          }
+        } else {
+          setActiveTab('catalogo-hoteis');
+        }
       } else if (parts[0] === 'hoteis') {
         if (parts[1] === 'cardapio') {
           setActiveTab('cardapio-hotel');
@@ -449,7 +484,12 @@ export const App: React.FC = () => {
             window.dispatchEvent(new CustomEvent('user_role_changed', { detail: savedRole }));
             definirAbaInicialAutenticada();
           } else {
-            setActiveTab(prev => (prev === 'login' || prev === 'landingpage' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login');
+            setActiveTab(prev => {
+              if (isAppDomain() && (prev === 'catalogo-hoteis' || !prev)) {
+                return 'login';
+              }
+              return (prev === 'login' || prev === 'landingpage' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login';
+            });
           }
         }
       } catch (bootErr) {
@@ -824,7 +864,7 @@ export const App: React.FC = () => {
     );
   }
 
-  if (activeTab === 'catalogo-hoteis' || pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1)) {
+  if (activeTab === 'catalogo-hoteis' || (!isAppDomain() && (pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1)))) {
     return (
       <CatalogoHoteis 
         onNavigateToLogin={() => {
