@@ -1,7 +1,7 @@
 ---
 type: project
 created: 2026-05-25
-updated: 2026-07-12
+updated: 2026-09-23
 ---
 
 # Project Conventions
@@ -9,7 +9,7 @@ updated: 2026-07-12
 ## Git Workflow & Deploy
 - Always create a new dedicated branch for major code changes.
 - Branch name format should follow: `feature/[task-slug]` or `fix/[bug-slug]`.
-- **REGRA MANDATÓRIA DE DEPLOY:** NUNCA fazer `git push` ou deploy (para o GitHub / Vercel) automaticamente. Somente realizar deploy quando o usuário solicitar expressamente.
+- **REGRA MANDATÓRIA DE DEPLOY:** NUNCA fazer `git push` ou deploy (para o GitHub / Vercel) automaticamente. Só é para fazer deploy quando o usuário solicitar expressamente.
 
 ## Supported AI platforms (AG Kit)
 - AG Kit **only supports Gemini CLI and Google Antigravity**.

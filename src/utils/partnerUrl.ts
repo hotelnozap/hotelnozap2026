@@ -1,14 +1,22 @@
 /**
  * Utilitário para geração e manipulação do link de indicação de parceiros.
- * Detecta dinamicamente a origem atual (localhost, IP local, ou domínio de produção)
- * para evitar erros de "URL não encontrada" / 404 ao testar localmente ou em produção.
+ * Em produção, o link oficial sempre utiliza o domínio público principal:
+ * https://hotelnozap.com.br/assinar?ref=CODIGO (sem o subdomínio app.)
+ * Em ambiente local (localhost), mantém a porta/origem atual para testes.
  */
 
-export const getAppBaseUrl = (): string => {
-  if (typeof window !== 'undefined' && window.location && window.location.origin) {
-    return window.location.origin;
+export const getPartnerPublicBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return window.location.origin;
+    }
   }
-  return import.meta.env?.VITE_APP_BASE_URL || 'https://app.hotelnozap.com.br';
+  return 'https://hotelnozap.com.br';
+};
+
+export const getAppBaseUrl = (): string => {
+  return getPartnerPublicBaseUrl();
 };
 
 /**
@@ -28,7 +36,7 @@ export const getAppLoginUrl = (): string => {
 
 export const getPartnerReferralLink = (coupon?: string): string => {
   const code = (coupon || 'HOTELNOZAP').trim();
-  const baseUrl = getAppBaseUrl();
+  const baseUrl = getPartnerPublicBaseUrl();
   return `${baseUrl}/assinar?ref=${encodeURIComponent(code)}`;
 };
 

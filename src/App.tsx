@@ -99,13 +99,21 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       if (checkIsAssinarUrl(window.location.pathname, window.location.search, window.location.hash)) {
+        if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+        }
         return 'assinar';
       }
       const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
       if (parts[0] === 'camareira') return 'camareira';
       if (parts[0] === 'lp' && parts[1] === 'lpnovohotel') return 'lp-novo-hotel';
       if (parts[0] === 'lp') return 'landingpage';
-      if (parts[0] === 'assinar') return 'assinar';
+      if (parts[0] === 'assinar') {
+        if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+        }
+        return 'assinar';
+      }
       if (parts[0] === 'minhaconta') {
         const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
         const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
@@ -174,6 +182,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleLocationChange = () => {
       if (checkIsAssinarUrl(window.location.pathname, window.location.search, window.location.hash)) {
+        if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+          return;
+        }
         setActiveTab('assinar');
         return;
       }
@@ -185,6 +197,10 @@ export const App: React.FC = () => {
       } else if (parts[0] === 'lp') {
         setActiveTab('landingpage');
       } else if (parts[0] === 'assinar') {
+        if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+          return;
+        }
         setActiveTab('assinar');
       } else if (parts[0] === 'paineladmin') {
         const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
