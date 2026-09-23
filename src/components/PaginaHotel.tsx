@@ -79,6 +79,8 @@ function formatInstagramUrl(val?: string): string {
   if (!val) return '';
   const trimmed = val.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  if (trimmed.startsWith('instagram.com/')) return `https://${trimmed}`;
+  if (trimmed.startsWith('www.instagram.com/')) return `https://${trimmed}`;
   const handle = trimmed.replace(/^@/, '');
   return `https://instagram.com/${handle}`;
 }
@@ -87,13 +89,18 @@ function formatFacebookUrl(val?: string): string {
   if (!val) return '';
   const trimmed = val.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  return `https://facebook.com/${trimmed}`;
+  if (trimmed.startsWith('facebook.com/')) return `https://${trimmed}`;
+  if (trimmed.startsWith('www.facebook.com/')) return `https://${trimmed}`;
+  const handle = trimmed.replace(/^@/, '');
+  return `https://facebook.com/${handle}`;
 }
 
 function formatTikTokUrl(val?: string): string {
   if (!val) return '';
   const trimmed = val.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  if (trimmed.startsWith('tiktok.com/')) return `https://${trimmed}`;
+  if (trimmed.startsWith('www.tiktok.com/')) return `https://${trimmed}`;
   const handle = trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
   return `https://www.tiktok.com/${handle}`;
 }
@@ -103,6 +110,7 @@ function formatWhatsAppUrl(val?: string): string {
   const trimmed = val.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
   const digits = trimmed.replace(/\D/g, '');
+  if (!digits) return '';
   const fullPhone = digits.length <= 11 ? `55${digits}` : digits;
   return `https://wa.me/${fullPhone}`;
 }
@@ -278,62 +286,76 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       const loggedHotel = currentHotelService.getCurrentHotel();
       let targetHotel: PublicHotel | null = propHotel || null;
 
-      if (!targetHotel) {
-        const pathSlug = window.location.pathname.replace(/^\/(hotel|hoteis)\/?/, '').split('/')[0] || '';
-        const cleanSlug = (propSlug || pathSlug)
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .trim();
+      const pathSlug = window.location.pathname.replace(/^\/(hotel|hoteis)\/?/, '').split('/')[0] || '';
+      const cleanSlug = (propSlug || pathSlug)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
 
-        // Carrega do Supabase
-        const dbHoteis = await hoteisService.getHoteis();
-        const mappedDbHoteis: PublicHotel[] = (dbHoteis || []).map(h => {
-          const cityParts = h.cityUf ? h.cityUf.split('/') : ['Ipojuca', 'PE'];
-          const cName = cityParts[0]?.trim() || 'Ipojuca';
-          const ufName = cityParts[1]?.trim() || 'PE';
-          const isDemo = h.id === '11111111-1111-1111-1111-111111111111';
-          const roomsCount = isDemo ? (h.capacity > 0 ? h.capacity : 4) : 0;
+      // Carrega sempre do Supabase para garantir os dados mais recentes (inclusive redes sociais)
+      const dbHoteis = await hoteisService.getHoteis();
+      const mappedDbHoteis: PublicHotel[] = (dbHoteis || []).map(h => {
+        const cityParts = h.cityUf ? h.cityUf.split('/') : ['Ipojuca', 'PE'];
+        const cName = cityParts[0]?.trim() || 'Ipojuca';
+        const ufName = cityParts[1]?.trim() || 'PE';
+        const isDemo = h.id === '11111111-1111-1111-1111-111111111111';
+        const roomsCount = isDemo ? (h.capacity > 0 ? h.capacity : 4) : 0;
 
-          return {
-            id: h.id,
-            name: h.name,
-            link: h.link,
-            category: h.category || 'Hotel & Pousada',
-            city: h.city || cName,
-            uf: h.uf || ufName,
-            neighborhood: h.neighborhood || 'Centro / Orla',
-            imageUrl: h.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
-            rating: 4.90,
-            reviewsCount: 45,
-            pricePerNight: isDemo ? 220 : 0,
-            whatsappPhone: (h.whatsapp ? h.whatsapp.replace(/\D/g, '') : (h.managerPhone ? h.managerPhone.replace(/\D/g, '') : '5581998765432')),
-            instagram: h.instagram || undefined,
-            facebook: h.facebook || undefined,
-            tiktok: h.tiktok || undefined,
-            whatsapp: h.whatsapp || undefined,
-            cancellationText: 'Cancelamento flexível via Zap',
-            capacity: roomsCount,
-            notes: h.notes,
-            plan: h.plan,
-            isImportedFromGoogle: Boolean(
-              (h.plan && h.plan.toLowerCase().includes('google')) ||
-              (h.notes && h.notes.toLowerCase().includes('google')) ||
-              (h.notes && h.notes.toLowerCase().includes('importado')) ||
-              (h.imageUrl && h.imageUrl.includes('places.googleapis.com'))
-            ),
-            roomTitle: roomsCount > 0 ? `Acomodação com ${roomsCount} quartos` : 'Contato Direto',
-            amenities: roomsCount > 0 ? [
-              { icon: 'bedroom_parent', label: `${roomsCount} Quartos` },
-              { icon: 'wifi', label: 'Wi-Fi Grátis' },
-              { icon: 'directions_car', label: 'Garagem: Sim' },
-              { icon: 'ac_unit', label: 'Ar Condicionado' }
-            ] : []
+        return {
+          id: h.id,
+          name: h.name,
+          link: h.link,
+          category: h.category || 'Hotel & Pousada',
+          city: h.city || cName,
+          uf: h.uf || ufName,
+          neighborhood: h.neighborhood || 'Centro / Orla',
+          imageUrl: h.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+          rating: 4.90,
+          reviewsCount: 45,
+          pricePerNight: isDemo ? 220 : 0,
+          whatsappPhone: (h.whatsapp ? h.whatsapp.replace(/\D/g, '') : (h.managerPhone ? h.managerPhone.replace(/\D/g, '') : '')),
+          instagram: h.instagram || undefined,
+          facebook: h.facebook || undefined,
+          tiktok: h.tiktok || undefined,
+          whatsapp: h.whatsapp || undefined,
+          cancellationText: 'Cancelamento flexível via Zap',
+          capacity: roomsCount,
+          notes: h.notes,
+          plan: h.plan,
+          isImportedFromGoogle: Boolean(
+            (h.plan && h.plan.toLowerCase().includes('google')) ||
+            (h.notes && h.notes.toLowerCase().includes('google')) ||
+            (h.notes && h.notes.toLowerCase().includes('importado')) ||
+            (h.imageUrl && h.imageUrl.includes('places.googleapis.com'))
+          ),
+          roomTitle: roomsCount > 0 ? `Acomodação com ${roomsCount} quartos` : 'Contato Direto',
+          amenities: roomsCount > 0 ? [
+            { icon: 'bedroom_parent', label: `${roomsCount} Quartos` },
+            { icon: 'wifi', label: 'Wi-Fi Grátis' },
+            { icon: 'directions_car', label: 'Garagem: Sim' },
+            { icon: 'ac_unit', label: 'Ar Condicionado' }
+          ] : []
+        };
+      });
+
+      const combinedHoteis = [...mappedDbHoteis];
+
+      if (targetHotel) {
+        // Encontra no banco para obter os campos mais atualizados de redes sociais
+        const dbMatch = combinedHoteis.find(h => h.id === targetHotel?.id || h.name.toLowerCase() === targetHotel?.name.toLowerCase());
+        if (dbMatch) {
+          targetHotel = {
+            ...targetHotel,
+            ...dbMatch,
+            instagram: dbMatch.instagram || targetHotel.instagram,
+            facebook: dbMatch.facebook || targetHotel.facebook,
+            tiktok: dbMatch.tiktok || targetHotel.tiktok,
+            whatsapp: dbMatch.whatsapp || targetHotel.whatsapp,
+            whatsappPhone: dbMatch.whatsappPhone || targetHotel.whatsappPhone
           };
-        });
-
-        const combinedHoteis = [...mappedDbHoteis];
-
+        }
+      } else {
         if (cleanSlug) {
           const normCleanSlug = cleanSlug.replace(/[^a-z0-9]/g, '');
 
@@ -1144,7 +1166,15 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-8">
           
           {/* BLOCO DE REDES SOCIAIS OFICIAIS DO HOTEL */}
-          {Boolean(currentHotel && (currentHotel.instagram || currentHotel.facebook || currentHotel.tiktok || currentHotel.whatsapp || currentHotel.whatsappPhone)) && (
+          {Boolean(
+            currentHotel && (
+              (currentHotel.instagram && currentHotel.instagram.trim()) ||
+              (currentHotel.facebook && currentHotel.facebook.trim()) ||
+              (currentHotel.tiktok && currentHotel.tiktok.trim()) ||
+              (currentHotel.whatsapp && currentHotel.whatsapp.trim()) ||
+              (currentHotel.whatsappPhone && currentHotel.whatsappPhone.trim() && !currentHotel.whatsappPhone.includes('5581998765432'))
+            )
+          ) && (
             <div className="pb-8 border-b border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="space-y-1">
                 <span className="text-[11px] uppercase font-extrabold tracking-widest text-emerald-400 block">
@@ -1160,13 +1190,13 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
 
               <div className="flex flex-wrap items-center gap-3">
                 {/* Instagram */}
-                {currentHotel?.instagram && (
+                {Boolean(currentHotel?.instagram && currentHotel.instagram.trim()) && (
                   <a
-                    href={formatInstagramUrl(currentHotel.instagram)}
+                    href={formatInstagramUrl(currentHotel?.instagram)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 text-white font-bold text-xs hover:brightness-110 transition-all shadow-md active:scale-95 group"
-                    title={`Visitar Instagram Oficial: ${currentHotel.instagram}`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 text-white font-bold text-xs hover:brightness-110 transition-all shadow-md active:scale-95 group cursor-pointer"
+                    title={`Visitar Instagram Oficial: ${currentHotel?.instagram}`}
                   >
                     <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                       <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -1176,13 +1206,13 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                 )}
 
                 {/* Facebook */}
-                {currentHotel?.facebook && (
+                {Boolean(currentHotel?.facebook && currentHotel.facebook.trim()) && (
                   <a
-                    href={formatFacebookUrl(currentHotel.facebook)}
+                    href={formatFacebookUrl(currentHotel?.facebook)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1877F2] text-white font-bold text-xs hover:bg-[#166fe5] transition-all shadow-md active:scale-95 group"
-                    title={`Visitar Facebook Oficial: ${currentHotel.facebook}`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1877F2] text-white font-bold text-xs hover:bg-[#166fe5] transition-all shadow-md active:scale-95 group cursor-pointer"
+                    title={`Visitar Facebook Oficial: ${currentHotel?.facebook}`}
                   >
                     <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -1192,13 +1222,13 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                 )}
 
                 {/* TikTok */}
-                {currentHotel?.tiktok && (
+                {Boolean(currentHotel?.tiktok && currentHotel.tiktok.trim()) && (
                   <a
-                    href={formatTikTokUrl(currentHotel.tiktok)}
+                    href={formatTikTokUrl(currentHotel?.tiktok)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all shadow-md active:scale-95 group"
-                    title={`Visitar TikTok Oficial: ${currentHotel.tiktok}`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-all shadow-md active:scale-95 group cursor-pointer"
+                    title={`Visitar TikTok Oficial: ${currentHotel?.tiktok}`}
                   >
                     <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                       <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01v8.86c0 1.57-.29 3.14-.92 4.58-.69 1.58-1.77 2.97-3.13 3.96-1.39 1.01-3.06 1.64-4.81 1.74-1.78.11-3.58-.27-5.18-1.05-1.63-.79-3.02-2.01-4-3.53-.98-1.52-1.5-3.32-1.48-5.13.02-1.8.58-3.58 1.58-5.08 1.01-1.5 2.43-2.68 4.09-3.37 1.66-.69 3.51-.83 5.27-.41v4.18c-1.02-.31-2.14-.31-3.14.01-.98.31-1.82.95-2.39 1.81-.57.86-.83 1.9-.74 2.94.09 1.04.56 2.02 1.31 2.75.76.73 1.77 1.15 2.82 1.18 1.06.03 2.1-.33 2.89-1.02.8-.69 1.32-1.67 1.45-2.73.07-.58.07-1.16.07-1.74V.02z"/>
@@ -1208,12 +1238,15 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                 )}
 
                 {/* WhatsApp */}
-                {(currentHotel?.whatsapp || currentHotel?.whatsappPhone) && (
+                {Boolean(
+                  (currentHotel?.whatsapp && currentHotel.whatsapp.trim()) ||
+                  (currentHotel?.whatsappPhone && currentHotel.whatsappPhone.trim() && !currentHotel.whatsappPhone.includes('5581998765432'))
+                ) && (
                   <a
                     href={formatWhatsAppUrl(currentHotel?.whatsapp || currentHotel?.whatsappPhone)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs transition-all shadow-md active:scale-95 group"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs transition-all shadow-md active:scale-95 group cursor-pointer"
                     title={`Falar no WhatsApp: ${currentHotel?.whatsapp || currentHotel?.whatsappPhone}`}
                   >
                     <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
