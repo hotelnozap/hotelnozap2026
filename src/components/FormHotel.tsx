@@ -673,39 +673,46 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nomeFantasia.trim()) {
-      showToast('Por favor, informe o Nome Fantasia do Hotel.');
+      showToast('Por favor, informe o Nome do Estabelecimento.');
       return;
     }
 
-    if (!isEditing && loginEmail.trim() && !password.trim()) {
-      showToast('Por favor, informe a Senha de Acesso Master para o novo hotel.');
+    if (isGoogleMaps && !whatsappSocial.trim()) {
+      showToast('Por favor, informe o WhatsApp para contato do hotel.');
       return;
     }
 
-    if (password.trim() || confirmPassword.trim()) {
-      if (password !== confirmPassword) {
-        showToast('As senhas digitadas não coincidem.');
+    if (!isGoogleMaps) {
+      if (!isEditing && loginEmail.trim() && !password.trim()) {
+        showToast('Por favor, informe a Senha de Acesso Master para o novo hotel.');
         return;
       }
-      if (password.length < 6) {
-        showToast('A senha de acesso master deve ter no mínimo 6 caracteres.');
-        return;
-      }
-    }
 
-    // Validação estrita de CPF do Responsável para barrar CPFs falsos
-    if (managerCpf.trim()) {
-      if (!isValidCpf(managerCpf)) {
-        showToast('O CPF do Responsável é falso ou inválido. Por favor, digite um CPF autêntico da Receita Federal.');
-        return;
+      if (password.trim() || confirmPassword.trim()) {
+        if (password !== confirmPassword) {
+          showToast('As senhas digitadas não coincidem.');
+          return;
+        }
+        if (password.length < 6) {
+          showToast('A senha de acesso master deve ter no mínimo 6 caracteres.');
+          return;
+        }
       }
-    }
 
-    // Validação de CNPJ do Hotel
-    if (cnpj.trim() && cnpj !== '00.000.000/0001-00') {
-      if (!isValidCnpj(cnpj)) {
-        showToast('O CNPJ informado é inválido. Por favor, verifique os dígitos.');
-        return;
+      // Validação estrita de CPF do Responsável para barrar CPFs falsos
+      if (managerCpf.trim()) {
+        if (!isValidCpf(managerCpf)) {
+          showToast('O CPF do Responsável é falso ou inválido. Por favor, digite um CPF autêntico da Receita Federal.');
+          return;
+        }
+      }
+
+      // Validação de CNPJ do Hotel
+      if (cnpj.trim() && cnpj !== '00.000.000/0001-00') {
+        if (!isValidCnpj(cnpj)) {
+          showToast('O CNPJ informado é inválido. Por favor, verifique os dígitos.');
+          return;
+        }
       }
     }
 
@@ -728,7 +735,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
 
       const payload: Partial<Hotel> = {
         name: nomeFantasia,
-        razaoSocial: razaoSocial,
+        razaoSocial: razaoSocial.trim() || nomeFantasia.trim(),
         category: category,
         cnpj: cnpj || '00.000.000/0001-00',
         city: city.trim(),
@@ -743,7 +750,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         capacityUnit: 'quartos',
         whatsappInstances: isGoogleMaps ? 0 : (currentSelectedPlano?.whatsappConnections ?? (hotelToEdit?.whatsappInstances ?? 0)),
         managerName: managerName.trim() || (isGoogleMaps ? 'Origem Google Maps' : 'Não informado'),
-        managerPhone: managerWhatsapp.trim() || phone.trim() || '',
+        managerPhone: whatsappSocial.trim() || managerWhatsapp.trim() || phone.trim() || '',
         managerEmail: managerEmail,
         managerCpf: managerCpf,
         managerRole: managerRole,
@@ -1016,8 +1023,192 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       {/* FORMULÁRIO PRINCIPAL */}
       <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
 
-        {/* SEÇÃO 1: IDENTIDADE & INFORMAÇÕES DO HOTEL */}
-        <div className="bg-white rounded-2xl p-5 md:p-7 border border-slate-200 shadow-xs space-y-6">
+        {isGoogleMaps ? (
+          /* ========================================================================= */
+          /* MODO SIMPLIFICADO: ORIGEM GOOGLE MAPS                                     */
+          /* Apenas Foto de Capa, Nome do Hotel, WhatsApp para Contato e Plano Grátis   */
+          /* ========================================================================= */
+          <div className="space-y-6 md:space-y-8 animate-in fade-in duration-200">
+            {/* Banner Google Maps */}
+            <div className="p-4 md:p-5 bg-gradient-to-r from-blue-50 to-indigo-50/60 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">travel_explore</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-base text-blue-950">Cadastro Simplificado • Google Maps</span>
+                    <span className="bg-blue-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">
+                      Plano Grátis
+                    </span>
+                  </div>
+                  <p className="text-blue-800 text-xs mt-0.5 font-medium">
+                    Preencha apenas a foto de capa, o nome do hotel e o WhatsApp para contato. O plano gratuito é aplicado automaticamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card com Foto de Capa, Nome e WhatsApp */}
+            <div className="bg-white rounded-2xl p-5 md:p-7 border border-slate-200 shadow-xs space-y-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-xl">hotel</span>
+                </div>
+                <div>
+                  <h2 className="text-base md:text-lg font-bold text-slate-900">1. Foto de Capa &amp; Informações Básicas</h2>
+                  <p className="text-xs text-slate-500">Foto de capa do estabelecimento, nome de exibição e WhatsApp</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                {/* Upload Foto de Capa do Hotel */}
+                <div className="md:col-span-5 flex flex-col">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Foto de Capa do Hotel
+                  </label>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-300 hover:border-emerald-600 rounded-2xl p-4 flex flex-col items-center justify-center text-center bg-slate-50/50 hover:bg-emerald-50/20 transition-all cursor-pointer min-h-[220px] group relative overflow-hidden"
+                  >
+                    {logoPreview ? (
+                      <div className="w-full h-full min-h-[190px] rounded-xl overflow-hidden relative group">
+                        <img src={logoPreview} alt="Capa Hotel" className="w-full h-48 object-cover rounded-xl" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white">
+                          <span className="material-symbols-outlined text-xl">edit</span>
+                          <span className="text-xs font-bold">Alterar Foto</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 rounded-2xl bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-400 mb-3 group-hover:scale-105 transition-transform">
+                          <span className="material-symbols-outlined text-3xl text-emerald-700">add_photo_alternate</span>
+                        </div>
+                        <span className="text-xs md:text-sm font-bold text-slate-800">Carregar Foto de Capa</span>
+                        <p className="text-[11px] text-slate-500 mt-1">PNG, JPG ou WebP até 5MB</p>
+                        <button 
+                          type="button" 
+                          className="mt-3 px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 shadow-xs cursor-pointer"
+                        >
+                          Selecionar do Computador
+                        </button>
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      accept="image/*" 
+                      onChange={handleLogoSelect} 
+                      className="hidden" 
+                    />
+                  </div>
+                  <span className="text-[11px] text-slate-400 mt-1.5">Foto exibida no catálogo público e na página do estabelecimento.</span>
+                </div>
+
+                {/* Campos Nome do Hotel e WhatsApp */}
+                <div className="md:col-span-7 flex flex-col gap-5 justify-center pt-1">
+                  {/* Nome do Hotel */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-nome-hotel">
+                      Nome do Hotel <span className="text-red-600">*</span>
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="material-symbols-outlined absolute left-3.5 text-slate-400 text-lg pointer-events-none">domain</span>
+                      <input 
+                        id="gm-nome-hotel"
+                        type="text" 
+                        required
+                        value={nomeFantasia}
+                        onChange={(e) => handleNomeFantasiaChange(e.target.value)}
+                        placeholder="Ex: Pousada Recanto dos Corais" 
+                        className="w-full pl-11 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs"
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-500">Nome oficial de identificação do estabelecimento.</span>
+                  </div>
+
+                  {/* WhatsApp para Contato */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-whatsapp-contato">
+                      WhatsApp para Contato <span className="text-red-600">*</span>
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="material-symbols-outlined absolute left-3.5 text-emerald-600 text-lg pointer-events-none">chat</span>
+                      <input 
+                        id="gm-whatsapp-contato"
+                        type="text" 
+                        required
+                        value={whatsappSocial}
+                        onChange={(e) => setWhatsappSocial(maskPhone(e.target.value))}
+                        placeholder="(00) 00000-0000" 
+                        maxLength={15}
+                        className="w-full pl-11 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs font-mono"
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-500">Número do WhatsApp direto que receberá o contato dos hóspedes.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 2: Plano Grátis */}
+            <div className="bg-white rounded-2xl p-5 md:p-7 border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-xl">card_membership</span>
+                </div>
+                <div>
+                  <h2 className="text-base md:text-lg font-bold text-slate-900">2. Plano de Assinatura</h2>
+                  <p className="text-xs text-slate-500">Plano vitalício gratuito aplicado ao estabelecimento</p>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-2xl border-2 border-emerald-600 bg-emerald-50/30 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">🗺️</span>
+                    <div>
+                      <h3 className="font-extrabold text-base text-slate-900">Plano Grátis (Google Maps)</h3>
+                      <span className="inline-block text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                        Plano Gratuito Vitalício
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-600 max-w-xl">
+                    Plano gratuito de entrada para estabelecimentos importados ou cadastrados com base no Google Maps / Places. Permite presença no catálogo e botão de WhatsApp direto para o hotel.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-slate-700">
+                    <span className="inline-flex items-center gap-1 text-slate-500">
+                      <span className="material-symbols-outlined text-base text-slate-400">block</span>
+                      Sem cadastro de quartos (0)
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-slate-500">
+                      <span className="material-symbols-outlined text-base text-slate-400">block</span>
+                      Sem conexão Evolution API (0)
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-emerald-700">
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      Página e Catálogo Público
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-emerald-700">
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      Botão de Contato via WhatsApp
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex md:flex-col items-baseline md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-200/80 pt-3 md:pt-0 md:pl-6 shrink-0">
+                  <div className="text-2xl md:text-3xl font-black text-slate-900">R$ 0,00</div>
+                  <span className="text-xs font-bold text-emerald-700">100% Gratuito</span>
+                  <span className="text-[11px] text-slate-400">Sem mensalidade</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* SEÇÃO 1: IDENTIDADE & INFORMAÇÕES DO HOTEL */}
+            <div className="bg-white rounded-2xl p-5 md:p-7 border border-slate-200 shadow-xs space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
               <span className="material-symbols-outlined text-xl">hotel</span>
@@ -2217,6 +2408,8 @@ export const FormHotel: React.FC<FormHotelProps> = ({
             ></textarea>
           </div>
         </div>
+        </>
+        )}
 
         {/* BARRA INFERIOR DE AÇÕES (RESPONSIVO DESKTOP vs MOBILE) */}
         <div className="pt-2">
