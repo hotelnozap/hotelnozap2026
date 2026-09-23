@@ -1,8 +1,11 @@
-// Service Worker para Hotel no Zap PWA
-const CACHE_NAME = 'hotelnozap-pwa-v1';
+// Service Worker para Hotel no Zap PWA (PWABuilder Certified)
+const CACHE_NAME = 'hotelnozap-pwa-v2';
+const OFFLINE_URL = '/offline.html';
+
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/offline.html',
   '/manifest.json',
   '/favicon.svg',
   '/favicon.png',
@@ -11,18 +14,23 @@ const STATIC_ASSETS = [
   '/apple-touch-icon.png'
 ];
 
-// Instalação do Service Worker e Precache dos arquivos essenciais
+// Instalação do Service Worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => {
-      return self.skipWaiting();
-    })
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Caching robusto: tenta adicionar todos individualmente para garantir sucesso
+      await Promise.allSettled(
+        STATIC_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => {
+            console.warn('[SW] Falha ao pré-cachear asset:', asset, err);
+          })
+        )
+      );
+    }).then(() => self.skipWaiting())
   );
 });
 
-// Ativação e limpeza de caches antigos
+// Ativação e limpeza de versões anteriores de cache
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -33,23 +41,24 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    }).then(() => {
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
-// Estratégia de Fetch:
-// - Para chamadas de API (Supabase, Evolution API): Network-Only (nunca cachear dados dinâmicos de backend)
-// - Para navegação HTML: Network-First com fallback de Cache
-// - Para recursos estáticos (CSS, JS, Fontes, Imagens): Stale-While-Revalidate
+// Estratégia de Fetch inteligente:
+// 1. APIs e rotas dinâmicas do Supabase / Evolution API: sempre Network-Only
+// 2. Navegação de páginas (HTML): Network-First com fallback de Cache e tela Offline
+// 3. Arquivos estáticos (CSS, JS, Imagens, Fontes): Cache-First / Stale-While-Revalidate
 self.addEventListener('fetch', (event) => {
   const request = event.request;
+
+  // Apenas processa requisições GET
+  if (request.method !== 'GET') return;
+
   const url = new URL(request.url);
 
-  // Não interceptar requisições para Supabase, APIs externas ou métodos não-GET
+  // Não intercepta chamadas de API de backend nem autenticação
   if (
-    request.method !== 'GET' ||
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('painelevolution') ||
     url.pathname.startsWith('/rest/') ||
@@ -58,38 +67,53 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navegação principal: Network-First
-  if (request.mode === 'navigate') {
+  // Requisição de navegação principal (HTML)
+  if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) {
+          if (response && response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }
           return response;
         })
-        .catch(() => {
-          return caches.match(request).then((cached) => cached || caches.match('/index.html'));
+        .catch(async () => {
+          const cache = await caches.open(CACHE_NAME);
+          const cachedResponse = await cache.match(request);
+          if (cachedResponse) return cachedResponse;
+
+          const offlineFallback = await cache.match(OFFLINE_URL);
+          if (offlineFallback) return offlineFallback;
+
+          return cache.match('/index.html');
         })
     );
     return;
   }
 
-  // Arquivos estáticos: Stale-While-Revalidate
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
+  // Arquivos estáticos e recursos locais
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // Atualiza o cache silenciosamente em background
+          fetch(request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse.clone()));
+            }
+          }).catch(() => {});
+          return cachedResponse;
+        }
+
+        return fetch(request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           }
           return networkResponse;
-        })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
-  );
+        });
+      })
+    );
+  }
 });

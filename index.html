@@ -66,5 +66,23 @@
   <body class="bg-[#f8f9ff] text-[#0b1c30] font-sans antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Registro PWA Service Worker (PWABuilder Compliance) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function(reg) {
+              console.log('[PWA] Service Worker registrado. Escopo:', reg.scope);
+            })
+            .catch(function(err) {
+              console.warn('[PWA] Falha ao registrar Service Worker:', err);
+            });
+        });
+        if (document.readyState === 'complete') {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        }
+      }
+    </script>
   </body>
 </html>
