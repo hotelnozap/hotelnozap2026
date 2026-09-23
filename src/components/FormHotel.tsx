@@ -293,7 +293,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const handleSelectPlan = (plano: any) => {
     setSelectedPlan(plano.name);
     if (plano.roomLimit !== undefined && plano.roomLimit !== null) {
-      setCapacity(plano.roomLimit);
+      setCapacity(Number(plano.roomLimit));
     }
   };
 
@@ -301,9 +301,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
     setIsGoogleMaps(checked);
     if (checked) {
       setSelectedPlan('Grátis (Google Maps)');
-      if (capacity === '' || capacity === 10 || capacity === 15) {
-        setCapacity(0);
-      }
+      setCapacity(0);
       setNotes(prev => {
         if (!prev || (!prev.toLowerCase().includes('google') && !prev.toLowerCase().includes('places'))) {
           return prev ? `${prev} | Cadastro manual - Origem Google Maps` : `Cadastro manual - Origem Google Maps (${new Date().toLocaleDateString('pt-BR')})`;
@@ -318,7 +316,9 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       }) || planos[0];
       if (commercialPlan) {
         setSelectedPlan(commercialPlan.name);
-        if (commercialPlan.roomLimit) setCapacity(commercialPlan.roomLimit);
+        if (commercialPlan.roomLimit !== undefined && commercialPlan.roomLimit !== null) {
+          setCapacity(Number(commercialPlan.roomLimit));
+        }
       }
       setNotes(prev => 
         prev
@@ -330,21 +330,19 @@ export const FormHotel: React.FC<FormHotelProps> = ({
     }
   };
 
-  // Preenchimento automático da capacidade quando:
-  // 1) Planos carregarem e já houver selectedPlan definido (modo edição)
-  // 2) selectedPlan mudar e não houver plano selecionado visualmente ainda (fallback)
+  // Preenchimento automático da capacidade de quartos de acordo com o plano selecionado
   useEffect(() => {
     if (!selectedPlan || planos.length === 0) return;
-    if (hotelToEdit) return; // Não sobrescrever quartos de hotel existente ao editar
-    if (isGoogleMaps) return; // Google maps não precisa de capacidade automática
+    if (isGoogleMaps) {
+      setCapacity(0);
+      return;
+    }
     const planoObj = planos.find(p => isPlanSelected(p)) || planos.find(p => p.name?.toLowerCase() === selectedPlan.toLowerCase());
     if (planoObj && planoObj.roomLimit !== undefined && planoObj.roomLimit !== null) {
-      if (capacity === '' || capacity === undefined) {
-        setCapacity(planoObj.roomLimit);
-      }
+      setCapacity(Number(planoObj.roomLimit));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPlan, planos.length, hotelToEdit, isGoogleMaps]);
+  }, [selectedPlan, planos.length, isGoogleMaps]);
 
   // Filtrar apenas planos ativos para seleção (no cadastro de novo hotel, o plano grátis do Google Maps não fica disponível a não ser que isGoogleMaps esteja ativo)
   const planosAtivos = useMemo(() => {
@@ -700,6 +698,13 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         finalNotes = finalNotes ? `${finalNotes} | Cadastro manual - Origem Google Maps` : `Cadastro manual - Origem Google Maps (${new Date().toLocaleDateString('pt-BR')})`;
       }
 
+      // Capacidade total de quartos gerenciados definida de acordo com o plano selecionado
+      const calculatedCapacity = isGoogleMaps
+        ? 0
+        : (currentSelectedPlano?.roomLimit !== undefined && currentSelectedPlano?.roomLimit !== null
+            ? Number(currentSelectedPlano.roomLimit)
+            : (capacity !== '' && capacity !== undefined ? Number(capacity) : 0));
+
       const payload: Partial<Hotel> = {
         name: nomeFantasia,
         razaoSocial: razaoSocial,
@@ -713,7 +718,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         street: street.trim(),
         streetNumber: streetNumber.trim(),
         plan: isGoogleMaps ? 'Grátis (Google Maps)' : (currentSelectedPlano?.name || selectedPlan || 'Professional'),
-        capacity: capacity !== '' && capacity !== undefined ? Number(capacity) : 0,
+        capacity: calculatedCapacity,
         capacityUnit: 'quartos',
         whatsappInstances: isGoogleMaps ? 0 : (currentSelectedPlano?.whatsappConnections ?? (hotelToEdit?.whatsappInstances ?? 0)),
         managerName: managerName.trim() || (isGoogleMaps ? 'Origem Google Maps' : 'Não informado'),
@@ -1169,47 +1174,6 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                   <option value="2">⭐⭐ (2 Estrelas / Econômico)</option>
                   <option value="boutique">🌟 Charme / Pousada Boutique</option>
                 </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Total de Quartos Gerenciados *
-                </label>
-                <input 
-                  type="number" 
-                  min="0"
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder={isGoogleMaps ? "0 (Sem quartos - Google Maps)" : "Ex: 15"}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-slate-50/30 font-semibold"
-                />
-                {isGoogleMaps && (
-                  <p className="text-[10px] text-blue-700 font-semibold flex items-center gap-1 mt-1">
-                    <span className="material-symbols-outlined text-xs">info</span>
-                    Hotéis do Google Maps não exigem quartos gerenciados (padrão: 0 quartos).
-                  </p>
-                )}
-                {(() => {
-                  const planoObj = planos.find(p => isPlanSelected(p)) || planos.find(p => p.name?.toLowerCase() === selectedPlan.toLowerCase());
-                  if (planoObj && planoObj.roomLimit !== undefined && planoObj.roomLimit !== null) {
-                    const isDefaultFromPlan = Number(capacity) === Number(planoObj.roomLimit);
-                    return (
-                      <div className={`flex items-start gap-1.5 mt-1.5 pl-0.5 ${isDefaultFromPlan ? 'text-[#003400]' : 'text-amber-700'}`}>
-                        <span className="material-symbols-outlined text-[14px] mt-px shrink-0">
-                          {isDefaultFromPlan ? 'verified' : 'tune'}
-                        </span>
-                        <p className="text-[10px] font-semibold leading-snug">
-                          {isDefaultFromPlan ? (
-                            <>Valor padrão do plano selecionado: <span className="font-bold">{planoObj.roomLimit} quartos</span>. {planoObj.roomExtraPriceText && <span className="text-[#003400]/80">{planoObj.roomExtraPriceText}.</span>}</>
-                          ) : (
-                            <>Ajuste manual do usuário. Limite padrão do plano <span className="font-bold">{planoObj.name}</span>: {planoObj.roomLimit} quartos.</>
-                          )}
-                        </p>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
               </div>
 
               <div className="space-y-1">
