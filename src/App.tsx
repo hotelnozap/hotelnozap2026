@@ -38,6 +38,7 @@ import ListagemCategoriasHotel from './components/ListagemCategoriasHotel';
 import CadastroCategoriaHotel from './components/CadastroCategoriaHotel';
 import { GestaoCreditosSaaS } from './components/GestaoCreditosSaaS';
 import { ConfiguracoesMercadoPago } from './components/ConfiguracoesMercadoPago';
+import { ConfiguracoesHotel } from './components/ConfiguracoesHotel';
 import RelatoriosHotel from './components/RelatoriosHotel';
 import Tutoriais from './components/Tutoriais';
 import ListagemUsuarios, { Usuario } from './components/ListagemUsuarios';
@@ -1452,7 +1453,7 @@ export const App: React.FC = () => {
                     const isConfigMenu = item.id === 'config';
                     const isActive = activeTab === item.id || 
                                      (isProdutoMenu && (activeTab === 'produto-categorias' || activeTab === 'produto-estoque' || activeTab === 'pedidos-cardapio')) ||
-                                     (isConfigMenu && activeTab === 'config-mercado-pago');
+                                     (isConfigMenu && (activeTab === 'config' || activeTab === 'config-hotel' || activeTab === 'config-mercado-pago'));
 
                     return (
                       <div key={item.id} className="flex flex-col gap-0.5 shrink-0">
@@ -1562,6 +1563,23 @@ export const App: React.FC = () => {
                         {/* SUBMENU CONFIGURAÇÕES MOBILE */}
                         {isConfigMenu && isConfigSubmenuOpen && (
                           <div className="flex flex-col gap-1 pl-10 pr-2 py-1">
+                            <button
+                              onClick={() => {
+                                setActiveTab('config-hotel');
+                                setIsConfigSubmenuOpen(false);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className={
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors text-left w-full cursor-pointer " +
+                                (activeTab === 'config-hotel' || activeTab === 'config'
+                                  ? 'bg-[#6cf8bb]/30 text-[#6cf8bb]'
+                                  : 'text-white/80 hover:bg-white/10 hover:text-white')
+                              }
+                            >
+                              <span className="material-symbols-outlined text-base">tune</span>
+                              <span>Geral, Horários & LGPD</span>
+                            </button>
+
                             <button
                               onClick={() => {
                                 setActiveTab('config-mercado-pago');
@@ -1852,7 +1870,7 @@ export const App: React.FC = () => {
               const isConfigMenu = item.id === 'config';
               const isActive = activeTab === item.id || 
                                (isProdutoMenu && (activeTab === 'produto-categorias' || activeTab === 'produto-estoque' || activeTab === 'pedidos-cardapio')) ||
-                               (isConfigMenu && activeTab === 'config-mercado-pago');
+                               (isConfigMenu && (activeTab === 'config' || activeTab === 'config-hotel' || activeTab === 'config-mercado-pago'));
 
               return (
                 <div key={item.id} className="flex flex-col gap-0.5 shrink-0">
@@ -1960,6 +1978,22 @@ export const App: React.FC = () => {
                   {/* SUBMENU CONFIGURAÇÕES DESKTOP */}
                   {isConfigMenu && isConfigSubmenuOpen && (
                     <div className="flex flex-col gap-1 pl-9 pr-2 py-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <button
+                        onClick={() => {
+                          setActiveTab('config-hotel');
+                          setIsConfigSubmenuOpen(false);
+                        }}
+                        className={
+                          "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer " +
+                          (activeTab === 'config-hotel' || activeTab === 'config'
+                            ? 'bg-[#6cf8bb]/30 text-[#6cf8bb]'
+                            : 'text-white/80 hover:bg-white/10 hover:text-white')
+                        }
+                      >
+                        <span className="material-symbols-outlined text-base">tune</span>
+                        <span>Geral, Horários & LGPD</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           setActiveTab('config-mercado-pago');
@@ -2514,8 +2548,15 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {(activeTab === 'config-mercado-pago' || activeTab === 'config') && (
-            <ConfiguracoesMercadoPago 
+          {(activeTab === 'config' || activeTab === 'config-hotel') && (
+            <ConfiguracoesHotel 
+              initialTab="horarios"
+              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+            />
+          )}
+          {activeTab === 'config-mercado-pago' && (
+            <ConfiguracoesHotel 
+              initialTab="mercadopago"
               onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
             />
           )}
@@ -2669,7 +2710,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
+          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
             <div className="p-8 text-center text-[#45464d]">
               <h2 className="text-xl font-bold text-[#0b1c30] mb-2">Tela em construção</h2>
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>
