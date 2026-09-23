@@ -1175,7 +1175,9 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                         <span className="material-symbols-outlined text-amber-600">receipt_long</span>
                         Consumo & Frigobar
                       </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">Lançamentos acumulados no Quarto 204</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {perfil?.quartoNumero && perfil?.quartoNumero !== '—' ? `Lançamentos acumulados no Quarto ${perfil.quartoNumero}` : 'Lançamentos acumulados da estadia'}
+                      </p>
                     </div>
                     <span className="text-base font-black text-slate-900">
                       R$ {totalConsumo.toFixed(2).replace('.', ',')}
@@ -1254,8 +1256,11 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           {activeSubTab === 'pedidos' && (
             <PedidosRecepcaoHospede
               userRole={userRole}
-              userName={userName}
-              userEmail={userEmail}
+              userName={perfil?.nome || userName}
+              userEmail={perfil?.email || userEmail}
+              perfil={perfil}
+              temCheckinAtivo={perfil?.temCheckinAtivo}
+              hotelId={perfil?.hotelId}
               onNavigateBack={() => setActiveSubTab('dashboard')}
             />
           )}

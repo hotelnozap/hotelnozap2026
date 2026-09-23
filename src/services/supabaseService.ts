@@ -4,6 +4,7 @@ import { Hotel } from '../components/CadastroHoteis';
 import { Partner } from '../components/ListagemParceiros';
 import { GuestData } from '../components/ListagemHospedes';
 import { ProductData } from '../components/ListagemProdutos';
+export type { ProductData };
 import { RoomTypeData } from '../components/ListagemTiposQuartos';
 import { Reserva } from '../components/ListagemReservas';
 import { caixaService } from './caixaService';
