@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary-fixed":"#e2e2e2","on-secondary-fixed":"#002113","primary-container":"#003400","on-surface-variant":"#42493e","surface-dim":"#cbdbf6","on-secondary-fixed-variant":"#005236","tertiary-fixed-dim":"#c6c6c6","on-tertiary-fixed":"#1b1b1b","error":"#ba1a1a","surface-container-low":"#eff4ff","surface-tint":"#386a2e","background":"#f8f9ff","on-tertiary-container":"#929292","surface-bright":"#f8f9ff","secondary":"#006c49","primary":"#001c00","gradient-end":"#000000","secondary-container":"#9af2c5","on-error":"#ffffff","error-container":"#ffdad6","on-surface":"#0b1c30","secondary-fixed":"#9df4c8","on-background":"#0b1c30","primary-fixed-dim":"#9dd58d","on-primary-fixed":"#002200","on-tertiary-fixed-variant":"#474747","surface-card":"#ffffff","outline-variant":"#c1c9ba","surface":"#f8f9ff","inverse-primary":"#9dd58d","border-subtle":"#c6c6cd","tertiary":"#171717","tertiary-container":"#2b2b2b","on-secondary-container":"#0c714d","surface-page":"#f8f9ff","on-primary":"#ffffff","surface-tint-active":"rgba(108, 248, 187, 0.15)","surface-container":"#e6eeff","primary-fixed":"#b9f2a7","gradient-start":"#003400","on-primary-container":"#6ba05d","secondary-fixed-dim":"#81d8ad","surface-container-lowest":"#ffffff","accent-mint":"#6cf8bb","surface-variant":"#d3e3ff","surface-container-high":"#dde9ff","on-secondary":"#ffffff","on-error-container":"#93000a","inverse-surface":"#213146","inverse-on-surface":"#ebf1ff","surface-container-highest":"#d3e3ff","on-primary-fixed-variant":"#205118","on-tertiary":"#ffffff","border-focused":"#003400","outline":"#72796d","error-base":"#ba1a1a"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-md":"1rem","space-lg":"1.5rem","gutter":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","space-xs":"0.25rem","margin":"2rem","gutter-mobile":"1rem","space-xl":"2rem"},"fontFamily":{"label-lg":["Inter"],"headline-md":["Inter"],"headline-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"body-md":["Inter"]},"fontSize":{"label-lg":["14px",{"lineHeight":"20px","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface min-h-screen"><main class="w-full min-h-screen bg-surface flex flex-col justify-center items-center py-margin px-margin-mobile sm:px-margin"><div class="w-full max-w-[1040px] mx-auto"><div class="flex flex-col w-full">
+<!-- Desktop Focus Canvas: Header & Navigation Area -->
+<div class="flex flex-col w-full mb-8">
+<div class="flex items-center justify-between mb-4">
+<a class="inline-flex items-center gap-2 text-secondary hover:text-on-surface transition-colors duration-150 font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-body-lg transition-transform duration-150 group-hover:-translate-x-1">arrow_back</span>
+<span>Voltar para Listagem de Planos</span>
+</a>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Ambiente Produção
+        </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-body-sm">shield_lock</span>
+          SSL 256-bit Seguro
+        </span>
+</div>
+</div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 shadow-sm bg-surface-card p-space-lg rounded-xl">
+<div class="flex flex-col gap-1.5">
+<div class="flex flex-wrap items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Cadastro de Plano de Assinatura</h1>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded bg-surface-variant text-on-surface font-label-sm text-label-sm">
+            SaaS Multi-tenant
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+          Configure as condições comerciais, limites de acomodações e conexões de WhatsApp do tier de assinatura para redes e pousadas associadas.
+        </p>
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<button class="px-5 py-2.5 rounded bg-surface-container text-on-surface hover:bg-surface-variant transition-colors duration-150 font-label-lg text-label-lg shadow-sm" type="button">
+          Descartar
+        </button>
+<button class="px-6 py-2.5 rounded bg-primary-container text-on-primary hover:opacity-90 active:scale-[0.99] transition-all duration-150 font-label-lg text-label-lg shadow-md flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-body-lg">save</span>
+<span>Salvar Plano</span>
+</button>
+</div>
+</div>
+</div>
+<form class="flex flex-col gap-8 w-full" id="planForm">
+<!-- Seção 1: Identificação & Status do Plano -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-headline-sm">tune</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">1. Identificação & Status do Plano</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Defina a nomenclatura oficial, visibilidade no catálogo e destaque mercadológico.</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">Passo 01/05</span>
+</div>
+<!-- Switches de ativação e recomendação -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+<div class="flex items-center justify-between p-4 rounded bg-surface-container-low hover:bg-surface-container transition-colors duration-150">
+<div class="flex flex-col pr-4">
+<span class="font-label-lg text-label-lg text-on-surface">Status de Disponibilidade</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Visível para contratação e cadastro de novos hotéis</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="statusSwitch" type="checkbox"/>
+<div class="w-12 h-6 bg-tertiary-fixed rounded-full peer peer-checked:bg-primary-container peer-focus:outline-none transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-surface-card after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm peer-checked:after:translate-x-6"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4 rounded bg-surface-container-low hover:bg-surface-container transition-colors duration-150">
+<div class="flex flex-col pr-4">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-on-surface">Destaque Comercial</span>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">Recomendado</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Destacar como Mais Escolhido pelos Hotéis</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input class="sr-only peer" id="featureSwitch" type="checkbox"/>
+<div class="w-12 h-6 bg-tertiary-fixed rounded-full peer peer-checked:bg-secondary peer-focus:outline-none transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-surface-card after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm peer-checked:after:translate-x-6"></div>
+</label>
+</div>
+</div>
+<!-- Campos de texto -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+<div class="md:col-span-6 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="planName">
+<span>Nome Oficial do Plano <span class="text-error">*</span></span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">Ex: Plano Professional</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-body-lg pointer-events-none">hotel_class</span>
+<input class="w-full h-11 pl-10 pr-3 rounded bg-surface-container-lowest text-on-surface placeholder:text-on-tertiary-container focus:outline-none focus:bg-surface-container-lowest transition-all font-body-md text-body-md shadow-sm" id="planName" placeholder="Ex: Plano Professional Gestão Pro" type="text" value="Plano Professional Hotel Max"/>
+</div>
+</div>
+<div class="md:col-span-4 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="planTag">
+<span>Badge Promocional / Tag</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">Opcional</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-body-lg pointer-events-none">sell</span>
+<input class="w-full h-11 pl-10 pr-3 rounded bg-surface-container-lowest text-on-surface placeholder:text-on-tertiary-container focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="planTag" placeholder="Ex: Mais Vendido, -20% OFF, Verão" type="text" value="Mais Escolhido"/>
+</div>
+</div>
+<div class="md:col-span-2 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="planOrder">
+            Ordem de Exibição
+          </label>
+<div class="relative flex items-center">
+<input class="w-full h-11 px-3 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-body-md text-body-md shadow-sm text-center" id="planOrder" max="99" min="1" type="number" value="2"/>
+</div>
+</div>
+<div class="md:col-span-12 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="planSummary">
+            Descrição Resumida (Subtítulo Comercial)
+          </label>
+<input class="w-full h-11 px-3.5 rounded bg-surface-container-lowest text-on-surface placeholder:text-on-tertiary-container focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="planSummary" placeholder="Ex: Recomendado para pousadas e redes hoteleiras de médio porte com gestão integrada e alta taxa de ocupação" type="text" value="Recomendado para pousadas e redes hoteleiras de médio porte com gestão integrada e múltiplos atendentes no WhatsApp."/>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Esta descrição será exibida no card principal durante a escolha de plano pelo hoteleiro.</p>
+</div>
+</div>
+</div>
+<!-- Seção 2: Precificação & Ciclo de Cobrança -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-headline-sm">payments</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">2. Precificação & Ciclo de Cobrança</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Configure o valor base de recorrência e bonificações por período contratado.</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">Passo 02/05</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="billingCycle">
+            Periodicidade de Cobrança <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<select class="w-full h-11 px-3 pr-8 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-body-md text-body-md appearance-none cursor-pointer shadow-sm" id="billingCycle">
+<option selected="" value="mensal">Mensal</option>
+<option value="trimestral">Trimestral</option>
+<option value="semestral">Semestral</option>
+<option value="anual">Anual (Compromisso 12 meses)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 text-on-surface-variant pointer-events-none text-body-lg">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="basePrice">
+            Valor Base Recorrente <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="absolute left-3 font-label-md text-label-md text-on-surface-variant pointer-events-none">R$</span>
+<input class="w-full h-11 pl-10 pr-3 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-label-lg text-label-lg shadow-sm" id="basePrice" type="text" value="389,00"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="cycleDiscount">
+            Desconto no Ciclo (Opcional)
+          </label>
+<div class="relative flex items-center">
+<input class="w-full h-11 px-3 rounded bg-surface-container-lowest text-on-surface placeholder:text-on-tertiary-container focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="cycleDiscount" placeholder="Ex: 15% ou R$ 50,00" type="text" value="15% OFF"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="trialDays">
+            Dias de Teste Grátis (Trial)
+          </label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-body-lg pointer-events-none">schedule</span>
+<input class="w-full h-11 pl-10 pr-12 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="trialDays" max="60" min="0" type="number" value="7"/>
+<span class="absolute right-3 font-body-sm text-body-sm text-on-surface-variant pointer-events-none">dias</span>
+</div>
+</div>
+</div>
+<!-- Preview de Faturamento Dinâmico -->
+<div class="p-4 rounded-lg bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-headline-sm">account_balance_wallet</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface block">Simulação de Repasse Líquido Estimado</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Valor líquido previsto por hotel após taxa de intermediação de cartão (estimativa 2.89%).</span>
+</div>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant block">Projeção por ciclo</span>
+<span class="font-headline-md text-headline-md text-secondary">R$ 377,75 <span class="font-body-sm text-body-sm text-on-surface-variant">/mês/hotel</span></span>
+</div>
+</div>
+</div>
+<!-- Seção 3: Limites de Quartos & Acomodações -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-headline-sm">bed</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">3. Limites de Quartos & Acomodações</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Estabeleça a franquia volumétrica de unidades habitacionais inclusas no contrato.</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">Passo 03/05</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+<div class="md:col-span-4 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="baseRooms">
+            Quantidade Base Inclusa <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-body-lg pointer-events-none">meeting_room</span>
+<input class="w-full h-11 pl-10 pr-16 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="baseRooms" max="5000" min="1" type="number" value="45"/>
+<span class="absolute right-3 font-body-sm text-body-sm text-on-surface-variant pointer-events-none">quartos</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Franquia inicial sem custo adicional.</span>
+</div>
+<div class="md:col-span-4 flex flex-col gap-1.5 justify-center">
+<span class="font-label-md text-label-md text-on-surface mb-1">Permitir Quartos Excedentes?</span>
+<div class="flex items-center gap-3 h-11 px-3 rounded bg-surface-container-low">
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="allowExtraRooms" type="checkbox"/>
+<div class="w-10 h-5 bg-tertiary-fixed rounded-full peer peer-checked:bg-primary-container peer-focus:outline-none transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface-card after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow-sm peer-checked:after:translate-x-5"></div>
+</label>
+<span class="font-body-sm text-body-sm text-on-surface">Sim, tarifar quartos adicionais</span>
+</div>
+</div>
+<div class="md:col-span-4 flex flex-col gap-1.5" id="extraRoomPriceContainer">
+<label class="font-label-md text-label-md text-on-surface" for="extraRoomPrice">
+            Valor por Quarto Adicional <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="absolute left-3 font-label-md text-label-md text-on-surface-variant pointer-events-none">R$</span>
+<input class="w-full h-11 pl-10 pr-24 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="extraRoomPrice" type="text" value="3,50"/>
+<span class="absolute right-3 font-body-sm text-body-sm text-on-surface-variant pointer-events-none">/quarto/mês</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cobrado automaticamente no faturamento.</span>
+</div>
+</div>
+</div>
+<!-- Seção 4: Conexões de WhatsApp (Instâncias) -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-headline-sm">chat</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">4. Conexões de WhatsApp (Instâncias Multi-Dispositivo)</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Controle a infraestrutura de números integrados ao motor de inteligência e atendimento.</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">Passo 04/05</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+<div class="md:col-span-4 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="baseWhatsapp">
+            Instâncias Inclusas no Plano <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-body-lg pointer-events-none">devices</span>
+<input class="w-full h-11 pl-10 pr-24 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="baseWhatsapp" max="100" min="1" type="number" value="2"/>
+<span class="absolute right-3 font-body-sm text-body-sm text-on-surface-variant pointer-events-none">conexões</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Números operando simultaneamente.</span>
+</div>
+<div class="md:col-span-4 flex flex-col gap-1.5 justify-center">
+<span class="font-label-md text-label-md text-on-surface mb-1">Permitir Conexões Extras?</span>
+<div class="flex items-center gap-3 h-11 px-3 rounded bg-surface-container-low">
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" id="allowExtraWa" type="checkbox"/>
+<div class="w-10 h-5 bg-tertiary-fixed rounded-full peer peer-checked:bg-primary-container peer-focus:outline-none transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface-card after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow-sm peer-checked:after:translate-x-5"></div>
+</label>
+<span class="font-body-sm text-body-sm text-on-surface">Sim, permitir instâncias extras</span>
+</div>
+</div>
+<div class="md:col-span-4 flex flex-col gap-1.5" id="extraWaPriceContainer">
+<label class="font-label-md text-label-md text-on-surface" for="extraWaPrice">
+            Valor por Instância Extra <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="absolute left-3 font-label-md text-label-md text-on-surface-variant pointer-events-none">R$</span>
+<input class="w-full h-11 pl-10 pr-28 rounded bg-surface-container-lowest text-on-surface focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="extraWaPrice" type="text" value="49,90"/>
+<span class="absolute right-3 font-body-sm text-body-sm text-on-surface-variant pointer-events-none">/instância/mês</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cobrança pró-rata adicionada na fatura.</span>
+</div>
+</div>
+<!-- Aviso Explicativo Oficial Hotel no Zap -->
+<div class="flex items-start gap-3.5 p-4 rounded-lg bg-surface-container-high text-on-surface">
+<span class="material-symbols-outlined text-secondary shrink-0 text-headline-sm">info</span>
+<div class="flex flex-col gap-0.5">
+<span class="font-label-lg text-label-lg text-on-surface">Diretriz de Disparos Ilimitados Hotel no Zap</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Atenção: Conforme as diretrizes do Hotel no Zap, <strong>não há limites por quantidade de disparos ou mensagens</strong>, apenas tarifação por conexões ativas e capacidade de quartos contratada pela propriedade.
+          </p>
+</div>
+</div>
+</div>
+<!-- Seção 5: Observações Internas & Termos do Plano -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded bg-surface-container-high flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-headline-sm">article</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">5. Observações Internas & Termos do Plano</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Registro para o time comercial, time de CS e suporte administrativo.</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">Passo 05/05</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="internalNotes">
+          Observações Comerciais / Regras de Concessão Internas
+        </label>
+<textarea class="w-full p-3 rounded bg-surface-container-lowest text-on-surface placeholder:text-on-tertiary-container focus:outline-none transition-all font-body-md text-body-md shadow-sm" id="internalNotes" placeholder="Ex: Plano voltado para migração de clientes legados e parcerias com agências afiliadas da ABIH..." rows="3">Plano prioritário para prospecções de médio porte (hotéis independentes e resorts de até 80 acomodações). Apto a concessão de até 10% adicional com aval do Head Comercial.</textarea>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Este campo não fica visível publicamente aos clientes na tela de checkout ou contratação.</span>
+</div>
+</div>
+<!-- Rodapé inferior de ações -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-space-lg bg-surface-card rounded-xl shadow-sm mb-6">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-body-lg text-secondary">verified_user</span>
+<span class="font-body-sm text-body-sm">Alterações registradas com auditoria de IP corporativo do operador.</span>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<button class="w-full sm:w-auto px-5 py-2.5 rounded bg-surface-container text-on-surface hover:bg-surface-variant transition-colors duration-150 font-label-lg text-label-lg" type="button">
+          Cancelar Alterações
+        </button>
+<button class="w-full sm:w-auto px-7 py-2.5 rounded bg-primary-container text-on-primary hover:opacity-90 active:scale-[0.99] transition-all duration-150 font-label-lg text-label-lg shadow-md flex items-center justify-center gap-2" type="submit">
+<span class="material-symbols-outlined text-body-lg">check_circle</span>
+<span>Salvar Plano</span>
+</button>
+</div>
+</div>
+</form>
+<script>
+    (function() {
+      const allowExtraRooms = document.getElementById('allowExtraRooms');
+      const extraRoomContainer = document.getElementById('extraRoomPriceContainer');
+      const extraRoomInput = document.getElementById('extraRoomPrice');
+
+      const allowExtraWa = document.getElementById('allowExtraWa');
+      const extraWaContainer = document.getElementById('extraWaPriceContainer');
+      const extraWaInput = document.getElementById('extraWaPrice');
+
+      function toggleRoomField() {
+        if (allowExtraRooms.checked) {
+          extraRoomContainer.style.opacity = '1';
+          extraRoomInput.removeAttribute('disabled');
+        } else {
+          extraRoomContainer.style.opacity = '0.4';
+          extraRoomInput.setAttribute('disabled', 'true');
+        }
+      }
+
+      function toggleWaField() {
+        if (allowExtraWa.checked) {
+          extraWaContainer.style.opacity = '1';
+          extraWaInput.removeAttribute('disabled');
+        } else {
+          extraWaContainer.style.opacity = '0.4';
+          extraWaInput.setAttribute('disabled', 'true');
+        }
+      }
+
+      allowExtraRooms.addEventListener('change', toggleRoomField);
+      allowExtraWa.addEventListener('change', toggleWaField);
+
+      document.getElementById('planForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = this.querySelector('button[type="submit"]');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-body-lg">progress_activity</span><span>Salvando...</span>';
+        btn.disabled = true;
+
+        setTimeout(() => {
+          btn.innerHTML = '<span class="material-symbols-outlined text-body-lg">task_alt</span><span>Plano Atualizado com Sucesso!</span>';
+          btn.classList.remove('bg-primary-container');
+          btn.classList.add('bg-secondary');
+          setTimeout(() => {
+            btn.innerHTML = originalContent;
+            btn.classList.remove('bg-secondary');
+            btn.classList.add('bg-primary-container');
+            btn.disabled = false;
+          }, 2500);
+        }, 800);
+      });
+    })();
+  </script>
+</div></div></main></body></html>

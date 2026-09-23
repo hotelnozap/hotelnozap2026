@@ -1,0 +1,269 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Cadastro de Novo Quarto</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#6ffbbe",
+                        "active-tab-text": "#6cf8bb",
+                        "inverse-primary": "#bec6e0",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "primary-container": "#131b2e",
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#131b2e",
+                        "border-subtle": "#c6c6cd",
+                        "primary-fixed": "#dae2fd",
+                        "tertiary-container": "#2a1700",
+                        "surface-tint": "#565e74",
+                        "secondary-container": "#6cf8bb",
+                        "surface-container-high": "#dce9ff",
+                        "on-secondary": "#ffffff",
+                        "surface-bg": "#f8f9ff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "primary-fixed-dim": "#bec6e0",
+                        "secondary": "#006c49",
+                        "on-secondary-container": "#00714d",
+                        "outline": "#76777d",
+                        "surface-container-highest": "#d3e4fe",
+                        "sidebar-end": "#000000",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#b87500",
+                        "on-primary": "#ffffff",
+                        "sidebar-start": "#003400",
+                        "on-secondary-fixed-variant": "#005236",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-primary-container": "#7c839b",
+                        "inverse-on-surface": "#eaf1ff",
+                        "outline-variant": "#c6c6cd",
+                        "surface-dim": "#cbdbf5",
+                        "background": "#f8f9ff",
+                        "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                        "on-background": "#0b1c30",
+                        "on-surface-variant": "#45464d",
+                        "surface": "#f8f9ff",
+                        "inverse-surface": "#213145",
+                        "surface-container": "#e5eeff",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-fixed-dim": "#4edea3",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-surface": "#0b1c30",
+                        "surface-variant": "#d3e4fe",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#000000",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "top-bar-height": "64px",
+                        "sidebar-width": "280px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex items-center justify-center p-margin-desktop text-on-surface">
+<div class="w-full max-w-4xl bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm flex flex-col overflow-hidden">
+<!-- Header Section within Card -->
+<div class="px-8 pt-8 pb-6 border-b border-border-subtle flex flex-col gap-4">
+<a class="inline-flex items-center gap-2 font-label-md text-label-md text-secondary hover:text-on-secondary-container transition-colors w-max" href="#">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                Voltar para o Mapa dos Quartos
+            </a>
+<div class="flex items-center justify-between">
+<div>
+<h1 class="font-headline-md text-headline-md text-primary">Cadastro de Novo Quarto</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Preencha os dados abaixo para registrar uma nova acomodação.</p>
+</div>
+<!-- Status Switch -->
+<label class="flex items-center cursor-pointer gap-3 bg-surface-container-low px-4 py-2 rounded-lg border border-border-subtle">
+<span class="font-label-md text-label-md text-on-surface">Status Ativo</span>
+<div class="relative">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-surface-tint rounded-full peer peer-checked:bg-secondary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+</div>
+</label>
+</div>
+</div>
+<!-- Form Content -->
+<div class="p-8 flex flex-col gap-8">
+<!-- Photos Area -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-3">Fotos do Quarto</label>
+<div class="flex gap-4">
+<!-- Upload Box -->
+<div class="w-32 h-32 flex flex-col items-center justify-center border-2 border-dashed border-border-subtle rounded-xl bg-surface hover:bg-surface-container-low cursor-pointer transition-colors group">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-secondary transition-colors mb-2">add_a_photo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center px-2">Adicionar Foto</span>
+</div>
+<!-- Mock Gallery Items -->
+<div class="w-32 h-32 rounded-xl border border-border-subtle overflow-hidden relative group">
+<img class="w-full h-full object-cover" data-alt="A brightly lit modern hotel room featuring a minimalist aesthetic. The space includes a freshly made king-sized bed with crisp white linens, light wooden nightstands, and a soft beige accent wall. Sunlight streams through a large window, highlighting the clean lines and professional corporate modern style of the interior decor." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6vDZ3G77r54EUELYEHIuaMLUfs9poMFFZY8cjNL4cp9P6dvd2U0IIQlS1WGBcm1kuZcpW4Wo6uVTxEcmHiB6uGEoNzO41aA1MCXVw5iNQuyCWmgTV3UJbZQOKCcfSZJAl-Ha8QvRexNsbrkJvRSy45lEtX2LEOonQiwtNpTlsv5pN9sI9qmg8bheG8Mo1eAkkisgLK9wLdzh30eFP9qDcN0zYZj4N2_OOyUYvwpqFIg2NlTNuXi9Z">
+<button class="absolute top-1 right-1 bg-surface-container-lowest/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[16px] text-error">delete</span>
+</button>
+</div>
+<div class="w-32 h-32 rounded-xl border border-border-subtle overflow-hidden relative group">
+<img class="w-full h-full object-cover" data-alt="A detailed view of a luxurious modern hotel bathroom attached to the main room. The scene features a sleek glass shower enclosure, a white marble vanity with dual sinks, and highly polished chrome fixtures. The lighting is bright and clean, reinforcing a sanitary, high-end hospitality environment with neutral tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRbBstwMZDsTQotBw_jQhsKIexbFzLW5ISmzBFCw7icyvwMV3XI_44JyFWvx7gVYo46_ToQnN_4eqNf-HHmZQ8qp6emwMEvxO0gYOKkPiJ_W8mVCodhLPjde_rHLt12KVZhTSTxwDuszl0eiwI-IZeFpMPeCA71NCs-sQ06UENS5cSqOM15WB2xu3skVM6D-T36eiz9WEhqlnhCIr4xyfi0txEiXGNK0cia4yAklBMcP2MR-Cmp4Dz">
+<button class="absolute top-1 right-1 bg-surface-container-lowest/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[16px] text-error">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Grid Fields -->
+<div class="grid grid-cols-2 gap-x-6 gap-y-5">
+<!-- Nome & Numero -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Nome do Quarto</label>
+<input class="w-full h-10 px-3 bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary placeholder-on-surface-variant/50" placeholder="Ex: Suíte Presidencial" type="text">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Número</label>
+<input class="w-full h-10 px-3 bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary placeholder-on-surface-variant/50" placeholder="Ex: 401" type="text">
+</div>
+<!-- Andar & Categoria -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Andar</label>
+<div class="relative">
+<select class="w-full h-10 px-3 appearance-none bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+<option value="">Selecione o andar</option>
+<option>Térreo</option>
+<option>1º Andar</option>
+<option>2º Andar</option>
+<option>3º Andar</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Categoria</label>
+<div class="relative">
+<select class="w-full h-10 px-3 appearance-none bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+<option value="">Selecione a categoria</option>
+<option>Standard</option>
+<option>Luxo</option>
+<option>Premium</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<!-- Tipo & Capacidade -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Tipo de Quarto</label>
+<div class="relative">
+<select class="w-full h-10 px-3 appearance-none bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+<option value="">Selecione o tipo</option>
+<option>Solteiro</option>
+<option>Casal</option>
+<option>Duplo Solteiro</option>
+<option>Família</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Capacidade (Pessoas)</label>
+<input class="w-full h-10 px-3 bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary placeholder-on-surface-variant/50" placeholder="Ex: 2" type="number">
+</div>
+<!-- Camas & Valor -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Quantidade de Camas</label>
+<input class="w-full h-10 px-3 bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary placeholder-on-surface-variant/50" placeholder="Ex: 1" type="number">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Valor da Diária (R$)</label>
+<input class="w-full h-10 px-3 bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary placeholder-on-surface-variant/50" placeholder="0,00" type="text">
+</div>
+</div>
+<!-- Room Items Checkboxes -->
+<div class="bg-surface-bg p-5 rounded-xl border border-border-subtle">
+<label class="block font-label-md text-label-md text-primary mb-4">Itens Inclusos no Quarto</label>
+<div class="grid grid-cols-3 gap-4">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 text-secondary bg-surface border-border-subtle rounded focus:ring-secondary focus:ring-2" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Ar condicionado</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 text-secondary bg-surface border-border-subtle rounded focus:ring-secondary focus:ring-2" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">TV Smart 50"</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 text-secondary bg-surface border-border-subtle rounded focus:ring-secondary focus:ring-2" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Frigobar</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="w-4 h-4 text-secondary bg-surface border-border-subtle rounded focus:ring-secondary focus:ring-2" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Cama King</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="w-4 h-4 text-secondary bg-surface border-border-subtle rounded focus:ring-secondary focus:ring-2" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Wi-Fi Alta Velocidade</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 text-secondary bg-surface border-border-subtle rounded focus:ring-secondary focus:ring-2" type="checkbox">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Banheira</span>
+</label>
+</div>
+</div>
+<!-- Observations -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Observações</label>
+<textarea class="w-full p-3 bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary placeholder-on-surface-variant/50 resize-y" placeholder="Insira detalhes adicionais sobre o quarto, vista, posição solar, etc." rows="3"></textarea>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="px-8 py-5 border-t border-border-subtle bg-surface-bg flex justify-end gap-4">
+<button class="px-6 py-2 rounded-xl font-label-md text-label-md text-on-surface-variant bg-transparent border border-border-subtle hover:bg-surface-container-low transition-colors">
+                Cancelar
+            </button>
+<button class="px-6 py-2 rounded-xl font-label-md text-label-md text-on-primary bg-primary hover:bg-surface-tint transition-colors shadow-sm">
+                Salvar Quarto
+            </button>
+</div>
+</div>
+</body></html>

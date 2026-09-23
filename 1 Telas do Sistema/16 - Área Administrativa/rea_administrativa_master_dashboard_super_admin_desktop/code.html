@@ -1,0 +1,788 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Super Admin - Hotel no Zap</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              dark: '#003400',
+              deep: '#001a00',
+              accent: '#10B981',
+              warning: '#FDB116',
+              danger: '#DC2626',
+              info: '#2563EB',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .sidebar-gradient {
+      background: linear-gradient(180deg, #003400 0%, #000000 100%);
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col lg:flex-row bg-[#F8FAFC]">
+
+  <!-- SIDEBAR DO SUPER ADMIN (DESKTOP) -->
+  <aside class="w-72 sidebar-gradient text-white flex-shrink-0 flex flex-col justify-between hidden lg:flex min-h-screen border-r border-emerald-950/40">
+    <div>
+      <!-- Top Brand -->
+      <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 font-extrabold text-xl shadow-inner">
+          <span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-wider text-white">HOTEL NO ZAP</h1>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 uppercase tracking-wider">
+            Super Admin Master
+          </span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="p-4 space-y-1.5 text-sm">
+        <div class="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70">
+          Visão Geral
+        </div>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-white/10 text-white font-medium border-l-4 border-emerald-400 transition-all">
+          <span class="material-symbols-outlined text-emerald-400">dashboard</span>
+          <span class="">Dashboard</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">domain</span>
+          <span class="">Hotéis &amp; Pousadas</span>
+          <span class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-emerald-300">128</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">handshake</span>
+          <span class="">Parceiros</span>
+          <span class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-amber-300">34</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">king_bed</span>
+          <span class="">Inventário Global Quartos</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">loyalty</span>
+          <span class="">Planos &amp; Assinaturas</span>
+        </a>
+
+        <div class="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70">
+          Infraestrutura &amp; SaaS
+        </div>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">sync_alt</span>
+          <span class="">Conexões WhatsApp</span>
+          <span class="ml-auto w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">payments</span>
+          <span class="">Receita &amp; Repasses</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">manage_accounts</span>
+          <span class="">Usuários Administrativos</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all">
+          <span class="material-symbols-outlined">settings_suggest</span>
+          <span class="">Parâmetros do Sistema</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom User Section -->
+    <div class="p-4 border-t border-white/10 space-y-3">
+      <div class="flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5 border border-white/10">
+        <div class="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-bold text-sm">
+          <span class="material-symbols-outlined text-lg">shield_person</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold text-white truncate">Admin Geral (Você)</p>
+          <p class="text-[11px] text-emerald-300/80 truncate">admin@hotelnozap.com.br</p>
+        </div>
+      </div>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-white/90 hover:text-white hover:bg-red-500/20 text-sm font-medium transition-colors">
+        <span class="material-symbols-outlined text-lg">logout</span>
+        <span class="">Sair da Conta Master</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    
+    <!-- Top Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="lg:hidden w-9 h-9 rounded-lg bg-[#003400] text-white flex items-center justify-center">
+          <span class="material-symbols-outlined">admin_panel_settings</span>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 tracking-tight">Painel de Controle do Administrador</h2>
+          <p class="text-xs text-slate-500">Métricas consolidadas de todos os clientes, parceiros e hospedagens ativas na plataforma</p>
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-3 ml-auto">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-medium text-slate-600 border border-slate-200">
+          <span class="material-symbols-outlined text-sm text-emerald-600">dns</span>
+          <span class="">Servidores: <strong class="text-emerald-700">Online 99.98%</strong></span>
+        </div>
+        
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200 text-xs font-medium text-slate-700">
+          <span class="material-symbols-outlined text-slate-400 text-base">calendar_today</span>
+          <span class="">Hoje, 24 Fev 2026</span>
+        </div>
+
+        <button class="relative p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
+          <span class="material-symbols-outlined text-xl">notifications</span>
+          <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500"></span>
+        </button>
+
+        <button class="px-4 py-2 rounded-lg bg-[#003400] text-white text-xs font-semibold hover:bg-emerald-950 transition-colors shadow-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">add_business</span>
+          <span class="">Novo Hotel / Cliente</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Body Area -->
+    <div class="p-6 space-y-6 max-w-[1600px] w-full mx-auto">
+
+      <!-- BANNER DE BOAS VINDAS & RESUMO RÁPIDO -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#003400] via-[#002400] to-black p-6 text-white shadow-md">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-1.5">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Operação Nacional Estável • Multi-tenant Ativo
+            </div>
+            <h3 class="text-2xl font-extrabold tracking-tight">Centro de Gestão Global SaaS</h3>
+            <p class="text-sm text-emerald-100/80 max-w-2xl">
+              Você está no comando do ecossistema <strong>Hotel no Zap</strong>. Acompanhe a expansão da base de hotéis, a performance dos afiliados e a infraestrutura de comunicação em tempo real.
+            </p>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold backdrop-blur-sm transition-all flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">download</span>
+              Exportar Relatório Geral
+            </button>
+            <button class="px-3.5 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold shadow-lg shadow-emerald-950/40 transition-all flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">database</span>
+              Backup do Sistema
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARDS DE INDICADORES PRINCIPAIS (KPIS GLOBAIS) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        
+        <!-- CARD 1: HOTÉIS CADASTRADOS -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Hotéis &amp; Pousadas</span>
+            <span class="p-2 rounded-lg bg-emerald-50 text-emerald-700">
+              <span class="material-symbols-outlined text-xl">domain</span>
+            </span>
+          </div>
+          <div class="mt-3">
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-slate-900">128</span>
+              <span class="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-sm">trending_up</span> +14% este mês
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">119 assinaturas ativas • 9 em teste grátis</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span class="">Ticket Médio: <strong>R$ 389/mês</strong></span>
+            <a href="#" class="text-emerald-700 font-semibold hover:underline">Ver todos →</a>
+          </div>
+        </div>
+
+        <!-- CARD 2: PARCEIROS & AFILIADOS -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Parceiros Afiliados</span>
+            <span class="p-2 rounded-lg bg-amber-50 text-amber-700">
+              <span class="material-symbols-outlined text-xl">handshake</span>
+            </span>
+          </div>
+          <div class="mt-3">
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-slate-900">34</span>
+              <span class="text-xs font-bold text-amber-600 flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-sm">trending_up</span> +6 novos
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Responsáveis por 54 hotéis cadastrados</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span class="">Comissões pagas: <strong>R$ 12.450</strong></span>
+            <a href="#" class="text-amber-700 font-semibold hover:underline">Gerenciar →</a>
+          </div>
+        </div>
+
+        <!-- CARD 3: SOMA DE QUARTOS ATIVOS -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Quartos Ativos na Rede</span>
+            <span class="p-2 rounded-lg bg-blue-50 text-blue-700">
+              <span class="material-symbols-outlined text-xl">king_bed</span>
+            </span>
+          </div>
+          <div class="mt-3">
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-slate-900">3.480</span>
+              <span class="text-xs font-bold text-blue-600 flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-sm">check_circle</span> 94.2% ativos
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Capacidade de ~8.200 hóspedes simultâneos</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span class="">Ocupação consolidada: <strong>76%</strong></span>
+            <a href="#" class="text-blue-700 font-semibold hover:underline">Auditoria →</a>
+          </div>
+        </div>
+
+        <!-- CARD 4: FATURAMENTO MENSAL RECORRENTE (MRR) -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Receita Recorrente (MRR)</span>
+            <span class="p-2 rounded-lg bg-emerald-100 text-emerald-900">
+              <span class="material-symbols-outlined text-xl">payments</span>
+            </span>
+          </div>
+          <div class="mt-3">
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold text-slate-900">R$ 51.840</span>
+              <span class="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-sm">north_east</span> +18.5%
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Previsão fechamento: R$ 56.200,00</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span class="">Inadimplência geral: <strong>1.2%</strong></span>
+            <a href="#" class="text-emerald-700 font-semibold hover:underline">Extrato SaaS →</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CARDS SECUNDÁRIOS DE OPERAÇÃO -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-2xl">sync</span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase">Instâncias WhatsApp</p>
+            <h4 class="text-xl font-bold text-slate-900">142 Ativas</h4>
+            <span class="text-[11px] text-emerald-600 font-medium">100% de estabilidade de gateway</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-2xl">mark_chat_read</span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase">Mensagens Processadas Hoje</p>
+            <h4 class="text-xl font-bold text-slate-900">28.490 msgs</h4>
+            <span class="text-[11px] text-purple-600 font-medium">Confirmações, check-in e cardápios</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-2xl">price_change</span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase">GMV Transacionado na Rede</p>
+            <h4 class="text-xl font-bold text-slate-900">R$ 1.84M</h4>
+            <span class="text-[11px] text-amber-600 font-medium">Volume total em reservas neste mês</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SEÇÃO DE GRÁFICOS ANALÍTICOS -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- GRÁFICO 1: EVOLUÇÃO DE HOTÉIS & FATURAMENTO (2 COLUNAS) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h4 class="text-base font-bold text-slate-900">Crescimento de Hotéis &amp; Receita Mensal</h4>
+              <p class="text-xs text-slate-500">Histórico de adesão de novos clientes e expansão da receita recorrente</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1 text-xs text-slate-600 mr-2">
+                <span class="w-3 h-3 rounded-full bg-[#003400]"></span> Hotéis
+              </span>
+              <span class="inline-flex items-center gap-1 text-xs text-slate-600 mr-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-400"></span> Receita (R$k)
+              </span>
+              <select class="text-xs border border-slate-200 rounded-lg px-2.5 py-1 bg-slate-50 text-slate-700 font-medium">
+                <option>Últimos 6 meses</option>
+                <option>Ano atual (2026)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Bar Chart Visual Representation -->
+          <div class="pt-6">
+            <div class="h-64 flex items-end justify-between gap-4 px-2">
+              
+              <!-- Mês 1: Set -->
+              <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div class="w-full flex items-end justify-center gap-1.5 h-full">
+                  <div class="w-5 bg-[#003400] rounded-t-md group-hover:brightness-125 transition-all" style="height: 48%;"></div>
+                  <div class="w-5 bg-emerald-400 rounded-t-md group-hover:brightness-110 transition-all" style="height: 52%;"></div>
+                </div>
+                <span class="text-xs font-medium text-slate-500">Set</span>
+                <span class="text-[10px] text-slate-400">64 hotéis</span>
+              </div>
+
+              <!-- Mês 2: Out -->
+              <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div class="w-full flex items-end justify-center gap-1.5 h-full">
+                  <div class="w-5 bg-[#003400] rounded-t-md group-hover:brightness-125 transition-all" style="height: 58%;"></div>
+                  <div class="w-5 bg-emerald-400 rounded-t-md group-hover:brightness-110 transition-all" style="height: 60%;"></div>
+                </div>
+                <span class="text-xs font-medium text-slate-500">Out</span>
+                <span class="text-[10px] text-slate-400">78 hotéis</span>
+              </div>
+
+              <!-- Mês 3: Nov -->
+              <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div class="w-full flex items-end justify-center gap-1.5 h-full">
+                  <div class="w-5 bg-[#003400] rounded-t-md group-hover:brightness-125 transition-all" style="height: 68%;"></div>
+                  <div class="w-5 bg-emerald-400 rounded-t-md group-hover:brightness-110 transition-all" style="height: 72%;"></div>
+                </div>
+                <span class="text-xs font-medium text-slate-500">Nov</span>
+                <span class="text-[10px] text-slate-400">92 hotéis</span>
+              </div>
+
+              <!-- Mês 4: Dez -->
+              <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div class="w-full flex items-end justify-center gap-1.5 h-full">
+                  <div class="w-5 bg-[#003400] rounded-t-md group-hover:brightness-125 transition-all" style="height: 82%;"></div>
+                  <div class="w-5 bg-emerald-400 rounded-t-md group-hover:brightness-110 transition-all" style="height: 85%;"></div>
+                </div>
+                <span class="text-xs font-medium text-slate-500">Dez</span>
+                <span class="text-[10px] text-slate-400">105 hotéis</span>
+              </div>
+
+              <!-- Mês 5: Jan -->
+              <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div class="w-full flex items-end justify-center gap-1.5 h-full">
+                  <div class="w-5 bg-[#003400] rounded-t-md group-hover:brightness-125 transition-all" style="height: 90%;"></div>
+                  <div class="w-5 bg-emerald-400 rounded-t-md group-hover:brightness-110 transition-all" style="height: 92%;"></div>
+                </div>
+                <span class="text-xs font-medium text-slate-500">Jan</span>
+                <span class="text-[10px] text-slate-400">116 hotéis</span>
+              </div>
+
+              <!-- Mês 6: Fev (Atual) -->
+              <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div class="w-full flex items-end justify-center gap-1.5 h-full">
+                  <div class="w-5 bg-[#003400] rounded-t-md shadow-md ring-2 ring-emerald-500/20" style="height: 100%;"></div>
+                  <div class="w-5 bg-emerald-400 rounded-t-md shadow-md" style="height: 98%;"></div>
+                </div>
+                <span class="text-xs font-bold text-emerald-800">Fev</span>
+                <span class="text-[10px] font-semibold text-emerald-700">128 hotéis</span>
+              </div>
+
+            </div>
+
+            <!-- Legenda e Rodapé do Gráfico -->
+            <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-3 gap-4 text-center">
+              <div>
+                <span class="text-[11px] text-slate-400 uppercase font-semibold">Taxa de Churn</span>
+                <p class="text-sm font-bold text-slate-800">0.78% / mês</p>
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-400 uppercase font-semibold">LTV Médio</span>
+                <p class="text-sm font-bold text-slate-800">R$ 4.680,00</p>
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-400 uppercase font-semibold">Tempo de Setup</span>
+                <p class="text-sm font-bold text-emerald-700">12 min / hotel</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- GRÁFICO 2: DISTRIBUIÇÃO DOS PLANOS E QUARTOS (1 COLUNA) -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h4 class="text-base font-bold text-slate-900">Planos Contratados</h4>
+                <p class="text-xs text-slate-500">Distribuição por porte de cliente</p>
+              </div>
+              <span class="material-symbols-outlined text-slate-400">pie_chart</span>
+            </div>
+
+            <!-- Visual Donut / Progress bars -->
+            <div class="py-6 space-y-4">
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-slate-700">Plano Resort &amp; Rede (Até 80 quartos)</span>
+                  <span class="text-slate-900">42 hotéis (33%)</span>
+                </div>
+                <div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div class="h-full bg-[#003400] rounded-full" style="width: 33%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-slate-700">Plano Pousada VIP (Até 35 quartos)</span>
+                  <span class="text-slate-900">58 hotéis (45%)</span>
+                </div>
+                <div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div class="h-full bg-emerald-500 rounded-full" style="width: 45%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-slate-700">Plano Starter (Até 12 quartos)</span>
+                  <span class="text-slate-900">28 hotéis (22%)</span>
+                </div>
+                <div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div class="h-full bg-amber-400 rounded-full" style="width: 22%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estatísticas dos Quartos por Tipo -->
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-2 text-xs">
+              <span class="font-bold text-slate-700 block uppercase text-[10px] tracking-wider">Composição dos 3.480 Quartos</span>
+              <div class="flex justify-between text-slate-600">
+                <span class="">Suítes Master / Luxo:</span>
+                <span class="font-bold text-slate-800">1.120 unidades</span>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <span class="">Apartamentos Standard:</span>
+                <span class="font-bold text-slate-800">1.640 unidades</span>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <span class="">Bangalôs &amp; Chalés:</span>
+                <span class="font-bold text-slate-800">720 unidades</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100">
+            <a href="#" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors">
+              <span class="material-symbols-outlined text-sm">tune</span>
+              Configurar Preços dos Planos
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TABELA DE HOTÉIS RECENTEMENTE ATIVADOS & MONITOR DE AFILIADOS -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        <!-- TABELA: ÚLTIMOS HOTÉIS CADASTRADOS (2 COLUNAS) -->
+        <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h4 class="text-base font-bold text-slate-900">Últimos Hotéis Integrados no Sistema</h4>
+              <p class="text-xs text-slate-500">Monitoramento de status, plano contratado, número de quartos e conexão</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" placeholder="Filtrar por nome ou cidade..." class="text-xs border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+              <button class="p-1.5 text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg">
+                <span class="material-symbols-outlined text-base">filter_list</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabela -->
+          <div class="overflow-x-auto mt-4">
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th class="px-4 py-3 rounded-l-lg">Hotel / Unidade</th>
+                  <th class="px-3 py-3">Localização</th>
+                  <th class="px-3 py-3">Quartos</th>
+                  <th class="px-3 py-3">Parceiro</th>
+                  <th class="px-3 py-3">Plano</th>
+                  <th class="px-3 py-3">WhatsApp</th>
+                  <th class="px-4 py-3 text-right rounded-r-lg">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                
+                <!-- Linha 1 -->
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                  <td class="px-4 py-3.5 flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                      HM
+                    </div>
+                    <div>
+                      <p class="font-bold text-slate-900">Hotel Master Porto de Galinhas</p>
+                      <p class="text-[11px] text-slate-400">ID: #HT-0128</p>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3.5 text-slate-700">Ipojuca - PE</td>
+                  <td class="px-3 py-3.5 font-bold text-slate-900">48 quartos</td>
+                  <td class="px-3 py-3.5">
+                    <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px] font-semibold">Carlos Afiliado</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="font-semibold text-emerald-800">Pousada VIP</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5 text-right space-x-1">
+                    <button class="px-2.5 py-1 rounded bg-[#2563EB] text-white hover:bg-blue-700 text-[11px] font-semibold transition-colors">Acessar</button>
+                    <button class="px-2.5 py-1 rounded bg-[#EA580C] text-white hover:bg-orange-700 text-[11px] font-semibold transition-colors">Editar</button>
+                  </td>
+                </tr>
+
+                <!-- Linha 2 -->
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                  <td class="px-4 py-3.5 flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                      PR
+                    </div>
+                    <div>
+                      <p class="font-bold text-slate-900">Pousada Recanto dos Corais</p>
+                      <p class="text-[11px] text-slate-400">ID: #HT-0127</p>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3.5 text-slate-700">Maragogi - AL</td>
+                  <td class="px-3 py-3.5 font-bold text-slate-900">24 quartos</td>
+                  <td class="px-3 py-3.5">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-medium">Orgânico (Direto)</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="font-semibold text-emerald-800">Starter</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5 text-right space-x-1">
+                    <button class="px-2.5 py-1 rounded bg-[#2563EB] text-white hover:bg-blue-700 text-[11px] font-semibold transition-colors">Acessar</button>
+                    <button class="px-2.5 py-1 rounded bg-[#EA580C] text-white hover:bg-orange-700 text-[11px] font-semibold transition-colors">Editar</button>
+                  </td>
+                </tr>
+
+                <!-- Linha 3 -->
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                  <td class="px-4 py-3.5 flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-xs">
+                      SD
+                    </div>
+                    <div>
+                      <p class="font-bold text-slate-900">Hotel Solar das Dunas</p>
+                      <p class="text-[11px] text-slate-400">ID: #HT-0126</p>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3.5 text-slate-700">Natal - RN</td>
+                  <td class="px-3 py-3.5 font-bold text-slate-900">62 quartos</td>
+                  <td class="px-3 py-3.5">
+                    <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px] font-semibold">Agência Ponta Verde</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="font-semibold text-emerald-800">Resort &amp; Rede</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5 text-right space-x-1">
+                    <button class="px-2.5 py-1 rounded bg-[#2563EB] text-white hover:bg-blue-700 text-[11px] font-semibold transition-colors">Acessar</button>
+                    <button class="px-2.5 py-1 rounded bg-[#EA580C] text-white hover:bg-orange-700 text-[11px] font-semibold transition-colors">Editar</button>
+                  </td>
+                </tr>
+
+                <!-- Linha 4 -->
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                  <td class="px-4 py-3.5 flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-800 flex items-center justify-center font-bold text-xs">
+                      GO
+                    </div>
+                    <div>
+                      <p class="font-bold text-slate-900">Grand Oasis Resort &amp; Spa</p>
+                      <p class="text-[11px] text-slate-400">ID: #HT-0125</p>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3.5 text-slate-700">Muro Alto - PE</td>
+                  <td class="px-3 py-3.5 font-bold text-slate-900">110 quartos</td>
+                  <td class="px-3 py-3.5">
+                    <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px] font-semibold">Carlos Afiliado</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="font-semibold text-emerald-800">Custom Enterprise</span>
+                  </td>
+                  <td class="px-3 py-3.5">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600">
+                      <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> Pareamento Pendente
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5 text-right space-x-1">
+                    <button class="px-2.5 py-1 rounded bg-[#2563EB] text-white hover:bg-blue-700 text-[11px] font-semibold transition-colors">Acessar</button>
+                    <button class="px-2.5 py-1 rounded bg-[#EA580C] text-white hover:bg-orange-700 text-[11px] font-semibold transition-colors">Editar</button>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Rodapé de paginação -->
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span class="">Exibindo 4 de 128 hotéis ativos</span>
+            <div class="flex items-center gap-1">
+              <button class="px-2 py-1 rounded border border-slate-200 bg-white text-slate-400 cursor-not-allowed">Anterior</button>
+              <button class="px-2 py-1 rounded bg-[#003400] text-white font-bold">1</button>
+              <button class="px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50">2</button>
+              <button class="px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50">3</button>
+              <button class="px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50">Próxima</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LATERAL: RANKING DE AFILIADOS & NOTIFICAÇÕES TÉCNICAS (1 COLUNA) -->
+        <div class="space-y-6">
+          
+          <!-- TOP PARCEIROS -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 class="text-sm font-bold text-slate-900">Top Afiliados / Parceiros</h4>
+              <span class="text-xs font-semibold text-amber-600">34 Ativos</span>
+            </div>
+
+            <div class="divide-y divide-slate-100 mt-2">
+              <div class="py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs">
+                    1º
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-slate-900">Carlos Eduardo Silva</p>
+                    <p class="text-[11px] text-slate-400">18 hotéis ativos</p>
+                  </div>
+                </div>
+                <span class="text-xs font-bold text-emerald-700">R$ 4.250 /mês</span>
+              </div>
+
+              <div class="py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-800 font-bold flex items-center justify-center text-xs">
+                    2º
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-slate-900">Agência Ponta Verde</p>
+                    <p class="text-[11px] text-slate-400">12 hotéis ativos</p>
+                  </div>
+                </div>
+                <span class="text-xs font-bold text-emerald-700">R$ 2.890 /mês</span>
+              </div>
+
+              <div class="py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-800 font-bold flex items-center justify-center text-xs">
+                    3º
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-slate-900">Renata Vasconcelos</p>
+                    <p class="text-[11px] text-slate-400">9 hotéis ativos</p>
+                  </div>
+                </div>
+                <span class="text-xs font-bold text-emerald-700">R$ 1.950 /mês</span>
+              </div>
+            </div>
+
+            <a href="#" class="mt-3 block text-center text-xs font-semibold text-emerald-700 hover:underline pt-2 border-t border-slate-100">
+              Ver painel completo de comissões →
+            </a>
+          </div>
+
+          <!-- LOGS DO SISTEMA & ALERTA DE SERVIDORES -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 class="text-sm font-bold text-slate-900">Monitor do Sistema Master</h4>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Tudo OK</span>
+            </div>
+
+            <div class="mt-3 space-y-2.5 text-xs text-slate-600">
+              <div class="flex items-start gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></span>
+                <div>
+                  <p class="font-semibold text-slate-800">Sincronização WhatsApp API v4</p>
+                  <p class="text-[10px] text-slate-400">Latência média: 42ms • Filas vazias</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></span>
+                <div>
+                  <p class="font-semibold text-slate-800">Banco de Dados PostgreSQL Cluster</p>
+                  <p class="text-[10px] text-slate-400">Armazenamento: 18.4 GB de 100 GB</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></span>
+                <div>
+                  <p class="font-semibold text-slate-800">Rotina de Backup Diário</p>
+                  <p class="text-[10px] text-slate-400">Executado hoje às 03:00 com sucesso</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+
+
+
+
+</body></html>

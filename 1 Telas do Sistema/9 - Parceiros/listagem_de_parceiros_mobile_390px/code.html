@@ -1,0 +1,332 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Listagem de Parceiros - Mobile</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      width: 390px;
+      margin: 0 auto;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-24 relative bg-slate-50 w-full mx-auto">
+<!-- Top Header Mobile Padrão: degradê #003400 a #000000 -->
+<header class="bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3 sticky top-0 z-40 shadow-md flex items-center justify-between w-full">
+<div class="flex items-center gap-3">
+<button class="text-white hover:text-emerald-400 p-1">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<span class="font-bold tracking-wider text-base uppercase">HOTEL NO ZAP</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="relative p-1 text-slate-300 hover:text-white">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-xs border border-emerald-500">
+        AD
+      </div>
+</div>
+</header>
+<main class="p-4 space-y-4">
+<!-- Navegação Voltar & Título -->
+<div>
+<a class="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-[#003400] transition-colors mb-1" href="#">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+        Voltar para Dashboard
+      </a>
+<div class="flex items-center justify-between">
+<h1 class="text-xl font-black text-slate-900 tracking-tight">Parceiros &amp; Afiliados</h1>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+          24 Ativos
+        </span>
+</div>
+<p class="text-xs text-slate-500 mt-0.5">Acompanhe hotéis indicados e comissões dos afiliados.</p>
+</div>
+<!-- Botões de Ação Mobile Padrão: 2x2 -->
+<div class="grid grid-cols-2 gap-2">
+<!-- Novo Parceiro (Verde Corporativo #003400) -->
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#003400] text-white font-semibold text-xs shadow-sm active:scale-95 transition-all">
+<span class="material-symbols-outlined text-base">person_add</span>
+        Novo Parceiro
+      </button>
+<!-- Pagar Comissões (Verde Esmeralda #10B981) -->
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#10B981] text-white font-semibold text-xs shadow-sm active:scale-95 transition-all">
+<span class="material-symbols-outlined text-base">payments</span>
+        Pagar Comissões
+      </button>
+<!-- Exportar (Amarelo #FDB116) -->
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FDB116] text-slate-900 font-semibold text-xs shadow-sm active:scale-95 transition-all">
+<span class="material-symbols-outlined text-base">download</span>
+        Exportar
+      </button>
+<!-- Atualizar Dados (Neutro) -->
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-xs shadow-sm active:scale-95 transition-all">
+<span class="material-symbols-outlined text-base">sync</span>
+        Atualizar
+      </button>
+</div>
+<!-- Barra de Pesquisa e Filtro na Mesma Linha -->
+<div class="flex items-center gap-2">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-9 pr-3 py-2 bg-white rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#003400]" placeholder="Buscar parceiro ou cupom..." type="text">
+</div>
+<button class="p-2 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 flex items-center justify-center" title="Filtros">
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+</div>
+<!-- Cards de KPIs 2x2 com Cores Diferentes -->
+<div class="grid grid-cols-2 gap-2.5">
+<!-- Total Parceiros -->
+<div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-emerald-800">
+<span class="text-[10px] font-bold uppercase tracking-wider">Total Afiliados</span>
+<span class="material-symbols-outlined text-base">handshake</span>
+</div>
+<div class="mt-2">
+<div class="text-xl font-black text-slate-900">28</div>
+<span class="text-[10px] text-emerald-700 font-medium">24 ativos / 4 pend.</span>
+</div>
+</div>
+<!-- Vendas Indicadas -->
+<div class="p-3 bg-blue-50 rounded-xl border border-blue-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-blue-800">
+<span class="text-[10px] font-bold uppercase tracking-wider">Vendas Totais</span>
+<span class="material-symbols-outlined text-base">trending_up</span>
+</div>
+<div class="mt-2">
+<div class="text-lg font-black text-slate-900">R$ 64,8k</div>
+<span class="text-[10px] text-blue-700 font-medium">184 hotéis ativos</span>
+</div>
+</div>
+<!-- Comissões a Pagar -->
+<div class="p-3 bg-amber-50 rounded-xl border border-amber-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-amber-800">
+<span class="text-[10px] font-bold uppercase tracking-wider">A Pagar</span>
+<span class="material-symbols-outlined text-base">pending_actions</span>
+</div>
+<div class="mt-2">
+<div class="text-lg font-black text-amber-900">R$ 6.482</div>
+<span class="text-[10px] text-amber-700 font-medium">12 a liquidar</span>
+</div>
+</div>
+<!-- Total Pago -->
+<div class="p-3 bg-purple-50 rounded-xl border border-purple-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-purple-800">
+<span class="text-[10px] font-bold uppercase tracking-wider">Já Pago</span>
+<span class="material-symbols-outlined text-base">account_balance_wallet</span>
+</div>
+<div class="mt-2">
+<div class="text-lg font-black text-purple-900">R$ 29,4k</div>
+<span class="text-[10px] text-purple-700 font-medium">Acumulado</span>
+</div>
+</div>
+</div>
+<!-- Lista de Afiliados / Parceiros (Cards Individuais) -->
+<div class="space-y-3">
+<!-- Card 1 -->
+<div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs border border-emerald-200">
+              RC
+            </div>
+<div>
+<div class="text-sm font-bold text-slate-900 leading-tight">Rodrigo Carvalho</div>
+<div class="text-[11px] text-slate-500">rodrigo.influencer@gmail.com</div>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Ativo
+          </span>
+</div>
+<!-- Dados do Parceiro -->
+<div class="bg-slate-50 p-2.5 rounded-xl text-xs space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Cupom / Link:</span>
+<span class="font-mono font-bold text-slate-800 bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">HOTELRODRIGO10</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Comissão / Nível:</span>
+<span class="font-bold text-slate-800">10% <span class="text-[10px] text-slate-400 font-normal">(Prata)</span></span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Vendas Geradas:</span>
+<span class="font-bold text-slate-900">R$ 18.500,00 <span class="text-emerald-600 text-[11px] font-medium">(84 hotéis)</span></span>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-slate-200/80">
+<span class="text-slate-700 font-medium">Saldo a Pagar:</span>
+<span class="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">R$ 450,00</span>
+</div>
+</div>
+<!-- Botões de Ação Alinhados à Direita -->
+<div class="flex items-center justify-between pt-1">
+<span class="text-[11px] text-slate-400">Total Ganho: R$ 1.850,00</span>
+<div class="flex items-center gap-1.5">
+<!-- Ver (Azul) -->
+<button class="p-2 rounded-lg bg-blue-600 text-white shadow-sm active:scale-90 transition-all" title="Ver Detalhes">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<!-- Editar (Laranja) -->
+<button class="p-2 rounded-lg bg-[#EA580C] text-white shadow-sm active:scale-90 transition-all" title="Editar">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<!-- Pagar Comissão (Verde) -->
+<button class="p-2 rounded-lg bg-[#10B981] text-white shadow-sm active:scale-90 transition-all" title="Pagar Saldo">
+<span class="material-symbols-outlined text-sm">paid</span>
+</button>
+<!-- Excluir (Vermelho) -->
+<button class="p-2 rounded-lg bg-[#DC2626] text-white shadow-sm active:scale-90 transition-all" title="Excluir">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-blue-100 text-blue-800 font-bold flex items-center justify-center text-xs border border-blue-200">
+              VT
+            </div>
+<div>
+<div class="text-sm font-bold text-slate-900 leading-tight">Agência Viaje Tranquilo</div>
+<div class="text-[11px] text-slate-500">contato@viajetranquilo.tur.br</div>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Ativo
+          </span>
+</div>
+<div class="bg-slate-50 p-2.5 rounded-xl text-xs space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Cupom / Link:</span>
+<span class="font-mono font-bold text-slate-800 bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">VIAJETRANQUILO</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Comissão / Nível:</span>
+<span class="font-bold text-purple-700">15% <span class="text-[10px] font-normal">(Ouro)</span></span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Vendas Geradas:</span>
+<span class="font-bold text-slate-900">R$ 32.400,00 <span class="text-emerald-600 text-[11px] font-medium">(84 hotéis)</span></span>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-slate-200/80">
+<span class="text-slate-700 font-medium">Saldo a Pagar:</span>
+<span class="font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">R$ 1.950,00</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="text-[11px] text-slate-400">Total Ganho: R$ 4.860,00</span>
+<div class="flex items-center gap-1.5">
+<button class="p-2 rounded-lg bg-blue-600 text-white shadow-sm active:scale-90 transition-all" title="Ver Detalhes">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="p-2 rounded-lg bg-[#EA580C] text-white shadow-sm active:scale-90 transition-all" title="Editar">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-[#10B981] text-white shadow-sm active:scale-90 transition-all" title="Pagar Saldo">
+<span class="material-symbols-outlined text-sm">paid</span>
+</button>
+<button class="p-2 rounded-lg bg-[#DC2626] text-white shadow-sm active:scale-90 transition-all" title="Excluir">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs border border-amber-200">
+              MS
+            </div>
+<div>
+<div class="text-sm font-bold text-slate-900 leading-tight">Mariana Souza (Consultora)</div>
+<div class="text-[11px] text-slate-500">mariana.guiatur@hotmail.com</div>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Ativo
+          </span>
+</div>
+<div class="bg-slate-50 p-2.5 rounded-xl text-xs space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Cupom / Link:</span>
+<span class="font-mono font-bold text-slate-800 bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[11px]">MARIGUIA5</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Comissão / Nível:</span>
+<span class="font-bold text-slate-800">5% <span class="text-[10px] text-slate-400 font-normal">(Bronze)</span></span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-500">Vendas Geradas:</span>
+<span class="font-bold text-slate-900">R$ 8.920,00 <span class="text-emerald-600 text-[11px] font-medium">(19 hotéis)</span></span>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-slate-200/80">
+<span class="text-slate-700 font-medium">Saldo a Pagar:</span>
+<span class="font-medium text-slate-400 text-xs">R$ 0,00 (Em dia)</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="text-[11px] text-slate-400">Total Ganho: R$ 446,00</span>
+<div class="flex items-center gap-1.5">
+<button class="p-2 rounded-lg bg-blue-600 text-white shadow-sm active:scale-90 transition-all" title="Ver Detalhes">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="p-2 rounded-lg bg-[#EA580C] text-white shadow-sm active:scale-90 transition-all" title="Editar">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-slate-200 text-slate-400 cursor-not-allowed" disabled="" title="Sem saldo pendente">
+<span class="material-symbols-outlined text-sm">paid</span>
+</button>
+<button class="p-2 rounded-lg bg-[#DC2626] text-white shadow-sm active:scale-90 transition-all" title="Excluir">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar Oficial Hotel no Zap -->
+<nav class="fixed bottom-0 left-0 right-0 w-[390px] mx-auto bg-white border-t border-slate-200 py-2 px-3 flex items-center justify-around z-50 shadow-lg w-full">
+<a class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600" href="#">
+<span class="material-symbols-outlined text-xl">grid_view</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600" href="#">
+<span class="material-symbols-outlined text-xl">bed</span>
+<span class="text-[10px] font-medium">Quartos</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600" href="#">
+<span class="material-symbols-outlined text-xl">calendar_month</span>
+<span class="text-[10px] font-medium">Reservas</span>
+</a>
+<!-- Aba Parceiros Ativa -->
+<a class="flex flex-col items-center gap-0.5 text-[#003400] font-bold" href="#">
+<div class="px-3 py-0.5 rounded-full bg-emerald-100/70 text-[#003400] flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">handshake</span>
+</div>
+<span class="text-[10px]">Parceiros</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600" href="#">
+<span class="material-symbols-outlined text-xl">more_horiz</span>
+<span class="text-[10px] font-medium">Mais</span>
+</a>
+</nav>
+
+
+
+</body></html>

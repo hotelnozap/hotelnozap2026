@@ -1,0 +1,335 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cadastro de Hotel - Mobile (390px Oficial)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#003400',
+              primary: '#004d00',
+              accent: '#10B981',
+              warning: '#FDB116',
+              danger: '#DC2626',
+              info: '#2563EB'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      width: 390px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 font-sans antialiased min-h-screen relative pb-32">
+
+  <!-- Cabeçalho Oficial Mobile no Degradê Verde Escuro a Preto (#003400 a #000000) -->
+  <header class="sticky top-0 z-50 bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <button type="button" class="p-1 rounded-lg text-white hover:bg-white/10 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-2xl">menu</span>
+      </button>
+      <span class="text-sm font-black tracking-wider uppercase text-white">HOTEL NO ZAP</span>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <button type="button" class="p-1.5 rounded-full text-white/90 hover:text-white relative">
+        <span class="material-symbols-outlined text-xl">notifications</span>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 rounded-full bg-emerald-800 border border-emerald-400 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+        AD
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Retorno e Subtítulo -->
+  <div class="px-4 pt-3 pb-2 bg-white border-b border-slate-200">
+    <a href="#" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-brand-dark">
+      <span class="material-symbols-outlined text-sm">arrow_back</span>
+      Voltar para Hotéis Cadastrados
+    </a>
+    <div class="flex items-center justify-between mt-2">
+      <div>
+        <h1 class="text-lg font-black text-slate-900 leading-tight">Novo Hotel</h1>
+        <p class="text-[11px] text-slate-500">Cadastro de unidade SaaS e instância Zap</p>
+      </div>
+      <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span class="text-[10px] font-bold text-emerald-800 uppercase">Ativo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteúdo do Formulário Mobile -->
+  <form class="p-4 space-y-4" onsubmit="event.preventDefault();">
+
+    <!-- Bloco 1: Logo & Informações Básicas -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+      <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <span class="material-symbols-outlined text-emerald-700 text-lg">hotel</span>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">1. Dados do Estabelecimento</h2>
+      </div>
+
+      <!-- Upload de Logo Compacto -->
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Logo do Hotel *</label>
+        <div class="border-2 border-dashed border-slate-300 rounded-xl p-3 text-center bg-slate-50 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-700 shrink-0">
+            <span class="material-symbols-outlined text-2xl">add_photo_alternate</span>
+          </div>
+          <div class="text-left flex-1">
+            <span class="text-xs font-bold text-slate-800 block">Carregar Imagem</span>
+            <span class="text-[10px] text-slate-400 block">PNG, JPG até 5MB</span>
+          </div>
+          <button type="button" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 shadow-xs">
+            Escolher
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Nome Fantasia (No Zap) *</label>
+        <input type="text" placeholder="Ex: Hotel Master Porto de Galinhas" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-dark bg-slate-50/50">
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Razão Social / CNPJ *</label>
+        <input type="text" placeholder="00.000.000/0001-00" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-dark bg-slate-50/50 font-mono">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Categoria *</label>
+          <select class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none bg-white font-medium">
+            <option>Pousada Boutique</option>
+            <option>Hotel Urbano</option>
+            <option>Resort</option>
+            <option>Chalés</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Total Quartos *</label>
+          <input type="number" value="32" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none bg-slate-50/50 font-bold">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="col-span-2">
+          <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Cidade / Bairro *</label>
+          <input type="text" placeholder="Ipojuca / PE" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none bg-slate-50/50">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">UF *</label>
+          <input type="text" value="PE" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-center font-bold bg-slate-50/50 uppercase">
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloco 2: Seleção de Plano SaaS -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+      <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <span class="material-symbols-outlined text-amber-600 text-lg">loyalty</span>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">2. Plano SaaS &amp; Assinatura</h2>
+      </div>
+
+      <!-- Planos em Cards Verticais Otimizados -->
+      <div class="space-y-2">
+        <label class="flex items-center justify-between p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer has-[:checked]:border-brand-dark has-[:checked]:bg-emerald-50/30">
+          <div class="flex items-center gap-2.5">
+            <input type="radio" name="plano_mob" value="starter" class="text-brand-dark focus:ring-brand-dark">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-900">Starter</span>
+                <span class="text-[10px] text-slate-500">• Até 15 Qts • 1 Zap</span>
+              </div>
+            </div>
+          </div>
+          <span class="text-xs font-black text-slate-900">R$ 197<span class="text-[10px] font-normal text-slate-500">/m</span></span>
+        </label>
+
+        <label class="flex items-center justify-between p-3 rounded-xl border-2 border-brand-dark bg-emerald-50/30 cursor-pointer shadow-xs">
+          <div class="flex items-center gap-2.5">
+            <input type="radio" name="plano_mob" value="pro" checked="" class="text-brand-dark focus:ring-brand-dark">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-900">Professional</span>
+                <span class="px-1.5 py-0.2 bg-emerald-600 text-white rounded text-[9px] font-bold">TOP</span>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-0.5">Até 45 Qts • 2 Instâncias Zap</p>
+            </div>
+          </div>
+          <span class="text-xs font-black text-slate-900">R$ 389<span class="text-[10px] font-normal text-slate-500">/m</span></span>
+        </label>
+
+        <label class="flex items-center justify-between p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer has-[:checked]:border-brand-dark has-[:checked]:bg-emerald-50/30">
+          <div class="flex items-center gap-2.5">
+            <input type="radio" name="plano_mob" value="enterprise" class="text-brand-dark focus:ring-brand-dark">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-900">Enterprise</span>
+                <span class="text-[10px] text-slate-500">• 150 Qts • 5 Zaps</span>
+              </div>
+            </div>
+          </div>
+          <span class="text-xs font-black text-slate-900">R$ 690<span class="text-[10px] font-normal text-slate-500">/m</span></span>
+        </label>
+      </div>
+
+      <div class="pt-2 grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Vencimento *</label>
+          <select class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs bg-white font-medium">
+            <option>Dia 10</option>
+            <option>Dia 05</option>
+            <option>Dia 15</option>
+            <option>Dia 20</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Parceiro Ind.</label>
+          <select class="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs bg-white font-medium">
+            <option>Lucas Consultoria</option>
+            <option>Mariana Viagens</option>
+            <option>Sem indicação</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloco 3: Proprietário / Responsável -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+      <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <span class="material-symbols-outlined text-blue-600 text-lg">person</span>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">3. Proprietário / Contato</h2>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Nome do Responsável *</label>
+        <input type="text" placeholder="Ex: Marcos Andrade" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none bg-slate-50/50">
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">WhatsApp Pessoal *</label>
+        <div class="relative">
+          <span class="absolute left-3 top-2 text-emerald-600 material-symbols-outlined text-base">chat</span>
+          <input type="text" placeholder="(81) 99876-5432" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none bg-slate-50/50">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">E-mail Comercial *</label>
+        <input type="email" placeholder="marcos@hotelmaster.com.br" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none bg-slate-50/50">
+      </div>
+    </div>
+
+    <!-- Bloco 4: Acesso Administrativo (Login) -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+      <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <span class="material-symbols-outlined text-slate-800 text-lg">lock_open</span>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">4. Senha de Acesso (Login)</h2>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">E-mail de Login *</label>
+        <input type="email" placeholder="admin@hotelmaster.com.br" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none bg-slate-50/50 font-medium">
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Senha Master *</label>
+        <div class="relative">
+          <input type="password" value="Master@2026" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none bg-slate-50/50 pr-8">
+          <span class="absolute right-2.5 top-2 text-slate-400 material-symbols-outlined text-base">visibility</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Repetir Senha *</label>
+        <div class="relative">
+          <input type="password" value="Master@2026" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none bg-slate-50/50 pr-8">
+          <span class="absolute right-2.5 top-2 text-slate-400 material-symbols-outlined text-base">visibility</span>
+        </div>
+      </div>
+    <div class="flex justify-end pt-1"><a href="#" class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 transition-all">Esqueceu a senha?</a></div></div>
+
+    <!-- Bloco 5: Instância WhatsApp -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+      <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <span class="material-symbols-outlined text-emerald-700 text-lg">cell_tower</span>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">5. Instância WhatsApp</h2>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">Nome da Instância *</label>
+        <input type="text" value="hotel_master_01" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:outline-none bg-slate-50/50">
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">URL da API / Endpoint *</label>
+        <input type="url" value="https://api.zaphotel.com.br/instance/master01" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-[11px] font-mono focus:outline-none bg-slate-50/50">
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">API Key / Token *</label>
+        <input type="text" value="B67F982A1B02C8894E2109DFFC1388E45" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-[11px] font-mono focus:outline-none bg-slate-50/50">
+      </div>
+
+      
+    </div>
+
+    <!-- Ações de Salvar / Cancelar Mobile -->
+    <div class="pt-2 space-y-2">
+      <button type="submit" class="w-full py-3 bg-[#003400] text-white text-xs font-bold rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-base">save</span>
+        Salvar Hotel
+      </button>
+      <button type="button" class="w-full py-2.5 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl active:scale-95 transition-all">
+        Cancelar
+      </button>
+    </div>
+
+  </form>
+
+  <!-- Barra de Navegação Inferior (Bottom Bar) Oficial Mobile -->
+  <nav class="fixed bottom-0 left-0 right-0 w-[390px] mx-auto bg-white border-t border-slate-200 z-50 px-2 py-2 flex items-center justify-around shadow-lg">
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">dashboard</span>
+      <span class="text-[10px] font-medium">Dashboard</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">bed</span>
+      <span class="text-[10px] font-medium">Quartos</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-emerald-900 bg-emerald-50 px-3 py-1 rounded-xl">
+      <span class="material-symbols-outlined text-xl font-bold">domain</span>
+      <span class="text-[10px] font-bold">Hotéis</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">calendar_month</span>
+      <span class="text-[10px] font-medium">Reservas</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">more_horiz</span>
+      <span class="text-[10px] font-medium">Mais</span>
+    </a>
+  </nav>
+
+
+
+
+</body></html>

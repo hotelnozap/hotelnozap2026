@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cadastro de Categoria - Mobile</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .header-gradient {
+      background: linear-gradient(180deg, #003400 0%, #000000 100%);
+    }
+  </style>
+</head>
+<body class="w-[390px] max-w-[390px] min-h-[1200px] h-[1200px] mx-auto relative bg-[#f8fafc] text-[#0f172a] pb-24 flex flex-col justify-between overflow-hidden shadow-2xl">
+<!-- Top Bar Mobile Oficial com degradê #003400 a #000000 -->
+<header class="header-gradient text-white sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-md">
+<button aria-label="Abrir Menu" class="p-1 hover:bg-white/10 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<div class="text-center">
+<h1 class="text-base font-bold tracking-wider text-white">HOTEL NO ZAP</h1>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Notificações" class="relative p-1 hover:bg-white/10 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full"></span>
+</button>
+<button aria-label="Perfil" class="p-1 hover:bg-white/10 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Conteúdo Principal -->
+<main class="px-4 py-4 space-y-4 max-w-lg mx-auto w-full">
+<!-- Link Voltar e Título -->
+<div class="space-y-1">
+<a class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 hover:text-emerald-900 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        Voltar para Listagem de Categorias
+      </a>
+<h2 class="text-xl font-bold text-slate-900">Cadastro de Categoria</h2>
+<p class="text-xs text-slate-500">Preencha os dados da categoria para controle de estoque e serviços.</p>
+</div>
+<form class="space-y-3.5" onsubmit="event.preventDefault();">
+<!-- Card: Status -->
+<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
+<span class="material-symbols-outlined text-emerald-700 text-base">toggle_on</span>
+              Status da Categoria
+            </span>
+<p class="text-[11px] text-slate-500 mt-0.5">Disponível para associação</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-800"></div>
+<span class="ml-2 text-xs font-semibold text-emerald-800">Ativa</span>
+</label>
+</div>
+</section>
+<!-- Card: Ordenação -->
+<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-2">
+<label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide" for="ordem-mob">
+<span class="material-symbols-outlined text-emerald-700 text-base">format_list_numbered</span>
+          Ordem de Exibição
+        </label>
+<input class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 focus:bg-white outline-none" id="ordem-mob" min="1" name="ordem" placeholder="Ex: 1" type="number" value="1"/>
+<p class="text-[11px] text-slate-400">Prioridade de exibição nos cardápios e listagens.</p>
+</section>
+<!-- Card: Imagem da Categoria -->
+<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-2">
+<span class="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
+<span class="material-symbols-outlined text-emerald-700 text-base">image</span>
+          Imagem da Categoria
+        </span>
+<p class="text-[11px] text-slate-500">Carregar imagem (coletar do celular/computador). JPG, PNG até 5MB.</p>
+<div class="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center bg-slate-50">
+<div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto mb-2">
+<span class="material-symbols-outlined text-xl">cloud_upload</span>
+</div>
+<p class="text-xs font-semibold text-slate-700">Toque para selecionar imagem</p>
+<p class="text-[10px] text-slate-400 mt-0.5">Recomendado: 800x800px</p>
+<button class="mt-3 inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span>
+            Selecionar do celular
+          </button>
+</div>
+</section>
+<!-- Card: Informações Principais -->
+<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-2">
+<label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide" for="nome-mob">
+<span class="material-symbols-outlined text-emerald-700 text-base">category</span>
+          Nome da Categoria *
+        </label>
+<input class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 focus:bg-white outline-none" id="nome-mob" name="nome" placeholder="Ex: Bebidas, Snacks &amp; Petiscos..." required="" type="text"/>
+</section>
+<!-- Card: Descrição -->
+<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-2">
+<label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide" for="desc-mob">
+<span class="material-symbols-outlined text-emerald-700 text-base">description</span>
+          Descrição
+        </label>
+<textarea class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 focus:bg-white outline-none resize-y" id="desc-mob" name="descricao" placeholder="Informações detalhadas sobre a categoria..." rows="3"></textarea>
+</section>
+<!-- Botões de Ação -->
+<div class="pt-2 space-y-2">
+<button class="w-full py-3 bg-[#003400] hover:bg-[#004d00] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-colors" type="submit">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+          Salvar Categoria
+        </button>
+<button class="w-full py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-colors" type="button">
+          Cancelar
+        </button>
+</div>
+</form>
+</main>
+<!-- Barra de Navegação Inferior (Bottom Bar) Oficial -->
+<nav class="absolute bottom-0 left-0 w-full bg-white border-t border-slate-200 px-2 py-2 flex justify-around items-center z-40 shadow-lg">
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 text-[10px] font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+      Dashboard
+    </a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 text-[10px] font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">bed</span>
+      Quartos
+    </a>
+<a class="flex flex-col items-center justify-center text-emerald-800 text-[10px] font-bold transition-colors" href="#">
+<div class="p-1 bg-emerald-100 text-emerald-800 rounded-lg mb-0.5">
+<span class="material-symbols-outlined text-xl">inventory_2</span>
+</div>
+      Estoque
+    </a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 text-[10px] font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">calendar_month</span>
+      Reservas
+    </a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 text-[10px] font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">more_horiz</span>
+      Mais
+    </a>
+</nav>
+</body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Listagem de Parceiros &amp; Afiliados - Hotel no Zap</title>
+<!-- Tailwind CSS v3 com plugins forms e container-queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              primary: '#003400',
+              secondary: '#004d00',
+              amber: '#FDB116',
+              amberHover: '#e59f13',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-typography">
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F8FAFC;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased p-4 md:p-8 lg:p-10">
+<!-- BEGIN: PageWrapper -->
+<div class="max-w-[1400px] mx-auto space-y-6">
+<!-- BEGIN: TopBarNavigation -->
+<nav aria-label="Navegação secundária superior" class="flex items-center justify-between">
+<a class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors" href="#">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+        Voltar para Dashboard
+      </a>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-xs">
+<span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        SaaS • Modo Grade de Parceiros
+      </div>
+</nav>
+<!-- END: TopBarNavigation -->
+<!-- BEGIN: PageHeader -->
+<header class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex items-start md:items-center gap-4">
+<!-- Ícone da Seção (Parceiros/Handshake) -->
+<div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+<svg class="w-7 h-7" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<div>
+<h1 class="text-2xl font-bold text-slate-900 tracking-tight">Parceiros &amp; Afiliados</h1>
+<p class="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+            Gerencie influenciadores, consultores hoteleiros, agências parceiras, comissões recorrentes e hotéis indicados.
+          </p>
+</div>
+</div>
+<!-- Ações Principais -->
+<div class="flex flex-wrap items-center gap-3 shrink-0">
+<button class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors shadow-xs" type="button">
+<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+          Importar
+        </button>
+<button class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#FDB116] hover:bg-[#e59f13] rounded-xl transition-colors shadow-xs" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+          Exportar
+        </button>
+<button class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#003400] hover:bg-[#002400] rounded-xl transition-colors shadow-xs" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+          Novo Parceiro
+        </button>
+</div>
+</header>
+<!-- END: PageHeader -->
+<!-- BEGIN: MetricsCards -->
+<section aria-label="Indicadores gerais de afiliados" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Total -->
+<article class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm relative">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-slate-500">TOTAL DE PARCEIROS</span>
+<div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<p class="text-3xl font-extrabold text-slate-900 mt-2">34</p>
+<p class="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          Em todos os níveis
+        </p>
+</article>
+<!-- Card 2: Ativos -->
+<article class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm relative">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-slate-500">PARCEIROS ATIVOS</span>
+<div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<p class="text-3xl font-extrabold text-slate-900 mt-2">29</p>
+<p class="text-xs font-semibold text-blue-600 mt-2 flex items-center gap-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          Gerando novas contas
+        </p>
+</article>
+<!-- Card 3: Hotéis Indicados -->
+<article class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm relative">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-slate-500">HOTÉIS INDICADOS</span>
+<div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<p class="text-3xl font-extrabold text-slate-900 mt-2">54</p>
+<p class="text-xs font-semibold text-amber-700 mt-2 flex items-center gap-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          +6 adicionados neste mês
+        </p>
+</article>
+<!-- Card 4: Comissões -->
+<article class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm relative">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-slate-500">COMISSÕES DO MÊS</span>
+<div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+            $
+          </div>
+</div>
+<p class="text-3xl font-extrabold text-slate-900 mt-2">R$ 12.450,00</p>
+<p class="text-xs font-semibold text-purple-600 mt-2 flex items-center gap-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+          Média 15% recorrente
+        </p>
+</article>
+</section>
+<!-- END: MetricsCards -->
+<!-- BEGIN: FilterToolbar -->
+<section aria-label="Filtros de busca" class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm">
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+<!-- Campo de Busca -->
+<div class="relative flex-1">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<input class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003400]/20 focus:border-[#003400] transition" placeholder="Buscar por nome, e-mail, CPF/CNPJ ou chave PIX..." type="text"/>
+</div>
+<!-- Filtros Dropdown e Alternador -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Dropdown Regiões -->
+<select class="text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-[#003400]/20 focus:border-[#003400]">
+<option>Todas as Regiões / Estados</option>
+<option>Pernambuco (PE)</option>
+<option>Alagoas (AL)</option>
+<option>Bahia (BA)</option>
+<option>Rio Grande do Norte (RN)</option>
+<option>Paraíba (PB)</option>
+<option>Ceará (CE)</option>
+</select>
+<!-- Dropdown Níveis -->
+<select class="text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-[#003400]/20 focus:border-[#003400]">
+<option>Todos os Níveis</option>
+<option>Top Afiliado</option>
+<option>Consultor Especialista</option>
+<option>Agência Partner</option>
+<option>Iniciante</option>
+</select>
+<!-- Botão Limpar Filtros -->
+<button class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 px-2.5 py-2 transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Limpar Filtros
+          </button>
+<!-- Alternadores de Modo de Visualização -->
+<div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 rounded-lg transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+              Lista
+            </button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-900 bg-white rounded-lg shadow-xs border border-slate-200/60" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+              Grade
+            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- END: FilterToolbar -->
+<!-- BEGIN: GridCardsSection -->
+<main aria-label="Lista de parceiros em grade" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- CARD 1: Destaque Operacional Top Afiliado -->
+<article class="bg-white rounded-2xl border-2 border-amber-400 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<!-- Tarja Superior de Destaque -->
+<div class="bg-[#003400] text-amber-400 font-bold text-[11px] tracking-wider uppercase py-1 px-4 text-center flex items-center justify-center gap-1.5 border-b border-amber-400/30">
+<span>★</span> TOP AFILIADO DO MÊS
+        </div>
+<div class="p-5 flex-1">
+<!-- Cabeçalho do Card -->
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-base flex items-center justify-center border border-amber-200">
+                CE
+              </div>
+<div>
+<h2 class="font-bold text-slate-900 text-base leading-snug">Carlos Eduardo Silva</h2>
+<p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                  Recife - PE
+                </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Ativo
+            </span>
+</div>
+<!-- Métricas Internas do Parceiro -->
+<div class="grid grid-cols-2 gap-3 mt-5">
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Hotéis Ativos</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">18 propriedades</p>
+</div>
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Chave PIX</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5 truncate" title="Celular (81) 99823-****">Celular (81) 99823-****</p>
+</div>
+</div>
+<!-- Detalhamento de Comissões -->
+<div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Comissão:</span>
+<span class="inline-flex px-2 py-0.5 rounded-md font-semibold text-emerald-800 bg-emerald-50">15% Recorrente</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Total Repassado:</span>
+<span class="font-bold text-slate-800">R$ 5.840,00</span>
+</div>
+</div>
+</div>
+<!-- Rodapé do Card com Ações -->
+<div class="px-5 py-3.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs font-medium text-slate-400">Ações rápidas</span>
+<div class="flex items-center gap-1.5">
+<button class="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition" title="Visualizar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition" title="Editar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition" title="Excluir" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- CARD 2: Ponta Verde Marketing -->
+<article class="bg-white rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="p-5 flex-1">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 font-bold text-base flex items-center justify-center border border-blue-200">
+                PV
+              </div>
+<div>
+<h2 class="font-bold text-slate-900 text-base leading-snug">Agência Ponta Verde Marketing</h2>
+<p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                  Maceió - AL
+                </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Ativo
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-5">
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Hotéis Ativos</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">12 hotéis</p>
+</div>
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Chave PIX</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">CNPJ</p>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Comissão:</span>
+<span class="inline-flex px-2 py-0.5 rounded-md font-semibold text-blue-800 bg-blue-50">12% Recorrente</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Total Repassado:</span>
+<span class="font-bold text-slate-800">R$ 3.420,00</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs font-medium text-slate-400">Ações rápidas</span>
+<div class="flex items-center gap-1.5">
+<button class="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition" title="Visualizar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition" title="Editar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition" title="Excluir" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- CARD 3: Renata Vasconcelos -->
+<article class="bg-white rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="p-5 flex-1">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 font-bold text-base flex items-center justify-center border border-purple-200">
+                RV
+              </div>
+<div>
+<h2 class="font-bold text-slate-900 text-base leading-snug">Renata Vasconcelos Hub</h2>
+<p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                  Salvador - BA
+                </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Ativo
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-5">
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Hotéis Ativos</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">9 hotéis</p>
+</div>
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Chave PIX</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">E-mail</p>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Comissão:</span>
+<span class="inline-flex px-2 py-0.5 rounded-md font-semibold text-slate-800 bg-slate-100">10% Recorrente</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Total Repassado:</span>
+<span class="font-bold text-slate-800">R$ 1.850,00</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs font-medium text-slate-400">Ações rápidas</span>
+<div class="flex items-center gap-1.5">
+<button class="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition" title="Visualizar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition" title="Editar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition" title="Excluir" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- CARD 4: Marcos Vinicius -->
+<article class="bg-white rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="p-5 flex-1">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-base flex items-center justify-center border border-emerald-200">
+                MV
+              </div>
+<div>
+<h2 class="font-bold text-slate-900 text-base leading-snug">Marcos Vinícius Andrade</h2>
+<p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                  Natal - RN
+                </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Ativo
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-5">
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Hotéis Ativos</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">6 hotéis</p>
+</div>
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Chave PIX</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">CPF</p>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Comissão:</span>
+<span class="inline-flex px-2 py-0.5 rounded-md font-semibold text-slate-800 bg-slate-100">10% Recorrente</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Total Repassado:</span>
+<span class="font-bold text-slate-800">R$ 980,00</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs font-medium text-slate-400">Ações rápidas</span>
+<div class="flex items-center gap-1.5">
+<button class="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition" title="Visualizar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition" title="Editar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition" title="Excluir" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- CARD 5: Mariana Bastos -->
+<article class="bg-white rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="p-5 flex-1">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 font-bold text-base flex items-center justify-center border border-teal-200">
+                MB
+              </div>
+<div>
+<h2 class="font-bold text-slate-900 text-base leading-snug">Mariana Bastos Representações</h2>
+<p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                  João Pessoa - PB
+                </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Ativo
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-5">
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Hotéis Ativos</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">5 hotéis</p>
+</div>
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Chave PIX</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">E-mail</p>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Comissão:</span>
+<span class="inline-flex px-2 py-0.5 rounded-md font-semibold text-slate-800 bg-slate-100">10% Recorrente</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Total Repassado:</span>
+<span class="font-bold text-slate-800">R$ 720,00</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs font-medium text-slate-400">Ações rápidas</span>
+<div class="flex items-center gap-1.5">
+<button class="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition" title="Visualizar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition" title="Editar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition" title="Excluir" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</article>
+<!-- CARD 6: Diego Farias -->
+<article class="bg-white rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="p-5 flex-1">
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-base flex items-center justify-center border border-indigo-200">
+                DF
+              </div>
+<div>
+<h2 class="font-bold text-slate-900 text-base leading-snug">Diego Farias Consultoria</h2>
+<p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                  Fortaleza - CE
+                </p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Ativo
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mt-5">
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Hotéis Ativos</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">4 hotéis</p>
+</div>
+<div class="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+<p class="text-[11px] font-medium text-slate-400">Chave PIX</p>
+<p class="text-sm font-bold text-slate-800 mt-0.5">Celular</p>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Comissão:</span>
+<span class="inline-flex px-2 py-0.5 rounded-md font-semibold text-slate-700 bg-slate-100">8% Recorrente</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-400 font-medium">Total Repassado:</span>
+<span class="font-bold text-slate-800">R$ 440,00</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs font-medium text-slate-400">Ações rápidas</span>
+<div class="flex items-center gap-1.5">
+<button class="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition" title="Visualizar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition" title="Editar" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition" title="Excluir" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</article>
+</main>
+<!-- END: GridCardsSection -->
+<!-- BEGIN: PaginationFooter -->
+<footer class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+<p class="text-sm text-slate-500 font-medium">
+        Exibindo <span class="font-bold text-slate-800">6</span> de <span class="font-bold text-slate-800">34</span> parceiros cadastrados
+      </p>
+<nav aria-label="Navegação de página" class="flex items-center gap-1.5">
+<!-- Anterior -->
+<button aria-label="Página anterior" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<!-- Páginas -->
+<button class="w-9 h-9 flex items-center justify-center rounded-xl bg-[#003400] text-white text-sm font-bold shadow-xs" type="button">
+          1
+        </button>
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition" type="button">
+          2
+        </button>
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition" type="button">
+          3
+        </button>
+<span class="w-6 text-center text-slate-400 text-sm font-bold">...</span>
+<button class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition" type="button">
+          6
+        </button>
+<!-- Próximo -->
+<button aria-label="Próxima página" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</nav>
+</footer>
+<!-- END: PaginationFooter -->
+</div>
+<!-- END: PageWrapper -->
+</body></html>

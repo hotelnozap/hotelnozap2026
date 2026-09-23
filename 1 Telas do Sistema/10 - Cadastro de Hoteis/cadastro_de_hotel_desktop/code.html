@@ -1,0 +1,477 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Hotel - Desktop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#003400',
+              primary: '#004d00',
+              accent: '#10B981',
+              warning: '#FDB116',
+              danger: '#DC2626',
+              info: '#2563EB',
+              surface: '#F8FAFC'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-[#F4F6F9] text-slate-800 font-sans antialiased min-h-screen">
+
+  <div class="max-w-6xl mx-auto px-6 py-8">
+    
+    <!-- Topo / Navegação Padrão de Telas de Formulário Desktop (Sem Sidebar e Sem Header Global) -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-3">
+        <a href="#" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-dark transition-colors">
+          <span class="material-symbols-outlined text-base">arrow_back</span>
+          Voltar para Listagem de Hotéis
+        </a>
+        <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Ambiente Seguro • SaaS Hoteleiro v3.4
+        </div>
+      </div>
+      
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Cadastro de Novo Hotel</h1>
+            <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">Novo Registro</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-1">Cadastre todas as informações da propriedade, selecione o plano SaaS, credenciais administrativas e dados da instância WhatsApp.</p>
+        </div>
+        
+        <!-- Toggle Status Ativo -->
+        <div class="flex items-center gap-3 bg-white p-2.5 px-4 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-sm font-semibold text-slate-700">Status do Hotel:</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" checked="" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            <span class="ml-2.5 text-xs font-bold text-emerald-700 uppercase tracking-wide peer-checked:inline hidden">Ativo</span>
+            <span class="ml-2.5 text-xs font-bold text-slate-400 uppercase tracking-wide peer-checked:hidden">Inativo</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário Principal -->
+    <form class="space-y-8" onsubmit="event.preventDefault();">
+
+      <!-- Seção 1: Identidade & Marca do Hotel -->
+      <div class="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-3 pb-4 mb-6 border-b border-slate-100">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-xl">hotel</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">1. Identidade &amp; Informações do Hotel</h2>
+            <p class="text-xs text-slate-500">Dados institucionais, logotipo e informações da propriedade</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+          
+          <!-- Upload de Logo do Hotel -->
+          <div class="md:col-span-4 flex flex-col">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Logo Oficial do Hotel *</label>
+            <div class="border-2 border-dashed border-slate-300 hover:border-brand-accent rounded-2xl p-5 flex flex-col items-center justify-center text-center bg-slate-50/50 hover:bg-emerald-50/20 transition-all cursor-pointer h-full min-h-[220px]">
+              <div class="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-400 mb-3 group-hover:scale-105 transition-transform">
+                <span class="material-symbols-outlined text-3xl text-emerald-700">add_photo_alternate</span>
+              </div>
+              <span class="text-sm font-bold text-slate-800">Carregar Logo do Hotel</span>
+              <p class="text-xs text-slate-500 mt-1">PNG, JPG ou SVG até 5MB</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Recomendado: 400x400px (quadrado)</p>
+              <button type="button" class="mt-3 px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 shadow-xs">
+                Selecionar do Computador
+              </button>
+            </div>
+          </div>
+
+          <!-- Campos da Propriedade -->
+          <div class="md:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Razão Social / Nome Oficial do Estabelecimento *</label>
+              <input type="text" placeholder="Ex: Hotel Master Porto de Galinhas EIRELI" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nome Fantasia (Exibição no Zap) *</label>
+              <input type="text" placeholder="Ex: Hotel Master Porto de Galinhas" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">CNPJ *</label>
+              <input type="text" placeholder="00.000.000/0001-00" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Categoria / Tipo de Hospedagem *</label>
+              <select class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-white">
+                <option value="">Selecione a categoria...</option>
+                <option value="hotel">Hotel Urbano / Executivo</option>
+                <option value="resort">Resort All-Inclusive / Lazer</option>
+                <option value="pousada" selected="">Pousada Boutique / Charme</option>
+                <option value="chale">Chalés &amp; Eco Village</option>
+                <option value="flat">Flat / Apart-hotel</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Classificação / Estrelas</label>
+              <select class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-white">
+                <option value="5">⭐⭐⭐⭐⭐ (5 Estrelas / Luxo)</option>
+                <option value="4" selected="">⭐⭐⭐⭐ (4 Estrelas / Superior)</option>
+                <option value="3">⭐⭐⭐ (3 Estrelas / Padrão)</option>
+                <option value="2">⭐⭐ (2 Estrelas / Econômico)</option>
+                <option value="boutique">🌟 Charme / Pousada Boutique</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Total de Quartos Gerenciados *</label>
+              <input type="number" value="64" min="1" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-semibold">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Telefone Comercial Fixo</label>
+              <input type="text" placeholder="(81) 3456-7890" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+            </div>
+          </div>
+        </div>
+
+        <!-- Endereço da Propriedade -->
+        <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">CEP da Propriedade *</label>
+            <div class="relative">
+              <input type="text" placeholder="55590-000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono">
+              <button type="button" class="absolute right-2 top-2 px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700">Buscar</button>
+            </div>
+          </div>
+
+          <div class="md:col-span-4">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Endereço (Rua, Av, Rodovia) *</label>
+            <input type="text" placeholder="Rodovia PE-09, Km 08 - Praia do Cupe" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Bairro / Região *</label>
+            <input type="text" placeholder="Praia do Cupe" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+          </div>
+
+          <div class="md:col-span-3">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Cidade *</label>
+            <input type="text" placeholder="Ipojuca" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+          </div>
+
+          <div class="md:col-span-1">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">UF *</label>
+            <input type="text" value="PE" maxlength="2" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 uppercase text-center font-bold">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 2: Escolha do Plano SaaS & Faturamento -->
+      <div class="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-xl">loyalty</span>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-slate-900">2. Plano SaaS &amp; Limites Contratados</h2>
+              <p class="text-xs text-slate-500">Selecione o plano de assinatura do hotel (cobrança baseada em quartos e conexões)</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Cobrança Mensal / Anual</span>
+        </div>
+
+        <!-- Grid de Seleção de Planos -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          
+          <!-- Plano 1: Starter -->
+          <label class="relative flex flex-col p-5 rounded-2xl border-2 border-slate-200 hover:border-slate-300 cursor-pointer transition-all bg-white has-[:checked]:border-brand-dark has-[:checked]:bg-emerald-50/20 has-[:checked]:shadow-md">
+            <input type="radio" name="plano_hotel" value="starter" class="sr-only peer">
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2.5 py-0.5 text-[11px] font-extrabold rounded-full bg-slate-100 text-slate-700 uppercase tracking-wide">Starter</span>
+              <span class="material-symbols-outlined text-xl text-slate-300 peer-checked:text-brand-dark">check_circle</span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mb-1">R$ 197<span class="text-xs font-medium text-slate-500">/mês</span></div>
+            <p class="text-xs text-slate-500 mb-4">Ideal para pousadas e chalés até 15 quartos.</p>
+            <div class="mt-auto space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-600">bed</span> Até 15 quartos inclusos</div>
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-600">chat</span> 1 Instância WhatsApp</div>
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-600">badge</span> 2 Operadores inclusos</div>
+            </div>
+          </label>
+
+          <!-- Plano 2: Professional (Destaque) -->
+          <label class="relative flex flex-col p-5 rounded-2xl border-2 border-brand-dark bg-emerald-50/20 shadow-md cursor-pointer transition-all has-[:checked]:border-brand-dark">
+            <input type="radio" name="plano_hotel" value="professional" checked="" class="sr-only peer">
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2.5 py-0.5 text-[11px] font-extrabold rounded-full bg-emerald-600 text-white uppercase tracking-wide">Professional (Mais Escolhido)</span>
+              <span class="material-symbols-outlined text-xl text-brand-dark">check_circle</span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mb-1">R$ 389<span class="text-xs font-medium text-slate-500">/mês</span></div>
+            <p class="text-xs text-slate-500 mb-4">Para hotéis médios e pousadas de alto fluxo.</p>
+            <div class="mt-auto space-y-2 text-xs text-slate-700 border-t border-emerald-200/50 pt-3 font-medium">
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-700 font-bold">bed</span> Até 45 quartos inclusos</div>
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-700 font-bold">chat</span> 2 Instâncias WhatsApp inclusas</div>
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-700 font-bold">badge</span> 5 Operadores simultâneos</div>
+            </div>
+          </label>
+
+          <!-- Plano 3: Enterprise -->
+          <label class="relative flex flex-col p-5 rounded-2xl border-2 border-slate-200 hover:border-slate-300 cursor-pointer transition-all bg-white has-[:checked]:border-brand-dark has-[:checked]:bg-emerald-50/20 has-[:checked]:shadow-md">
+            <input type="radio" name="plano_hotel" value="enterprise" class="sr-only peer">
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2.5 py-0.5 text-[11px] font-extrabold rounded-full bg-purple-100 text-purple-800 uppercase tracking-wide">Enterprise</span>
+              <span class="material-symbols-outlined text-xl text-slate-300 peer-checked:text-brand-dark">check_circle</span>
+            </div>
+            <div class="text-2xl font-black text-slate-900 mb-1">R$ 690<span class="text-xs font-medium text-slate-500">/mês</span></div>
+            <p class="text-xs text-slate-500 mb-4">Resorts, grandes redes e complexos hoteleiros.</p>
+            <div class="mt-auto space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-600">bed</span> Até 150 quartos inclusos</div>
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-600">chat</span> 5 Instâncias WhatsApp inclusas</div>
+              <div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-emerald-600">badge</span> Operadores ilimitados</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Parâmetros Adicionais de Cobrança -->
+        <div class="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Dia do Vencimento Mensal *</label>
+            <select class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark bg-white font-medium">
+              <option value="5">Dia 05 de cada mês</option>
+              <option value="10" selected="">Dia 10 de cada mês</option>
+              <option value="15">Dia 15 de cada mês</option>
+              <option value="20">Dia 20 de cada mês</option>
+              <option value="25">Dia 25 de cada mês</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Ciclo de Cobrança</label>
+            <select class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark bg-white font-medium">
+              <option value="mensal" selected="">Mensal Recorrente</option>
+              <option value="trimestral">Trimestral (5% de desconto)</option>
+              <option value="semestral">Semestral (10% de desconto)</option>
+              <option value="anual">Anual (20% de desconto / 2 meses grátis)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Parceiro / Afiliado Indicador</label>
+            <select class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark bg-white font-medium">
+              <option value="">Sem indicação direta</option>
+              <option value="1" selected="">Lucas Consultoria Hoteleira (15% Com.)</option>
+              <option value="2">Mariana Viagens &amp; Hospedagem</option>
+              <option value="3">Portal Hotéis do Nordeste</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 3: Dados do Proprietário & Responsável Legal -->
+      <div class="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-3 pb-4 mb-6 border-b border-slate-100">
+          <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-xl">person</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">3. Dados do Proprietário / Responsável Geral</h2>
+            <p class="text-xs text-slate-500">Contato direto para notificações operacionais, cobrança e contratos</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nome Completo do Proprietário / Gestor Geral *</label>
+            <input type="text" placeholder="Ex: Marcos Andrade Albuquerque" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">CPF do Responsável *</label>
+            <input type="text" placeholder="000.000.000-00" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">WhatsApp Pessoal do Responsável *</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-2.5 text-emerald-600 material-symbols-outlined text-lg">chat</span>
+              <input type="text" placeholder="(81) 99876-5432" class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-semibold">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">E-mail Comercial do Responsável *</label>
+            <input type="email" placeholder="marcos.andrade@hotelmaster.com.br" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Cargo / Função no Hotel</label>
+            <input type="text" placeholder="Sócio Proprietário / Diretor Geral" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30">
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 4: Login & Acesso Administrativo Inicial -->
+      <div class="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-3 pb-4 mb-6 border-b border-slate-100">
+          <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-xl">lock_open</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">4. Credenciais de Acesso</h2>
+            <p class="text-xs text-slate-500">Usuário master para acesso ao painel de controle do hotel no Hotel no Zap</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">E-mail de Login Master *</label>
+            <input type="email" placeholder="admin@hotelmaster.com.br" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-medium">
+          </div>
+
+          <div><div class="flex items-center justify-between mb-1.5"><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Senha de Acesso Master *</label><a href="#" class="text-xs font-semibold text-emerald-700 hover:text-brand-dark transition-colors">Esqueci minha senha</a></div><div class="relative"><input type="password" value="Master@2026HotelZap" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono pr-10"><button type="button" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined text-lg">visibility</span></button></div></div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Repetir Senha *</label>
+            <div class="relative">
+              <input type="password" value="Master@2026HotelZap" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono pr-10">
+              <button type="button" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined text-lg">visibility</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="material-symbols-outlined text-base text-brand-info">info</span>
+          <span class="">Um e-mail com as instruções de primeiro acesso e link seguro de login será enviado para a caixa de entrada do hotel.</span>
+        </div>
+      </div>
+
+      <!-- Seção 5: Configuração Técnica da Instância WhatsApp -->
+      <div class="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-xl">cell_tower</span>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-slate-900">5. Dados da Instância WhatsApp do Hotel</h2>
+              <p class="text-xs text-slate-500">Parâmetros de conexão API para disparos, atendimento automático e recepção 24h</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Evolution API / Baileys Gateway
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nome da Instância *</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-2.5 text-slate-400 font-mono text-xs">inst_</span>
+              <input type="text" value="hotel_master_porto_01" class="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono font-semibold">
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Identificador único sem espaços ou caracteres especiais</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">URL da API / Webhook Endpoint *</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-2.5 text-slate-400 material-symbols-outlined text-base">link</span>
+              <input type="url" value="https://api.zaphotel.com.br/instance/hotel_master_porto_01" class="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono text-xs">
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Endereço do gateway corporativo de mensageria</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">API Key / Token de Autenticação *</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-2.5 text-slate-400 material-symbols-outlined text-base">key</span>
+              <input type="text" value="B67F982A1B02C8894E2109DFFC1388E45B20984AA610E" class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30 font-mono text-xs">
+              <button type="button" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600" title="Copiar Chave">
+                <span class="material-symbols-outlined text-lg">content_copy</span>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Chave privada de segurança da API</p>
+          </div>
+        </div>
+
+        <!-- Opções de Automação do WhatsApp -->
+        
+      </div>
+
+      <!-- Seção 6: Observações Operacionais e Contrato -->
+      <div class="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-3 pb-4 mb-6 border-b border-slate-100">
+          <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-xl">edit_note</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">6. Observações &amp; Informações Internas</h2>
+            <p class="text-xs text-slate-500">Notas para o time de suporte, implantação e account manager</p>
+          </div>
+        </div>
+
+        <div>
+          <textarea rows="3" placeholder="Insira quaisquer particularidades sobre o hotel, horários diferenciados de atendimento, data prevista de go-live ou acordos comerciais específicos..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark bg-slate-50/30"></textarea>
+        </div>
+      </div>
+
+      <!-- Barra Inferior de Ações Padronizada -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-4 z-20">
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span class="material-symbols-outlined text-emerald-600 text-lg">verified</span>
+          <span class="">Ao salvar o cadastro, as instâncias e acessos serão provisionados imediatamente.</span>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+            Cancelar
+          </button>
+          
+          <!-- Botão Salvar Padrão Sem duplicação de '+' -->
+          <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#003400] text-white text-sm font-bold hover:bg-[#002600] transition-colors shadow-md flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-lg">save</span>
+            Salvar Hotel
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- Rodapé Discreto -->
+    <div class="mt-8 text-center text-xs text-slate-400">
+      Hotel no Zap © 2026 — Plataforma de Gestão Hoteleira SaaS &amp; Mensageria Digital
+    </div>
+
+  </div>
+
+
+
+
+</body></html>

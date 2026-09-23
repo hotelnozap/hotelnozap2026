@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Conta a Pagar - Desktop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#003400',
+              primary: '#0f172a',
+              accent: '#10B981',
+              warning: '#FDB116',
+              danger: '#DC2626',
+              info: '#2563EB',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f8f9fc] text-slate-800 font-sans antialiased min-h-screen p-6 md:p-10">
+  <div class="max-w-5xl mx-auto">
+    <!-- Topo / Header sem sidebar ou header global -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-200 gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Cadastro de Conta a Pagar</h1>
+        <p class="text-sm text-slate-500 mt-1">Preencha as informações do compromisso financeiro, parcelamento e conciliação.</p>
+      </div>
+      <div>
+        <a href="#" class="inline-flex items-center gap-2 text-sm font-semibold text-[#003400] hover:text-emerald-800 transition-colors">
+          <span class="material-symbols-outlined text-lg">arrow_back</span>
+          Voltar para Controle de Caixa
+        </a>
+      </div>
+    </div>
+
+    <!-- Formulário em Cards -->
+    <form class="mt-8 space-y-6">
+
+      <!-- Bloco 1: Status & Dados Básicos -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+          <div class="flex items-center gap-3">
+            <span class="p-2 rounded-lg bg-emerald-50 text-[#003400]">
+              <span class="material-symbols-outlined text-xl">payments</span>
+            </span>
+            <span class="font-semibold text-slate-900">Informações Principais</span>
+          </div>
+
+          <!-- Switch de Status / Situação -->
+          <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Situação da Conta</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" value="" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003400]"></div>
+            </label>
+            <span class="text-sm font-semibold text-emerald-700">Pendente</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Descrição da Despesa / Título <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" placeholder="Ex: Manutenção Elétrica - Ar Condicionado Suíte 204" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Categoria de Despesa <span class="text-rose-500">*</span>
+            </label>
+            <select class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+              <option value="">Selecione a categoria...</option>
+              <option value="manutencao">Manutenção Predial</option>
+              <option value="fornecedores">Fornecedores (Alimentos / Frigobar)</option>
+              <option value="lavanderia">Lavanderia & Enxoval</option>
+              <option value="energia">Energia Elétrica & Água</option>
+              <option value="impostos">Impostos & Tributos</option>
+              <option value="salarios">Folha de Pagamento & Equipe</option>
+              <option value="marketing">Marketing & Software</option>
+              <option value="outros">Outras Despesas Operacionais</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Fornecedor / Credor <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="text" placeholder="Ex: ClimaTech Soluções LTDA" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+              <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">storefront</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              CNPJ / CPF do Credor
+            </label>
+            <input type="text" placeholder="00.000.000/0001-00" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Nº do Documento / Nota Fiscal / Boleto
+            </label>
+            <input type="text" placeholder="Ex: NF-e 84.921" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco 2: Valores, Prazos e Forma de Pagamento -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-6">
+        <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+          <span class="p-2 rounded-lg bg-emerald-50 text-[#003400]">
+            <span class="material-symbols-outlined text-xl">event_upcoming</span>
+          </span>
+          <span class="font-semibold text-slate-900">Valores, Vencimento & Pagamento</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Valor Total (R$) <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-2.5 text-slate-500 text-sm font-semibold">R$</span>
+              <input type="text" placeholder="0,00" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm font-semibold text-slate-900 bg-slate-50/50 focus:bg-white transition-all">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Data de Emissão <span class="text-rose-500">*</span>
+            </label>
+            <input type="date" value="2025-05-18" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Data de Vencimento <span class="text-rose-500">*</span>
+            </label>
+            <input type="date" value="2025-05-25" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Forma de Pagamento Prevista
+            </label>
+            <select class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+              <option value="pix">PIX</option>
+              <option value="boleto">Boleto Bancário</option>
+              <option value="transferencia">Transferência TED/DOC</option>
+              <option value="cartao_corp">Cartão Corporativo</option>
+              <option value="dinheiro">Dinheiro (Caixa Físico)</option>
+              <option value="cheque">Cheque</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Parcelamento e Frequência -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Condição de Pagamento
+            </label>
+            <select class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+              <option value="unica">À Vista / Parcela Única</option>
+              <option value="parcelada">Parcelado</option>
+              <option value="recorrente">Despesa Fixa Recorrente (Mensal)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Quantidade de Parcelas
+            </label>
+            <input type="number" min="1" max="60" value="1" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+              Conta de Saída / Origem
+            </label>
+            <select class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all">
+              <option value="caixa_recepcao">Gaveta / Caixa Recepção</option>
+              <option value="banco_itau">Banco Itaú - Conta Principal</option>
+              <option value="banco_bb">Banco do Brasil</option>
+              <option value="cofre">Cofre Administrativo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco 3: Anexo do Comprovante / Boleto -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+        <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+          <span class="p-2 rounded-lg bg-emerald-50 text-[#003400]">
+            <span class="material-symbols-outlined text-xl">attach_file</span>
+          </span>
+          <span class="font-semibold text-slate-900">Anexo do Documento (Boleto, Nota Fiscal ou Recibo)</span>
+        </div>
+
+        <div class="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center bg-slate-50/40 hover:bg-slate-50 transition-colors cursor-pointer group">
+          <div class="mx-auto w-12 h-12 rounded-full bg-emerald-50 text-[#003400] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+            <span class="material-symbols-outlined text-2xl">cloud_upload</span>
+          </div>
+          <p class="text-sm font-semibold text-slate-700">Arraste e solte o arquivo ou clique para selecionar</p>
+          <p class="text-xs text-slate-400 mt-1">Formatos aceitos: PDF, JPG, PNG até 10MB (Boleto, NF-e, Comprovante)</p>
+          <button type="button" class="mt-4 px-4 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">upload_file</span>
+            Selecionar arquivo do computador
+          </button>
+        </div>
+      </div>
+
+      <!-- Bloco 4: Observações / Centro de Custos -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+        <div class="flex items-center gap-3 pb-4 border-b border-slate-100">
+          <span class="p-2 rounded-lg bg-emerald-50 text-[#003400]">
+            <span class="material-symbols-outlined text-xl">notes</span>
+          </span>
+          <span class="font-semibold text-slate-900">Observações & Detalhes Adicionais</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+            Observações Internas
+          </label>
+          <textarea rows="3" placeholder="Informações de autorização, chave PIX para pagamento, código de barras do boleto ou instruções para o turno..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003400] text-sm bg-slate-50/50 focus:bg-white transition-all"></textarea>
+        </div>
+      </div>
+
+      <!-- Barra de Ações Inferior -->
+      <div class="flex items-center justify-end gap-4 pt-4">
+        <button type="button" class="px-6 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-semibold text-sm text-slate-700 transition-colors shadow-sm">
+          Cancelar
+        </button>
+        <button type="submit" class="px-8 py-3 rounded-xl bg-[#003400] hover:bg-emerald-950 font-semibold text-sm text-white transition-colors shadow-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg">check_circle</span>
+          Salvar Conta a Pagar
+        </button>
+      </div>
+
+    </form>
+  </div>
+</body>
+</html>

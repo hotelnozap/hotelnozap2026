@@ -1,0 +1,797 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary-fixed":"#e2e2e2","on-secondary-fixed":"#002113","primary-container":"#003400","on-surface-variant":"#42493e","surface-dim":"#cbdbf6","on-secondary-fixed-variant":"#005236","tertiary-fixed-dim":"#c6c6c6","on-tertiary-fixed":"#1b1b1b","error":"#ba1a1a","surface-container-low":"#eff4ff","surface-tint":"#386a2e","background":"#f8f9ff","on-tertiary-container":"#929292","surface-bright":"#f8f9ff","secondary":"#006c49","primary":"#001c00","gradient-end":"#000000","secondary-container":"#9af2c5","on-error":"#ffffff","error-container":"#ffdad6","on-surface":"#0b1c30","secondary-fixed":"#9df4c8","on-background":"#0b1c30","primary-fixed-dim":"#9dd58d","on-primary-fixed":"#002200","on-tertiary-fixed-variant":"#474747","surface-card":"#ffffff","outline-variant":"#c1c9ba","surface":"#f8f9ff","inverse-primary":"#9dd58d","border-subtle":"#c6c6cd","tertiary":"#171717","tertiary-container":"#2b2b2b","on-secondary-container":"#0c714d","surface-page":"#f8f9ff","on-primary":"#ffffff","surface-tint-active":"rgba(108, 248, 187, 0.15)","surface-container":"#e6eeff","primary-fixed":"#b9f2a7","gradient-start":"#003400","on-primary-container":"#6ba05d","secondary-fixed-dim":"#81d8ad","surface-container-lowest":"#ffffff","accent-mint":"#6cf8bb","surface-variant":"#d3e3ff","surface-container-high":"#dde9ff","on-secondary":"#ffffff","on-error-container":"#93000a","inverse-surface":"#213146","inverse-on-surface":"#ebf1ff","surface-container-highest":"#d3e3ff","on-primary-fixed-variant":"#205118","on-tertiary":"#ffffff","border-focused":"#003400","outline":"#72796d","error-base":"#ba1a1a"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-md":"1rem","space-lg":"1.5rem","gutter":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","space-xs":"0.25rem","margin":"2rem","gutter-mobile":"1rem","space-xl":"2rem"},"fontFamily":{"label-lg":["Inter"],"headline-md":["Inter"],"headline-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"body-md":["Inter"]},"fontSize":{"label-lg":["14px",{"lineHeight":"20px","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface min-h-screen"><main class="w-full min-h-screen bg-surface flex flex-col justify-center items-center py-margin px-margin-mobile sm:px-margin"><div class="w-full max-w-[1040px] mx-auto"><div class="flex flex-col w-full">
+<!-- Top Command & Staff Bar -->
+<div class="w-full bg-gradient-to-r from-primary-container via-primary to-gradient-end rounded-2xl p-6 text-on-primary shadow-xl relative overflow-hidden mb-6">
+<div class="absolute -right-16 -top-20 w-80 h-80 bg-accent-mint/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute right-40 -bottom-10 w-48 h-48 bg-secondary/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+<!-- Staff Profile & Context -->
+<div class="flex items-center gap-5">
+<div class="relative">
+<div class="w-16 h-16 rounded-2xl bg-surface-card flex items-center justify-center text-primary font-headline-md shadow-md overflow-hidden ring-2 ring-accent-mint/40">
+<img class="w-full h-full object-cover" data-alt="Portrait photo of Maria das Graças Silva, a professional smiling hotel executive housekeeper in crisp dark green uniform with tidy hair in a bright luxury hotel lobby setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY16OEA0iaKDNLKtGiRnUoVezzasfkXj_sG94nTls_HpSM3ZAVCVyog4a9XPZ_T24k502Kacvde8EJpYJsgeRIp8QbVJyarlbeasuJQecXuc0WGLkFAUDXv_aAxeDYsC_QiUMfi1QEFKOFUa8A8wXWvX7TDBwqm-c1v1XFAhwSjzmu6ceAd22Vk5ZmRjq5MpLMg0bYNmeN5dXUbCriG2dX_G2E6ZMEDGwLaFCD-TFe0oNhR2nvi8Eg">
+</div>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-accent-mint rounded-full ring-2 ring-primary-container" title="Disponível e em serviço"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-headline-sm tracking-tight">Maria das Graças Silva</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-tint-active text-accent-mint font-label-sm text-label-sm uppercase tracking-wider">
+<span class="w-2 h-2 rounded-full bg-accent-mint animate-pulse"></span>
+              Em Serviço
+            </span>
+</div>
+<div class="flex flex-wrap items-center gap-3 mt-1 text-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">badge</span>
+              Camareira Líder • Andar 1 &amp; 2
+            </span>
+<span class="">•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">schedule</span>
+              Turno Manhã (07:00 às 15:20)
+            </span>
+<span class="">•</span>
+<span class="flex items-center gap-1 text-primary-fixed">
+<span class="material-symbols-outlined text-sm">hotel</span>
+              Hotel no Zap Premium
+            </span>
+</div>
+</div>
+</div>
+<!-- Quick Actions / Mode Toggles -->
+<div class="flex items-center gap-3 self-start lg:self-center">
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-card text-on-surface font-label-md text-label-md shadow-sm transition-all hover:bg-surface-bright" id="tab-dashboard-btn" onclick="switchView('dashboard')">
+<span class="material-symbols-outlined text-base">cleaning_services</span>
+<span class="">Painel dos Quartos</span>
+</button>
+
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-error-container/20 hover:bg-error-container/30 text-error-container font-label-md text-label-md transition-all ml-1" onclick="alert('Turno de Maria das Graças finalizado com sucesso. Relatório diário encaminhado para Governança Geral!')">
+<span class="material-symbols-outlined text-base">logout</span>
+<span class="">Finalizar Turno</span>
+</button>
+</div>
+</div>
+</div>
+<!-- VIEW 1: OPERATIONAL ROOMS MANAGEMENT (DEFAULT) -->
+<div class="flex flex-col w-full space-y-6" id="view-dashboard">
+<!-- Operational KPI Metrics Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- KPI 1: Designados -->
+<div class="bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined">hotel</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Meta Total</span>
+</div>
+<div class="mt-4 flex items-baseline justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface tracking-tight">14</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant ml-1">quartos</span>
+</div>
+<span class="text-body-sm font-body-sm text-on-surface-variant">Andares 1 e 2</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full mt-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<!-- KPI 2: Pendentes -->
+<div class="bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+<span class="material-symbols-outlined">pending_actions</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-label-sm text-label-sm font-semibold">Prioridade Alta</span>
+</div>
+<div class="mt-4 flex items-baseline justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-amber-600 tracking-tight">6</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant ml-1">aguardando</span>
+</div>
+<span class="text-body-sm font-body-sm text-amber-700">4 Check-outs</span>
+</div>
+<div class="w-full bg-amber-100 h-1.5 rounded-full mt-3 overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: 42%"></div>
+</div>
+</div>
+<!-- KPI 3: Em Andamento -->
+<div class="bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+<span class="material-symbols-outlined">mop</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm font-semibold">Em Execução</span>
+</div>
+<div class="mt-4 flex items-baseline justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-blue-600 tracking-tight">2</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant ml-1">no momento</span>
+</div>
+<span class="text-body-sm font-body-sm text-blue-700">Média 22 min</span>
+</div>
+<div class="w-full bg-blue-100 h-1.5 rounded-full mt-3 overflow-hidden">
+<div class="bg-blue-600 h-full rounded-full" style="width: 15%"></div>
+</div>
+</div>
+<!-- KPI 4: Concluídos -->
+<div class="bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+<span class="material-symbols-outlined">verified</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-label-sm font-semibold">Liberados Recepção</span>
+</div>
+<div class="mt-4 flex items-baseline justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-emerald-600 tracking-tight">6</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant ml-1">prontos</span>
+</div>
+<span class="text-body-sm font-body-sm text-emerald-700">43% Concluído</span>
+</div>
+<div class="w-full bg-emerald-100 h-1.5 rounded-full mt-3 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 43%"></div>
+</div>
+</div>
+</div>
+<!-- Filter Bar and Incident Report Trigger -->
+<div class="bg-surface-card rounded-2xl p-4 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+<div class="flex flex-1 flex-wrap items-center gap-3">
+<!-- Room Search Input -->
+<div class="relative min-w-[220px] flex-1 max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-lg">search</span>
+<input class="w-full bg-surface-container-low rounded-xl pl-9 pr-4 py-2 text-on-surface font-body-md text-body-md focus:outline-none focus:bg-surface-card focus:shadow-inner transition-all placeholder:text-on-surface-variant" id="room-search-input" onkeyup="filterCards()" placeholder="Buscar quarto ou hóspede..." type="text">
+</div>
+<!-- Filter Chips -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+<button class="filter-btn px-3.5 py-2 rounded-xl text-label-md font-label-md bg-primary text-on-primary whitespace-nowrap transition-all shadow-sm" onclick="setFilter('todos', this)">
+            Todos (14)
+          </button>
+<button class="filter-btn px-3.5 py-2 rounded-xl text-label-md font-label-md bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap transition-all" onclick="setFilter('checkout', this)">
+            Check-out / Sujos (4)
+          </button>
+<button class="filter-btn px-3.5 py-2 rounded-xl text-label-md font-label-md bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap transition-all" onclick="setFilter('em-limpeza', this)">
+            Em Limpeza (2)
+          </button>
+<button class="filter-btn px-3.5 py-2 rounded-xl text-label-md font-label-md bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap transition-all" onclick="setFilter('inspecao', this)">
+            Para Inspecionar (1)
+          </button>
+<button class="filter-btn px-3.5 py-2 rounded-xl text-label-md font-label-md bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap transition-all" onclick="setFilter('pronto', this)">
+            Prontos (6)
+          </button>
+</div>
+</div>
+<!-- Action Button: Open Incident Modal -->
+<button class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-all whitespace-nowrap" onclick="toggleMaintenanceModal(true)">
+<span class="material-symbols-outlined text-base">report_problem</span>
+<span class="">Relatar Problema / Manutenção</span>
+</button>
+</div>
+<!-- Rooms Operational Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="rooms-grid">
+<!-- ROOM 1: Quarto 101 (Check-out Realizado - Urgente) -->
+<div class="room-card bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-room="101" data-status="checkout">
+<div>
+<!-- Card Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Quarto 101</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">1º Andar</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Suíte Luxo King • Vista Jardim</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">priority_high</span>
+              Check-out Realizado
+            </span>
+</div>
+<!-- Room Visual / Task Context -->
+<div class="mt-4 p-3 rounded-xl bg-surface-container-low space-y-2">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">timer</span>
+                Tempo estimado:
+              </span>
+<span class="font-label-md text-label-md text-on-surface">35 minutos</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-blue-600">bed</span>
+                Enxoval:
+              </span>
+<span class="font-label-md text-label-md text-blue-700">Troca Completa King + 4 Toalhas</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-amber-600">kitchen</span>
+                Frigobar (Zap):
+              </span>
+<span class="font-label-md text-label-md text-amber-700">3 consumos confirmados</span>
+</div>
+</div>
+<div class="mt-3 flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-emerald-600">event_available</span>
+<span class="">Novo hóspede previsto para às 14:00</span>
+</div>
+</div>
+<div class="mt-5 pt-4 bg-surface-container/30 -mx-5 -mb-5 p-4 rounded-b-2xl flex items-center justify-between gap-3">
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all" onclick="toggleDetailsModal('101', 'Suíte Luxo King')" title="Ver Detalhes do Quarto">
+<span class="material-symbols-outlined text-lg">info</span>
+</button>
+<button class="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-all" onclick="startCleaning('101')">
+<span class="material-symbols-outlined text-base">play_arrow</span>
+<span class="">Iniciar Limpeza</span>
+</button>
+</div>
+</div>
+<!-- ROOM 2: Quarto 104 (Em Limpeza - 65% concluído) -->
+<div class="room-card bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-room="104" data-status="em-limpeza">
+<div>
+<!-- Card Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Quarto 104</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">1º Andar</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Standard Casal • Bloco Central</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+              Em Limpeza (18 min)
+            </span>
+</div>
+<!-- Progress Bar -->
+<div class="mt-4">
+<div class="flex justify-between items-center text-body-sm font-body-sm mb-1">
+<span class="text-on-surface-variant">Progresso atual</span>
+<span class="font-label-md text-label-md text-blue-700">65%</span>
+</div>
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 65%"></div>
+</div>
+</div>
+<!-- Quick Checklist Items -->
+<div class="mt-3 space-y-1.5 text-body-sm font-body-sm">
+<div class="flex items-center gap-2 text-emerald-700">
+<span class="material-symbols-outlined text-base">check_circle</span>
+<span class="line-through text-on-surface-variant">Troca de enxoval casal</span>
+</div>
+<div class="flex items-center gap-2 text-emerald-700">
+<span class="material-symbols-outlined text-base">check_circle</span>
+<span class="line-through text-on-surface-variant">Higienização completa banheiro</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-base text-amber-500">radio_button_unchecked</span>
+<span class="">Reposição de amenities &amp; toalhas rosto</span>
+</div>
+</div>
+</div>
+<div class="mt-5 pt-4 bg-surface-container/30 -mx-5 -mb-5 p-4 rounded-b-2xl flex items-center justify-between gap-3">
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all" onclick="toggleDetailsModal('104', 'Standard Casal')" title="Ver Detalhes do Quarto">
+<span class="material-symbols-outlined text-lg">info</span>
+</button>
+<button class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-all" onclick="completeRoom('104')">
+<span class="material-symbols-outlined text-base">check</span>
+<span class="">Concluir e Liberar Quarto</span>
+</button>
+</div>
+</div>
+<!-- ROOM 3: Quarto 108 (Estadia em Andamento - Limpeza Leve) -->
+<div class="room-card bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-room="108" data-status="checkout">
+<div>
+<!-- Card Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Quarto 108</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">1º Andar</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Suíte Master com Varanda</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">person</span>
+              Estadia (Ocupado)
+            </span>
+</div>
+<!-- Note from Guest via WhatsApp -->
+<div class="mt-4 p-3 rounded-xl bg-emerald-50 text-emerald-900 space-y-1 text-body-sm font-body-sm">
+<div class="flex items-center gap-1.5 font-label-md text-label-md text-emerald-800">
+<span class="material-symbols-outlined text-sm">chat</span>
+              Mensagem do Hóspede (Hotel no Zap):
+            </div>
+<p class="italic text-emerald-950">“Favor trocar apenas as toalhas de banho após às 11:30. Não recolher os pertences na mesa.”</p>
+</div>
+<div class="mt-3 flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">dry_cleaning</span>
+              Limpeza Leve
+            </span>
+<span class="font-label-md text-label-md text-on-surface">Agendado: 11:30</span>
+</div>
+</div>
+<div class="mt-5 pt-4 bg-surface-container/30 -mx-5 -mb-5 p-4 rounded-b-2xl flex items-center justify-between gap-3">
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all" onclick="toggleDetailsModal('108', 'Suíte Master')" title="Ver Detalhes do Quarto">
+<span class="material-symbols-outlined text-lg">info</span>
+</button>
+<button class="flex-1 py-2.5 px-4 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-all" onclick="startCleaning('108')">
+<span class="material-symbols-outlined text-base">cleaning_services</span>
+<span class="">Iniciar Limpeza Diária</span>
+</button>
+</div>
+</div>
+<!-- ROOM 4: Quarto 202 (Pendente Inspeção da Líder) -->
+<div class="room-card bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-room="202" data-status="inspecao">
+<div>
+<!-- Card Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Quarto 202</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">2º Andar</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Família Premium • 1 Casal + 2 Solteiro</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">fact_check</span>
+              Pendente Inspeção
+            </span>
+</div>
+<div class="mt-4 p-3 rounded-xl bg-surface-container-low text-body-sm font-body-sm space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Limpo por:</span>
+<span class="font-label-md text-label-md text-on-surface">Joana Santos (Auxiliar)</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Término:</span>
+<span class="font-label-md text-label-md text-on-surface">10:05 (há 15 min)</span>
+</div>
+<div class="flex items-center justify-between text-purple-700">
+<span class="text-purple-700 font-label-md text-label-md">Ação Necessária:</span>
+<span class="">Revisar checklist e liberar</span>
+</div>
+</div>
+<div class="mt-3 flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-purple-600">rate_review</span>
+<span class="">Checklist 12 itens aguardando aprovação</span>
+</div>
+</div>
+<div class="mt-5 pt-4 bg-surface-container/30 -mx-5 -mb-5 p-4 rounded-b-2xl flex items-center justify-between gap-3">
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all" onclick="toggleDetailsModal('202', 'Família Premium')" title="Ver Detalhes do Quarto">
+<span class="material-symbols-outlined text-lg">info</span>
+</button>
+<button class="flex-1 py-2.5 px-4 rounded-xl bg-purple-700 hover:bg-purple-800 text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-all" onclick="inspectRoom('202')">
+<span class="material-symbols-outlined text-base">rule</span>
+<span class="">Inspecionar &amp; Aprovar</span>
+</button>
+</div>
+</div>
+<!-- ROOM 5: Quarto 205 (Manutenção Solicitada) -->
+<div class="room-card bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-room="205" data-status="checkout">
+<div>
+<!-- Card Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Quarto 205</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">2º Andar</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Suíte Executiva • Cama Queen</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">build</span>
+              Manutenção Ativa
+            </span>
+</div>
+<!-- Alert box -->
+<div class="mt-4 p-3 rounded-xl bg-red-50/70 text-red-900 space-y-1 text-body-sm font-body-sm">
+<div class="flex items-center gap-1.5 font-label-md text-label-md text-red-800">
+<span class="material-symbols-outlined text-sm">warning</span>
+              Ocorrência #MN-4892:
+            </div>
+<p class="text-red-950 font-medium">Gotejamento no dreno do Ar Condicionado Split. Técnico acionado.</p>
+</div>
+<div class="mt-3 flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant">
+<span class="">Status da Camareira:</span>
+<span class="text-amber-700 font-label-md text-label-md">Limpeza pausada</span>
+</div>
+</div>
+<div class="mt-5 pt-4 bg-surface-container/30 -mx-5 -mb-5 p-4 rounded-b-2xl flex items-center justify-between gap-3">
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all" onclick="toggleDetailsModal('205', 'Suíte Executiva')" title="Ver Detalhes do Quarto">
+<span class="material-symbols-outlined text-lg">info</span>
+</button>
+<button class="flex-1 py-2.5 px-4 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-all" onclick="alert('Chamado de manutenção acompanhado pelo time de engenharia predial.')">
+<span class="material-symbols-outlined text-base">visibility</span>
+<span class="">Ver Ocorrência</span>
+</button>
+</div>
+</div>
+<!-- ROOM 6: Quarto 210 (Pronto & Liberado) -->
+<div class="room-card bg-surface-card rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between" data-room="210" data-status="pronto">
+<div>
+<!-- Card Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Quarto 210</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">2º Andar</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Casal Superior • Vista Mar</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+              Pronto &amp; Liberado
+            </span>
+</div>
+<div class="mt-4 p-3 rounded-xl bg-surface-container-low text-body-sm font-body-sm space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Concluído às:</span>
+<span class="font-label-md text-label-md text-emerald-800">09:40 por Maria das Graças</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Inspeção:</span>
+<span class="font-label-md text-label-md text-emerald-800">100% Validado</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant">Frigobar:</span>
+<span class="font-label-md text-label-md text-on-surface">100% Abastecido</span>
+</div>
+</div>
+<div class="mt-3 flex items-center gap-2 text-body-sm font-body-sm text-emerald-700">
+<span class="material-symbols-outlined text-sm">door_front</span>
+<span class="">Disponível no WhatsApp da Recepção para Check-in</span>
+</div>
+</div>
+<div class="mt-5 pt-4 bg-surface-container/30 -mx-5 -mb-5 p-4 rounded-b-2xl flex items-center justify-between gap-3">
+<button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-all" onclick="toggleDetailsModal('210', 'Casal Superior')" title="Ver Detalhes do Quarto">
+<span class="material-symbols-outlined text-lg">info</span>
+</button>
+<div class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-50 text-emerald-800 font-label-md text-label-md text-center">
+            Liberado no Sistema
+          </div>
+</div>
+</div>
+</div>
+</div>
+<!-- VIEW 2: PROFILE & WORKING SHIFT DATA (TOGGLEABLE) -->
+<div class="hidden flex flex-col w-full space-y-6" id="view-profile">
+<div class="bg-surface-card rounded-2xl p-6 sm:p-8 shadow-sm">
+<div class="flex items-center justify-between pb-6 border-b border-surface-container">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Meus Dados Pessoais &amp; Preferências Operacionais</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Gerencie suas informações cadastrais, escala de trabalho e credenciais de segurança do portal.</p>
+</div>
+<button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-all flex items-center gap-1.5" onclick="switchView('dashboard')">
+<span class="material-symbols-outlined text-base">arrow_back</span>
+<span class="">Voltar aos Quartos</span>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
+<!-- Col 1 & 2: Cadastro & Escala -->
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-surface-container-low rounded-2xl p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">badge</span>
+              Dados Cadastrais do Colaborador
+            </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 uppercase">Nome Completo</label>
+<input class="w-full bg-surface-card rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" type="text" value="Maria das Graças Silva">
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 uppercase">CPF</label>
+<input class="w-full bg-surface-card rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" type="text" value="384.921.848-12">
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 uppercase">WhatsApp / Telefone de Contato</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-emerald-600 text-lg">chat</span>
+<input class="w-full bg-surface-card rounded-xl pl-9 pr-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" type="text" value="(11) 98452-1190">
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 uppercase">E-mail Corporativo / Pessoal</label>
+<input class="w-full bg-surface-card rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" type="email" value="maria.silva@hotelnozap.com.br">
+</div>
+<div class="sm:col-span-2">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 uppercase">Endereço Residencial</label>
+<input class="w-full bg-surface-card rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" type="text" value="Rua das Acácias, 240, Apto 14 - São Paulo, SP">
+</div>
+</div>
+</div>
+<!-- Escala & Turno -->
+<div class="bg-surface-container-low rounded-2xl p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">calendar_month</span>
+              Escala &amp; Setor de Atuação
+            </h3>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="bg-surface-card p-4 rounded-xl">
+<span class="text-on-surface-variant font-label-sm text-label-sm block">Horário Oficial</span>
+<span class="font-headline-sm text-headline-sm text-on-surface mt-1 block">07:00 - 15:20</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 block">Intervalo: 11:30 às 12:30</span>
+</div>
+<div class="bg-surface-card p-4 rounded-xl">
+<span class="text-on-surface-variant font-label-sm text-label-sm block">Setor Primário</span>
+<span class="font-headline-sm text-headline-sm text-on-surface mt-1 block">Andares 1 e 2</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 block">14 Suítes &amp; Standards</span>
+</div>
+<div class="bg-surface-card p-4 rounded-xl">
+<span class="text-on-surface-variant font-label-sm text-label-sm block">Folgas da Semana</span>
+<span class="font-headline-sm text-headline-sm text-secondary mt-1 block">Quarta e Domingo</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 block">Regime 6x1 com revezamento</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Col 3: Segurança, Senha e Botões de Salvar -->
+<div class="space-y-6">
+<!-- Segurança da Senha -->
+<div class="bg-surface-container-low rounded-2xl p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">lock</span>
+              Acesso &amp; Senha
+            </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-4">Atualize sua senha de 6 dígitos para o terminal da governança.</p>
+<div class="space-y-3">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Senha Atual</label>
+<input class="w-full bg-surface-card rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" type="password" value="******">
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Nova Senha</label>
+<input class="w-full bg-surface-card rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Nova senha numérica" type="password">
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Confirmar Nova Senha</label>
+<input class="w-full bg-surface-card rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Repita a nova senha" type="password">
+</div>
+</div>
+</div>
+<!-- Notification Preferences -->
+<div class="bg-surface-container-low rounded-2xl p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">notifications</span>
+              Alertas WhatsApp
+            </h3>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-0" type="checkbox">
+<span class="text-body-sm font-body-sm text-on-surface">Avisar no WhatsApp ao registrar Check-out</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-0" type="checkbox">
+<span class="text-body-sm font-body-sm text-on-surface">Notificar quando manutenção for concluída</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer">
+<input class="w-4 h-4 rounded text-primary-container focus:ring-0" type="checkbox">
+<span class="text-body-sm font-body-sm text-on-surface">Resumo de turno por mensagem de áudio</span>
+</label>
+</div>
+</div>
+<!-- Save Button -->
+<button class="w-full py-3.5 px-6 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg shadow-md transition-all flex items-center justify-center gap-2" onclick="alert('Seus dados cadastrais e preferências foram salvos com êxito no sistema Hotel no Zap!')">
+<span class="material-symbols-outlined text-base">save</span>
+<span class="">Salvar Dados Cadastrais</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- MODAL: RELATAR PROBLEMA / MANUTENÇÃO (HIDDEN BY DEFAULT) -->
+<div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4" id="maintenance-modal">
+<div class="bg-surface-card rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+<div class="flex items-center justify-between pb-4 border-b border-surface-container">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">report_problem</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Relatar Problema / Manutenção</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Notifica imediatamente a equipe técnica e recepção</p>
+</div>
+</div>
+<button class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container" onclick="toggleMaintenanceModal(false)">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="mt-4 space-y-4">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Selecione o Quarto</label>
+<select class="w-full bg-surface-container-low rounded-xl px-4 py-2.5 text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary">
+<option value="101">Quarto 101 - Suíte Luxo King</option>
+<option value="104">Quarto 104 - Standard Casal</option>
+<option value="108">Quarto 108 - Suíte Master</option>
+<option value="202">Quarto 202 - Família Premium</option>
+<option selected="" value="205">Quarto 205 - Suíte Executiva</option>
+<option value="210">Quarto 210 - Casal Superior</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Tipo de Ocorrência</label>
+<div class="grid grid-cols-2 gap-2">
+<label class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl cursor-pointer">
+<input checked="" class="text-primary-container focus:ring-0" name="incident-type" type="radio">
+<span class="text-body-sm font-body-sm text-on-surface">Ar Condicionado / Ventilação</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl cursor-pointer">
+<input class="text-primary-container focus:ring-0" name="incident-type" type="radio">
+<span class="text-body-sm font-body-sm text-on-surface">Hidráulica / Chuveiro / Vaso</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl cursor-pointer">
+<input class="text-primary-container focus:ring-0" name="incident-type" type="radio">
+<span class="text-body-sm font-body-sm text-on-surface">Elétrica / TV / Lâmpada</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 bg-surface-container-low rounded-xl cursor-pointer">
+<input class="text-primary-container focus:ring-0" name="incident-type" type="radio">
+<span class="text-body-sm font-body-sm text-on-surface">Mobília / Danos / Outros</span>
+</label>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Descrição Detalhada do Problema</label>
+<textarea class="w-full bg-surface-container-low rounded-xl p-3 text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Ex: Chuveiro não esquenta, torneira com vazamento, lâmpada da cabeceira queimada..." rows="3"></textarea>
+</div>
+<div class="p-3 bg-amber-50 rounded-xl flex items-start gap-2.5 text-amber-800 text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-base mt-0.5">notification_important</span>
+<span class="">Ao enviar, o status do quarto é atualizado no mapa de reservas do Hotel no Zap e o plantão da manutenção recebe aviso imediato via WhatsApp.</span>
+</div>
+</div>
+<div class="mt-6 flex items-center justify-end gap-3">
+<button class="px-4 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-all" onclick="toggleMaintenanceModal(false)">
+          Cancelar
+        </button>
+<button class="px-5 py-2.5 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-all flex items-center gap-2" onclick="submitMaintenance()">
+<span class="material-symbols-outlined text-base">send</span>
+<span class="">Registrar Ocorrência</span>
+</button>
+</div>
+</div>
+</div>
+<!-- MODAL: DETALHES & CHECKLIST DO QUARTO (HIDDEN BY DEFAULT) -->
+<div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4" id="details-modal">
+<div class="bg-surface-card rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+<div class="flex items-center justify-between pb-4 border-b border-surface-container">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface" id="modal-room-title">Detalhes do Quarto</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant" id="modal-room-subtitle">Checklist e especificações do apartamento</p>
+</div>
+<button class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container" onclick="toggleDetailsModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="mt-4 space-y-4">
+<!-- Amenities Required -->
+<div class="bg-surface-container-low p-4 rounded-xl">
+<h4 class="font-label-md text-label-md text-on-surface mb-2 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-primary">inventory_2</span>
+            Kit de Amenities Obrigatório
+          </h4>
+<div class="grid grid-cols-2 gap-2 text-body-sm font-body-sm text-on-surface">
+<div class="">• 2x Shampoos Botânicos</div>
+<div class="">• 2x Sabonetes Artesanais</div>
+<div class="">• 1x Kit Costura / Touca</div>
+<div class="">• 2x Águas Cortesia no Zap</div>
+</div>
+</div>
+<!-- Bed Linen Standard -->
+<div class="bg-surface-container-low p-4 rounded-xl">
+<h4 class="font-label-md text-label-md text-on-surface mb-2 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-blue-600">drive_file_rename</span>
+            Padrão de Arrumação de Cama
+          </h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+            Lençol 300 fios com dobras envelope retas. Peseira azul marinho esticada a 20cm da borda inferior. 4 travesseiros alinhados aos pares.
+          </p>
+</div>
+<!-- WhatsApp integration tip -->
+<div class="p-3 bg-emerald-50 rounded-xl flex items-center gap-3 text-emerald-900 text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-lg text-emerald-600">qr_code_2</span>
+<span class="">Ao concluir este quarto, a mensagem automática de boas-vindas com chave digital é liberada no WhatsApp do hóspede.</span>
+</div>
+</div>
+<div class="mt-6 flex justify-end">
+<button class="px-5 py-2.5 rounded-xl bg-primary-container text-on-primary font-label-md text-label-md" onclick="toggleDetailsModal()">
+          Entendido, Fechar
+        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Simple Interactive Logic -->
+<script>
+  function switchView(viewName) {
+    const dashView = document.getElementById('view-dashboard');
+    const profView = document.getElementById('view-profile');
+    const dashBtn = document.getElementById('tab-dashboard-btn');
+    const profBtn = document.getElementById('tab-profile-btn');
+
+    if (viewName === 'profile') {
+      dashView.classList.add('hidden');
+      profView.classList.remove('hidden');
+
+      dashBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-on-primary font-label-md text-label-md transition-all';
+      profBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-card text-on-surface font-label-md text-label-md shadow-sm transition-all hover:bg-surface-bright';
+    } else {
+      profView.classList.add('hidden');
+      dashView.classList.remove('hidden');
+
+      dashBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-card text-on-surface font-label-md text-label-md shadow-sm transition-all hover:bg-surface-bright';
+      profBtn.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-on-primary font-label-md text-label-md transition-all';
+    }
+  }
+
+  function setFilter(filter, element) {
+    const buttons = document.querySelectorAll('.filter-btn');
+    buttons.forEach(btn => {
+      btn.className = 'filter-btn px-3.5 py-2 rounded-xl text-label-md font-label-md bg-surface-container text-on-surface hover:bg-surface-container-high whitespace-nowrap transition-all';
+    });
+
+    element.className = 'filter-btn px-3.5 py-2 rounded-xl text-label-md font-label-md bg-primary text-on-primary whitespace-nowrap transition-all shadow-sm';
+
+    const cards = document.querySelectorAll('.room-card');
+    cards.forEach(card => {
+      const status = card.getAttribute('data-status');
+      if (filter === 'todos' || status === filter) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function filterCards() {
+    const input = document.getElementById('room-search-input').value.toLowerCase();
+    const cards = document.querySelectorAll('.room-card');
+    cards.forEach(card => {
+      const text = card.innerText.toLowerCase();
+      if (text.includes(input)) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function startCleaning(roomNum) {
+    alert('Limpeza do Quarto ' + roomNum + ' iniciada por Maria das Graças! O cronômetro de operação está em execução.');
+  }
+
+  function completeRoom(roomNum) {
+    alert('Quarto ' + roomNum + ' concluído com sucesso! Notificação enviada para a Recepção no WhatsApp.');
+  }
+
+  function inspectRoom(roomNum) {
+    alert('Inspeção do Quarto ' + roomNum + ' aprovada! Quarto liberado para entrada de hóspedes.');
+  }
+
+  function toggleMaintenanceModal(show) {
+    const modal = document.getElementById('maintenance-modal');
+    if (show) {
+      modal.classList.remove('hidden');
+    } else {
+      modal.classList.add('hidden');
+    }
+  }
+
+  function submitMaintenance() {
+    alert('Ocorrência de manutenção registrada com sucesso! A equipe predial foi acionada.');
+    toggleMaintenanceModal(false);
+  }
+
+  function toggleDetailsModal(roomNum, roomDesc) {
+    const modal = document.getElementById('details-modal');
+    if (roomNum) {
+      document.getElementById('modal-room-title').innerText = 'Quarto ' + roomNum + ' • Especificações';
+      document.getElementById('modal-room-subtitle').innerText = roomDesc + ' - Padrão de Higienização e Enxoval';
+      modal.classList.remove('hidden');
+    } else {
+      modal.classList.add('hidden');
+    }
+  }
+</script></div></main>
+
+</body></html>

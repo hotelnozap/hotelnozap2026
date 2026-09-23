@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0">
+  <title>Listagem de Itens dos Quartos - Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      width: 390px;
+      margin: 0 auto;
+      background-color: #f8f9ff;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 22;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-[#f8f9ff] text-slate-800 min-h-screen relative pb-28">
+
+  <!-- Cabeçalho Oficial Mobile: Degradê #003400 para #000000, Caixa Alta, Hambúrguer, Sino, Avatar -->
+  <header class="bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-md">
+    <div class="flex items-center gap-3">
+      <button class="p-1 rounded-md hover:bg-white/10 text-white">
+        <span class="material-symbols-outlined text-2xl">menu</span>
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-emerald-400 text-2xl">apartment</span>
+        <span class="font-black text-lg tracking-wider">HOTEL NO ZAP</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2.5">
+      <button class="relative p-1.5 rounded-full hover:bg-white/10 text-white">
+        <span class="material-symbols-outlined text-xl">notifications</span>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 rounded-full bg-emerald-800 border border-emerald-500/50 flex items-center justify-center font-bold text-xs text-white">
+        AD
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="p-4 space-y-4">
+
+    <!-- Navegação Voltar e Título -->
+    <div>
+      <a href="#" class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#003400] hover:underline mb-1">
+        <span class="material-symbols-outlined text-sm">arrow_back</span>
+        Voltar para o Mapa dos Quartos
+      </a>
+      <div class="flex items-center justify-between mt-1">
+        <div>
+          <h1 class="text-xl font-bold text-slate-900">Itens dos Quartos</h1>
+          <p class="text-xs text-slate-500">Móveis e comodidades das acomodações</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões de Ação Mobile: 2x2 conforme padrão consolidado -->
+    <div class="grid grid-cols-2 gap-2.5">
+      <button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold text-white bg-[#003400] hover:bg-[#002800] shadow-sm">
+        <span class="material-symbols-outlined text-base">add</span>
+        + Novo Item
+      </button>
+      <button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-bold text-white bg-[#FDB116] hover:bg-[#e59e0f] shadow-sm">
+        <span class="material-symbols-outlined text-base">file_download</span>
+        Exportar
+      </button>
+    </div>
+
+    <!-- Barra de Pesquisa e Botão Filtro na Mesma Linha -->
+    <div class="flex items-center gap-2">
+      <div class="relative flex-1">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+        <input type="text" placeholder="Buscar itens..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#003400] shadow-sm">
+      </div>
+      <button class="w-10 h-9 rounded-lg bg-white border border-slate-200 text-slate-600 flex items-center justify-center shadow-sm hover:bg-slate-50">
+        <span class="material-symbols-outlined text-lg">tune</span>
+      </button>
+    </div>
+
+    <!-- Cards de Indicadores KPIs: Grade 2x2 com Cores Distintas -->
+    <div class="grid grid-cols-2 gap-2.5">
+      
+      <!-- KPI 1 -->
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase text-blue-700">Total Itens</span>
+          <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+            <span class="material-symbols-outlined text-base">inventory_2</span>
+          </div>
+        </div>
+        <div class="mt-2">
+          <span class="text-xl font-black text-blue-950">24</span>
+          <span class="text-[10px] text-blue-600 block mt-0.5 font-medium">Cadastrados</span>
+        </div>
+      </div>
+
+      <!-- KPI 2 -->
+      <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase text-emerald-700">Ativos</span>
+          <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <span class="material-symbols-outlined text-base">check_circle</span>
+          </div>
+        </div>
+        <div class="mt-2">
+          <span class="text-xl font-black text-emerald-950">21</span>
+          <span class="text-[10px] text-emerald-600 block mt-0.5 font-medium">Disponíveis</span>
+        </div>
+      </div>
+
+      <!-- KPI 3 -->
+      <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase text-indigo-700">Mais Usados</span>
+          <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <span class="material-symbols-outlined text-base">star</span>
+          </div>
+        </div>
+        <div class="mt-2">
+          <span class="text-xl font-black text-indigo-950">8</span>
+          <span class="text-[10px] text-indigo-600 block mt-0.5 font-medium">Em todos quartos</span>
+        </div>
+      </div>
+
+      <!-- KPI 4 -->
+      <div class="bg-rose-50 border border-rose-100 rounded-xl p-3 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase text-rose-700">Inativos</span>
+          <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
+            <span class="material-symbols-outlined text-base">block</span>
+          </div>
+        </div>
+        <div class="mt-2">
+          <span class="text-xl font-black text-rose-950">3</span>
+          <span class="text-[10px] text-rose-600 block mt-0.5 font-medium">Ocultados</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Lista de Itens (Cards Mobile) -->
+    <div class="space-y-3">
+      
+      <!-- Card Item 1 -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-emerald-100 text-[#003400] flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-lg">king_bed</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 leading-tight">Cama King Size</h3>
+              <span class="text-[10px] text-slate-400">ID: #ITM-01 • 18 quartos</span>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+            ● Ativo
+          </span>
+        </div>
+        <p class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg">
+          Cama de casal com molas ensacadas de padrão hoteleiro 1,93m x 2,03m.
+        </p>
+        <!-- Botões de Ação Padronizados -->
+        <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#2563EB] hover:bg-blue-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Ver
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#EA580C] hover:bg-orange-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">edit</span>
+            Editar
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#DC2626] hover:bg-red-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">delete</span>
+            Excluir
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Item 2 -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-emerald-100 text-[#003400] flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-lg">ac_unit</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 leading-tight">Ar-condicionado Split</h3>
+              <span class="text-[10px] text-slate-400">ID: #ITM-02 • 24 quartos</span>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+            ● Ativo
+          </span>
+        </div>
+        <p class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg">
+          Aparelho 12.000 BTUs silencioso quente e frio com controle remoto.
+        </p>
+        <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#2563EB] hover:bg-blue-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Ver
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#EA580C] hover:bg-orange-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">edit</span>
+            Editar
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#DC2626] hover:bg-red-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">delete</span>
+            Excluir
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Item 3 -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-emerald-100 text-[#003400] flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-lg">wifi</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 leading-tight">Wi-Fi Alta Velocidade</h3>
+              <span class="text-[10px] text-slate-400">ID: #ITM-03 • 24 quartos</span>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+            ● Ativo
+          </span>
+        </div>
+        <p class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg">
+          Conexão dedicada de fibra 500Mbps com roteador Mesh por andar.
+        </p>
+        <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#2563EB] hover:bg-blue-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Ver
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#EA580C] hover:bg-orange-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">edit</span>
+            Editar
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#DC2626] hover:bg-red-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">delete</span>
+            Excluir
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Item 4 (Inativo) -->
+      <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 opacity-90">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-slate-200 text-slate-500 flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-lg">hot_tub</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-700 leading-tight">Banheira Hidro Dupla</h3>
+              <span class="text-[10px] text-slate-400">ID: #ITM-06 • 2 quartos</span>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+            ● Inativo
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg">
+          Em manutenção preventiva nos quartos 401 e 402 temporariamente.
+        </p>
+        <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#2563EB] hover:bg-blue-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Ver
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#EA580C] hover:bg-orange-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">edit</span>
+            Editar
+          </button>
+          <button class="flex items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-semibold text-white bg-[#DC2626] hover:bg-red-700 shadow-sm">
+            <span class="material-symbols-outlined text-sm">delete</span>
+            Excluir
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Paginação Mobile -->
+    <div class="flex items-center justify-between pt-3 text-xs text-slate-500">
+      <span>1 a 4 de 24 itens</span>
+      <div class="flex items-center gap-1">
+        <button class="w-7 h-7 rounded-lg bg-[#003400] text-white font-bold flex items-center justify-center">1</button>
+        <button class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center">2</button>
+        <button class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center">3</button>
+        <button class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Barra de Navegação Inferior Mobile Oficial: Fixa no Rodapé com a aba Quartos em destaque -->
+  <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 py-2 px-3 flex items-center justify-around z-50 shadow-lg">
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">dashboard</span>
+      <span class="text-[10px] font-medium">Início</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-[#003400] font-bold bg-emerald-50 px-3 py-1 rounded-xl">
+      <span class="material-symbols-outlined text-xl">bed</span>
+      <span class="text-[10px]">Quartos</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">calendar_month</span>
+      <span class="text-[10px] font-medium">Reservas</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">payments</span>
+      <span class="text-[10px] font-medium">Caixa</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">more_horiz</span>
+      <span class="text-[10px] font-medium">Mais</span>
+    </a>
+  </nav>
+
+</body>
+</html>

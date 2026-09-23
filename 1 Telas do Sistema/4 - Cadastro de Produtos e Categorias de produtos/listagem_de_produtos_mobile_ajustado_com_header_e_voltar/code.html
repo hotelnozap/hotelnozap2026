@@ -1,0 +1,374 @@
+<!DOCTYPE html><html lang="pt-BR" style="width: 390px; height: 1396px; overflow: hidden; position: relative;"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Hotel no Zap - Listagem de Produtos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface-container": "#e5eeff",
+                "on-primary-container": "#7c839b",
+                "on-primary-fixed-variant": "#3f465c",
+                "on-surface": "#0b1c30",
+                "surface-dim": "#cbdbf5",
+                "surface-bright": "#f8f9ff",
+                "tertiary-fixed": "#ffddb8",
+                "on-primary": "#ffffff",
+                "outline": "#76777d",
+                "on-tertiary-fixed": "#2a1700",
+                "surface": "#f8f9ff",
+                "on-primary-fixed": "#131b2e",
+                "sidebar-end": "#000000",
+                "primary": "#000000",
+                "error-container": "#ffdad6",
+                "surface-bg": "#f8f9ff",
+                "secondary": "#006c49",
+                "on-error-container": "#93000a",
+                "on-background": "#0b1c30",
+                "active-tab-text": "#6cf8bb",
+                "surface-container-high": "#dce9ff",
+                "on-surface-variant": "#45464d",
+                "surface-container-lowest": "#ffffff",
+                "inverse-surface": "#213145",
+                "sidebar-start": "#003400",
+                "surface-container-highest": "#d3e4fe",
+                "secondary-fixed": "#6ffbbe",
+                "error": "#ba1a1a",
+                "on-secondary": "#ffffff",
+                "secondary-container": "#6cf8bb",
+                "background": "#f8f9ff",
+                "primary-fixed-dim": "#bec6e0",
+                "surface-tint": "#565e74",
+                "on-secondary-fixed-variant": "#005236",
+                "tertiary": "#000000",
+                "on-tertiary": "#ffffff",
+                "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                "on-secondary-container": "#00714d",
+                "on-tertiary-container": "#b87500",
+                "inverse-on-surface": "#eaf1ff",
+                "tertiary-fixed-dim": "#ffb95f",
+                "surface-variant": "#d3e4fe",
+                "tertiary-container": "#2a1700",
+                "outline-variant": "#c6c6cd",
+                "primary-fixed": "#dae2fd",
+                "on-secondary-fixed": "#002113",
+                "surface-container-low": "#eff4ff",
+                "on-tertiary-fixed-variant": "#653e00",
+                "border-subtle": "#c6c6cd",
+                "on-error": "#ffffff",
+                "inverse-primary": "#bec6e0",
+                "secondary-fixed-dim": "#4edea3",
+                "primary-container": "#131b2e"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "top-bar-height": "64px",
+                "gutter": "24px",
+                "margin-desktop": "32px",
+                "unit": "4px",
+                "margin-mobile": "16px",
+                "sidebar-width": "280px"
+        },
+        "fontFamily": {
+                "body-md": [
+                        "Inter"
+                ],
+                "headline-sm": [
+                        "Inter"
+                ],
+                "headline-md": [
+                        "Inter"
+                ],
+                "label-sm": [
+                        "Inter"
+                ],
+                "label-md": [
+                        "Inter"
+                ],
+                "body-lg": [
+                        "Inter"
+                ],
+                "headline-lg": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-sm": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pt-[64px] pb-[80px] md:pt-0 md:pl-[280px] md:pb-0">
+<!-- TopNavBar (Shared Component) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile h-top-bar-height bg-gradient-to-r from-sidebar-start to-sidebar-end dark:from-sidebar-start dark:to-sidebar-end shadow-sm docked full-width md:hidden"><div class="flex items-center gap-3"><button class="text-white hover:bg-white/10 transition-all duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center" aria-label="Menu"><span class="material-symbols-outlined text-[24px]">menu</span></button><h1 class="font-headline-md text-headline-sm-mobile md:text-headline-md text-on-secondary font-bold uppercase tracking-wider">HOTEL NO ZAP</h1></div><div class="flex gap-4"><button class="text-on-secondary/80 hover:bg-white/10 transition-all duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button><button class="text-on-secondary/80 hover:bg-white/10 transition-all duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center"><span class="material-symbols-outlined" data-icon="account_circle">account_circle</span></button></div></header>
+<!-- Sidebar (Desktop only - implicit from layout, minimal structure to maintain layout) -->
+<aside class="hidden md:flex fixed top-0 left-0 h-full w-sidebar-width bg-gradient-to-b from-sidebar-start to-sidebar-end z-40 flex-col py-margin-desktop">
+<div class="px-gutter mb-8">
+<h1 class="font-headline-lg text-headline-lg text-on-secondary">Hotel no Zap</h1>
+</div>
+<nav class="flex-1 flex flex-col gap-2 px-margin-desktop">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-secondary/80 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-active-tab-bg border-l-4 border-secondary-fixed text-on-secondary font-bold" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Estoque</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-secondary/80 hover:bg-white/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">Vendas</span>
+</a>
+</nav>
+</aside>
+<main class="p-margin-mobile md:p-margin-desktop max-w-7xl mx-auto space-y-6">
+<!-- Top Actions -->
+<div class="flex flex-col gap-3"><div class="flex flex-col gap-1 mb-1"><a class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-background text-label-sm font-label-sm transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">arrow_back</span>Voltar para Dashboard</a><h2 class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-background font-bold mt-1">Listagem de Produtos</h2><p class="font-body-md text-body-md text-on-surface-variant">Gerencie seu inventário.</p></div><div class="grid grid-cols-2 gap-2 w-full"><button class="bg-primary text-on-primary font-label-md text-label-sm px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 hover:bg-primary/90 transition-all active:scale-95 shadow-sm w-full"><span class="material-symbols-outlined text-[18px]">add</span><span class="truncate">Novo Produto</span></button><button class="text-white font-label-md text-label-sm px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm w-full" style="background-color: #10B981;"><span class="material-symbols-outlined text-[18px]">create_new_folder</span><span class="truncate">Nova Categoria</span></button><button class="text-white font-label-md text-label-sm px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-95 w-full" style="background-color: #2563EB;"><span class="material-symbols-outlined text-[18px]">upload</span><span class="">Importar</span></button><button class="font-label-md text-label-sm px-3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-sm font-semibold transition-all active:scale-95 w-full" style="background-color: #FDB116; color: #1F2937;"><span class="material-symbols-outlined text-[18px]">download</span><span class="">Exportar</span></button></div><div class="flex items-center gap-2 w-full"><div class="relative flex-1"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span><input class="w-full bg-surface-container-lowest border border-border-subtle rounded-xl py-2.5 pl-10 pr-4 font-body-md text-body-md text-on-background focus:ring-2 focus:ring-primary-fixed focus:border-transparent outline-none transition-all placeholder:text-outline-variant shadow-sm" placeholder="Buscar produtos por nome, categoria ou ID..." type="text"></div><button class="bg-surface-container-lowest border border-border-subtle text-on-background font-label-md text-label-md px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-1.5 hover:bg-surface-variant/50 transition-colors shadow-sm whitespace-nowrap"><span class="material-symbols-outlined text-[18px]">tune</span><span class="">Filtros</span></button></div></div>
+<!-- Page Header -->
+<!-- KPI Cards -->
+<div class="grid grid-cols-2 gap-3 mb-6"><div class="p-3 rounded-xl shadow-sm border" style="background-color: rgb(239, 246, 255); border-color: rgb(191, 219, 254);">
+<p class="font-label-sm text-label-sm uppercase tracking-wider mb-1" style="color: #1D4ED8;">Total de Produtos</p>
+<p class="font-headline-md text-headline-md font-bold" style="color: #1E40AF;">328</p>
+</div>
+<div class="p-3 rounded-xl shadow-sm border" style="background-color: rgb(236, 253, 245); border-color: rgb(167, 243, 208);">
+<p class="font-label-sm text-label-sm uppercase tracking-wider mb-1" style="color: #047857;">Ativos</p>
+<p class="font-headline-md text-headline-md font-bold" style="color: #065F46;">312</p>
+</div>
+<div class="p-3 rounded-xl shadow-sm border" style="background-color: rgb(254, 242, 242); border-color: rgb(254, 205, 211);">
+<p class="font-label-sm text-label-sm uppercase tracking-wider mb-1" style="color: #B91C1C;">Sem Estoque</p>
+<p class="font-headline-md text-headline-md font-bold text-error">4</p>
+</div>
+<div class="p-3 rounded-xl shadow-sm border" style="background-color: rgb(255, 251, 235); border-color: rgb(253, 230, 138);">
+<p class="font-label-sm text-label-sm uppercase tracking-wider mb-1" style="color: #B45309;">Estoque Baixo</p>
+<p class="font-headline-md text-headline-md font-bold text-[#b87500]">12</p>
+</div></div>
+<!-- Product Grid (Bento style interpretation for list items) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+<!-- Product Card 1 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow">
+<div class="p-4 flex-1">
+<div class="flex justify-between items-start mb-3">
+<span class="bg-surface-variant text-on-background font-label-sm text-label-sm px-2.5 py-1 rounded-full inline-block">Bebidas</span>
+<div class="flex items-center gap-1 text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+<span class="font-label-sm text-label-sm">Em Estoque</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm-mobile md:text-headline-sm text-on-background mb-1">Água Mineral Sem Gás 500ml</h3>
+<div class="flex justify-between items-end mt-4">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Preço</p>
+<p class="font-body-lg text-body-lg text-on-background font-semibold">R$ 4,50</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Estoque</p>
+<p class="font-body-lg text-body-lg text-on-background">142 un</p>
+</div>
+</div>
+</div>
+<div class="border-t border-border-subtle bg-surface/50 p-2 flex justify-end gap-1">
+<button class="text-[#005cbb] hover:bg-[#e6f1ff] p-2 rounded-lg flex items-center justify-center transition-colors" title="Ver">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">visibility</span>
+</button>
+<button class="text-[#b87500] hover:bg-[#fff2df] p-2 rounded-lg flex items-center justify-center transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="text-error hover:bg-error-container p-2 rounded-lg flex items-center justify-center transition-colors" title="Excluir">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow">
+<div class="p-4 flex-1">
+<div class="flex justify-between items-start mb-3">
+<span class="bg-surface-variant text-on-background font-label-sm text-label-sm px-2.5 py-1 rounded-full inline-block">Snacks</span>
+<div class="flex items-center gap-1 text-[#b87500] bg-[#fff2df] px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 bg-[#b87500] rounded-full"></span>
+<span class="font-label-sm text-label-sm">Baixo Estoque</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm-mobile md:text-headline-sm text-on-background mb-1">Batata Frita Tradicional 100g</h3>
+<div class="flex justify-between items-end mt-4">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Preço</p>
+<p class="font-body-lg text-body-lg text-on-background font-semibold">R$ 12,00</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Estoque</p>
+<p class="font-body-lg text-body-lg text-on-background">15 un</p>
+</div>
+</div>
+</div>
+<div class="border-t border-border-subtle bg-surface/50 p-2 flex justify-end gap-1">
+<button class="text-[#005cbb] hover:bg-[#e6f1ff] p-2 rounded-lg flex items-center justify-center transition-colors" title="Ver">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">visibility</span>
+</button>
+<button class="text-[#b87500] hover:bg-[#fff2df] p-2 rounded-lg flex items-center justify-center transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="text-error hover:bg-error-container p-2 rounded-lg flex items-center justify-center transition-colors" title="Excluir">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="bg-surface-container-lowest border border-error-container rounded-xl shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow relative">
+<div class="absolute inset-0 bg-error/5 pointer-events-none"></div>
+<div class="p-4 flex-1 relative z-10">
+<div class="flex justify-between items-start mb-3">
+<span class="bg-surface-variant text-on-background font-label-sm text-label-sm px-2.5 py-1 rounded-full inline-block">Higiene</span>
+<div class="flex items-center gap-1 text-error bg-error-container px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+<span class="font-label-sm text-label-sm">Sem Estoque</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm-mobile md:text-headline-sm text-on-background mb-1">Kit Escova e Creme Dental</h3>
+<div class="flex justify-between items-end mt-4">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Preço</p>
+<p class="font-body-lg text-body-lg text-on-background font-semibold">R$ 15,90</p>
+</div>
+<div class="text-right opacity-50">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Estoque</p>
+<p class="font-body-lg text-body-lg text-error font-medium">0 un</p>
+</div>
+</div>
+</div>
+<div class="border-t border-border-subtle bg-surface/50 p-2 flex justify-end gap-1 relative z-10">
+<button class="text-[#005cbb] hover:bg-[#e6f1ff] p-2 rounded-lg flex items-center justify-center transition-colors" title="Ver">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">visibility</span>
+</button>
+<button class="text-[#b87500] hover:bg-[#fff2df] p-2 rounded-lg flex items-center justify-center transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="text-error hover:bg-error-container p-2 rounded-lg flex items-center justify-center transition-colors" title="Excluir">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow">
+<div class="p-4 flex-1">
+<div class="flex justify-between items-start mb-3">
+<span class="bg-surface-variant text-on-background font-label-sm text-label-sm px-2.5 py-1 rounded-full inline-block">Bebidas Alcoólicas</span>
+<div class="flex items-center gap-1 text-secondary bg-secondary-fixed/20 px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+<span class="font-label-sm text-label-sm">Em Estoque</span>
+</div>
+</div>
+<h3 class="font-headline-sm text-headline-sm-mobile md:text-headline-sm text-on-background mb-1">Cerveja Pilsen Lata 350ml</h3>
+<div class="flex justify-between items-end mt-4">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Preço</p>
+<p class="font-body-lg text-body-lg text-on-background font-semibold">R$ 8,00</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Estoque</p>
+<p class="font-body-lg text-body-lg text-on-background">210 un</p>
+</div>
+</div>
+</div>
+<div class="border-t border-border-subtle bg-surface/50 p-2 flex justify-end gap-1">
+<button class="text-[#005cbb] hover:bg-[#e6f1ff] p-2 rounded-lg flex items-center justify-center transition-colors" title="Ver">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">visibility</span>
+</button>
+<button class="text-[#b87500] hover:bg-[#fff2df] p-2 rounded-lg flex items-center justify-center transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="text-error hover:bg-error-container p-2 rounded-lg flex items-center justify-center transition-colors" title="Excluir">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Shared Component) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container-lowest dark:bg-inverse-surface shadow-lg docked full-width md:hidden border-t-0">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high active:scale-95 transition-transform w-16 rounded-xl py-1" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-[10px] mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim bg-active-tab-bg rounded-full px-4 py-1 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-label-sm text-[10px] mt-1">Estoque</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high active:scale-95 transition-transform w-16 rounded-xl py-1" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-sm text-[10px] mt-1">Vendas</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high active:scale-95 transition-transform w-16 rounded-xl py-1" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-sm text-[10px] mt-1">Mais</span>
+</a>
+</nav>
+
+
+</body></html>

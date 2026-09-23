@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Reserva - Desktop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              dark: '#003400',
+              emerald: '#10B981',
+              amber: '#FDB116',
+              blue: '#2563EB',
+              red: '#DC2626',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f8f9ff] text-slate-800 font-sans antialiased min-h-screen p-6 md:p-10 flex flex-col justify-between">
+  
+  <main class="max-w-5xl mx-auto w-full">
+    <!-- Header / Voltar -->
+    <div class="mb-6">
+      <a href="#" class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800 hover:text-emerald-950 transition-colors mb-3">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Voltar para Listagem de Reservas
+      </a>
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Cadastro de Reserva</h1>
+          <p class="text-sm text-slate-500 mt-1">Insira os dados da nova hospedagem, hóspede vinculado, datas e cálculo financeiro.</p>
+        </div>
+        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Status da Reserva</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" checked class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003400]"></div>
+            <span class="ml-2 text-sm font-bold text-emerald-800 peer-checked:text-emerald-900">Confirmada</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário Principal -->
+    <form class="space-y-6">
+      <!-- Bloco 1: Identificação & Vínculos -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+          <span class="material-symbols-outlined text-emerald-700">badge</span>
+          Identificação & Acomodação
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Codigo Reserva -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Código da Reserva *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">tag</span>
+              </span>
+              <input type="text" value="#RES-507" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 font-semibold text-slate-900 bg-slate-50" readonly />
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Gerado automaticamente pelo sistema</span>
+          </div>
+
+          <!-- Hospede ID (Select com busca) -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Hóspede / Cliente *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">person</span>
+              </span>
+              <select class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800 bg-white appearance-none cursor-pointer">
+                <option value="">Selecione o hóspede...</option>
+                <option value="1" selected>Carlos Silveira (CPF: 382.910.482-19)</option>
+                <option value="2">Mariana Costa (CPF: 492.102.948-00)</option>
+                <option value="3">Roberto Alves (CPF: 194.829.102-44)</option>
+                <option value="4">Gabriel Souza (CNPJ: 48.192.019/0001-92)</option>
+              </select>
+              <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">expand_more</span>
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Vincule um cadastro de hóspede existente</span>
+          </div>
+
+          <!-- Quarto ID -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Quarto / Acomodação *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">bed</span>
+              </span>
+              <select class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800 bg-white appearance-none cursor-pointer">
+                <option value="">Selecione o quarto...</option>
+                <option value="203" selected>Quarto 203 - Luxo Duplo (Disponível)</option>
+                <option value="101">Suíte Master 101 - Premium (Disponível)</option>
+                <option value="112">Quarto 112 - Standard Solteiro (Disponível)</option>
+                <option value="305">Quarto 305 - Casal Standard (Disponível)</option>
+              </select>
+              <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">expand_more</span>
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Apenas quartos disponíveis para o período</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco 2: Datas, Prazos & Ocupação -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+          <span class="material-symbols-outlined text-emerald-700">calendar_month</span>
+          Datas & Cronograma de Estadia
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          <!-- Data da Reserva -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Data da Reserva *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">event_available</span>
+              </span>
+              <input type="date" value="2023-10-10" class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800" />
+            </div>
+          </div>
+
+          <!-- Check-in Previsto -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Check-in Previsto *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-emerald-600 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">login</span>
+              </span>
+              <input type="datetime-local" value="2023-10-12T14:00" class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800" />
+            </div>
+          </div>
+
+          <!-- Check-out Previsto -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Check-out Previsto *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-amber-600 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">logout</span>
+              </span>
+              <input type="datetime-local" value="2023-10-17T11:00" class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800" />
+            </div>
+          </div>
+
+          <!-- Quantidade Hospedes -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Qtd. de Hóspedes *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">group</span>
+              </span>
+              <input type="number" min="1" max="10" value="2" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco 3: Financeiro & Tarifas -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+          <span class="material-symbols-outlined text-emerald-700">payments</span>
+          Valores, Diárias & Total a Pagar
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          <!-- Quantidade Diarias -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Qtd. de Diárias
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">night_shelter</span>
+              </span>
+              <input type="number" value="5" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-bold text-slate-900 bg-slate-50" readonly />
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Calculado pelo período</span>
+          </div>
+
+          <!-- Valor Diaria -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Valor da Diária (R$) *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none font-bold text-sm">
+                R$
+              </span>
+              <input type="text" value="160,00" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800" />
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Tarifa base da categoria</span>
+          </div>
+
+          <!-- Desconto -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Desconto (R$)
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none font-bold text-sm">
+                R$
+              </span>
+              <input type="text" value="50,00" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800" />
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Cupom ou negociação direta</span>
+          </div>
+
+          <!-- Total a Pagar -->
+          <div class="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200/80">
+            <label class="block text-xs font-bold uppercase tracking-wider text-emerald-900 mb-1">
+              Total a Pagar
+            </label>
+            <div class="text-2xl font-black text-emerald-800">
+              R$ 750,00
+            </div>
+            <span class="text-[11px] text-emerald-700 font-medium mt-0.5 block">5 diárias × R$ 160 - R$ 50 desc.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco 4: Origem & Observações -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+          <span class="material-symbols-outlined text-emerald-700">info</span>
+          Canal de Origem & Observações
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Origem da Reserva -->
+          <div class="md:col-span-1">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Origem da Reserva *
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">share_location</span>
+              </span>
+              <select class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-medium text-slate-800 bg-white appearance-none cursor-pointer">
+                <option value="WhatsApp" selected>WhatsApp (Hotel no Zap)</option>
+                <option value="Balcão / Recepção">Balcão / Recepção Direta</option>
+                <option value="Booking.com">Booking.com</option>
+                <option value="Airbnb">Airbnb</option>
+                <option value="Site Direto">Website Oficial</option>
+                <option value="Telefone">Telefone / Central</option>
+              </select>
+              <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 pointer-events-none">
+                <span class="material-symbols-outlined text-[20px]">expand_more</span>
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1 block">Canal pelo qual a reserva foi feita</span>
+          </div>
+
+          <!-- Observações -->
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Observações & Solicitações Especiais
+            </label>
+            <textarea rows="3" placeholder="Ex: Hóspede solicitou berço infantil adicional e check-in antecipado para as 12h..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 text-sm font-normal text-slate-800 resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rodapé de Ações do Formulário -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+        <button type="button" class="px-6 py-2.5 rounded-xl border border-slate-300 font-bold text-sm text-slate-700 hover:bg-slate-100 transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" class="px-8 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002400] text-white font-bold text-sm shadow-md transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">check_circle</span>
+          Salvar Reserva
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <footer class="mt-12 text-center text-xs text-slate-400">
+    © 2024 Hotel no Zap — Sistema de Gestão Hoteleira Integrada
+  </footer>
+</body>
+</html>

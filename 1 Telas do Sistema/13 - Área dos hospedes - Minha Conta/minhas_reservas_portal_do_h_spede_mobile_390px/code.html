@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0">
+  <title>Minhas Reservas - Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              dark: '#003400',
+              black: '#000000',
+              primary: '#054e18',
+              accent: '#10B981',
+              actionBlue: '#2563EB',
+              actionOrange: '#EA580C',
+              actionRed: '#DC2626',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      width: 390px;
+      margin: 0 auto;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="w-[390px] min-h-screen bg-slate-50 text-slate-900 pb-28 select-none">
+
+  <!-- CABEÇALHO OFICIAL MOBILE (#003400 a #000000) -->
+  <header class="sticky top-0 z-40 bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3.5 shadow-md flex items-center justify-between border-b border-emerald-950/40">
+    <div class="flex items-center gap-2.5">
+      <button class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/15 active:scale-95 flex items-center justify-center transition-transform" aria-label="Abrir menu">
+        <span class="material-symbols-outlined text-[22px]">menu</span>
+      </button>
+      <div>
+        <span class="text-[10px] tracking-widest text-emerald-400 font-semibold block leading-none">PORTAL DO HÓSPEDE</span>
+        <h1 class="text-base font-extrabold tracking-wider leading-tight text-white uppercase">HOTEL NO ZAP</h1>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/15 active:scale-95 flex items-center justify-center relative transition-transform" aria-label="Notificações">
+        <span class="material-symbols-outlined text-[20px]">notifications</span>
+        <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-400"></span>
+      </button>
+      <div class="w-9 h-9 rounded-lg bg-white/20 text-white font-bold text-xs flex items-center justify-center border border-white/20">
+        CT
+      </div>
+    </div>
+  </header>
+
+  <!-- ÁREA DE NAVEGAÇÃO & TÍTULO DA TELA -->
+  <div class="px-4 pt-4 pb-2">
+    <a href="#" class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 hover:text-emerald-950 active:scale-95 transition-transform mb-2">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      Voltar para Minha Conta
+    </a>
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Minhas Reservas</h2>
+        <p class="text-xs text-slate-500">Histórico de estadias e vouchers</p>
+      </div>
+      <button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#003400] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+        <span class="material-symbols-outlined text-[16px]">add</span>
+        Nova
+      </button>
+    </div>
+  </div>
+
+  <!-- CARDS DE INDICADORES (GRADE 2x2 PADRÃO MOBILE) -->
+  <section class="px-4 py-2">
+    <div class="grid grid-cols-2 gap-2.5">
+      
+      <!-- Total de Reservas -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500 mb-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider">Total</span>
+          <span class="material-symbols-outlined text-[18px] text-blue-600">hotel</span>
+        </div>
+        <div>
+          <div class="text-xl font-extrabold text-slate-900 leading-none">12</div>
+          <p class="text-[10px] text-emerald-600 font-medium mt-1">4 neste ano</p>
+        </div>
+      </div>
+
+      <!-- Estadia Ativa -->
+      <div class="bg-gradient-to-br from-emerald-50 to-white rounded-xl p-3 border border-emerald-300 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between text-emerald-700 mb-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider">Estadia Ativa</span>
+          <span class="material-symbols-outlined text-[18px] text-emerald-700">key</span>
+        </div>
+        <div>
+          <div class="text-xl font-extrabold text-emerald-900 leading-none">1 Ativa</div>
+          <p class="text-[10px] text-emerald-700 font-medium mt-1">Suíte 204 • King</p>
+        </div>
+      </div>
+
+      <!-- Próximas Viagens -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500 mb-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider">Confirmadas</span>
+          <span class="material-symbols-outlined text-[18px] text-amber-600">calendar_month</span>
+        </div>
+        <div>
+          <div class="text-xl font-extrabold text-slate-900 leading-none">2 Viagens</div>
+          <p class="text-[10px] text-slate-500 font-medium mt-1">Próxima: 18/04</p>
+        </div>
+      </div>
+
+      <!-- Fidelidade VIP -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-500 mb-1">
+          <span class="text-[11px] font-semibold uppercase tracking-wider">Fidelidade</span>
+          <span class="material-symbols-outlined text-[18px] text-purple-600">military_tech</span>
+        </div>
+        <div>
+          <div class="text-xl font-extrabold text-purple-700 leading-none">2.450</div>
+          <p class="text-[10px] text-purple-600 font-medium mt-1">Nível Ouro VIP</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BARRA DE BUSCA E BOTÃO FILTRO -->
+  <section class="px-4 py-2">
+    <div class="flex items-center gap-2">
+      <div class="relative flex-1">
+        <span class="material-symbols-outlined text-slate-400 absolute left-3 top-2.5 text-[18px]">search</span>
+        <input type="text" placeholder="Buscar código ou hotel..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 shadow-sm">
+      </div>
+      <button class="w-10 h-9 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-700 active:scale-95 shadow-sm">
+        <span class="material-symbols-outlined text-[20px]">tune</span>
+      </button>
+    </div>
+
+    <!-- ABAS DESLIZANTES POR STATUS -->
+    <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pt-3 pb-1">
+      <button class="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#003400] text-white shadow-sm whitespace-nowrap">
+        Todas (12)
+      </button>
+      <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 whitespace-nowrap">
+        Ativa (1)
+      </button>
+      <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 whitespace-nowrap">
+        Confirmadas (2)
+      </button>
+      <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 whitespace-nowrap">
+        Concluídas (8)
+      </button>
+      <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 whitespace-nowrap">
+        Canceladas (1)
+      </button>
+    </div>
+  </section>
+
+  <!-- LISTA DE CARDS DE RESERVAS -->
+  <main class="px-4 py-2 space-y-3">
+
+    <!-- Card 1: Hospedado Agora (Em Andamento) -->
+    <div class="bg-white rounded-2xl border-2 border-emerald-500/80 p-4 shadow-sm relative overflow-hidden">
+      <div class="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl uppercase tracking-wider flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+        Hospedado Agora
+      </div>
+
+      <div class="flex items-start gap-3 pt-1">
+        <div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-sm border border-emerald-300">
+          204
+        </div>
+        <div class="flex-1 pr-24">
+          <span class="text-xs font-bold text-slate-900 block">#ZAP-88410</span>
+          <h3 class="text-sm font-extrabold text-slate-900 leading-snug">Hotel Master Porto de Galinhas</h3>
+          <p class="text-[11px] text-slate-500">Suíte Master King com Hidro</p>
+        </div>
+      </div>
+
+      <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span class="text-[10px] uppercase font-semibold text-slate-400 block">Período</span>
+          <p class="font-bold text-slate-800 text-[11px]">22/02 a 27/02/2026</p>
+          <span class="text-[10px] text-emerald-700 font-medium">5 diárias (Dia 3)</span>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase font-semibold text-slate-400 block">Total</span>
+          <p class="font-extrabold text-slate-900 text-sm">R$ 2.450,00</p>
+          <span class="text-[10px] text-emerald-600 font-medium">Pago no Cartão</span>
+        </div>
+      </div>
+
+      <!-- Botões de Ação Padronizados -->
+      <div class="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-2">
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">visibility</span>
+          Ver Voucher
+        </button>
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-emerald-800 text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">chat</span>
+          Recepção
+        </button>
+        <button class="px-3 py-2 rounded-xl bg-[#EA580C] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform" title="Editar Serviços">
+          <span class="material-symbols-outlined text-[16px]">edit</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 2: Confirmada / Futura -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+      <div class="flex items-start justify-between">
+        <div class="flex items-start gap-3">
+          <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm border border-blue-200">
+            108
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-slate-900">#ZAP-91204</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">
+                Confirmada
+              </span>
+            </div>
+            <h3 class="text-sm font-extrabold text-slate-900 leading-snug">Pousada Recanto dos Corais</h3>
+            <p class="text-[11px] text-slate-500">Bangalô Premium Frente Mar</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span class="text-[10px] uppercase font-semibold text-slate-400 block">Check-in / Check-out</span>
+          <p class="font-bold text-slate-800 text-[11px]">18/04 a 22/04/2026</p>
+          <span class="text-[10px] text-slate-500 font-medium">4 diárias • 2 Adultos + 1 Criança</span>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase font-semibold text-slate-400 block">Valor</span>
+          <p class="font-extrabold text-slate-900 text-sm">R$ 3.120,00</p>
+          <span class="text-[10px] text-emerald-600 font-medium">Pago via PIX</span>
+        </div>
+      </div>
+
+      <div class="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-2">
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">visibility</span>
+          Ver
+        </button>
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-[#EA580C] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">edit</span>
+          Editar
+        </button>
+        <button class="px-3 py-2 rounded-xl bg-[#DC2626] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform" title="Cancelar Reserva">
+          <span class="material-symbols-outlined text-[16px]">cancel</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 3: Garantida / Férias -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+      <div class="flex items-start justify-between">
+        <div class="flex items-start gap-3">
+          <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-black text-sm border border-amber-200">
+            312
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-slate-900">#ZAP-94882</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">
+                Garantida
+              </span>
+            </div>
+            <h3 class="text-sm font-extrabold text-slate-900 leading-snug">Hotel Solar das Dunas</h3>
+            <p class="text-[11px] text-slate-500">Apartamento Família Deluxe</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span class="text-[10px] uppercase font-semibold text-slate-400 block">Check-in / Check-out</span>
+          <p class="font-bold text-slate-800 text-[11px]">10/07 a 17/07/2026</p>
+          <span class="text-[10px] text-slate-500 font-medium">7 diárias • 4 Adultos</span>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase font-semibold text-slate-400 block">Valor</span>
+          <p class="font-extrabold text-slate-900 text-sm">R$ 4.890,00</p>
+          <span class="text-[10px] text-amber-600 font-medium">Sinal 50% Pago</span>
+        </div>
+      </div>
+
+      <div class="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-2">
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">visibility</span>
+          Ver
+        </button>
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-[#EA580C] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">edit</span>
+          Editar
+        </button>
+        <button class="px-3 py-2 rounded-xl bg-[#DC2626] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform" title="Cancelar Reserva">
+          <span class="material-symbols-outlined text-[16px]">cancel</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 4: Concluída / Histórico -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm opacity-95">
+      <div class="flex items-start justify-between">
+        <div class="flex items-start gap-3">
+          <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-black text-sm border border-slate-200">
+            105
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-slate-900">#ZAP-77610</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700">
+                Concluída
+              </span>
+            </div>
+            <h3 class="text-sm font-extrabold text-slate-900 leading-snug">Hotel Master Porto de Galinhas</h3>
+            <p class="text-[11px] text-slate-500">12/01 a 16/01/2026 • R$ 1.980,00</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-2">
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">visibility</span>
+          Ver Detalhes
+        </button>
+        <button class="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-emerald-800 text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-[16px]">replay</span>
+          Repetir
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR OFICIAL (BOTTOM BAR) -->
+  <nav class="fixed bottom-0 left-0 right-0 w-[390px] mx-auto bg-white border-t border-slate-200 px-3 py-2 flex items-center justify-around z-50 shadow-lg">
+    <!-- Estadia -->
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-emerald-800 transition-colors">
+      <span class="material-symbols-outlined text-[22px]">hotel</span>
+      <span class="text-[10px] font-medium">Estadia</span>
+    </a>
+
+    <!-- Minhas Reservas (Ativa) -->
+    <a href="#" class="flex flex-col items-center gap-0.5 text-emerald-800 font-bold">
+      <div class="w-10 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[20px]">calendar_month</span>
+      </div>
+      <span class="text-[10px]">Reservas</span>
+    </a>
+
+    <!-- Pedidos -->
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-emerald-800 transition-colors">
+      <span class="material-symbols-outlined text-[22px]">room_service</span>
+      <span class="text-[10px] font-medium">Pedidos</span>
+    </a>
+
+    <!-- Consumo -->
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-emerald-800 transition-colors">
+      <span class="material-symbols-outlined text-[22px]">receipt_long</span>
+      <span class="text-[10px] font-medium">Consumo</span>
+    </a>
+
+    <!-- Perfil -->
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-emerald-800 transition-colors">
+      <span class="material-symbols-outlined text-[22px]">person</span>
+      <span class="text-[10px] font-medium">Perfil</span>
+    </a>
+  </nav>
+
+</body>
+</html>

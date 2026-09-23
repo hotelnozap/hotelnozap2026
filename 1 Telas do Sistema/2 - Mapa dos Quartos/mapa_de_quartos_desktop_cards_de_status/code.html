@@ -1,0 +1,329 @@
+<!DOCTYPE html><html class="light" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Mapa de Quartos - Hotel no Zap</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed-variant": "#005236",
+                      "secondary": "#006c49",
+                      "on-tertiary": "#ffffff",
+                      "secondary-container": "#6cf8bb",
+                      "on-background": "#0b1c30",
+                      "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                      "on-tertiary-fixed": "#2a1700",
+                      "on-tertiary-container": "#b87500",
+                      "surface": "#f8f9ff",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "secondary-fixed-dim": "#4edea3",
+                      "active-tab-text": "#6cf8bb",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed": "#6ffbbe",
+                      "primary-fixed-dim": "#bec6e0",
+                      "surface-container": "#e5eeff",
+                      "tertiary-container": "#2a1700",
+                      "on-surface": "#0b1c30",
+                      "surface-container-low": "#eff4ff",
+                      "surface-dim": "#cbdbf5",
+                      "tertiary-fixed": "#ffddb8",
+                      "on-surface-variant": "#45464d",
+                      "outline-variant": "#c6c6cd",
+                      "primary-fixed": "#dae2fd",
+                      "inverse-primary": "#bec6e0",
+                      "tertiary": "#000000",
+                      "surface-bg": "#f8f9ff",
+                      "surface-container-high": "#dce9ff",
+                      "primary": "#000000",
+                      "on-error": "#ffffff",
+                      "surface-variant": "#d3e4fe",
+                      "primary-container": "#131b2e",
+                      "surface-tint": "#565e74",
+                      "inverse-surface": "#213145",
+                      "on-secondary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-secondary-container": "#00714d",
+                      "on-error-container": "#93000a",
+                      "sidebar-start": "#003400",
+                      "outline": "#76777d",
+                      "sidebar-end": "#000000",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-container": "#7c839b",
+                      "on-primary-fixed": "#131b2e",
+                      "surface-bright": "#f8f9ff",
+                      "background": "#f8f9ff",
+                      "on-primary": "#ffffff",
+                      "border-subtle": "#c6c6cd",
+                      "on-secondary-fixed": "#002113",
+                      "surface-container-highest": "#d3e4fe"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sidebar-width": "280px",
+                      "gutter": "24px",
+                      "top-bar-height": "64px",
+                      "margin-desktop": "32px",
+                      "unit": "4px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen p-margin-mobile md:p-margin-desktop font-body-md text-body-md antialiased flex flex-col gap-6">
+<!-- Top Action Bar -->
+<header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary">Mapa de Quartos</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Gerencie a disponibilidade e o status dos quartos em tempo real.</p>
+</div>
+<div class="flex gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-surface-container-highest hover:bg-surface-variant text-on-surface border border-border-subtle rounded-xl px-4 py-2 transition-colors">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+<span class="font-label-md text-label-md">Cadastrar Itens</span>
+</button>
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-on-background text-on-primary rounded-xl px-4 py-2 transition-colors shadow-sm">
+<span class="material-symbols-outlined" data-icon="add" style="font-variation-settings: 'FILL' 0;">add</span>
+<span class="font-label-md text-label-md">Novo Quarto</span>
+</button>
+</div>
+</header>
+<!-- Legend & Filters -->
+<section class=""><div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+<!-- Livre KPI -->
+<div class="bg-surface-container-lowest border-l-4 border-secondary-fixed border-y border-r border-outline-variant rounded-xl p-4 shadow-sm flex flex-col gap-1 cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Livre</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-primary">12</span>
+<span class="font-body-md text-body-md text-on-secondary-container">Quartos</span>
+</div>
+</div>
+<!-- Ocupado KPI -->
+<div class="bg-surface-container-lowest border-l-4 border-error border-y border-r border-outline-variant rounded-xl p-4 shadow-sm flex flex-col gap-1 cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Ocupado</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-primary">24</span>
+<span class="font-body-md text-body-md text-error">Quartos</span>
+</div>
+</div>
+<!-- Limpeza KPI -->
+<div class="bg-surface-container-lowest border-l-4 border-tertiary-fixed-dim border-y border-r border-outline-variant rounded-xl p-4 shadow-sm flex flex-col gap-1 cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Em Limpeza</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-primary">5</span>
+<span class="font-body-md text-body-md text-on-tertiary-container">Quartos</span>
+</div>
+</div>
+<!-- Manutenção KPI -->
+<div class="bg-surface-container-lowest border-l-4 border-outline border-y border-r border-outline-variant rounded-xl p-4 shadow-sm flex flex-col gap-1 cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Manutenção</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-primary">2</span>
+<span class="font-body-md text-body-md text-outline">Quartos</span>
+</div>
+</div>
+</div></section>
+<!-- Room Grid -->
+<main class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+<!-- Room Card (Livre) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary-fixed"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">101</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">STANDARD</p>
+</div>
+<div class="bg-secondary-container/20 text-on-secondary-container px-2 py-1 rounded font-label-sm text-label-sm">
+                    Livre
+                </div>
+</div>
+<div class="mt-auto flex justify-between items-center text-on-surface-variant">
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity" data-icon="more_horiz">more_horiz</span>
+<span class="material-symbols-outlined" data-icon="bed">bed</span>
+</div>
+</article>
+<!-- Room Card (Ocupado) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-error"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">102</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">LUXO</p>
+</div>
+<div class="bg-error-container/50 text-on-error-container px-2 py-1 rounded font-label-sm text-label-sm">
+                    Ocupado
+                </div>
+</div>
+<div class="mt-auto flex justify-between items-center text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-error text-[16px]" data-icon="person">person</span>
+<span class="font-body-md text-body-md text-error">João S.</span>
+</div>
+<span class="material-symbols-outlined" data-icon="king_bed">king_bed</span>
+</div>
+</article>
+<!-- Room Card (Em Limpeza) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">103</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">STANDARD</p>
+</div>
+<div class="bg-tertiary-fixed/30 text-on-tertiary-container px-2 py-1 rounded font-label-sm text-label-sm">
+                    Limpeza
+                </div>
+</div>
+<div class="mt-auto flex justify-between items-center text-on-surface-variant">
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity" data-icon="more_horiz">more_horiz</span>
+<span class="material-symbols-outlined text-tertiary-container" data-icon="cleaning_services">cleaning_services</span>
+</div>
+</article>
+<!-- Room Card (Manutenção) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-outline"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-outline">104</h2>
+<p class="font-label-sm text-label-sm text-outline-variant">SUÍTE</p>
+</div>
+<div class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">
+                    Manutenção
+                </div>
+</div>
+<div class="mt-auto flex justify-between items-center text-on-surface-variant">
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity" data-icon="more_horiz">more_horiz</span>
+<span class="material-symbols-outlined text-outline" data-icon="build">build</span>
+</div>
+</article>
+<!-- Room Card (Livre) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary-fixed"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">105</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">STANDARD</p>
+</div>
+<div class="bg-secondary-container/20 text-on-secondary-container px-2 py-1 rounded font-label-sm text-label-sm">
+                    Livre
+                </div>
+</div>
+<div class="mt-auto flex justify-between items-center text-on-surface-variant">
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity" data-icon="more_horiz">more_horiz</span>
+<span class="material-symbols-outlined" data-icon="bed">bed</span>
+</div>
+</article>
+<!-- Room Card (Ocupado) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-error"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">201</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">LUXO</p>
+</div>
+<div class="bg-error-container/50 text-on-error-container px-2 py-1 rounded font-label-sm text-label-sm">
+                    Ocupado
+                </div>
+</div>
+<div class="mt-auto flex justify-between items-center text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-error text-[16px]" data-icon="person">person</span>
+<span class="font-body-md text-body-md text-error">Maria S.</span>
+</div>
+<span class="material-symbols-outlined" data-icon="king_bed">king_bed</span>
+</div>
+</article>
+</main>
+</body></html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Minha Conta - Área do Hóspede | Hotel no Zap</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#003400',
+              deep: '#001a00',
+              primary: '#10B981',
+              emerald: '#059669',
+              amber: '#FDB116',
+              blue: '#2563EB',
+              red: '#DC2626'
+            },
+            surface: {
+              main: '#F8FAFC',
+              card: '#FFFFFF',
+              border: '#E2E8F0',
+              muted: '#64748B'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased h-screen flex overflow-hidden">
+<!-- SIDEBAR DO HÓSPEDE (Degradê #003400 a #000000 Padrão Oficial do Sistema) -->
+<aside class="w-72 bg-gradient-to-b from-[#003400] to-[#000000] text-white flex flex-col justify-between shrink-0 shadow-2xl z-30">
+<!-- Topo da Sidebar -->
+<div>
+<!-- Brand & Hotel Info -->
+<div class="p-6 border-b border-white/10 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shadow-inner">
+<span class="material-symbols-outlined text-2xl">hotel</span>
+</div>
+<div>
+<h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+            HOTEL NO ZAP
+            <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Hóspede</span>
+</h1>
+<p class="text-xs text-emerald-200/70 font-medium">Portal do Hóspede VIP</p>
+</div>
+</div>
+<!-- Resumo do Quarto Atual / Status de Estadia -->
+<div class="mx-4 mt-5 p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
+<div class="w-11 h-11 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg shrink-0">
+          204
+        </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-emerald-300 uppercase tracking-wider">Hospedado</span>
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+</div>
+<p class="text-sm font-bold text-white truncate">Suíte Master King</p>
+<p class="text-[11px] text-slate-400 truncate">Hotel Master Porto de Galinhas</p>
+</div>
+</div>
+<!-- Menus de Navegação -->
+<nav class="mt-6 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 font-semibold text-sm transition-all shadow-sm" href="#dashboard">
+<span class="material-symbols-outlined text-xl text-emerald-400">dashboard</span>
+<span class="">Visão Geral &amp; Estadia</span>
+</a>
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 font-medium text-sm transition-all group" href="#pedidos">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-emerald-400 transition-colors">room_service</span>
+<span class="">Pedidos &amp; Recepção</span>
+</div>
+<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Novo</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 font-medium text-sm transition-all group" href="#minhas-reservas">
+<span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-emerald-400 transition-colors">calendar_month</span>
+<span class="">Minhas Reservas</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 font-medium text-sm transition-all group" href="#dados-cadastrais">
+<span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-emerald-400 transition-colors">badge</span>
+<span class="">Meus Dados</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 font-medium text-sm transition-all group" href="#enderecos">
+<span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-emerald-400 transition-colors">location_on</span>
+<span class="">Endereços Cadastrados</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 font-medium text-sm transition-all group" href="#seguranca">
+<span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-emerald-400 transition-colors">lock</span>
+<span class="">Segurança &amp; Senha</span>
+</a>
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 font-medium text-sm transition-all group" href="#consumo">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-emerald-400 transition-colors">receipt_long</span>
+<span class="">Extrato de Consumo</span>
+</div>
+<span class="text-[11px] font-bold text-amber-300">R$ 180,00</span>
+</a>
+
+</nav>
+</div>
+<!-- Rodapé da Sidebar (Identificação do Hóspede e Sair em Branco Padronizado) -->
+<div class="p-4 border-t border-white/10 bg-black/30">
+<!-- Identificação do Usuário -->
+<div class="flex items-center gap-3 mb-3 px-2 py-1.5 rounded-lg bg-white/5 border border-white/5">
+<div class="relative">
+<img alt="Foto do Hóspede" class="w-10 h-10 rounded-full object-cover border border-emerald-400/50 shadow" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg">
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-black"></span>
+</div>
+<div class="min-w-0 flex-1">
+<p class="text-sm font-bold text-white truncate">Camila Torres</p>
+<p class="text-xs text-slate-400 truncate">camila.torres@gmail.com</p>
+</div>
+</div>
+<!-- Botão Sair Padronizado em Branco -->
+<button class="w-full flex items-center justify-start gap-2.5 px-3 py-2 rounded-lg text-white hover:bg-white/10 transition-colors text-sm font-semibold group">
+<span class="material-symbols-outlined text-lg text-white group-hover:translate-x-0.5 transition-transform">logout</span>
+<span class="">Sair da Conta</span>
+</button>
+</div>
+</aside>
+<!-- ÁREA PRINCIPAL COM SCROLL INTERNO -->
+<div class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+<!-- CABEÇALHO SUPERIOR ELEGANTE -->
+<header class="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 shadow-sm z-20"><div class="flex items-center gap-3">
+  <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Olá, Camila Torres! 👋</h2>
+  <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200">Hóspede VIP</span>
+</div>
+<div class="flex items-center gap-4">
+  <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700">
+    <span class="material-symbols-outlined text-base text-emerald-600">wifi</span>
+    <span class="font-medium">Wi-Fi: <strong class="font-bold text-slate-900">HotelMaster_VIP</strong></span>
+  </div>
+  <button class="relative p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200">
+    <span class="material-symbols-outlined text-xl">notifications</span>
+    <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+  </button>
+  <button class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold shadow-md shadow-[#003400]/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+    <span class="material-symbols-outlined text-base text-emerald-400">room_service</span>
+    <span class="">+ Fazer Pedido</span>
+  </button>
+</div></header>
+<!-- CONTEÚDO SCROLLÁVEL -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+<!-- BANNER HERO DA HOSPEDAGEM ATUAL (Visão de Impacto) -->
+<section class="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white shadow-xl border border-slate-800 p-7">
+<!-- Decoração de Fundo sutil -->
+<div class="absolute -right-10 -bottom-10 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute right-0 top-0 h-full w-1/3 opacity-15 pointer-events-none bg-[radial-gradient(#10B981_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<div class="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+<div class="space-y-3 max-w-2xl">
+<div class="flex items-center gap-2.5">
+<span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                Estadia em Andamento
+              </span>
+<span class="text-xs text-slate-300 font-medium">Reserva #ZAP-88410</span>
+</div>
+<h3 class="text-2xl lg:text-3xl font-black tracking-tight text-white">
+              Suíte Master King com Vista para o Mar
+            </h3>
+<p class="text-sm text-slate-300 leading-relaxed">
+              Check-in realizado em <strong>22/02 às 14:00</strong>. Seu check-out está previsto para <strong>27/02 às 12:00</strong> (5 diárias). Relaxe e aproveite cada instante!
+            </p>
+<!-- Mini badges de comodidades do quarto -->
+<div class="flex flex-wrap gap-2 pt-1">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-slate-200 border border-white/10">
+<span class="material-symbols-outlined text-sm text-emerald-400">king_bed</span> Cama King Size
+              </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-slate-200 border border-white/10">
+<span class="material-symbols-outlined text-sm text-emerald-400">hot_tub</span> Banheira de Hidromassagem
+              </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-slate-200 border border-white/10">
+<span class="material-symbols-outlined text-sm text-emerald-400">ac_unit</span> Ar Climatizado
+              </span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-slate-200 border border-white/10">
+<span class="material-symbols-outlined text-sm text-emerald-400">coffee</span> Cafeteira Nespresso
+              </span>
+</div>
+</div>
+<!-- Card de Ação Rápida no Hero (Chave Virtual / Extrato) -->
+<div class="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/15 flex flex-col sm:flex-row xl:flex-col gap-4 min-w-[280px] shadow-lg"><div class="">
+<div class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Atendimento &amp; Suporte</div>
+<div class="text-2xl font-black text-white flex items-center gap-2 mt-0.5">
+<span class="material-symbols-outlined text-emerald-400 text-3xl">support_agent</span>
+Recepção 24h
+</div>
+<p class="text-[11px] text-emerald-200/80 mt-1">Canal direto com a equipe do hotel</p>
+</div>
+<div class="pt-3 border-t border-white/10 flex flex-col gap-2">
+<button class="w-full py-2.5 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md">
+<span class="material-symbols-outlined text-base">chat</span>
+Falar com Recepção (WhatsApp)
+</button>
+</div></div>
+</div>
+</section>
+<!-- CARDS DE INDICADORES / ATALHOS DO HÓSPEDE (4 Cards no padrão oficial) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"><div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between mb-3">
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico</span>
+    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+      <span class="material-symbols-outlined">hotel</span>
+    </div>
+  </div>
+  <div class="text-2xl font-extrabold text-slate-900">12 Hospedagens</div>
+  <p class="text-xs text-emerald-700 font-medium mt-1 flex items-center gap-1">
+    <span class="material-symbols-outlined text-sm">verified</span> 4 neste ano • Cliente Fiel
+  </p>
+</div>
+<div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between mb-3">
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pontos Fidelidade</span>
+    <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+      <span class="material-symbols-outlined">workspace_premium</span>
+    </div>
+  </div>
+  <div class="text-2xl font-extrabold text-slate-900">2.450 Pontos</div>
+  <p class="text-xs text-purple-700 font-medium mt-1">Nível Ouro (550 pts para Diamante)</p>
+</div>
+<div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between mb-3">
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Estadia Atual</span>
+    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+      <span class="material-symbols-outlined">calendar_month</span>
+    </div>
+  </div>
+  <div class="text-2xl font-extrabold text-slate-900">3 de 5 Diárias</div>
+  <p class="text-xs text-slate-500 mt-1">Check-out: 27/02 às 12h</p>
+</div>
+<div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between mb-3">
+    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Consumo Quarto</span>
+    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+      <span class="material-symbols-outlined">receipt_long</span>
+    </div>
+  </div>
+  <div class="text-2xl font-extrabold text-slate-900">R$ 180,00</div>
+  <div class="flex items-center justify-between mt-1">
+    <span class="text-xs text-slate-500">3 lançamentos no frigobar</span>
+    <a class="text-xs text-emerald-700 font-bold hover:underline" href="#consumo">Ver extrato</a>
+  </div>
+</div></section>
+<!-- DUAS COLUNAS PRINCIPAIS: CENTRAL DE PEDIDOS & EXTRATO DE CONSUMO -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-7">
+<!-- COLUNA ESQUERDA: CENTRAL DE PEDIDOS PARA RECEPÇÃO & SERVIÇOS DE QUARTO (7 Colunas) -->
+<div class="lg:col-span-7 space-y-6">
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+<div class="flex items-center justify-between mb-5 pb-4 border-b border-slate-100"><div class=""><h4 class="text-base font-extrabold text-slate-900 flex items-center gap-2"><span class="material-symbols-outlined text-emerald-600">room_service</span>Ações Rápidas &amp; Pedidos Frequentes</h4><p class="text-xs text-slate-500 mt-0.5">Solicite itens com 1 clique para entrega direta na Suíte 204.</p></div><span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">Atendimento 24h</span></div>
+<!-- Botões Rápidos de Pedidos Pré-definidos -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+<!-- Item 1: Toalhas Extras -->
+<button class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group">
+<div class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-lg">dry_cleaning</span>
+</div>
+<div class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Toalhas Extras</div>
+<p class="text-[11px] text-slate-500">Banho / Piscina (Grátis)</p>
+</button>
+<!-- Item 2: Limpeza do Quarto -->
+<button class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group">
+<div class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-lg">cleaning_services</span>
+</div>
+<div class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Limpeza do Quarto</div>
+<p class="text-[11px] text-slate-500">Camareira agora</p>
+</button>
+<!-- Item 3: Travesseiros Extras -->
+<button class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group">
+<div class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-lg">bed</span>
+</div>
+<div class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Travesseiros</div>
+<p class="text-[11px] text-slate-500">Macio / Firme (Grátis)</p>
+</button>
+<!-- Item 4: Kit Higiene / Amenities -->
+<button class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group">
+<div class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-lg">sanitizer</span>
+</div>
+<div class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Kit Amenities</div>
+<p class="text-[11px] text-slate-500">Shampoo, sabonete</p>
+</button>
+<!-- Item 5: Água Mineral / Frigobar -->
+<button class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group">
+<div class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-lg">water_bottle</span>
+</div>
+<div class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Água Mineral</div>
+<p class="text-[11px] text-slate-500">Com / Sem gás (R$ 6)</p>
+</button>
+<!-- Item 6: Balde de Gelo -->
+<button class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group">
+<div class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-lg">ac_unit</span>
+</div>
+<div class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Balde de Gelo</div>
+<p class="text-[11px] text-slate-500">Entrega rápida</p>
+</button>
+</div>
+<!-- Formulário de Pedido Personalizado com Observação -->
+<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+<label class="block text-xs font-bold text-slate-700">Outra solicitação ou observação especial para o quarto:</label>
+<div class="relative">
+<textarea class="w-full text-xs rounded-lg border border-slate-300 p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ex: Por favor, enviar ferro de passar e tábua ao quarto 204, ou não bater na porta antes das 10h..." rows="2"></textarea>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2 text-slate-500 text-[11px]">
+<span class="material-symbols-outlined text-sm text-emerald-600">bolt</span>
+                  Tempo médio de atendimento: 10 a 15 minutos
+                </div>
+<button class="px-4 py-2 bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">send</span>
+                  Enviar Solicitação
+                </button>
+</div>
+</div>
+<!-- Histórico de Pedidos da Estadia -->
+<div class="mt-6">
+<div class="flex items-center justify-between mb-3">
+<h5 class="text-xs font-bold uppercase tracking-wider text-slate-600">Pedidos Desta Estadia</h5>
+<span class="text-xs text-slate-400">Quarto 204</span>
+</div>
+<div class="space-y-2.5">
+<!-- Pedido 1: Em Preparo -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-base">hourglass_bottom</span>
+</div>
+<div>
+<p class="font-bold text-slate-800">2x Toalhas de Banho Extras + 1x Travesseiro de Pena</p>
+<p class="text-[11px] text-slate-500">Solicitado às 15:10 • A camareira Maria está a caminho</p>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-amber-200/60 text-amber-900 font-extrabold text-[10px] uppercase tracking-wide">
+                    Em Rota
+                  </span>
+</div>
+<!-- Pedido 2: Entregue -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-base">check_circle</span>
+</div>
+<div>
+<p class="font-bold text-slate-800">1x Balde de Gelo + 2x Copos de Vinho</p>
+<p class="text-[11px] text-slate-500">Ontem às 21:40 • Entregue por Recepção</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                    Entregue
+                  </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- COLUNA DIREITA: EXTRATO DE CONSUMO & INFORMAÇÕES DO HOTEL (5 Colunas) -->
+<div class="lg:col-span-5 space-y-6">
+<!-- Card de Extrato de Frigobar e Consumo -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+<div class="flex items-center justify-between pb-4 border-b border-slate-100">
+<div>
+<h4 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-600">receipt_long</span>
+                  Consumo &amp; Frigobar
+                </h4>
+<p class="text-xs text-slate-500 mt-0.5">Lançamentos acumulados no Quarto 204</p>
+</div>
+<span class="text-base font-black text-slate-900">R$ 180,00</span>
+</div>
+<!-- Tabela de Itens Consumidos -->
+<div class="divide-y divide-slate-100 text-xs mt-3">
+<div class="py-2.5 flex items-center justify-between">
+<div>
+<div class="font-semibold text-slate-800">2x Água Mineral sem Gás 500ml</div>
+<div class="text-[11px] text-slate-400">23/02 • 16:30 (Frigobar)</div>
+</div>
+<span class="font-bold text-slate-700">R$ 12,00</span>
+</div>
+<div class="py-2.5 flex items-center justify-between">
+<div>
+<div class="font-semibold text-slate-800">1x Cerveja Artesanal Corona 330ml</div>
+<div class="text-[11px] text-slate-400">23/02 • 20:15 (Bar da Piscina)</div>
+</div>
+<span class="font-bold text-slate-700">R$ 18,00</span>
+</div>
+<div class="py-2.5 flex items-center justify-between">
+<div>
+<div class="font-semibold text-slate-800">1x Porção de Camarão Crocante</div>
+<div class="text-[11px] text-slate-400">23/02 • 21:00 (Restaurante Beira-Mar)</div>
+</div>
+<span class="font-bold text-slate-700">R$ 110,00</span>
+</div>
+<div class="py-2.5 flex items-center justify-between">
+<div>
+<div class="font-semibold text-slate-800">2x Refrigerante Coca-Cola Zero</div>
+<div class="text-[11px] text-slate-400">24/02 • 11:20 (Frigobar)</div>
+</div>
+<span class="font-bold text-slate-700">R$ 16,00</span>
+</div>
+<div class="py-2.5 flex items-center justify-between">
+<div>
+<div class="font-semibold text-slate-800">1x Barra de Chocolate Importado</div>
+<div class="text-[11px] text-slate-400">24/02 • 14:00 (Frigobar)</div>
+</div>
+<span class="font-bold text-slate-700">R$ 24,00</span>
+</div>
+</div>
+<!-- Rodapé do Extrato com opção de pagamento rápido -->
+<div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs text-slate-500">Pagamento no check-out ou via PIX antecipado</span>
+<button class="px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50 text-xs font-bold transition-all">
+                Pagar via PIX
+              </button>
+</div>
+</div>
+<!-- Card de Horários & Serviços do Hotel -->
+<div class="bg-gradient-to-br from-emerald-950 to-[#003400] rounded-2xl text-white p-6 shadow-md border border-emerald-900">
+<h4 class="text-sm font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-lg">info</span>
+              Horários da Pousada
+            </h4>
+<div class="space-y-3 text-xs">
+<div class="flex items-center justify-between border-b border-white/10 pb-2">
+<span class="text-slate-200">Café da Manhã Incluso:</span>
+<span class="font-bold text-white">07:00 às 10:30</span>
+</div>
+<div class="flex items-center justify-between border-b border-white/10 pb-2">
+<span class="text-slate-200">Piscina &amp; Bar Tropical:</span>
+<span class="font-bold text-white">09:00 às 22:00</span>
+</div>
+<div class="flex items-center justify-between border-b border-white/10 pb-2">
+<span class="text-slate-200">Room Service (Cardápio):</span>
+<span class="font-bold text-white">11:00 às 23:00</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-slate-200">Recepção &amp; Portaria:</span>
+<span class="font-bold text-emerald-300">24 Horas Disponível</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+<span class="text-slate-300">Ramal da Recepção: <strong>9</strong></span>
+<a class="text-emerald-300 font-bold hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm">menu_book</span> Cardápio Digital
+              </a>
+</div>
+</div>
+</div>
+</section>
+<!-- SEÇÃO: DADOS CADASTRAIS DO HÓSPEDE (FORMULÁRIO EDITÁVEL) -->
+
+<!-- SEÇÃO: GERENCIAMENTO DE ENDEREÇOS (Múltiplos Endereços: Residencial e Cobrança) -->
+
+<!-- SEÇÃO: SEGURANÇA, ALTERAÇÃO DE SENHA E ACESSO -->
+
+<!-- SEÇÃO: HISTÓRICO DE RESERVAS DO HÓSPEDE (Cards Elegantes com Ações Ver e Avaliar) -->
+
+<!-- RODAPÉ INSTITUCIONAL DISCRETO -->
+<footer class="pt-4 pb-8 text-center text-xs text-slate-400 border-t border-slate-200">
+<p class="">Hotel no Zap © 2026 — Gestão Hoteleira SaaS &amp; Hospitalidade Digital • Central do Hóspede Quarto 204</p>
+</footer>
+</main>
+</div>
+
+
+
+</body></html>

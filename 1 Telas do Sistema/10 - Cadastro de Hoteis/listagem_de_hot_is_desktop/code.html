@@ -1,0 +1,639 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {"darkMode":"class","theme":{"extend":{"colors":{"error-container":"#ffdad6","primary":"#000000","inverse-surface":"#213145","surface-container-low":"#eff4ff","surface-container-lowest":"#ffffff","secondary":"#006c49","surface-container-highest":"#d3e4fe","error":"#ba1a1a","on-tertiary-fixed-variant":"#653e00","border-subtle":"#c6c6cd","active-tab-text":"#6cf8bb","secondary-fixed":"#6ffbbe","on-secondary-fixed-variant":"#005236","on-surface-variant":"#45464d","on-primary-fixed":"#131b2e","on-primary-fixed-variant":"#3f465c","on-error":"#ffffff","secondary-container":"#6cf8bb","surface-tint":"#565e74","primary-container":"#131b2e","on-tertiary":"#ffffff","on-secondary-fixed":"#002113","tertiary":"#000000","surface-dim":"#cbdbf5","tertiary-container":"#2a1700","surface-variant":"#d3e4fe","on-error-container":"#93000a","surface-container":"#e5eeff","on-primary-container":"#7c839b","secondary-fixed-dim":"#4edea3","tertiary-fixed-dim":"#ffb95f","surface-bright":"#f8f9ff","primary-fixed":"#dae2fd","outline-variant":"#c6c6cd","sidebar-start":"#003400","on-secondary":"#ffffff","inverse-primary":"#bec6e0","on-secondary-container":"#00714d","tertiary-fixed":"#ffddb8","active-tab-bg":"rgba(108, 248, 187, 0.2)","surface":"#f8f9ff","on-background":"#0b1c30","primary-fixed-dim":"#bec6e0","outline":"#76777d","sidebar-end":"#000000","on-surface":"#0b1c30","inverse-on-surface":"#eaf1ff","on-tertiary-container":"#b87500","on-tertiary-fixed":"#2a1700","surface-container-high":"#dce9ff","background":"#f8f9ff","surface-bg":"#f8f9ff","on-primary":"#ffffff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"margin-desktop":"32px","top-bar-height":"64px","unit":"4px","gutter":"24px","margin-mobile":"16px","sidebar-width":"280px"},"fontFamily":{"body-md":["Inter"],"body-lg":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"headline-sm":["Inter"],"headline-lg":["Inter"],"label-md":["Inter"]},"fontSize":{"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"20px","fontWeight":"500"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface min-h-screen"><header class="fixed top-0 left-0 right-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-margin-desktop flex items-center justify-between"><div class="flex items-center gap-gutter"><div class="flex items-center gap-2"><div class="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center"><span class="material-symbols-outlined text-on-secondary text-[20px]">hotel</span></div><div class="flex flex-col leading-none"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">Hotel no Zap</span><span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Hospitalidade Digital</span></div></div><nav class="hidden lg:flex items-center gap-2 ml-4" data-active-classes="bg-surface-container text-primary font-bold rounded-xl"><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="catalogo-de-hoteis" href="#">Catálogo</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="destinos-populares" href="#">Destinos</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="meus-favoritos" href="#">Favoritos</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="central-de-reservas-whatsapp" href="#">Atendimento Zap</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="area-do-parceiro" href="#">Painel do Hoteleiro</a></nav></div><div class="flex items-center gap-3"><div class="hidden md:flex items-center bg-surface-container px-3 py-1.5 rounded-full gap-2"><span class="material-symbols-outlined text-secondary text-[18px]">chat</span><span class="font-label-sm text-label-sm text-on-surface font-semibold">Disponibilidade Online</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full">
+<div class="w-full px-margin-desktop py-8 max-w-[1720px] mx-auto flex flex-col gap-6">
+<!-- Voltar para Dashboard link -->
+<div class="flex items-center justify-between">
+<a class="inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors group" href="#">
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+<span class="">Voltar para Dashboard</span>
+</a>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Módulo Hoteleiro SaaS • Versão 3.4</span>
+</div>
+<!-- Header & Top Action Bar -->
+<div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6 pb-2">
+<div class="flex flex-col gap-1.5">
+<div class="flex flex-wrap items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">Hotéis Cadastrados</h1>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-semibold">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+            28 Hotéis Ativos
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Gerencie todas as propriedades, redes, pousadas e resorts ativos na plataforma SaaS.</p>
+</div>
+<!-- Barra de Ações Rápidas do Topo -->
+<div class="flex flex-wrap items-center gap-2.5">
+<!-- Importar -->
+<button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-lowest shadow-sm hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+<span class="">Importar</span>
+</button>
+<!-- Exportar: Fundo Âmbar/Amarelo com texto branco -->
+<button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-on-tertiary-container hover:opacity-90 shadow-sm text-on-tertiary font-label-md text-label-md font-bold transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span class="">Exportar</span>
+</button>
+<!-- Categorias / Redes: Verde Esmeralda -->
+<button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-on-secondary-container shadow-sm text-on-secondary font-label-md text-label-md font-semibold transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">account_tree</span>
+<span class="">Categorias / Redes</span>
+</button>
+<!-- + Novo Hotel: Verde Corporativo Padrão #003400 -->
+<button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sidebar-start hover:bg-black shadow-md text-on-primary font-label-md text-label-md font-bold transition-all hover:scale-[1.01]" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span class="">Novo Hotel</span>
+</button>
+</div>
+</div>
+<!-- Cards de Indicadores (KPIs) 4 em 1 linha -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter">
+<!-- 1. Total de Hotéis -->
+<div class="bg-secondary/10 rounded-xl p-5 shadow-sm flex items-start justify-between relative overflow-hidden">
+<div class="flex flex-col gap-1 z-10">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Total de Hotéis</span>
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">32</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Propriedades cadastradas</span>
+</div>
+<div class="w-12 h-12 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shadow-sm z-10">
+<span class="material-symbols-outlined text-[26px]">hotel</span>
+</div>
+<div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-secondary/15 pointer-events-none"></div>
+</div>
+<!-- 2. Hotéis Ativos -->
+<div class="bg-surface-container-high rounded-xl p-5 shadow-sm flex items-start justify-between relative overflow-hidden">
+<div class="flex flex-col gap-1 z-10">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-primary-fixed-variant font-bold">Hotéis Ativos</span>
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">28</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Operando regularmente</span>
+</div>
+<div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center shadow-sm z-10">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-surface-variant/40 pointer-events-none"></div>
+</div>
+<!-- 3. Quartos Gerenciados -->
+<div class="bg-tertiary-fixed rounded-xl p-5 shadow-sm flex items-start justify-between relative overflow-hidden">
+<div class="flex flex-col gap-1 z-10">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-tertiary-fixed-variant font-bold">Quartos Gerenciados</span>
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">864</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Quartos ativos no sistema</span>
+</div>
+<div class="w-12 h-12 rounded-xl bg-on-tertiary-container text-on-tertiary flex items-center justify-center shadow-sm z-10">
+<span class="material-symbols-outlined text-[26px]">bed</span>
+</div>
+<div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-tertiary-fixed-dim/40 pointer-events-none"></div>
+</div>
+<!-- 4. Conexões WhatsApp Ativas -->
+<div class="bg-surface-container-low rounded-xl p-5 shadow-sm flex items-start justify-between relative overflow-hidden">
+<div class="flex flex-col gap-1 z-10">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold">Conexões WhatsApp</span>
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">42</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-xs">Instâncias conectadas</span>
+</div>
+<div class="w-12 h-12 rounded-xl bg-inverse-surface text-inverse-on-surface flex items-center justify-center shadow-sm z-10">
+<span class="material-symbols-outlined text-[26px]">chat</span>
+</div>
+<div class="absolute -right-3 -bottom-3 w-20 h-20 rounded-full bg-surface-container-high/60 pointer-events-none"></div>
+</div>
+</div>
+<!-- Barra de Busca e Filtros -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+<div class="flex flex-1 flex-col md:flex-row items-stretch md:items-center gap-3">
+<!-- Input de Busca -->
+<div class="relative flex-1 min-w-[260px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded-xl placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container" placeholder="Buscar por hotel, CNPJ, cidade ou responsável..." type="text">
+</div>
+<!-- Filtro Dropdown Cidade/UF -->
+<div class="relative min-w-[200px]">
+<select aria-label="Filtrar por Cidade e UF" class="w-full appearance-none pl-3.5 pr-9 py-2.5 bg-surface-container-low text-on-surface font-label-md text-label-md rounded-xl focus:outline-none focus:bg-surface-container cursor-pointer">
+<option value="">Todas as Cidades / UF</option>
+<option value="porto-de-galinhas">Porto de Galinhas / PE</option>
+<option value="maragogi">Maragogi / AL</option>
+<option value="noronha">Fernando de Noronha / PE</option>
+<option value="gravata">Gravatá / PE</option>
+<option value="recife">Recife / PE</option>
+<option value="tamandare">Tamandaré / PE</option>
+<option value="gramado">Gramado / RS</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">expand_more</span>
+</div>
+<!-- Filtro Plano de Assinatura -->
+<div class="relative min-w-[170px]">
+<select aria-label="Filtrar por Plano de Assinatura" class="w-full appearance-none pl-3.5 pr-9 py-2.5 bg-surface-container-low text-on-surface font-label-md text-label-md rounded-xl focus:outline-none focus:bg-surface-container cursor-pointer">
+<option value="">Todos os Planos</option>
+<option value="enterprise">Enterprise</option>
+<option value="professional">Professional</option>
+<option value="starter">Starter</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">expand_more</span>
+</div>
+<!-- Filtro Status -->
+<div class="relative min-w-[170px]">
+<select aria-label="Filtrar por Status de Operação" class="w-full appearance-none pl-3.5 pr-9 py-2.5 bg-surface-container-low text-on-surface font-label-md text-label-md rounded-xl focus:outline-none focus:bg-surface-container cursor-pointer">
+<option value="">Todos os Status</option>
+<option value="ativo">Ativo</option>
+<option value="implantacao">Em Implantação</option>
+<option value="bloqueado">Bloqueado / Inadimplente</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Alternância de Exibição Lista / Grade -->
+<div class="flex items-center self-end xl:self-center gap-1 bg-surface-container-low p-1 rounded-xl">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold shadow-sm inline-flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+<span class="">Lista</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-medium inline-flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">grid_view</span>
+<span class="">Grade</span>
+</button>
+</div>
+</div>
+<!-- Tabela de Listagem de Hotéis de Alta Fidelidade -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left min-w-[1240px]">
+<thead>
+<tr class="bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+<th class="py-4 px-5" scope="col">Propriedade</th>
+<th class="py-4 px-4" scope="col">Cidade / UF</th>
+<th class="py-4 px-4" scope="col">Plano</th>
+<th class="py-4 px-4 text-center" scope="col">Quartos</th>
+<th class="py-4 px-4 text-center" scope="col">Instâncias Zap</th>
+<th class="py-4 px-4" scope="col">Responsável &amp; Contato</th>
+<th class="py-4 px-4 text-center" scope="col">Status</th>
+<th class="py-4 px-5 text-center" scope="col">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface font-body-md text-body-md">
+<!-- Hotel 1 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-5">
+<div class="flex items-center gap-3.5">
+<img class="w-13 h-13 w-12 h-12 rounded-xl object-cover shadow-sm bg-surface-container" data-alt="Luxury beachfront resort hotel in Porto de Galinhas Pernambuco with palm trees, blue swimming pool, and tropical sunshine, high architectural quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUq0sh9wPvxx7iDDV9B3hLwuPgNXY-lzy2Mbenhn6bt0-h0zJ7JdXdi7l3dKov5QHKBKh8VINnIH3iotReZu5Q7q3uhU8YDOzY8ilui6VwWkCDji0fYrQRiDwORTQdIvLv4CPIj5UJ4hMunxI0v9rrkvwnjfxvPnEEor2wd7D5pTphnMv3OD3dkuL9fxpH6uaNpcrh9T4y__ZxzOxq0cJmy4YEp91uPyhhtfiPoIbBZ3L-s1r_CLXm">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">Hotel Master Porto de Galinhas</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">star</span>
+                      Resort 5 estrelas • CNPJ 12.345.678/0001-90
+                    </span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">location_on</span>
+<span class="">Ipojuca / PE</span>
+</div>
+<span class="text-xs text-on-surface-variant">Praia do Cupe</span>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">diamond</span>
+                  Enterprise
+                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">64</span>
+<span class="block text-xs text-on-surface-variant">suítes</span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                  3 instâncias
+                </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Marcos Andrade</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-secondary">phone</span>
+                    (81) 99876-5432
+                  </span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5">
+<div class="flex items-center justify-center gap-1.5">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-variant text-on-primary-fixed-variant hover:bg-primary-container hover:text-on-primary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                    Ver
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed hover:bg-on-tertiary-container hover:text-on-tertiary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+                    Editar
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Hotel 2 -->
+<tr class="bg-surface-container-low/30 hover:bg-surface-container-low/70 transition-colors">
+<td class="py-4 px-5">
+<div class="flex items-center gap-3.5">
+<img class="w-12 h-12 rounded-xl object-cover shadow-sm bg-surface-container" data-alt="Cozy boutique inn in Maragogi Alagoas with modern rustic wooden decor, white linens, hammock, and ocean view in bright morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3YT54NlVN99q-bIYlKfGkrgbFMbxW7LKKVQxn23WvjXoINCPZKJi4hrmww4IH0uFEw2FYJHeF3YVCCffKtIQvIrt4BzJZQ0vIUmQ85wg4VflZJdBaXZBW0DuPpNxFNwyHnl4ovAt3z2eKcbC5MFzX00ZjVSJKbiwxwVGi1MjwCX-K-Oj0cNsLW73sDNAhMxkMr1AJKbLhJRzWq7qqdIQHptOLXZNDGMI7qmtIaloipZnker2z0Des">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">Pousada Brisa Marítima</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">spa</span>
+                      Pousada Boutique • CNPJ 23.456.789/0001-12
+                    </span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">location_on</span>
+<span class="">Maragogi / AL</span>
+</div>
+<span class="text-xs text-on-surface-variant">Praia de Antunes</span>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">workspace_premium</span>
+                  Professional
+                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">18</span>
+<span class="block text-xs text-on-surface-variant">quartos</span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                  2 instâncias
+                </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Juliana Paes</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-secondary">phone</span>
+                    (82) 98765-4321
+                  </span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5">
+<div class="flex items-center justify-center gap-1.5">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-variant text-on-primary-fixed-variant hover:bg-primary-container hover:text-on-primary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                    Ver
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed hover:bg-on-tertiary-container hover:text-on-tertiary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+                    Editar
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Hotel 3 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-5">
+<div class="flex items-center gap-3.5">
+<img class="w-12 h-12 rounded-xl object-cover shadow-sm bg-surface-container" data-alt="Massive all-inclusive resort with expansive lagoon swimming pool, water park elements, tropical landscaping, and coastal paradise background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXPHJ48666I-Ou3oFS5lmFXpn_Nzgo2H2BqUq-GreUEJk_aTtw69otYOQKzP8hJerz74ckMjo3E_fwJlTiP9vkX5Oz8VEsVo_KmuRvVDTPeqonlARDktFgTTc5svTqE73GzB2LQVJ2hGTdwF026pOKM6B7LKNhJVAki2Ff_1h456egDCW4POWR1HR_cnM52KuT6voSwDQy_g76ynasPYeEYlcxWl4jZWDt80uHuUFrx2zhbOMu1m1N">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">Grand Sol Maragogi Resort</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">pool</span>
+                      Resort All-Inclusive • CNPJ 34.567.890/0001-45
+                    </span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">location_on</span>
+<span class="">Maragogi / AL</span>
+</div>
+<span class="text-xs text-on-surface-variant">Praia de Burgalhau</span>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">diamond</span>
+                  Enterprise
+                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">120</span>
+<span class="block text-xs text-on-surface-variant">apartamentos</span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                  5 instâncias
+                </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Roberto Lima</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-secondary">phone</span>
+                    (82) 99123-4567
+                  </span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5">
+<div class="flex items-center justify-center gap-1.5">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-variant text-on-primary-fixed-variant hover:bg-primary-container hover:text-on-primary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                    Ver
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed hover:bg-on-tertiary-container hover:text-on-tertiary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+                    Editar
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Hotel 4 -->
+<tr class="bg-surface-container-low/30 hover:bg-surface-container-low/70 transition-colors">
+<td class="py-4 px-5">
+<div class="flex items-center gap-3.5">
+<img class="w-12 h-12 rounded-xl object-cover shadow-sm bg-surface-container" data-alt="Charming mountain farm hotel chalets surrounded by green pine trees, misty hills, stone fireplace chimneys, and sunny morning dew in Gravatá." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4QAmerrfY45KuRtphEm_sPMFgQNA_rJI3CjdIADL1NrJppikUNzAUcR5fLhCB8xKY88KJWR6IX2C8L9PQOFo5N0XON5IuuMVENWlN9T6KqayYnhmvsxUCncUUR1_G3QVUI_Pg0UXk6-QLI_WQYeZLIRLI-DHOqsttx2MGjP4sBPmhXFehYYI0B4iaMTn0pS-YIb0zucLmBBdvkj03Z9vFRplMzp57iZpY6Xf-NE-ZefV0gw456Bh5">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">Eco Ville Chalés &amp; Spa</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">forest</span>
+                      Hotel Fazenda • CNPJ 45.678.901/0001-78
+                    </span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">location_on</span>
+<span class="">Gravatá / PE</span>
+</div>
+<span class="text-xs text-on-surface-variant">Serra das Russas</span>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+                  Starter
+                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">12</span>
+<span class="block text-xs text-on-surface-variant">chalés</span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                  1 instância
+                </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Camila Torres</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-secondary">phone</span>
+                    (81) 98456-7890
+                  </span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5">
+<div class="flex items-center justify-center gap-1.5">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-variant text-on-primary-fixed-variant hover:bg-primary-container hover:text-on-primary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                    Ver
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed hover:bg-on-tertiary-container hover:text-on-tertiary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+                    Editar
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Hotel 5 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-5">
+<div class="flex items-center gap-3.5">
+<img class="w-12 h-12 rounded-xl object-cover shadow-sm bg-surface-container" data-alt="Modern high-rise corporate executive hotel in Boa Viagem Recife with glass facade, illuminated urban street entrance, and contemporary lobby." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDonizmdddO7-U48Kr1Ht2X6d__hwSJGxHMVT1fuOqFohg5CiDUzNoG3j5Wml9nVJrMxrJYjPDir1k2PAxVXLIYIy-NP3mbZGUfoUQK74SKrTDhczQrfnujhHWSUI-pXAV53Bh1Gsaz_XVnqqWKmkF3KzqB0k_UFNVdrPDuDdrXs9SKO2pfdz6MtkLMm0oBRcaLVnZnn5zrzhfQvNov1ruy4J4PB6MRtbbe7Nz8CLAaGcvcNLltFDtM">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">Solar das Palmeiras Hotel</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">business</span>
+                      Hotel Executivo • CNPJ 56.789.012/0001-34
+                    </span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">location_on</span>
+<span class="">Recife / PE</span>
+</div>
+<span class="text-xs text-on-surface-variant">Boa Viagem</span>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">workspace_premium</span>
+                  Professional
+                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">35</span>
+<span class="block text-xs text-on-surface-variant">apartamentos</span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                  2 instâncias
+                </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Eduardo Neves</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-secondary">phone</span>
+                    (81) 99234-5678
+                  </span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                  Em Implantação
+                </span>
+</td>
+<td class="py-4 px-5">
+<div class="flex items-center justify-center gap-1.5">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-variant text-on-primary-fixed-variant hover:bg-primary-container hover:text-on-primary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                    Ver
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed hover:bg-on-tertiary-container hover:text-on-tertiary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+                    Editar
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Hotel 6 -->
+<tr class="bg-surface-container-low/30 hover:bg-surface-container-low/70 transition-colors">
+<td class="py-4 px-5">
+<div class="flex items-center gap-3.5">
+<img class="w-12 h-12 rounded-xl object-cover shadow-sm bg-surface-container" data-alt="Quaint beachfront guesthouse in Tamandare with thatched roof verandas, colorful gardens, warm coastal lighting, and direct sand beach access." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYHC1aJ9PleDr4V9lK1DEeWo-ql7A4B8fz2Ekn8Fn0OZJMu40cspI0OzcpCJOoeNsBvPACC8m3Pgj7NVDQewRXo1iv5F52pBVNNe7dQHAfpQX6uW0TI1zYAHgKoH743mxTGGZ977DbcwNX_KnXdHlG14TqL4WuMfYTJ1vBFDOFe8L1avRTBaqrpduhO6_OfAzF1VWKlRbhH3aRZgSHhfhPcQvUuKwU3Px0R1AwNiQeWsijsp76GaGq">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface leading-snug">Pousada do Sossego Beira-Mar</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">beach_access</span>
+                      Pousada Familiar • CNPJ 67.890.123/0001-56
+                    </span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">location_on</span>
+<span class="">Tamandaré / PE</span>
+</div>
+<span class="text-xs text-on-surface-variant">Praia dos Carneiros</span>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+                  Starter
+                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">8</span>
+<span class="block text-xs text-on-surface-variant">suítes</span>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                  1 instância
+                </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Fernanda Rocha</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-secondary">phone</span>
+                    (81) 98112-2334
+                  </span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary/15 text-secondary font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5">
+<div class="flex items-center justify-center gap-1.5">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-variant text-on-primary-fixed-variant hover:bg-primary-container hover:text-on-primary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                    Ver
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed hover:bg-on-tertiary-container hover:text-on-tertiary font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+                    Editar
+                  </button>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-bold transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Rodapé de Paginação -->
+<div class="py-4 px-6 bg-surface-container-low flex flex-col md:flex-row items-center justify-between gap-4">
+<span class="font-body-md text-body-md text-on-surface-variant">
+          Exibindo <span class="font-semibold text-on-surface">1</span> a <span class="font-semibold text-on-surface">6</span> de <span class="font-semibold text-on-surface">32</span> hotéis cadastrados
+        </span>
+<!-- Botões de Paginação -->
+<div class="flex items-center gap-1">
+<!-- Anterior -->
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md font-medium inline-flex items-center gap-1 transition-all disabled:opacity-50" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+<span class="">Anterior</span>
+</button>
+<!-- Página 1: Verde corporativo #003400 com texto branco -->
+<button class="w-9 h-9 rounded-lg bg-sidebar-start text-on-primary font-label-md text-label-md font-bold flex items-center justify-center shadow-sm" type="button">
+            1
+          </button>
+<!-- Página 2 -->
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-label-md text-label-md font-medium flex items-center justify-center transition-colors" type="button">
+            2
+          </button>
+<!-- Página 3 -->
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-label-md text-label-md font-medium flex items-center justify-center transition-colors" type="button">
+            3
+          </button>
+<!-- Página 4 -->
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-label-md text-label-md font-medium flex items-center justify-center transition-colors" type="button">
+            4
+          </button>
+<!-- Próxima -->
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md font-medium inline-flex items-center gap-1 transition-all" type="button">
+<span class="">Próxima</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Rodapé Institucional Sutil -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 text-on-surface-variant">
+<span class="font-label-sm text-label-sm font-medium">Hotel no Zap © 2026 — Gestão Hoteleira Inteligente</span>
+<div class="flex items-center gap-4">
+<a class="font-label-sm text-label-sm hover:text-on-surface transition-colors" href="#">Termos de Serviço</a>
+<span class="">•</span>
+<a class="font-label-sm text-label-sm hover:text-on-surface transition-colors" href="#">Política de Privacidade</a>
+<span class="">•</span>
+<a class="font-label-sm text-label-sm hover:text-on-surface transition-colors" href="#">Suporte Técnico</a>
+</div>
+</div>
+</div>
+</div></main><footer class="w-full bg-surface-container-low mt-margin-desktop py-8 border-t border-border-subtle/40"><div class="w-full px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-4"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-lg bg-secondary flex items-center justify-center"><span class="material-symbols-outlined text-on-secondary text-[14px]">hotel</span></div><span class="font-label-md text-label-md text-on-surface font-semibold">Hotel no Zap © 2025</span><span class="font-body-md text-body-md text-on-surface-variant">— Rede Inteligente de Pousadas e Hotéis</span></div><div class="flex items-center gap-6"><span class="font-label-sm text-label-sm text-on-surface-variant">Central de Reservas via WhatsApp</span><span class="font-label-sm text-label-sm text-on-surface-variant">Termos de Uso</span><span class="font-label-sm text-label-sm text-on-surface-variant">Privacidade</span></div></div></footer>
+
+</body></html>

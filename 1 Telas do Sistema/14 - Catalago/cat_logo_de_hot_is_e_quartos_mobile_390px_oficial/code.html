@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {"darkMode":"class","theme":{"extend":{"colors":{"error-container":"#ffdad6","primary":"#000000","inverse-surface":"#213145","surface-container-low":"#eff4ff","surface-container-lowest":"#ffffff","secondary":"#006c49","surface-container-highest":"#d3e4fe","error":"#ba1a1a","on-tertiary-fixed-variant":"#653e00","border-subtle":"#c6c6cd","active-tab-text":"#6cf8bb","secondary-fixed":"#6ffbbe","on-secondary-fixed-variant":"#005236","on-surface-variant":"#45464d","on-primary-fixed":"#131b2e","on-primary-fixed-variant":"#3f465c","on-error":"#ffffff","secondary-container":"#6cf8bb","surface-tint":"#565e74","primary-container":"#131b2e","on-tertiary":"#ffffff","on-secondary-fixed":"#002113","tertiary":"#000000","surface-dim":"#cbdbf5","tertiary-container":"#2a1700","surface-variant":"#d3e4fe","on-error-container":"#93000a","surface-container":"#e5eeff","on-primary-container":"#7c839b","secondary-fixed-dim":"#4edea3","tertiary-fixed-dim":"#ffb95f","surface-bright":"#f8f9ff","primary-fixed":"#dae2fd","outline-variant":"#c6c6cd","sidebar-start":"#003400","on-secondary":"#ffffff","inverse-primary":"#bec6e0","on-secondary-container":"#00714d","tertiary-fixed":"#ffddb8","active-tab-bg":"rgba(108, 248, 187, 0.2)","surface":"#f8f9ff","on-background":"#0b1c30","primary-fixed-dim":"#bec6e0","outline":"#76777d","sidebar-end":"#000000","on-surface":"#0b1c30","inverse-on-surface":"#eaf1ff","on-tertiary-container":"#b87500","on-tertiary-fixed":"#2a1700","surface-container-high":"#dce9ff","background":"#f8f9ff","surface-bg":"#f8f9ff","on-primary":"#ffffff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"margin-desktop":"32px","top-bar-height":"64px","unit":"4px","gutter":"24px","margin-mobile":"16px","sidebar-width":"280px"},"fontFamily":{"body-md":["Inter"],"body-lg":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"headline-sm":["Inter"],"headline-lg":["Inter"],"label-md":["Inter"]},"fontSize":{"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"20px","fontWeight":"500"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface min-h-screen"><header class="fixed top-0 left-0 right-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-margin-desktop flex items-center justify-between"><div class="flex items-center gap-gutter"><div class="flex items-center gap-2"><div class="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center"><span class="material-symbols-outlined text-on-secondary text-[20px]">hotel</span></div><div class="flex flex-col leading-none"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">Hotel no Zap</span><span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Hospitalidade Digital</span></div></div><nav class="hidden lg:flex items-center gap-2 ml-4" data-active-classes="bg-surface-container text-primary font-bold rounded-xl"><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="catalogo-de-hoteis" href="#">Catálogo</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="destinos-populares" href="#">Destinos</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="meus-favoritos" href="#">Favoritos</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="central-de-reservas-whatsapp" href="#">Atendimento Zap</a><a class="px-3 py-2 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl transition-all" data-path="area-do-parceiro" href="#">Painel do Hoteleiro</a></nav></div><div class="flex items-center gap-3"><div class="hidden md:flex items-center bg-surface-container px-3 py-1.5 rounded-full gap-2"><span class="material-symbols-outlined text-secondary text-[18px]">chat</span><span class="font-label-sm text-label-sm text-on-surface font-semibold">Disponibilidade Online</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full pb-24 max-w-[420px] mx-auto">
+<!-- Top Location & Subheader Hero -->
+<div class="bg-gradient-to-b from-primary-container via-surface-container to-surface px-4 pt-4 pb-5 rounded-b-3xl shadow-sm">
+<!-- Top Action Bar -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<button aria-label="Menu" class="w-9 h-9 rounded-xl bg-surface-container-lowest/80 text-on-surface flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">menu</span>
+</button>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight uppercase">Hotel no Zap</span>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Notificações" class="w-9 h-9 rounded-xl bg-surface-container-lowest/80 text-on-surface flex items-center justify-center shadow-sm relative active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary"></span>
+</button>
+<div class="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center text-on-secondary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</div>
+</div>
+</div>
+<!-- Verified City Badge -->
+<div class="flex items-center gap-1.5 bg-surface-container-lowest/90 px-3 py-1.5 rounded-full shadow-sm w-fit mb-3">
+<span class="material-symbols-outlined text-secondary text-[18px]">location_on</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">Porto de Galinhas, PE</span>
+<span class="inline-flex items-center gap-1 bg-secondary-container/30 px-2 py-0.5 rounded-full text-on-secondary-container font-label-sm text-label-sm font-semibold ml-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+        Reserva Instantânea Zap
+      </span>
+</div>
+<!-- Title & Description -->
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight leading-snug mb-1">
+      Hotéis e Pousadas em Porto de Galinhas, PE
+    </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">
+      Confira as melhores opções de hospedagem verificadas em Porto de Galinhas, PE com reserva direta pelo WhatsApp.
+    </p>
+<!-- Value Props Badges -->
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-surface-container-lowest/95 rounded-xl p-2.5 flex items-center gap-2 shadow-sm">
+<div class="w-7 h-7 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-[16px]">bolt</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-sm text-label-sm font-bold text-on-surface leading-tight">Sem Intermediários</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Confirmação em minutos</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest/95 rounded-xl p-2.5 flex items-center gap-2 shadow-sm">
+<div class="w-7 h-7 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-[16px]">support_agent</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-sm text-label-sm font-bold text-on-surface leading-tight">Concierge no Zap</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Atendimento 24h</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Search & Filter Card -->
+<div class="px-4 -mt-2">
+<div class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm space-y-3">
+<!-- Destino -->
+<div class="flex items-center gap-3 bg-surface-container-low px-3.5 py-2.5 rounded-xl">
+<span class="material-symbols-outlined text-secondary text-[20px]">travel_explore</span>
+<div class="flex-1 min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant block uppercase font-semibold">Destino selecionado</span>
+<span class="font-label-md text-label-md font-bold text-on-surface block truncate">Porto de Galinhas, PE</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<!-- Datas -->
+<div class="flex items-center gap-2 bg-surface-container-low px-3 py-2.5 rounded-xl">
+<span class="material-symbols-outlined text-secondary text-[18px]">calendar_today</span>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant block font-medium">Período</span>
+<span class="font-label-sm text-label-sm font-bold text-on-surface truncate block">18 Nov — 23 Nov (5 nts)</span>
+</div>
+</div>
+<!-- Hóspedes & Quartos -->
+<div class="flex items-center gap-2 bg-surface-container-low px-3 py-2.5 rounded-xl">
+<span class="material-symbols-outlined text-secondary text-[18px]">group</span>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant block font-medium">Hóspedes</span>
+<span class="font-label-sm text-label-sm font-bold text-on-surface truncate block">2 Ad, 1 Cr • 1 Qto</span>
+</div>
+</div>
+</div>
+<!-- Buscar CTA -->
+<button class="w-full bg-secondary hover:bg-secondary/90 active:scale-[0.99] text-on-secondary py-3 px-4 rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[20px]">search</span>
+<span>Buscar Vagas</span>
+</button>
+</div>
+</div>
+<!-- Horizontal Quick Filters Bar -->
+<div class="px-4 mt-4">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-nowrap">
+<button class="bg-secondary text-on-secondary px-3.5 py-1.5 rounded-full font-label-md text-label-md font-semibold shadow-sm flex items-center gap-1.5 shrink-0">
+<span>Todos (48)</span>
+</button>
+<button class="bg-surface-container-low hover:bg-surface-container text-on-surface px-3.5 py-1.5 rounded-full font-label-md text-label-md font-medium shrink-0 flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px] text-secondary">pool</span>
+<span>Piscina</span>
+</button>
+<button class="bg-surface-container-low hover:bg-surface-container text-on-surface px-3.5 py-1.5 rounded-full font-label-md text-label-md font-medium shrink-0 flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px] text-secondary">wifi</span>
+<span>Wi-Fi 5G</span>
+</button>
+<button class="bg-surface-container-low hover:bg-surface-container text-on-surface px-3.5 py-1.5 rounded-full font-label-md text-label-md font-medium shrink-0 flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px] text-secondary">free_breakfast</span>
+<span>Café Incluso</span>
+</button>
+<button class="bg-surface-container-low hover:bg-surface-container text-on-surface px-3.5 py-1.5 rounded-full font-label-md text-label-md font-medium shrink-0 flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px] text-secondary">pets</span>
+<span>Pet Friendly</span>
+</button>
+<button class="bg-surface-container-low hover:bg-surface-container text-on-surface px-3.5 py-1.5 rounded-full font-label-md text-label-md font-medium shrink-0 flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px] text-secondary">waves</span>
+<span>Vista Mar</span>
+</button>
+<button class="bg-surface-container-high text-on-surface px-3 py-1.5 rounded-full font-label-md text-label-md font-semibold shrink-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Mais</span>
+</button>
+</div>
+</div>
+<!-- Sub-header & Dropdown Bar -->
+<div class="px-4 mt-4 mb-2 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+        48 acomodações encontradas
+      </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Porto de Galinhas</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<!-- Bairros Select -->
+<div class="relative bg-surface-container-lowest rounded-xl px-3 py-2 shadow-sm flex items-center justify-between">
+<div class="min-w-0 pr-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant block font-medium">Bairro</span>
+<select class="bg-transparent font-label-md text-label-md font-bold text-on-surface w-full appearance-none outline-none truncate cursor-pointer">
+<option>Todos os Bairros (48)</option>
+<option>Vila / Centro (14)</option>
+<option>Praia de Muro Alto (12)</option>
+<option>Pontal de Maracaípe (8)</option>
+<option>Praia do Cupe (9)</option>
+<option>Enseada de Serrambi (5)</option>
+</select>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] pointer-events-none">expand_more</span>
+</div>
+<!-- Order Select -->
+<div class="relative bg-surface-container-lowest rounded-xl px-3 py-2 shadow-sm flex items-center justify-between">
+<div class="min-w-0 pr-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant block font-medium">Ordenar</span>
+<select class="bg-transparent font-label-md text-label-md font-bold text-on-surface w-full appearance-none outline-none truncate cursor-pointer">
+<option>Mais recomendados</option>
+<option>Menor preço</option>
+<option>Melhor avaliação</option>
+<option>Perto da praia</option>
+</select>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] pointer-events-none">swap_vert</span>
+</div>
+</div>
+</div>
+<!-- SECTION A: ⭐ Os Queridinhos da Cidade -->
+<div class="px-4 mt-5 space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[20px]">⭐</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Os Queridinhos da Cidade</h2>
+</div>
+<span class="bg-secondary-container/40 text-on-secondary-container font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-full">
+        Nota 4.9+
+      </span>
+</div>
+<!-- Hotel Card 1 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Exquisite suite in Porto de Galinhas beachfront boutique pousada with private hot tub, canopy bed, linen sheets, warm wooden accents and sunlit balcony overlooking turquoise natural coral pools." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAO-KoIg9ldd_dcB3IpuwZiiUoHUP-WxxRSng7075SmUiOqhnWo9AOytM8jJI8Un6XuapQWAkjCn1lmCYpJeeH8fyN33sdy4iNvrx2RrokYbcos_QxlUZ4AaoYhsAy52XRhcqQsirIuEf1X_Hu4t1lcGAkTDS9UfYSNS30Mchei1midcK5uJPhiJjpao2vg-QEIqNAWiEatd30HCJS-iW7Xu5UC__D88H2BeTG2KdTOqeGr9XK9RDR3"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3 flex items-center gap-1.5">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+<span class="bg-surface-container-lowest/90 text-on-surface text-[11px] font-semibold px-2 py-0.5 rounded-full shadow-sm">
+            Destaque
+          </span>
+</div>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/90 text-on-surface text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">photo_camera</span>
+          1/8 fotos
+        </div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Vila / Centro</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.90</span>
+<span class="text-on-surface-variant font-normal">(128)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Pousada Morada das Águas</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Suíte Master King com Hidro privativa</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">king_bed</span> 1 Cama King
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">ac_unit</span> Ar Silent
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">wifi</span> Wi-Fi 5G
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">free_breakfast</span> Café Incluso
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 480</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Cancelamento grátis até 7 dias</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 2.400</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Hotel Card 2 -->
+<div class="bg-surface-container-lowest rounded-2xl border-subtle overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Charming chalet at Pontal de Maracaipe with coconut palm trees garden, eco-luxe wood veranda, outdoor plunge pool and warm evening garden lantern lighting in northeastern Brazil." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFfy7HnQDjgMUDIAxErcoAunzOBiUXy4RQ4KFIAGZa1ORpgOd3bI6Xjdjp_MTHMsrlUEN0J06JQX2HLL2lZbwcYZgYDcHrsJyFL9rBAE_BWyBNwtrbosRGdnUnu201m2lwCYB41_O-FQJx8fss2ex2xZVThgYfxdnBCz-VVw7_Vui-neBn9YsF6Cn_wmABHRjL5otlvVrcmQsBdvCZUz2fHBxxF339HoNbZ5YGavstDtfOFrHveLIt"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/90 text-on-surface text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">photo_camera</span>
+          1/6 fotos
+        </div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Pontal de Maracaípe</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.98</span>
+<span class="text-on-surface-variant font-normal">(94)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Château Serra da Estrela</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Chalé Premium com Varanda e Rede</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">king_bed</span> 1 Cama King
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">nature_people</span> Deck Privativo
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">wifi</span> Wi-Fi Fibra
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">free_breakfast</span> Brunch Artesanal
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 620</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Sem taxa de reserva</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 3.100</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Hotel Card 3 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Serrambi beach panoramic oceanfront suite with private plunge pool, panoramic glass sliding door, elegant contemporary wooden decor and tropical garden terrace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYtonKuj4PHOSvWWkQ3zSvnZx-Muf57tu1Lbqm8Un87mAxTuB3xiZg_st5R3mBwUXDLUddYLSjhDiSZHzy6HNlTi_bG-Fsrun4joIKtZyDGZFvxNkuTwhxqYAhJiVFCZFX-BYOZelZbhKiCv755IVO_aiw1iiD-EAVvGwCT0ykbK64eI-D_BpoTez5HS91WELrBTGCbE3w37UfITznRX9xQ4ThddkqztLGvMeRaIHMZVOjg7_BOM1y"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/90 text-on-surface text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">photo_camera</span>
+          1/10 fotos
+        </div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Enseada de Serrambi</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.92</span>
+<span class="text-on-surface-variant font-normal">(112)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Villa Bella Vista Pousada</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Suíte Imperial com Piscina Privativa</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">pool</span> Piscina Privativa
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">group</span> Até 4 Hóspedes
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">beach_access</span> Pé na Areia
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 690</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Café incluso no deck</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 3.450</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Hotel Card 4 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Modern premium beach hotel room at Praia de Muro Alto with clean lines, white linen bed, balcony view to turquoise sea pools, bright daylight and tropical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFzcYnbgzwe93YmfeyP7w-LQtmIZcLb0Cvza5W-x1oz3BbqvxQ_VVNn2FmiUbE9xKoykwxwSHmpxzAFD-atW-8iDzEGMMaaOnFYN0uSruYSh4dp5guWFe71YJ9pJNQcSWszdMtfk6Y6H16PX2ldvtubbm9QPc19ZviN9tBmNtc0fbiCZ6dcB35zUWEYPW3zg9Cn-IRUTa5I-Xl7WYuR5PNL3HM5YGh4oQKM40bbnFqePnVwoMeyohC"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/90 text-on-surface text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">photo_camera</span>
+          1/7 fotos
+        </div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Praia de Muro Alto</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.96</span>
+<span class="text-on-surface-variant font-normal">(168)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Pousada Solar da Praia Prime</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Suíte Master Luxo com Vista Mar</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">waves</span> Frente Mar
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">bathtub</span> Jacuzzi
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">wifi</span> Alta Velocidade
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 520</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Confirmação instantânea</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 2.600</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION B: 🏖️ Beira-Mar & Pousadas de Charme -->
+<div class="px-4 mt-8 space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[20px]">🏖️</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Beira-Mar & Charme</h2>
+</div>
+<span class="bg-secondary-container/40 text-on-secondary-container font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-full">
+        Pé na Areia
+      </span>
+</div>
+<!-- Hotel Card B1 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Tropical bungalow with wooden deck right over golden sand at Praia do Cupe, Porto de Galinhas, hammock swinging, clear blue sky, natural reef backdrop and palm trees." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA30SO_TVBNxbiCDZMFOphUrOQTWB67elWd37TkYsKf2e-oCHAfxjFvgU3lhQp_woH1Tcd-TMADkyPaOD7biHTusqbgW3O00-Zw36lX8KEWoi5EkG5CWaaycobkOji8fOLYZ53i20ZqjPD7Q3o8nrkmpRlxgdIxzcJAgc7EObhxKl8fvB6XJ0PpgKD0Jfl6wOB_eMersrThsfQDCbj7s5xIElxjHjGRYAugd_CaV298LHRqr07lDGGK"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Praia do Cupe</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.88</span>
+<span class="text-on-surface-variant font-normal">(81)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Boutique Hotel Mar Azul</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Bangalô Tropical com Deck Privativo</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">beach_access</span> Pé na Areia
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">deck</span> Deck com Rede
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">local_bar</span> Serviço de Praia
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 540</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Café tropical incluso</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 2.700</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Hotel Card B2 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Modern executive suite with floor-to-ceiling windows looking at the ocean and natural pools in the center of Porto de Galinhas, sleek furniture, high comfort amenities." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiMCPWDoBZ983Iv-OyHbBtc265D4UNlDSLA9LJAwwzz9Vj0TbL4wA4PRnl5tSEXcTHRNb6WMmJUzRi5wYQOVJnmO4NCQrklDk30MEOO_WznCBClOr7NhyWI_qgSOW-35vjXnxoz1MTG5UBYpTrCJjaUCHVzwx8ozwJl216HPvjmboaig57WqF1QT_GD6fzgIhr3p7NDH_XQGvy-ge8RdYJVxRkPV2Qwqn-J-zAfk0goggh9K4uSCSn"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Beira-Mar Centro</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.85</span>
+<span class="text-on-surface-variant font-normal">(210)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Grand Hotel Executive Prime</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Studio Executivo com Vista Panorâmica</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">business_center</span> Home Office
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">fitness_center</span> Academia
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">wifi</span> Wi-Fi 500MB
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 410</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Melhor custo-benefício</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 2.050</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Hotel Card B3 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Rustic chic bungalow suite with thatched roof, natural wicker decor, open-air stone shower and lush green garden path leading to sea in Pontal de Maracaipe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyEKLd1aTaTrMNV9yTXcYRvPTQpKS3HBJ2kfpgDYOpmb_z8zTYh7KUQbkal-T6lCi8b7Zv48DFqCZa4MJY_V7NcuS7neo9IEfaBbNKGlWtUx5Zmtjs0eWxtH-0z_xRd6x4eWwFv6lLt3PiTOzXdSnzteIvmV5rx70pezYdTI0R-ceDOG4jecGJo1dfMnMfqU9QxlEdaVE-e0XG8Lzc8pEDBmrDnC2EEyStua5VrgiJqdy9tnZCMkVe"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Pontal de Maracaípe</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.89</span>
+<span class="text-on-surface-variant font-normal">(145)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Pousada Recanto dos Corais</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Bangalô Rústico Chic com Jardim Exclusivo</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">kayaking</span> Passeio de Jangada
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">spa</span> Ducha Natural
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">wifi</span> Wi-Fi
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 490</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Ideal para casais</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 2.450</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card Promo/CTA Intermediário -->
+<div class="bg-gradient-to-r from-primary via-primary-container to-secondary p-5 rounded-2xl text-on-primary shadow-sm space-y-3">
+<div class="flex items-center gap-2">
+<span class="w-8 h-8 rounded-lg bg-secondary-container/20 flex items-center justify-center text-active-tab-text">
+<span class="material-symbols-outlined text-[20px]">beach_access</span>
+</span>
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-secondary-fixed">Exclusividade Pé na Areia</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-primary">Quer exclusividade pé na areia?</h3>
+<p class="font-body-md text-body-md text-on-primary/80 mt-1">
+          Nosso time local filtra e envia em tempo real pelo WhatsApp as melhores suítes com saída direta para os corais.
+        </p>
+</div>
+<button class="w-full bg-secondary-container hover:bg-secondary-fixed text-on-secondary-fixed py-2.5 px-4 rounded-xl font-label-md text-label-md font-bold flex items-center justify-center gap-2 shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+        Consultar Pousadas Pé na Areia
+      </button>
+</div>
+</div>
+<!-- SECTION C: 💎 Resorts & Estrutura Completa -->
+<div class="px-4 mt-8 space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[20px]">💎</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Resorts & All-Inclusive</h2>
+</div>
+<span class="bg-secondary-container/40 text-on-secondary-container font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-full">
+        Complexo Resort
+      </span>
+</div>
+<!-- Hotel Card C1 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Luxury eco-resort swimming pool lagoon at Praia de Muro Alto with private cabanas, pristine calm beach, upscale guest buildings with glass balconies." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqSdbySiHOoK53_65mA0NvhCJ2SawjPLe6QD6neLJgAF9MbcGIgVfgeWS9A-3MH5-b2l6Yj15ldyYH64Zo1Vf0LAbNjc6DDaCDDISkWCDROLAlsmCVNafkMSMYqvfB765-FexWDKofcgm8v7_ptncSLTJCmLa4lv0NS8OHeLLb1MWvhsOaOcsNOawP3jRyqt9MTp-S3UAQppmE9UU3ysEzLTWoQ7_G8zdkmN1fkWzAD4PGX8-DqwSt"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Praia de Muro Alto</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.95</span>
+<span class="text-on-surface-variant font-normal">(342)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Resort Praia Dourada Luxo</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Apartamento Luxo com Ampla Varanda</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">pool</span> Parque Aquático
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">restaurant</span> 3 Restaurantes
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">child_care</span> Espaço Kids
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 890</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Meia pensão inclusa</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 4.450</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Hotel Card C2 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Expansive family resort suite with lush botanical garden surroundings, multiple bedrooms, modern Brazilian seaside architecture and palm-lined walkways." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB9epv-RCVfqvQ6VTeuUNIaQsAIVIh68QdEMlDiYf3zzagz78OyKOUN9Fkq5KIoCk-8q45zrSqB8odaP1sNOX-ALxIZQkqcpB09pGidBut30Cz8q4JD-DC_s9E-r_yE_QXiSIUW3uhwr6vODbcTIAAsRTWDPCcJGqsSbmtGi0codhve9OcEfMcoxYL-2ok8XUaxe1QaHskJaNNah9PfHSyla2UmrkWVO27Oo3zuu5C3Lh9kFwyLO_f"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Muro Alto</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.91</span>
+<span class="text-on-surface-variant font-normal">(189)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Porto Tropical Eco Resort</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Suíte Família com Acesso ao Parque</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">family_restroom</span> Ideal p/ Família
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">sports_tennis</span> Quadras de Tênis
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">dinner_dining</span> All Inclusive
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 1.150</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">Tudo incluso 24h</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 5.750</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Hotel Card C3 -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm flex flex-col">
+<div class="relative h-48 w-full bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="High-end oceanfront resort in Praia do Cupe with sparkling blue sea, sandy beach sun loungers, stylish terrace restaurant and modern premium architecture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3hvVpXlhMFpcbGPkjMn54jBylho8mnyRMcDC3nn-bAu0LhnSiPG371Qsx-pYVhBjxzpIvri_Jw9NpRF_juZ8L0NRJvGI-3IK4AXR3FmpmnsZepbURSgTkW2cNRsDieEOfr7gcoX67ZP9tynlAeS86TG9BYQTByV10iUZu3dYQgaqq0TUQ4IlI1MHg5VTb78kN6ov54MrSQs22IzgDUHB8VX-kHbSUPs7In85mJy_oRwlbCsqKgT3q"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3">
+<span class="bg-secondary text-on-secondary text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">chat</span>
+            Reserva WhatsApp
+          </span>
+</div>
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-on-primary">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm font-semibold">Praia do Cupe</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="text-secondary font-bold">★ 4.93</span>
+<span class="text-on-surface-variant font-normal">(280)</span>
+</div>
+</div>
+</div>
+<div class="p-4 flex flex-col space-y-3">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Marupiara Ocean Resort</h3>
+<p class="font-label-md text-label-md text-secondary font-semibold">Apartamento Familiar All Inclusive</p>
+</div>
+<div class="flex items-center gap-3 py-1 text-on-surface-variant overflow-x-auto no-scrollbar text-nowrap">
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">pool</span> Piscinas Naturais
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">restaurant_menu</span> Buffet Gourmet
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">nightlife</span> Recreação Noturna
+          </span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 980</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium"> / noite</span>
+<span class="block font-label-sm text-label-sm text-secondary font-semibold">All Inclusive</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Total 5 diárias</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">R$ 4.900</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button class="w-full bg-surface-container text-on-surface hover:bg-surface-container-high py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all text-center">
+            Ver Detalhes
+          </button>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-2.5 px-3 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Reservar no Zap</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card Suporte a Grupos & Eventos -->
+<div class="bg-surface-container-low rounded-2xl p-4 shadow-sm flex items-center gap-3">
+<div class="w-11 h-11 rounded-xl bg-secondary/15 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-[22px]">diversity_3</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Bloqueio para Grupos & Famílias</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tarifas especiais negociadas no atacado para mais de 3 quartos.</p>
+</div>
+<button class="bg-secondary text-on-secondary px-3 py-2 rounded-xl font-label-sm text-label-sm font-bold shrink-0 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+        Cotar
+      </button>
+</div>
+</div>
+<!-- Concierge Help Banner -->
+<div class="px-4 mt-8">
+<div class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex flex-col items-center text-center space-y-3">
+<div class="w-12 h-12 rounded-2xl bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[28px]">support_agent</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Não encontrou as datas que desejava?</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">
+          Nosso Concierge Zap consulta vagas canceladas ou quartos de reserva técnica diretamente com os proprietários.
+        </p>
+</div>
+<button class="w-full bg-secondary hover:bg-secondary/90 text-on-secondary py-3 px-4 rounded-xl font-label-md text-label-md font-bold flex items-center justify-center gap-2 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+        Falar com Concierge Zap no WhatsApp
+      </button>
+</div>
+</div>
+<!-- Pagination Controls -->
+<div class="px-4 mt-6 flex flex-col items-center gap-3">
+<div class="flex items-center gap-2">
+<button class="w-9 h-9 rounded-xl bg-secondary text-on-secondary font-label-md text-label-md font-bold flex items-center justify-center shadow-sm">1</button>
+<button class="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-bold flex items-center justify-center transition-colors">2</button>
+<button class="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-bold flex items-center justify-center transition-colors">3</button>
+<button class="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-bold flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+<button class="w-full bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-bold py-3 rounded-xl transition-colors text-center">
+      Carregar Mais Hotéis em Porto de Galinhas
+    </button>
+</div>
+<!-- Mobile Floating / Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[420px] mx-auto bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 px-3 py-2">
+<div class="grid grid-cols-5 items-center">
+<button class="flex flex-col items-center gap-0.5 text-secondary">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="font-label-sm text-label-sm font-bold">Explorar</span>
+</button>
+<button class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-secondary">
+<span class="material-symbols-outlined text-[22px]">calendar_month</span>
+<span class="font-label-sm text-label-sm font-medium">Reservas</span>
+</button>
+<button class="flex flex-col items-center -mt-4 group">
+<div class="w-12 h-12 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-md group-active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[24px]">chat</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-secondary mt-1">Concierge</span>
+</button>
+<button class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-secondary">
+<span class="material-symbols-outlined text-[22px]">favorite</span>
+<span class="font-label-sm text-label-sm font-medium">Favoritos</span>
+</button>
+<button class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-secondary">
+<span class="material-symbols-outlined text-[22px]">account_circle</span>
+<span class="font-label-sm text-label-sm font-medium">Perfil</span>
+</button>
+</div>
+</div>
+</div></main><footer class="w-full bg-surface-container-low mt-margin-desktop py-8 border-t border-border-subtle/40"><div class="w-full px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-4"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded-lg bg-secondary flex items-center justify-center"><span class="material-symbols-outlined text-on-secondary text-[14px]">hotel</span></div><span class="font-label-md text-label-md text-on-surface font-semibold">Hotel no Zap © 2025</span><span class="font-body-md text-body-md text-on-surface-variant">— Rede Inteligente de Pousadas e Hotéis</span></div><div class="flex items-center gap-6"><span class="font-label-sm text-label-sm text-on-surface-variant">Central de Reservas via WhatsApp</span><span class="font-label-sm text-label-sm text-on-surface-variant">Termos de Uso</span><span class="font-label-sm text-label-sm text-on-surface-variant">Privacidade</span></div></div></footer></body></html>

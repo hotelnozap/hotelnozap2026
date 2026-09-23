@@ -1,0 +1,66 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        'primary-container': '#131b2e',
+        'error': '#ba1a1a',
+        'sidebar-start': '#003400',
+        'on-secondary-fixed-variant': '#005236',
+        'surface-container-low': '#eff4ff',
+        'active-tab-bg': 'rgba(108, 248, 187, 0.2)',
+        'surface-bg': '#f8f9ff',
+        'on-primary-container': '#7c839b',
+        'on-secondary-fixed': '#002113',
+        'inverse-on-surface': '#eaf1ff',
+        'primary-fixed': '#dae2fd',
+        'surface-bright': '#f8f9ff',
+        'tertiary-container': '#2a1700',
+        'on-primary-fixed': '#131b2e',
+        'outline': '#76777d',
+        'surface': '#f8f9ff',
+        'on-error': '#ffffff',
+        'secondary-container': '#6cf8bb',
+        'on-surface': '#0b1c30',
+        'tertiary': '#000000',
+        'secondary-fixed-dim': '#4edea3',
+        'on-secondary': '#ffffff',
+        'active-tab-text': '#6cf8bb',
+        'surface-variant': '#d3e4fe',
+        'secondary': '#006c49',
+        'inverse-primary': '#bec6e0',
+        'tertiary-fixed': '#ffddb8',
+        'surface-container-lowest': '#ffffff',
+        'on-tertiary-container': '#b87500',
+        'on-tertiary-fixed': '#2a1700',
+        'inverse-surface': '#213145',
+        'tertiary-fixed-dim': '#ffb95f',
+        'surface-container-high': '#dce9ff',
+        'on-primary-fixed-variant': '#3f465c',
+        'background': '#f8f9ff',
+        'on-secondary-container': '#00714d',
+        'on-surface-variant': '#45464d',
+        'on-error-container': '#93000a',
+        'surface-tint': '#565e74',
+        'surface-container-highest': '#d3e4fe',
+        'primary': '#000000',
+        'outline-variant': '#c6c6cd',
+        'on-tertiary-fixed-variant': '#653e00',
+        'sidebar-end': '#000000',
+        'border-subtle': '#c6c6cd',
+        'surface-dim': '#cbdbf5',
+        'on-primary': '#ffffff',
+        'error-container': '#ffdad6',
+        'on-background': '#0b1c30',
+        'primary-fixed-dim': '#bec6e0',
+        'secondary-fixed': '#6ffbbe',
+        'surface-container': '#e5eeff'
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif']
+      }
+    }
+  },
+  plugins: []
+};

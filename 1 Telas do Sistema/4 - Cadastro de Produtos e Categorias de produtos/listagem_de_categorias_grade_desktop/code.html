@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Listagem de Categorias - Hotel no Zap</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN com plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              green: '#00875A',
+              emerald: '#00966D',
+              blue: '#2563EB',
+              amber: '#F59E0B',
+              orange: '#EA580C',
+              red: '#DC2626',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-layout">
+    body {
+      background-color: #F8FAFC;
+      color: #1E293B;
+    }
+  </style>
+</head>
+<body class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans antialiased text-slate-800">
+<!-- BEGIN: PageWrapper -->
+<main class="max-w-7xl mx-auto space-y-6" data-purpose="categories-management-container">
+<!-- BEGIN: TopNavigationAndKPIs -->
+<section class="flex flex-col lg:flex-row lg:items-center justify-between gap-6" data-purpose="header-section">
+<!-- Left: Title and Breadcrumb Navigation -->
+<div class="space-y-1">
+<a class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors gap-2" href="#dashboard">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+          Voltar para Dashboard
+        </a>
+<h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Listagem de Categorias</h1>
+<p class="text-sm text-slate-500">Gerencie as categorias de produtos e serviços do hotel.</p>
+</div>
+<!-- Right: Summary Metric Cards (KPIs) -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full lg:w-auto" data-purpose="kpi-cards">
+<!-- Metric 1: Categorias Ativas -->
+<div class="bg-amber-50/60 border border-amber-200/70 rounded-xl p-4 flex flex-col justify-between min-w-[145px] sm:min-w-[160px] relative">
+<div class="flex items-center justify-between">
+<span class="text-xs font-medium text-slate-700">Categorias Ativas</span>
+<div class="w-4 h-4 rounded-full border border-amber-500 flex items-center justify-center text-amber-600">
+<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+<div class="mt-2">
+<span class="text-2xl font-bold text-slate-900">18</span>
+<div class="flex items-center text-xs font-medium text-amber-700 mt-0.5 gap-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Em operação</span>
+</div>
+</div>
+</div>
+<!-- Metric 2: Total Produtos -->
+<div class="bg-blue-50/60 border border-blue-200/70 rounded-xl p-4 flex flex-col justify-between min-w-[145px] sm:min-w-[160px]">
+<div class="flex items-center justify-between">
+<span class="text-xs font-medium text-slate-700">Total Produtos</span>
+<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-2">
+<span class="text-2xl font-bold text-slate-900">328</span>
+<div class="flex items-center text-xs font-medium text-blue-700 mt-0.5 gap-1">
+<span>#</span>
+<span>Vinculados</span>
+</div>
+</div>
+</div>
+<!-- Metric 3: Sem Itens -->
+<div class="bg-rose-50/60 border border-rose-200/70 rounded-xl p-4 flex flex-col justify-between min-w-[145px] sm:min-w-[160px]">
+<div class="flex items-center justify-between">
+<span class="text-xs font-medium text-slate-700">Sem Itens</span>
+<svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-2">
+<span class="text-2xl font-bold text-slate-900">2</span>
+<div class="flex items-center text-xs font-medium text-rose-600 mt-0.5 gap-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+<path d="M12 8v4m0 4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Requer atenção</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: TopNavigationAndKPIs -->
+<!-- BEGIN: MainContentPanel -->
+<section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" data-purpose="main-categories-panel">
+<!-- BEGIN: ActionToolbar -->
+<div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4" data-purpose="toolbar-filters">
+<!-- Left: Search & Filter Controls -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Search Input -->
+<div class="relative min-w-[240px] sm:w-64 flex-1 sm:flex-initial">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+<input class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all" placeholder="Buscar categorias..." type="text"/>
+</div>
+<!-- Status Dropdown Filter -->
+<div class="relative">
+<select class="appearance-none bg-white border border-slate-200 rounded-lg text-sm text-slate-700 py-2 pl-3.5 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+<option>Todos os Status</option>
+<option>Ativo</option>
+<option>Inativo</option>
+</select>
+<span class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<!-- Reset Filter Button -->
+<button class="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors" type="button">
+<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Limpar Filtros</span>
+</button>
+</div>
+<!-- Right: View Switcher and Action Buttons -->
+<div class="flex flex-wrap items-center justify-between sm:justify-end gap-2.5">
+<!-- View Toggle (List vs Grid) -->
+<div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+<!-- List View (Inactive) -->
+<button class="p-1.5 rounded-md text-slate-500 hover:text-slate-800 transition-colors" title="Visualização em Lista" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</button>
+<!-- Grid View (Active) -->
+<button class="p-1.5 rounded-md bg-white text-blue-600 shadow-sm border border-slate-200/50" title="Visualização em Grade" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Import Button -->
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Importar</span>
+</button>
+<!-- Export Button -->
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Exportar</span>
+</button>
+<!-- New Category Button -->
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Nova Categoria</span>
+</button>
+</div>
+</div>
+<!-- END: ActionToolbar -->
+<!-- BEGIN: CategoryCardsGrid -->
+<div class="p-5 sm:p-6" data-purpose="grid-container">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+<!-- Card #01: Bebidas -->
+<div class="border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-white" data-purpose="category-card">
+<div>
+<!-- Top Row: Icon and Status Badge -->
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+<!-- Bottle/Glass icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9.75 3.75h4.5M10.5 3.75v3.75a3 3 0 01-1.06 2.29L6.5 12.25a3 3 0 00-.94 2.25v4.25a1.5 1.5 0 001.5 1.5h10a1.5 1.5 0 001.5-1.5v-4.25a3 3 0 00-.94-2.25l-2.94-2.46A3 3 0 0113.5 7.5V3.75" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  Ativo
+                </span>
+</div>
+<!-- Identification & Name -->
+<div class="space-y-1">
+<span class="text-xs font-medium text-slate-400">#01</span>
+<h3 class="text-base font-semibold text-slate-900 leading-snug">Bebidas</h3>
+<p class="text-xs text-slate-500 line-clamp-2 min-h-[32px]">Refrigerantes, sucos, cervejas e águas minerais</p>
+</div>
+<!-- Product Counter -->
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+<span class="text-slate-400">Produtos vinculados</span>
+<span class="text-sm font-bold text-slate-900">48</span>
+</div>
+</div>
+<!-- Card Bottom: Action Buttons -->
+<div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100" data-purpose="card-actions">
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Ver
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Editar
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Excluir
+              </button>
+</div>
+</div>
+<!-- Card #02: Snacks & Petiscos -->
+<div class="border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-white" data-purpose="category-card">
+<div>
+<!-- Top Row -->
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+<!-- Cake / Snack icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 15.5c0 .83-.67 1.5-1.5 1.5h-15C3.67 17 3 16.33 3 15.5v-3C3 11.67 3.67 11 4.5 11h15c.83 0 1.5.67 1.5 1.5v3zM4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2M8 11V7m4 4V7m4 4V7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  Ativo
+                </span>
+</div>
+<!-- Identification & Name -->
+<div class="space-y-1">
+<span class="text-xs font-medium text-slate-400">#02</span>
+<h3 class="text-base font-semibold text-slate-900 leading-snug">Snacks &amp; Petiscos</h3>
+<p class="text-xs text-slate-500 line-clamp-2 min-h-[32px]">Batatas, amendoins, biscoitos e chocolates</p>
+</div>
+<!-- Product Counter -->
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+<span class="text-slate-400">Produtos vinculados</span>
+<span class="text-sm font-bold text-slate-900">32</span>
+</div>
+</div>
+<!-- Card Bottom: Actions -->
+<div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100" data-purpose="card-actions">
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Ver
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Editar
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Excluir
+              </button>
+</div>
+</div>
+<!-- Card #03: Higiene & Amenities -->
+<div class="border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-white" data-purpose="category-card">
+<div>
+<!-- Top Row -->
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+<!-- Bottle/Cosmetics icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  Ativo
+                </span>
+</div>
+<!-- Identification & Name -->
+<div class="space-y-1">
+<span class="text-xs font-medium text-slate-400">#03</span>
+<h3 class="text-base font-semibold text-slate-900 leading-snug">Higiene &amp; Amenities</h3>
+<p class="text-xs text-slate-500 line-clamp-2 min-h-[32px]">Kits dentais, sabonetes artesanais, xampus e condicionadores</p>
+</div>
+<!-- Product Counter -->
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+<span class="text-slate-400">Produtos vinculados</span>
+<span class="text-sm font-bold text-slate-900">24</span>
+</div>
+</div>
+<!-- Card Bottom: Actions -->
+<div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100" data-purpose="card-actions">
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Ver
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Editar
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Excluir
+              </button>
+</div>
+</div>
+<!-- Card #04: Bebidas Alcoólicas -->
+<div class="border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-white" data-purpose="category-card">
+<div>
+<!-- Top Row -->
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+<!-- Wine Glass / Screen icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  Ativo
+                </span>
+</div>
+<!-- Identification & Name -->
+<div class="space-y-1">
+<span class="text-xs font-medium text-slate-400">#04</span>
+<h3 class="text-base font-semibold text-slate-900 leading-snug">Bebidas Alcoólicas</h3>
+<p class="text-xs text-slate-500 line-clamp-2 min-h-[32px]">Vinhos selecionados, destilados e cervejas especiais</p>
+</div>
+<!-- Product Counter -->
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+<span class="text-slate-400">Produtos vinculados</span>
+<span class="text-sm font-bold text-slate-900">18</span>
+</div>
+</div>
+<!-- Card Bottom: Actions -->
+<div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100" data-purpose="card-actions">
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Ver
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Editar
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Excluir
+              </button>
+</div>
+</div>
+<!-- Card #05: Enxoval & Extras -->
+<div class="border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-white" data-purpose="category-card">
+<div>
+<!-- Top Row -->
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+<!-- Bed / Linens icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  Ativo
+                </span>
+</div>
+<!-- Identification & Name -->
+<div class="space-y-1">
+<span class="text-xs font-medium text-slate-400">#05</span>
+<h3 class="text-base font-semibold text-slate-900 leading-snug">Enxoval &amp; Extras</h3>
+<p class="text-xs text-slate-500 line-clamp-2 min-h-[32px]">Toalhas adicionais, travesseiros extras e roupões</p>
+</div>
+<!-- Product Counter -->
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+<span class="text-slate-400">Produtos vinculados</span>
+<span class="text-sm font-bold text-slate-900">15</span>
+</div>
+</div>
+<!-- Card Bottom: Actions -->
+<div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100" data-purpose="card-actions">
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Ver
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Editar
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Excluir
+              </button>
+</div>
+</div>
+<!-- Card #06: Lavanderia Express (Inativo e Sem Produtos) -->
+<div class="border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:shadow-md transition-shadow bg-white" data-purpose="category-card">
+<div>
+<!-- Top Row -->
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+<!-- Box / Package icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                  Inativo
+                </span>
+</div>
+<!-- Identification & Name -->
+<div class="space-y-1">
+<span class="text-xs font-medium text-slate-400">#06</span>
+<h3 class="text-base font-semibold text-slate-900 leading-snug">Lavanderia Express</h3>
+<p class="text-xs text-slate-500 line-clamp-2 min-h-[32px]">Serviços adicionais de lavanderia por peça</p>
+</div>
+<!-- Product Counter (0 Products in Red) -->
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+<span class="text-slate-400">Produtos vinculados</span>
+<span class="text-sm font-bold text-red-600">0</span>
+</div>
+</div>
+<!-- Card Bottom: Actions -->
+<div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100" data-purpose="card-actions">
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Ver
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Editar
+              </button>
+<button class="inline-flex items-center justify-center gap-1 py-1.5 px-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Excluir
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- END: CategoryCardsGrid -->
+<!-- BEGIN: PaginationFooter -->
+<footer class="p-4 sm:px-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-500" data-purpose="pagination-footer">
+<div>
+          Mostrando <span class="font-semibold text-slate-800">1</span> a <span class="font-semibold text-slate-800">6</span> de <span class="font-semibold text-slate-800">18</span> resultados
+        </div>
+<!-- Pagination Controls -->
+<nav aria-label="Navegação da listagem" class="inline-flex items-center -space-x-px rounded-md border border-slate-200 bg-white">
+<!-- Previous Button -->
+<button class="px-3 py-1.5 text-slate-400 hover:bg-slate-50 rounded-l-md border-r border-slate-200 transition-colors" disabled="" type="button">
+<span class="sr-only">Anterior</span>
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Page 1 (Active) -->
+<button aria-current="page" class="px-3.5 py-1.5 text-xs font-semibold bg-emerald-900 text-white hover:bg-emerald-950 transition-colors" type="button">
+            1
+          </button>
+<!-- Page 2 -->
+<button class="px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 border-l border-r border-slate-200 transition-colors" type="button">
+            2
+          </button>
+<!-- Page 3 -->
+<button class="px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 border-r border-slate-200 transition-colors" type="button">
+            3
+          </button>
+<!-- Next Button -->
+<button class="px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-r-md transition-colors" type="button">
+<span class="sr-only">Próxima</span>
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</nav>
+</footer>
+<!-- END: PaginationFooter -->
+</section>
+<!-- END: MainContentPanel -->
+</main>
+<!-- END: PageWrapper -->
+</body></html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Detalhes do Produto - Hotel no Zap</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<!-- Tailwind CSS v3 CDN with forms and container-queries plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#003400',
+              primary: '#008000',
+              accent: '#25D366',
+            },
+            status: {
+              active: '#10B981',
+              warning: '#F59E0B',
+              danger: '#DC2626',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scroll-and-visuals">
+    /* Fix mobile width precisely to 390px */
+    body {
+      font-family: 'Inter', sans-serif;
+      width: 390px;
+      margin: 0 auto;
+      background-color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Custom subtle scrollbar for the modal body */
+    .modal-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .modal-scroll::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    .modal-scroll::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen bg-slate-900 text-slate-800 overflow-x-hidden">
+<!-- BEGIN: BackgroundLayer -->
+<!-- Contextual background simulating the Mobile Products Listing of 'Hotel no Zap' -->
+<div class="fixed inset-0 w-[390px] h-full overflow-hidden pointer-events-none z-0 select-none bg-slate-100 flex flex-col">
+<!-- Background Header -->
+<header class="bg-gradient-to-r from-[#003400] to-black text-white px-4 py-3 shadow-md flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[#25D366] text-2xl">hotel</span>
+<span class="font-black tracking-wider text-base uppercase">Hotel no Zap</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-slate-300 text-xl">notifications</span>
+<div class="w-7 h-7 rounded-full bg-emerald-700 flex items-center justify-center text-xs font-bold">G</div>
+</div>
+</header>
+<!-- Simulated Top Metrics & Search -->
+<div class="p-3 space-y-2.5 opacity-60 filter blur-[0.5px]">
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-white p-3 rounded-xl border border-slate-200">
+<p class="text-[11px] text-slate-500">Total de Produtos</p>
+<p class="text-lg font-bold text-slate-800">1.248</p>
+</div>
+<div class="bg-white p-3 rounded-xl border border-slate-200">
+<p class="text-[11px] text-slate-500">Sem Estoque</p>
+<p class="text-lg font-bold text-red-600">24</p>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-slate-200 p-2 flex items-center gap-2 text-xs text-slate-400">
+<span class="material-symbols-outlined text-sm">search</span>
+<span>Buscar produto por nome ou código...</span>
+</div>
+<!-- Simulated Product Cards in background -->
+<div class="space-y-2">
+<div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+<div class="h-3 w-3/4 bg-slate-200 rounded mb-1"></div>
+<div class="h-2.5 w-1/2 bg-slate-100 rounded"></div>
+</div>
+<div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+<div class="h-3 w-2/3 bg-slate-200 rounded mb-1"></div>
+<div class="h-2.5 w-1/3 bg-slate-100 rounded"></div>
+</div>
+<div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+<div class="h-3 w-4/5 bg-slate-200 rounded mb-1"></div>
+<div class="h-2.5 w-2/5 bg-slate-100 rounded"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- END: BackgroundLayer -->
+<!-- BEGIN: ModalBackdropAndContainer -->
+<!-- Dark overlay with smooth blur over background -->
+<div class="relative z-10 w-[390px] min-h-screen bg-black/65 backdrop-blur-sm flex flex-col justify-center items-center px-3 py-4">
+<!-- Modal Card Container -->
+<main class="w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200/80 flex flex-col max-h-[92vh] animate-fadeIn" data-purpose="product-detail-modal">
+<!-- BEGIN: ModalHeader -->
+<header class="bg-[#003400] text-white px-4 py-3.5 flex items-center justify-between shrink-0 shadow-md">
+<!-- Title and Badges -->
+<div class="flex items-center space-x-2 overflow-hidden">
+<span class="material-symbols-outlined text-[#25D366] text-xl shrink-0">inventory_2</span>
+<h1 class="text-sm font-bold tracking-tight text-white truncate">Detalhes do Produto</h1>
+<span class="text-[11px] bg-emerald-950/80 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-800 shrink-0">#1042</span>
+<!-- Active Badge with pulsing dot -->
+<span class="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-500/40 shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Ativo
+          </span>
+</div>
+<!-- Close Button -->
+<button aria-label="Fechar Modal" class="text-slate-300 hover:text-white hover:bg-red-600/80 transition-colors p-1 rounded-lg shrink-0 flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-lg">close</span>
+</button>
+</header>
+<!-- END: ModalHeader -->
+<!-- BEGIN: ModalScrollableContent -->
+<div class="modal-scroll overflow-y-auto px-3.5 py-3.5 space-y-3.5 text-slate-700 text-xs">
+<!-- BEGIN: ProductIdentityCard -->
+<!-- Product icon, name, category, barcode, sku -->
+<section class="p-3 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 border border-blue-100 rounded-xl flex items-start gap-3" data-purpose="product-main-identity">
+<!-- Item Icon -->
+<div class="w-12 h-12 rounded-xl bg-white border border-blue-200 text-blue-600 shadow-sm flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-2xl">water_drop</span>
+</div>
+<!-- Product meta texts -->
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-1.5 text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-0.5">
+<span class="text-emerald-700 font-bold">Bebidas</span>
+<span>•</span>
+<span class="truncate">Frigobar &amp; Recepção</span>
+</div>
+<h2 class="text-sm font-bold text-slate-900 leading-snug">Água Mineral com Gás 500ml</h2>
+<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500">
+<div class="flex items-center gap-1 bg-white/80 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
+<span class="material-symbols-outlined text-[13px] text-slate-600">barcode_scanner</span>
+<span>7891234567890</span>
+</div>
+<span class="text-slate-300">|</span>
+<span class="font-mono font-medium text-slate-600">SKU: <strong class="text-slate-800">BEB-AGU-001</strong></span>
+</div>
+</div>
+</section>
+<!-- END: ProductIdentityCard -->
+<!-- BEGIN: PricesAndProfitability -->
+<section data-purpose="pricing-section">
+<!-- Section Title -->
+<div class="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider text-slate-500 mb-2">
+<span class="material-symbols-outlined text-sm text-emerald-700">payments</span>
+<span>Preços e Rentabilidade</span>
+</div>
+<!-- Prices Grid (Adaptive mobile layout) -->
+<div class="grid grid-cols-2 gap-2">
+<!-- Preço de Custo -->
+<div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+<span class="text-[10px] text-slate-500 font-medium">Preço de Custo</span>
+<span class="text-base font-bold text-slate-900 mt-0.5">R$ 2,20</span>
+<span class="text-[9px] text-slate-400 mt-1">Última compra</span>
+</div>
+<!-- Preço de Venda -->
+<div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+<span class="text-[10px] text-slate-500 font-medium">Preço de Venda</span>
+<span class="text-base font-bold text-emerald-800 mt-0.5">R$ 5,00</span>
+<span class="text-[9px] text-slate-400 mt-1">Tabela Padrão</span>
+</div>
+<!-- Margem de Lucro (Full width on 2-column mobile row) -->
+<div class="col-span-2 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200 shadow-sm flex items-center justify-between">
+<div>
+<span class="text-[10px] text-emerald-800 font-medium block">Margem de Lucro Bruta</span>
+<span class="text-sm font-extrabold text-emerald-700">127% <span class="text-xs font-semibold text-emerald-600">(+R$ 2,80)</span></span>
+</div>
+<span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-white/80 border border-emerald-300 px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-xs text-emerald-600">trending_up</span>
+                Rentabilidade alta
+              </span>
+</div>
+</div>
+</section>
+<!-- END: PricesAndProfitability -->
+<!-- BEGIN: StockControl -->
+<section data-purpose="stock-control-section">
+<!-- Section Title -->
+<div class="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider text-slate-500 mb-2">
+<span class="material-symbols-outlined text-sm text-emerald-700">warehouse</span>
+<span>Controle de Estoque</span>
+</div>
+<!-- Stock Grid -->
+<div class="grid grid-cols-2 gap-2">
+<!-- Estoque Atual -->
+<div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90 shadow-sm">
+<span class="text-[10px] text-slate-500 font-medium">Estoque Atual</span>
+<div class="text-base font-bold text-slate-900 mt-0.5">
+                145 <span class="text-[11px] font-normal text-slate-500">un.</span>
+</div>
+<span class="inline-block mt-1 bg-emerald-100 text-emerald-800 text-[9px] font-semibold px-1.5 py-0.5 rounded border border-emerald-200">
+                Nível Saudável
+              </span>
+</div>
+<!-- Estoque Mínimo -->
+<div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90 shadow-sm">
+<span class="text-[10px] text-slate-500 font-medium">Mínimo</span>
+<div class="text-base font-bold text-slate-800 mt-0.5">
+                30 <span class="text-[11px] font-normal text-slate-500">un.</span>
+</div>
+<span class="text-[9px] text-slate-400 block mt-1">Ponto de reposição</span>
+</div>
+<!-- Estoque Máximo -->
+<div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90 shadow-sm">
+<span class="text-[10px] text-slate-500 font-medium">Máximo</span>
+<div class="text-base font-bold text-slate-800 mt-0.5">
+                300 <span class="text-[11px] font-normal text-slate-500">un.</span>
+</div>
+<span class="text-[9px] text-slate-400 block mt-1">Capacidade total</span>
+</div>
+<!-- Unidade de Medida -->
+<div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90 shadow-sm">
+<span class="text-[10px] text-slate-500 font-medium">Unidade</span>
+<div class="text-base font-bold text-slate-800 mt-0.5 uppercase">UN</div>
+<span class="text-[9px] text-slate-400 block mt-1">Unidade individual</span>
+</div>
+</div>
+</section>
+<!-- END: StockControl -->
+<!-- BEGIN: OperationalDetailsAndDescription -->
+<section class="bg-slate-50 border border-slate-200/90 rounded-xl p-3 space-y-2.5" data-purpose="operational-description-card">
+<!-- Description Header -->
+<div class="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider text-slate-500">
+<span class="material-symbols-outlined text-sm text-emerald-700">description</span>
+<span>Descrição &amp; Detalhes Operacionais</span>
+</div>
+<!-- Description Text -->
+<p class="text-[11px] leading-relaxed text-slate-600 bg-white p-2.5 rounded-lg border border-slate-100">
+            Garrafa pet 500ml com gás, ideal para frigobar dos quartos e consumo rápido na recepção. Produto de alta rotatividade com validade média de 12 meses. Armazenar em local seco, arejado e protegido da luz solar direta.
+          </p>
+<!-- Extra Logistics Info -->
+<div class="space-y-1.5 pt-1 text-[11px]">
+<div class="flex items-start gap-1.5">
+<span class="text-slate-400 font-medium shrink-0">Fornecedor:</span>
+<span class="font-semibold text-slate-800 truncate">Distribuidora Fontes Claras Ltda</span>
+</div>
+<div class="flex items-start gap-1.5">
+<span class="text-slate-400 font-medium shrink-0">Localização Interna:</span>
+<span class="font-semibold text-slate-800">Depósito Central - Prateleira B3</span>
+</div>
+</div>
+</section>
+<!-- END: OperationalDetailsAndDescription -->
+<!-- BEGIN: AuditMetadata -->
+<!-- Timestamps and author audit log -->
+<div class="pt-0.5 text-[9.5px] text-slate-400 flex flex-col gap-0.5 border-t border-slate-100" data-purpose="audit-metadata">
+<div>Criado em: <strong class="font-medium text-slate-600">12/01/2025 às 10:34</strong> por <strong class="font-medium text-slate-600">Gerência</strong></div>
+<div>Última atualização: <strong class="font-medium text-slate-600">04/03/2025 às 14:18</strong></div>
+</div>
+<!-- END: AuditMetadata -->
+</div>
+<!-- END: ModalScrollableContent -->
+<!-- BEGIN: ModalActionsFooter -->
+<footer class="bg-slate-50 px-3.5 py-3 border-t border-slate-200/80 flex items-center gap-2 shrink-0">
+<!-- Close Button -->
+<button class="flex-1 inline-flex items-center justify-center gap-1.5 bg-[#DC2626] hover:bg-red-700 active:scale-[0.98] text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-red-400" type="button">
+<span class="material-symbols-outlined text-base">close</span>
+<span>Fechar</span>
+</button>
+<!-- Edit Product Button -->
+<button class="flex-1 inline-flex items-center justify-center gap-1.5 bg-[#EA580C] hover:bg-orange-700 active:scale-[0.98] text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-400" type="button">
+<span class="material-symbols-outlined text-base">edit</span>
+<span>Editar Produto</span>
+</button>
+</footer>
+<!-- END: ModalActionsFooter -->
+</main>
+</div>
+<!-- END: ModalBackdropAndContainer -->
+</body></html>

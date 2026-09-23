@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Listagem de Categorias - Hotel no Zap</title>
+<!-- Tailwind CSS CDN com plugins de formulários e container-queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              emerald: '#10B981',
+              blue: '#2563EB',
+              amber: '#FDB116',
+              orange: '#F97316',
+              red: '#DC2626',
+              dark: '#032D15'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style data-purpose="typography">
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 min-h-screen p-6 md:p-8">
+<!-- BEGIN: MainContainer -->
+<main class="max-w-[1400px] mx-auto space-y-6" data-purpose="categories-management-view">
+<!-- BEGIN: TopBarAndKPIs -->
+<section class="flex flex-col lg:flex-row lg:items-start justify-between gap-6" data-purpose="page-header-and-kpis">
+<!-- Lado Esquerdo: Navegação de Voltar e Títulos -->
+<div class="space-y-4">
+<!-- Link Voltar -->
+<a class="inline-flex items-center text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors group" href="#">
+<svg class="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+          Voltar para Dashboard
+        </a>
+<!-- Título e Descrição da Página -->
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-slate-900">Listagem de Categorias</h1>
+<p class="text-sm text-slate-500 mt-0.5">Gerencie as categorias de produtos e serviços do hotel.</p>
+</div>
+</div>
+<!-- Lado Direito: Cards de Indicadores (KPIs) -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:w-auto" data-purpose="kpi-cards">
+<!-- KPI 1: Categorias Ativas -->
+<div class="bg-[#FEFCE8] border border-amber-200/80 rounded-2xl p-4 w-full sm:w-[170px] xl:w-[185px] flex flex-col justify-between shadow-xs">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-700">Categorias Ativas</span>
+<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-3">
+<span class="text-2xl font-bold text-slate-900 tracking-tight">18</span>
+<div class="flex items-center text-[11px] font-medium text-amber-700 mt-0.5">
+<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+              Em operação
+            </div>
+</div>
+</div>
+<!-- KPI 2: Total de Produtos Vinculados -->
+<div class="bg-[#EFF6FF] border border-blue-200/80 rounded-2xl p-4 w-full sm:w-[170px] xl:w-[185px] flex flex-col justify-between shadow-xs">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-700">Total Produtos</span>
+<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-3">
+<span class="text-2xl font-bold text-slate-900 tracking-tight">328</span>
+<div class="flex items-center text-[11px] font-medium text-blue-700 mt-0.5">
+<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+              Vinculados
+            </div>
+</div>
+</div>
+<!-- KPI 3: Categorias sem Itens -->
+<div class="bg-[#FFF1F2] border border-rose-200/80 rounded-2xl p-4 w-full sm:w-[170px] xl:w-[185px] flex flex-col justify-between shadow-xs">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-700">Sem Itens</span>
+<div class="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center">
+<svg class="w-3 h-3 text-rose-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</div>
+</div>
+<div class="mt-3">
+<span class="text-2xl font-bold text-slate-900 tracking-tight">2</span>
+<div class="flex items-center text-[11px] font-medium text-rose-600 mt-0.5">
+<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+              Requer atenção
+            </div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: TopBarAndKPIs -->
+<!-- BEGIN: MainContentCard -->
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" data-purpose="table-wrapper-card">
+<!-- BEGIN: ActionToolbar -->
+<section class="p-4 border-b border-slate-100 flex flex-col xl:flex-row items-center justify-between gap-4" data-purpose="action-toolbar">
+<!-- Controles de Busca e Filtros -->
+<div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+<!-- Campo de Busca -->
+<div class="relative w-full sm:w-64">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<input class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-xs" placeholder="Buscar categorias..." type="text"/>
+</div>
+<!-- Filtro de Status -->
+<div class="relative min-w-[150px]">
+<select class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-3 pr-8 text-sm text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-xs appearance-none cursor-pointer">
+<option>Todos os Status</option>
+<option>Ativos</option>
+<option>Inativos</option>
+</select>
+<div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<!-- Botão Limpar Filtros -->
+<button class="inline-flex items-center px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors shadow-xs" type="button">
+<svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Limpar Filtros
+          </button>
+</div>
+<!-- Botões de Ação Principais e Alternador de Visão -->
+<div class="flex flex-wrap items-center gap-2.5 w-full xl:w-auto justify-start xl:justify-end">
+<!-- Alternador de Modo de Exibição (Lista / Grade) -->
+<div class="flex border border-slate-200 rounded-lg p-0.5 bg-slate-50/50 shadow-xs mr-1">
+<button class="p-1.5 rounded-md bg-blue-100 text-blue-700 shadow-2xs" title="Modo Lista" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 rounded-md text-slate-400 hover:text-slate-600" title="Modo Grade" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Botão Importar -->
+<button class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-xs transition-colors" type="button">
+<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Importar
+          </button>
+<!-- Botão Exportar -->
+<button class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-900 bg-amber-400 hover:bg-amber-500 shadow-xs transition-colors" type="button">
+<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Exportar
+          </button>
+<!-- Botão + Nova Categoria -->
+<button class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition-colors" type="button">
+<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+            Nova Categoria
+          </button>
+</div>
+</section>
+<!-- END: ActionToolbar -->
+<!-- BEGIN: TableSection -->
+<section class="overflow-x-auto" data-purpose="categories-table">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+<th class="py-3.5 px-5" scope="col">ID</th>
+<th class="py-3.5 px-5" scope="col">Ícone &amp; Nome</th>
+<th class="py-3.5 px-5" scope="col">Descrição</th>
+<th class="py-3.5 px-5 text-center" scope="col">Produtos</th>
+<th class="py-3.5 px-5 text-center" scope="col">Status</th>
+<th class="py-3.5 px-5 text-center" scope="col">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-sm">
+<!-- Linha 1: Bebidas -->
+<tr class="hover:bg-slate-50/60 transition-colors">
+<td class="py-4 px-5 text-xs font-semibold text-slate-500">#01</td>
+<td class="py-4 px-5">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="font-medium text-slate-900">Bebidas</span>
+</div>
+</td>
+<td class="py-4 px-5 text-slate-600 max-w-xs truncate">Refrigerantes, sucos, cervejas e águas minerais</td>
+<td class="py-4 px-5 text-center font-semibold text-slate-700">48</td>
+<td class="py-4 px-5 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Ver
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Editar
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Linha 2: Snacks & Petiscos -->
+<tr class="hover:bg-slate-50/60 transition-colors">
+<td class="py-4 px-5 text-xs font-semibold text-slate-500">#02</td>
+<td class="py-4 px-5">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="font-medium text-slate-900">Snacks &amp; Petiscos</span>
+</div>
+</td>
+<td class="py-4 px-5 text-slate-600 max-w-xs truncate">Batatas, amendoins, biscoitos e chocolates</td>
+<td class="py-4 px-5 text-center font-semibold text-slate-700">32</td>
+<td class="py-4 px-5 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Ver
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Editar
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Linha 3: Higiene & Amenities -->
+<tr class="hover:bg-slate-50/60 transition-colors">
+<td class="py-4 px-5 text-xs font-semibold text-slate-500">#03</td>
+<td class="py-4 px-5">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="font-medium text-slate-900">Higiene &amp; Amenities</span>
+</div>
+</td>
+<td class="py-4 px-5 text-slate-600 max-w-xs truncate">Kits dentais, sabonetes artesanais, xampus e toucas</td>
+<td class="py-4 px-5 text-center font-semibold text-slate-700">24</td>
+<td class="py-4 px-5 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Ver
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Editar
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Linha 4: Bebidas Alcoólicas -->
+<tr class="hover:bg-slate-50/60 transition-colors">
+<td class="py-4 px-5 text-xs font-semibold text-slate-500">#04</td>
+<td class="py-4 px-5">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="font-medium text-slate-900">Bebidas Alcoólicas</span>
+</div>
+</td>
+<td class="py-4 px-5 text-slate-600 max-w-xs truncate">Vinhos selecionados, destilados e cervejas especiais</td>
+<td class="py-4 px-5 text-center font-semibold text-slate-700">18</td>
+<td class="py-4 px-5 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Ver
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Editar
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Linha 5: Enxoval & Extras -->
+<tr class="hover:bg-slate-50/60 transition-colors">
+<td class="py-4 px-5 text-xs font-semibold text-slate-500">#05</td>
+<td class="py-4 px-5">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="font-medium text-slate-900">Enxoval &amp; Extras</span>
+</div>
+</td>
+<td class="py-4 px-5 text-slate-600 max-w-xs truncate">Toalhas adicionais, travesseiros extras e roupões</td>
+<td class="py-4 px-5 text-center font-semibold text-slate-700">15</td>
+<td class="py-4 px-5 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Ativo
+                </span>
+</td>
+<td class="py-4 px-5 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Ver
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Editar
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+<!-- Linha 6: Lavanderia Express -->
+<tr class="hover:bg-slate-50/60 transition-colors">
+<td class="py-4 px-5 text-xs font-semibold text-slate-500">#06</td>
+<td class="py-4 px-5">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</div>
+<span class="font-medium text-slate-900">Lavanderia Express</span>
+</div>
+</td>
+<td class="py-4 px-5 text-slate-600 max-w-xs truncate">Serviços adicionais de lavanderia por peça</td>
+<td class="py-4 px-5 text-center font-semibold text-red-600">0</td>
+<td class="py-4 px-5 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                  Inativo
+                </span>
+</td>
+<td class="py-4 px-5 text-center">
+<div class="inline-flex items-center gap-1.5">
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Ver
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Editar
+                  </button>
+<button class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-2xs" type="button">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                    Excluir
+                  </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<!-- END: TableSection -->
+<!-- BEGIN: PaginationFooter -->
+<footer class="p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4" data-purpose="table-pagination">
+<!-- Texto de Contagem -->
+<span class="text-xs text-slate-500 font-medium">
+          Mostrando <span class="font-semibold text-slate-800">1</span> a <span class="font-semibold text-slate-800">6</span> de <span class="font-semibold text-slate-800">18</span> resultados
+        </span>
+<!-- Botões de Navegação de Página -->
+<nav aria-label="Paginação" class="inline-flex items-center -space-x-px rounded-md shadow-2xs text-xs font-medium">
+<!-- Anterior -->
+<button class="relative inline-flex items-center px-2.5 py-1.5 rounded-l-md border border-slate-200 bg-white text-slate-400 hover:bg-slate-50 cursor-pointer" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Páginas -->
+<button class="relative inline-flex items-center px-3 py-1.5 border border-emerald-800 bg-[#003400] text-white font-semibold" type="button">
+            1
+          </button>
+<button class="relative inline-flex items-center px-3 py-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors" type="button">
+            2
+          </button>
+<button class="relative inline-flex items-center px-3 py-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors" type="button">
+            3
+          </button>
+<!-- Próximo -->
+<button class="relative inline-flex items-center px-2.5 py-1.5 rounded-r-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 cursor-pointer" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</nav>
+</footer>
+<!-- END: PaginationFooter -->
+</div>
+<!-- END: MainContentCard -->
+</main>
+<!-- END: MainContainer -->
+</body></html>

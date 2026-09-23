@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Listagem de Hotéis &amp; Pousadas - Hotel no Zap</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Custom Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#003400',
+              emerald: '#10B981',
+              amber: '#FDB116',
+            }
+          },
+          boxShadow: {
+            'card-sm': '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)',
+          }
+        }
+      }
+    };
+  </script>
+<!-- Base Custom Styles -->
+<style data-purpose="base-layout">
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Estilo para manter o tamanho estrito mobile de 390px centralizado em previews maiores */
+    .mobile-frame {
+      width: 100%;
+      max-width: 390px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background-color: #FFFFFF;
+      position: relative;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex justify-center">
+<div class="mobile-frame flex flex-col shadow-2xl relative pb-28">
+<!-- BEGIN: Header -->
+<!-- Cabeçalho oficial corporativo em degradê de verde escuro a preto -->
+<header class="bg-gradient-to-r from-[#003400] to-black px-4 py-3 flex items-center justify-between text-white sticky top-0 z-50">
+<!-- Botão Menu Hambúrguer -->
+<button aria-label="Abrir Menu" class="p-1 focus:outline-none hover:opacity-80 transition-opacity" type="button">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Logomarca Oficial em Caixa Alta -->
+<h1 class="text-sm font-extrabold tracking-wider text-white">HOTEL NO ZAP</h1>
+<!-- Ações do Cabeçalho: Notificações e Avatar de Usuário -->
+<div class="flex items-center gap-2">
+<button aria-label="Notificações" class="p-1 relative hover:opacity-80 transition-opacity" type="button">
+<svg class="w-5 h-5 text-gray-200" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<!-- Badge indicador de nova notificação -->
+<span class="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-black"></span>
+</button>
+<!-- Avatar circular com iniciais AD -->
+<div class="w-8 h-8 rounded-full bg-[#004d00] border border-emerald-500/40 flex items-center justify-center text-xs font-semibold text-white cursor-pointer">
+          AD
+        </div>
+</div>
+</header>
+<!-- END: Header -->
+<!-- BEGIN: MainContent -->
+<main class="px-4 pt-3 space-y-4">
+<!-- BEGIN: PageTitleArea -->
+<div>
+<!-- Link de Retorno ao Dashboard -->
+<a class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 hover:text-emerald-950 transition-colors mb-1.5" href="#dashboard">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          Voltar para Dashboard
+        </a>
+<!-- Título da Tela e Badge de Hotéis Ativos -->
+<div class="flex items-center justify-between">
+<h2 class="text-xl font-bold tracking-tight text-slate-900">Hotéis &amp; Pousadas</h2>
+<span class="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+            119 Ativos
+          </span>
+</div>
+<p class="text-xs text-slate-500 mt-0.5">Gerencie propriedades, canais WhatsApp e unidades.</p>
+</div>
+<!-- END: PageTitleArea -->
+<!-- BEGIN: ActionButtonsGrid -->
+<!-- Grade de Botões de Ação Superiores: 2 linhas x 2 botões -->
+<div class="grid grid-cols-2 gap-2">
+<!-- Linha 1: Botão + Novo Hotel (Verde escuro corporativo) -->
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-[#003400] text-white text-xs font-semibold shadow hover:bg-[#002600] active:scale-[0.98] transition-all" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          Novo Hotel
+        </button>
+<!-- Linha 1: Botão Regras Gerais (Verde esmeralda) -->
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-[#10B981] text-white text-xs font-semibold shadow hover:bg-emerald-600 active:scale-[0.98] transition-all" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          Regras Gerais
+        </button>
+<!-- Linha 2: Botão Exportar (Âmbar oficial) -->
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-[#FDB116] text-slate-900 text-xs font-bold shadow hover:bg-amber-500 active:scale-[0.98] transition-all" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          Exportar
+        </button>
+<!-- Linha 2: Botão Importar (Clean com borda) -->
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-semibold shadow-sm hover:bg-slate-50 active:scale-[0.98] transition-all" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          Importar
+        </button>
+</div>
+<!-- END: ActionButtonsGrid -->
+<!-- BEGIN: SearchAndFilters -->
+<!-- Barra de busca e botão de filtros alinhados na mesma linha -->
+<div class="flex items-center gap-2">
+<div class="relative flex-1">
+<span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</span>
+<input class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-colors" placeholder="Buscar hotéis, pousadas..." type="text"/>
+</div>
+<button class="flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-medium rounded-lg hover:bg-slate-50 active:scale-95 transition-all" type="button">
+<svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+          Filtros
+        </button>
+</div>
+<!-- END: SearchAndFilters -->
+<!-- BEGIN: KpiMetricsGrid -->
+<!-- 4 Cards de Indicadores organizados em Grade 2x2 com fundos suaves distintos -->
+<div class="grid grid-cols-2 gap-2.5 pt-1">
+<!-- Card KPI 1: Total de Hotéis -->
+<div class="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex flex-col justify-between">
+<div class="flex items-center justify-between text-emerald-800">
+<span class="text-[10px] font-bold uppercase tracking-wide">Total Hotéis</span>
+<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="mt-1.5">
+<div class="text-xl font-black text-slate-900 leading-tight">128</div>
+<div class="text-[10px] text-emerald-700 font-medium">Cadastrados</div>
+</div>
+</div>
+<!-- Card KPI 2: Ativos -->
+<div class="bg-blue-50/70 border border-blue-200/80 rounded-xl p-3 flex flex-col justify-between">
+<div class="flex items-center justify-between text-blue-800">
+<span class="text-[10px] font-bold uppercase tracking-wide">Ativos</span>
+<svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="mt-1.5">
+<div class="text-xl font-black text-slate-900 leading-tight">119</div>
+<div class="text-[10px] text-blue-700 font-medium">Visíveis no app</div>
+</div>
+</div>
+<!-- Card KPI 3: Quartos Conectados -->
+<div class="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 flex flex-col justify-between">
+<div class="flex items-center justify-between text-amber-800">
+<span class="text-[10px] font-bold uppercase tracking-wide">Quartos</span>
+<svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="mt-1.5">
+<div class="text-xl font-black text-slate-900 leading-tight">3.480</div>
+<div class="text-[10px] text-amber-700 font-medium">+140 este mês</div>
+</div>
+</div>
+<!-- Card KPI 4: MRR Total -->
+<div class="bg-purple-50/70 border border-purple-200/80 rounded-xl p-3 flex flex-col justify-between">
+<div class="flex items-center justify-between text-purple-800">
+<span class="text-[10px] font-bold uppercase tracking-wide">MRR Total</span>
+<svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="mt-1.5">
+<div class="text-lg font-black text-slate-900 leading-tight">R$ 51.840</div>
+<div class="text-[10px] text-purple-700 font-medium">Ticket R$ 435/mês</div>
+</div>
+</div>
+</div>
+<!-- END: KpiMetricsGrid -->
+<!-- BEGIN: HotelCardsList -->
+<!-- Lista Vertical de Cards de Hotéis com botões de ação permanentes no rodapé de cada um -->
+<div class="space-y-3 pt-1">
+<!-- Card 1: Hotel Master Porto de Galinhas (Destaque VIP) -->
+<article class="bg-white border-2 border-[#003400] rounded-2xl shadow-md overflow-hidden relative" data-purpose="hotel-item-card">
+<!-- Tarja Superior Decorativa -->
+<div class="bg-[#003400] text-emerald-300 py-1 px-3 text-[10px] font-bold text-center flex items-center justify-center gap-1">
+<span>★</span> PLANO RECOMENDADO / VIP
+          </div>
+<div class="p-3.5 space-y-2.5">
+<!-- Cabeçalho do Card -->
+<div class="flex items-start justify-between">
+<div>
+<h3 class="text-sm font-bold text-slate-900">Hotel Master Porto de Galinhas</h3>
+<p class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+<svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+                  Ipojuca - PE
+                </p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span> Ativo
+              </span>
+</div>
+<!-- Tags e Detalhes Operacionais -->
+<div class="flex flex-wrap gap-1.5 text-[11px]">
+<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">48 quartos</span>
+<span class="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"></path>
+</svg>
+                2 WhatsApp
+              </span>
+<span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-semibold">Plano VIP</span>
+</div>
+<!-- Divisória e Rodapé com Ações Permanentes -->
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<span class="text-[11px] text-slate-500">ID: #MZ-9081</span>
+<div class="flex items-center gap-1.5">
+<!-- Botão Ver (#2563EB) -->
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-[#2563EB] text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Botão Editar (#EA580C) -->
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Botão Excluir (#DC2626) -->
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 2: Pousada Recanto dos Corais -->
+<article class="bg-white border border-slate-200 rounded-2xl shadow-card-sm overflow-hidden" data-purpose="hotel-item-card">
+<div class="p-3.5 space-y-2.5">
+<div class="flex items-start justify-between">
+<div>
+<h3 class="text-sm font-bold text-slate-900">Pousada Recanto dos Corais</h3>
+<p class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+<svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+                  Maragogi - AL
+                </p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span> Ativo
+              </span>
+</div>
+<div class="flex flex-wrap gap-1.5 text-[11px]">
+<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">24 quartos</span>
+<span class="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"></path>
+</svg>
+                1 WhatsApp
+              </span>
+<span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-medium">Plano Starter</span>
+</div>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<span class="text-[11px] text-slate-500">ID: #MZ-8441</span>
+<div class="flex items-center gap-1.5">
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-[#2563EB] text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 3: Hotel Solar das Dunas -->
+<article class="bg-white border border-slate-200 rounded-2xl shadow-card-sm overflow-hidden" data-purpose="hotel-item-card">
+<div class="p-3.5 space-y-2.5">
+<div class="flex items-start justify-between">
+<div>
+<h3 class="text-sm font-bold text-slate-900">Hotel Solar das Dunas</h3>
+<p class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+<svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+                  Natal - RN
+                </p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span> Ativo
+              </span>
+</div>
+<div class="flex flex-wrap gap-1.5 text-[11px]">
+<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">62 quartos</span>
+<span class="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"></path>
+</svg>
+                2 WhatsApp
+              </span>
+<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">Plano Professional</span>
+</div>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<span class="text-[11px] text-slate-500">ID: #MZ-6520</span>
+<div class="flex items-center gap-1.5">
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-[#2563EB] text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 4: Grand Oasis Resort & Spa -->
+<article class="bg-white border border-slate-200 rounded-2xl shadow-card-sm overflow-hidden" data-purpose="hotel-item-card">
+<div class="p-3.5 space-y-2.5">
+<div class="flex items-start justify-between">
+<div>
+<h3 class="text-sm font-bold text-slate-900">Grand Oasis Resort &amp; Spa</h3>
+<p class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+<svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+                  Muro Alto - PE
+                </p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span> Ativo
+              </span>
+</div>
+<div class="flex flex-wrap gap-1.5 text-[11px]">
+<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">110 quartos</span>
+<span class="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2z"></path>
+</svg>
+                5 WhatsApp
+              </span>
+<span class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded font-semibold">Plano Enterprise</span>
+</div>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<span class="text-[11px] text-slate-500">ID: #MZ-1102</span>
+<div class="flex items-center gap-1.5">
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-[#2563EB] text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 transition-all" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- END: HotelCardsList -->
+<!-- BEGIN: PaginationFooter -->
+<!-- Controles de paginação com indicador ativo em verde corporativo -->
+<section aria-label="Paginação" class="flex items-center justify-between pt-2 pb-4 text-xs text-slate-500">
+<span>Exibindo <strong>4</strong> de <strong>128</strong> hotéis</span>
+<div class="flex items-center gap-1">
+<!-- Anterior -->
+<button aria-label="Página anterior" class="w-7 h-7 flex items-center justify-center border border-slate-200 rounded-md text-slate-300 cursor-not-allowed bg-white" disabled="" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Página 1 Ativa -->
+<button aria-current="page" class="w-7 h-7 flex items-center justify-center rounded-md font-bold bg-[#003400] text-white text-xs" type="button">
+            1
+          </button>
+<!-- Página 2 -->
+<button class="w-7 h-7 flex items-center justify-center border border-slate-200 rounded-md text-slate-700 hover:bg-slate-50 text-xs font-medium bg-white" type="button">
+            2
+          </button>
+<!-- Próximo -->
+<button aria-label="Próxima página" class="w-7 h-7 flex items-center justify-center border border-slate-200 rounded-md text-slate-600 hover:bg-slate-50 text-xs bg-white" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</section>
+<!-- END: PaginationFooter -->
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: BottomNavigation -->
+<!-- Barra de Navegação Inferior Fixa com margem de segurança pb-28 garantindo visualização -->
+<nav aria-label="Navegação Principal" class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto bg-white border-t border-slate-200 py-1.5 px-3 z-50 flex items-center justify-around text-[10px] text-slate-500 shadow-lg">
+<!-- Aba: Dashboard -->
+<a class="flex flex-col items-center gap-0.5 hover:text-emerald-700 transition-colors" href="#dashboard">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>Dashboard</span>
+</a>
+<!-- Aba Ativa: Hotéis (Destaque com cápsula/fundo verde suave oficial) -->
+<a aria-current="page" class="flex flex-col items-center gap-0.5 text-emerald-800 font-bold" href="#hoteis">
+<div class="bg-emerald-100/80 px-3 py-0.5 rounded-full flex items-center justify-center">
+<svg class="w-5 h-5 text-emerald-900" fill="currentColor" viewbox="0 0 24 24">
+<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+</svg>
+</div>
+<span>Hotéis</span>
+</a>
+<!-- Aba: Quartos -->
+<a class="flex flex-col items-center gap-0.5 hover:text-emerald-700 transition-colors" href="#quartos">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>Quartos</span>
+</a>
+<!-- Aba: Reservas -->
+<a class="flex flex-col items-center gap-0.5 hover:text-emerald-700 transition-colors" href="#reservas">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>Reservas</span>
+</a>
+<!-- Aba: Mais -->
+<a class="flex flex-col items-center gap-0.5 hover:text-emerald-700 transition-colors" href="#mais">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span>Mais</span>
+</a>
+</nav>
+<!-- END: BottomNavigation -->
+</div>
+</body></html>

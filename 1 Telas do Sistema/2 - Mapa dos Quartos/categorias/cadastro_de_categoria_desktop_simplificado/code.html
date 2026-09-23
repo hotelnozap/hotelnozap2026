@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Categoria - Desktop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8f9ff;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col items-center py-10 px-4 sm:px-6">
+
+  <!-- Container Geral Centralizado (Sem Sidebar e Sem Cabeçalho Global conforme padrão dos formulários Desktop) -->
+  <div class="w-full max-w-3xl">
+
+    <!-- Link de Retorno -->
+    <div class="mb-6">
+      <a href="#" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+        <span class="material-symbols-outlined text-lg">arrow_back</span>
+        Voltar para Categorias dos Quartos
+      </a>
+    </div>
+
+    <!-- Card Principal do Formulário -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8 sm:p-10">
+
+      <!-- Cabeçalho do Card com Título e Switch de Status -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
+            <span class="material-symbols-outlined text-2xl">category</span>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">Cadastro de Categoria</h1>
+            <p class="text-sm text-slate-500">Defina os dados e parâmetros da categoria de acomodação</p>
+          </div>
+        </div>
+
+        <!-- Switch de Status (Ativo / Inativo) -->
+        <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60 self-start sm:self-auto">
+          <span class="text-sm font-semibold text-slate-700">Status:</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" checked class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003400]"></div>
+            <span class="ml-2.5 text-xs font-bold text-emerald-800 uppercase tracking-wide">Ativa</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Formulário com os campos solicitados -->
+      <form class="mt-8 space-y-6" onsubmit="event.preventDefault();">
+
+        <!-- Grid: Nome da Categoria e Ordenação -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <!-- Nome da Categoria (Ocupa 2 colunas) -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Nome da Categoria <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <span class="material-symbols-outlined text-xl">meeting_room</span>
+              </span>
+              <input 
+                type="text" 
+                required 
+                placeholder="Ex: Suíte Presidencial, Chalé Família, Standard Casal" 
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all text-sm font-medium"
+              >
+            </div>
+            <p class="mt-1.5 text-xs text-slate-400">Nome identificador exibido nos mapas, reservas e orçamentos.</p>
+          </div>
+
+          <!-- Ordenação (Ocupa 1 coluna) -->
+          <div class="sm:col-span-1">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Ordenação <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <span class="material-symbols-outlined text-xl">format_list_numbered</span>
+              </span>
+              <input 
+                type="number" 
+                min="1" 
+                value="1" 
+                required 
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all text-sm font-medium"
+              >
+            </div>
+            <p class="mt-1.5 text-xs text-slate-400">Prioridade de exibição na lista.</p>
+          </div>
+        </div>
+
+        <!-- Observação -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">
+            Observação
+          </label>
+          <div class="relative">
+            <textarea 
+              rows="5" 
+              placeholder="Digite observações internas, particularidades ou anotações sobre esta categoria..." 
+              class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all text-sm font-medium resize-y"
+            ></textarea>
+          </div>
+          <p class="mt-1.5 text-xs text-slate-400">Informações opcionais para controle interno da equipe e recepção.</p>
+        </div>
+
+        <!-- Ações do Rodapé -->
+        <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button 
+            type="button" 
+            class="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 hover:text-slate-900 transition-all active:scale-[0.99]"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="inline-flex items-center gap-2 px-8 py-2.5 rounded-xl bg-[#003400] text-white font-semibold text-sm hover:bg-emerald-950 transition-all shadow-sm active:scale-[0.99]"
+          >
+            <span class="material-symbols-outlined text-lg">check_circle</span>
+            Salvar Categoria
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

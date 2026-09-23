@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Listagem de Planos - Hotel no Zap</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#002500',
+              primary: '#003400',
+              surface: '#024202',
+              emerald: '#10B981',
+              amber: '#FDB116'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    /* Previne overflow horizontal mantendo precisão de 390px */
+    body {
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 flex justify-center min-h-screen text-slate-800 antialiased selection:bg-emerald-500 selection:text-white">
+<!-- BEGIN: MobileDeviceContainer (390px oficial) -->
+<div class="w-[390px] max-w-[390px] min-h-screen bg-slate-50 flex flex-col shadow-2xl relative border-x border-slate-200">
+<!-- BEGIN: TopHeader -->
+<header class="sticky top-0 z-40 bg-gradient-to-r from-[#003400] via-[#002200] to-[#000000] px-4 py-3 text-white flex items-center justify-between shadow-md">
+<!-- Menu Hambúrguer -->
+<button aria-label="Abrir menu lateral" class="p-1.5 -ml-1 text-white hover:bg-white/10 rounded-lg transition-colors" type="button">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Logo / Nome da Aplicação -->
+<div class="font-black tracking-wider text-sm sm:text-base text-white">
+        HOTEL NO ZAP
+      </div>
+<!-- Ações Direita (Notificação e Perfil Admin) -->
+<div class="flex items-center space-x-2.5">
+<button aria-label="Notificações" class="relative p-1.5 text-slate-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-black"></span>
+</button>
+<!-- Avatar Admin -->
+<div class="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-500/40 flex items-center justify-center font-bold text-xs text-emerald-300 shadow-inner">
+          AD
+        </div>
+</div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContent -->
+<main class="flex-1 px-3.5 pt-3 pb-28 space-y-4">
+<!-- BEGIN: NavigationBreadcrumbTitle -->
+<section class="space-y-1.5">
+<!-- Voltar para Dashboard -->
+<a class="inline-flex items-center text-xs font-semibold text-emerald-800 hover:text-emerald-950 transition-colors" href="#dashboard">
+<svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+          Voltar para Dashboard
+        </a>
+<!-- Título com Badge de Ativos -->
+<div class="flex items-center justify-between pt-0.5">
+<h1 class="text-xl font-bold text-slate-900 tracking-tight">Planos de Assinatura</h1>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            5 Ativos
+          </span>
+</div>
+<p class="text-xs text-slate-500 font-normal">Gerencie os pacotes e regras de SaaS.</p>
+</section>
+<!-- END: NavigationBreadcrumbTitle -->
+<!-- BEGIN: ActionButtonsGrid -->
+<!-- 2 linhas de 2 botões conforme especificação oficial -->
+<section class="space-y-2">
+<!-- Linha 1 -->
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center justify-center space-x-1.5 bg-[#003400] text-white py-2.5 px-3 rounded-lg text-xs font-semibold shadow-sm hover:bg-[#002500] active:scale-[0.98] transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Novo Plano</span>
+</button>
+<button class="flex items-center justify-center space-x-1.5 bg-[#10B981] text-white py-2.5 px-3 rounded-lg text-xs font-semibold shadow-sm hover:bg-emerald-600 active:scale-[0.98] transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Regras Gerais</span>
+</button>
+</div>
+<!-- Linha 2 -->
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center justify-center space-x-1.5 bg-[#FDB116] text-slate-950 py-2 px-3 rounded-lg text-xs font-semibold shadow-sm hover:bg-amber-400 active:scale-[0.98] transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Exportar</span>
+</button>
+<button class="flex items-center justify-center space-x-1.5 bg-white text-slate-700 border border-slate-300 py-2 px-3 rounded-lg text-xs font-semibold shadow-sm hover:bg-slate-50 active:scale-[0.98] transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Importar</span>
+</button>
+</div>
+</section>
+<!-- END: ActionButtonsGrid -->
+<!-- BEGIN: SearchFilterRow -->
+<section class="flex items-center space-x-2">
+<div class="relative flex-1">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+<input class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600" placeholder="Buscar planos..." type="text"/>
+</div>
+<button class="flex items-center space-x-1 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-50 active:scale-95 transition" type="button">
+<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Filtros</span>
+</button>
+</section>
+<!-- END: SearchFilterRow -->
+<!-- BEGIN: KpiMetricsGrid -->
+<section class="grid grid-cols-2 gap-2.5">
+<!-- Card 1: Total Planos -->
+<div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-2.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-emerald-800">
+<span class="text-[10px] font-bold tracking-wide uppercase">TOTAL PLANOS</span>
+<svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-1">
+<span class="text-xl font-black text-slate-900 leading-tight">6</span>
+<p class="text-[10px] text-emerald-700 font-medium">Todos os tiers</p>
+</div>
+</div>
+<!-- Card 2: Ativos -->
+<div class="bg-blue-50/70 border border-blue-100 rounded-xl p-2.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-blue-800">
+<span class="text-[10px] font-bold tracking-wide uppercase">ATIVOS</span>
+<svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-1">
+<span class="text-xl font-black text-slate-900 leading-tight">5</span>
+<p class="text-[10px] text-blue-700 font-medium">Visíveis no portal</p>
+</div>
+</div>
+<!-- Card 3: Assinantes -->
+<div class="bg-amber-50/70 border border-amber-100 rounded-xl p-2.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-amber-800">
+<span class="text-[10px] font-bold tracking-wide uppercase">ASSINANTES</span>
+<svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-1">
+<span class="text-xl font-black text-slate-900 leading-tight">142</span>
+<p class="text-[10px] text-amber-700 font-semibold">+12 no mês</p>
+</div>
+</div>
+<!-- Card 4: MRR Mensal -->
+<div class="bg-purple-50/70 border border-purple-100 rounded-xl p-2.5 flex flex-col justify-between">
+<div class="flex items-center justify-between text-purple-800">
+<span class="text-[10px] font-bold tracking-wide uppercase">MRR MENSAL</span>
+<svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div class="mt-1">
+<span class="text-base font-black text-slate-900 leading-tight">R$ 48.960</span>
+<p class="text-[10px] text-purple-700 font-medium">Ticket R$ 344/mês</p>
+</div>
+</div>
+</section>
+<!-- END: KpiMetricsGrid -->
+<!-- BEGIN: PlanCardsList -->
+<section class="space-y-3.5">
+<!-- PLAN CARD 1: Professional (Destaque Mais Escolhido) -->
+<article class="bg-white rounded-xl border-2 border-emerald-600 shadow-md overflow-hidden relative">
+<!-- Banner Superior Destaque -->
+<div class="bg-gradient-to-r from-emerald-950 via-[#003400] to-emerald-900 text-amber-400 text-[10px] font-bold tracking-wide py-1 px-3 text-center flex items-center justify-center space-x-1">
+<span>★</span>
+<span>MAIS ESCOLHIDO PELOS HOTÉIS</span>
+</div>
+<div class="p-3.5 space-y-3">
+<!-- Cabeçalho do Card -->
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-2">
+<div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h2 class="text-sm font-bold text-slate-900 leading-tight">Plano Professional</h2>
+<p class="text-[11px] text-slate-500">Hotéis de médio porte e redes</p>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 bg-emerald-600 rounded-full mr-1"></span>
+                Ativo
+              </span>
+</div>
+<!-- Preço e Período -->
+<div class="flex items-baseline justify-between pt-1 border-b border-slate-100 pb-2.5">
+<div>
+<span class="text-2xl font-black text-slate-950">R$ 299,00</span>
+<span class="text-xs text-slate-500 font-medium">/mês</span>
+</div>
+<span class="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                Mensal
+              </span>
+</div>
+<!-- Lista de Recursos / Limites -->
+<ul class="space-y-1.5 text-xs text-slate-700">
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Capacidade para até <strong>30 quartos</strong></span>
+</li>
+<li class="flex items-center space-x-1.5 font-medium text-emerald-900">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>2 Conexões WhatsApp simultâneas</span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Módulo governança &amp; limpeza tempo real</span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Disparos de confirmação automática no Zap</span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Usuários ilimitados com permissões</span>
+</li>
+</ul>
+<!-- Rodapé do Card: Assinantes e Ações Rápidas -->
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<div>
+<span class="text-xs font-bold text-slate-900 block leading-tight">64 hotéis</span>
+<span class="text-[10px] text-slate-500">assinantes ativos</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<!-- Ver -->
+<button aria-label="Visualizar plano" class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 shadow-sm transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Editar -->
+<button aria-label="Editar plano" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 shadow-sm transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Excluir -->
+<button aria-label="Excluir plano" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 shadow-sm transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- PLAN CARD 2: Starter -->
+<article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="p-3.5 space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-2">
+<div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h2 class="text-sm font-bold text-slate-900 leading-tight">Plano Starter</h2>
+<p class="text-[11px] text-slate-500">Pousadas familiares e chalés</p>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 bg-emerald-600 rounded-full mr-1"></span>
+                Ativo
+              </span>
+</div>
+<div class="flex items-baseline justify-between pt-1 border-b border-slate-100 pb-2.5">
+<div>
+<span class="text-2xl font-black text-slate-950">R$ 149,00</span>
+<span class="text-xs text-slate-500 font-medium">/mês</span>
+</div>
+<span class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                Mensal
+              </span>
+</div>
+<ul class="space-y-1.5 text-xs text-slate-700">
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Capacidade para até <strong>10 quartos</strong></span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span><strong>1 Conexão WhatsApp</strong> oficial integrada</span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Mapa de quartos e controle de check-in</span>
+</li>
+<li class="flex items-center space-x-1.5 text-slate-400">
+<svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="line-through">IA Concierge automatizado</span>
+</li>
+</ul>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<div>
+<span class="text-xs font-bold text-slate-900 block leading-tight">48 pousadas</span>
+<span class="text-[10px] text-slate-500">ativas no plano</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- PLAN CARD 3: Enterprise -->
+<article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="p-3.5 space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-2">
+<div class="w-7 h-7 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center shrink-0 mt-0.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h2 class="text-sm font-bold text-slate-900 leading-tight">Plano Enterprise</h2>
+<p class="text-[11px] text-slate-500">Grandes resorts e redes</p>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 bg-emerald-600 rounded-full mr-1"></span>
+                Ativo
+              </span>
+</div>
+<div class="flex items-baseline justify-between pt-1 border-b border-slate-100 pb-2.5">
+<div>
+<span class="text-2xl font-black text-slate-950">R$ 590,00</span>
+<span class="text-xs text-slate-500 font-medium">/mês</span>
+</div>
+<span class="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
+                Ilimitado
+              </span>
+</div>
+<ul class="space-y-1.5 text-xs text-slate-700">
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span><strong>Quartos Ilimitados</strong> sem sobretaxa</span>
+</li>
+<li class="flex items-center space-x-1.5 bg-purple-50/60 p-1 rounded font-semibold text-purple-900">
+<svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>5 Conexões WhatsApp dedicadas</span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>IA de Atendimento 24/7 (Reserva Automática)</span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Portal exclusivo de parceiros B2B</span>
+</li>
+</ul>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<div>
+<span class="text-xs font-bold text-slate-900 block leading-tight">22 resorts</span>
+<span class="text-[10px] text-slate-500">assinantes ativos</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- PLAN CARD 4: Anual Fidelidade -->
+<article class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="p-3.5 space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-2">
+<div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 mt-0.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center space-x-1.5">
+<h2 class="text-sm font-bold text-slate-900 leading-tight">Anual Fidelidade</h2>
+<span class="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded">-20% OFF</span>
+</div>
+<p class="text-[11px] text-slate-500">Economia com 2 meses grátis</p>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+<span class="w-1.5 h-1.5 bg-emerald-600 rounded-full mr-1"></span>
+                Ativo
+              </span>
+</div>
+<div class="flex items-baseline justify-between pt-1 border-b border-slate-100 pb-2.5">
+<div>
+<span class="text-2xl font-black text-slate-950">R$ 2.870,00</span>
+<span class="text-xs text-slate-500 font-medium">/ano</span>
+</div>
+<span class="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                Equiv. R$ 239/mês
+              </span>
+</div>
+<ul class="space-y-1.5 text-xs text-slate-700">
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Capacidade para até <strong>40 quartos</strong></span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span><strong>3 Conexões WhatsApp</strong> simultâneas</span>
+</li>
+<li class="flex items-center space-x-1.5">
+<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>Onboarding com especialista dedicado</span>
+</li>
+</ul>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+<div>
+<span class="text-xs font-bold text-slate-900 block leading-tight">8 hotéis</span>
+<span class="text-[10px] text-slate-500">anuais</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- PLAN CARD 5: Promocional 2024 (Legado/Inativo) -->
+<article class="bg-white/90 rounded-xl border border-slate-200 shadow-sm opacity-85">
+<div class="p-3.5 space-y-3">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-2">
+<div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 mt-0.5">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h2 class="text-sm font-bold text-slate-700 leading-tight">Plano Promocional 2024</h2>
+<p class="text-[11px] text-slate-400">Plano descontinuado</p>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+<span class="w-1.5 h-1.5 bg-slate-400 rounded-full mr-1"></span>
+                Inativo
+              </span>
+</div>
+<div class="flex items-baseline justify-between pt-1 border-b border-slate-100 pb-2.5">
+<div>
+<span class="text-2xl font-black text-slate-700">R$ 99,00</span>
+<span class="text-xs text-slate-400 font-medium">/mês</span>
+</div>
+<span class="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                Legado
+              </span>
+</div>
+<div class="pt-1 border-t border-slate-100 flex items-center justify-between">
+<div>
+<span class="text-xs font-bold text-slate-700 block leading-tight">0 hotéis</span>
+<span class="text-[10px] text-slate-400">sem renovações</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<button aria-label="Visualizar" class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Editar" class="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center hover:bg-orange-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Excluir" class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center hover:bg-red-700 active:scale-95 shadow-sm" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</div>
+</div>
+</article>
+</section>
+<!-- END: PlanCardsList -->
+<!-- BEGIN: MobilePagination -->
+<nav aria-label="Paginação" class="flex items-center justify-between pt-2 pb-2 text-xs text-slate-500">
+<span>Exibindo <strong>5</strong> planos</span>
+<div class="flex items-center space-x-1">
+<button class="w-7 h-7 rounded border border-slate-200 bg-white text-slate-300 flex items-center justify-center cursor-not-allowed" disabled="" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button class="w-7 h-7 rounded bg-[#003400] text-white font-bold flex items-center justify-center shadow-sm" type="button">
+            1
+          </button>
+<button class="w-7 h-7 rounded border border-slate-200 bg-white text-slate-300 flex items-center justify-center cursor-not-allowed" disabled="" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</nav>
+<!-- END: MobilePagination -->
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: FixedBottomNavigation -->
+<nav class="fixed bottom-0 w-[390px] bg-white border-t border-slate-200 px-3 py-1.5 flex items-center justify-around z-50 shadow-lg">
+<!-- Item 1: Dashboard -->
+<a class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 transition" href="#dashboard">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="text-[10px] mt-0.5 font-medium">Dashboard</span>
+</a>
+<!-- Item 2: Quartos -->
+<a class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 transition" href="#quartos">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="text-[10px] mt-0.5 font-medium">Quartos</span>
+</a>
+<!-- Item 3: Reservas -->
+<a class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 transition" href="#reservas">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="text-[10px] mt-0.5 font-medium">Reservas</span>
+</a>
+<!-- Item 4: Planos (Ativo com Cor Corporativa) -->
+<a class="flex flex-col items-center justify-center py-1 text-[#003400] transition" href="#planos">
+<div class="px-2.5 py-0.5 rounded-full bg-emerald-100 flex items-center justify-center">
+<svg class="w-5 h-5 text-[#003400]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+</svg>
+</div>
+<span class="text-[10px] mt-0.5 font-bold text-[#003400]">Planos</span>
+</a>
+<!-- Item 5: Mais -->
+<a class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 transition" href="#mais">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+<span class="text-[10px] mt-0.5 font-medium">Mais</span>
+</a>
+</nav>
+<!-- END: FixedBottomNavigation -->
+</div>
+<!-- END: MobileDeviceContainer -->
+</body></html>

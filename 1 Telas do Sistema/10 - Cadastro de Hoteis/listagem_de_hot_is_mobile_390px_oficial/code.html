@@ -1,0 +1,282 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "on-primary-fixed": "#131b2e", "surface-bright": "#f8f9ff", "on-primary-container": "#7c839b", "primary-container": "#131b2e", "on-tertiary-fixed": "#2a1700", "on-secondary-fixed": "#002113", "active-tab-bg": "rgba(108, 248, 187, 0.2)", "secondary-fixed-dim": "#4edea3", "error-container": "#ffdad6", "inverse-primary": "#bec6e0", "surface-variant": "#d3e4fe", "tertiary-container": "#2a1700", "on-surface-variant": "#45464d", "primary": "#000000", "surface-container-high": "#dce9ff", "sidebar-start": "#003400", "tertiary-fixed-dim": "#ffb95f", "on-tertiary-fixed-variant": "#653e00", "on-surface": "#0b1c30", "secondary-container": "#6cf8bb", "background": "#f8f9ff", "on-primary-fixed-variant": "#3f465c", "outline": "#76777d", "surface-container-low": "#eff4ff", "on-secondary-fixed-variant": "#005236", "surface-tint": "#565e74", "border-subtle": "#c6c6cd", "on-secondary": "#ffffff", "surface-container": "#e5eeff", "outline-variant": "#c6c6cd", "inverse-on-surface": "#eaf1ff", "surface-bg": "#f8f9ff", "surface": "#f8f9ff", "on-error-container": "#93000a", "on-tertiary-container": "#b87500", "primary-fixed": "#dae2fd", "primary-fixed-dim": "#bec6e0", "on-error": "#ffffff", "on-primary": "#ffffff", "surface-container-lowest": "#ffffff", "sidebar-end": "#000000", "on-secondary-container": "#00714d", "on-tertiary": "#ffffff", "secondary": "#006c49", "tertiary": "#000000", "surface-dim": "#cbdbf5", "surface-container-highest": "#d3e4fe", "error": "#ba1a1a", "on-background": "#0b1c30", "secondary-fixed": "#6ffbbe", "tertiary-fixed": "#ffddb8", "active-tab-text": "#6cf8bb", "inverse-surface": "#213145" }, borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, spacing: { "unit": "4px", "margin-desktop": "32px", "sidebar-width": "280px", "margin-mobile": "16px", "top-bar-height": "64px", "gutter": "24px" }, fontFamily: { "label-sm": ["Inter"], "label-md": ["Inter"], "body-md": ["Inter"], "headline-md": ["Inter"], "headline-sm": ["Inter"], "headline-lg": ["Inter"], "body-lg": ["Inter"] }, fontSize: { "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }], "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-gradient-to-r from-sidebar-start to-sidebar-end shadow-[0_1px_8px_rgba(0,0,0,0.15)]"><div class="h-16 px-4 flex items-center justify-between"><button aria-label="Menu Principal" class="w-11 h-11 flex items-center justify-center text-on-primary rounded-xl active:bg-white/10 transition-colors"><span class="material-symbols-outlined text-[24px]">menu</span></button><div class="flex flex-col items-center justify-center"><span class="font-headline-sm text-headline-sm text-on-primary tracking-wider uppercase select-none">HOTEL NO ZAP</span></div><div class="flex items-center gap-1"><button aria-label="Notificações" class="w-11 h-11 flex items-center justify-center text-on-primary rounded-xl relative active:bg-white/10 transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary-fixed"></span></button><div class="w-11 h-11 flex items-center justify-center"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface flex-grow"><div class="flex flex-col w-full max-w-[390px] mx-auto px-4 pb-28 pt-2">
+<!-- Link de retorno -->
+<div class="flex items-center mb-3">
+<a class="inline-flex items-center gap-1.5 text-secondary font-label-md text-label-md active:opacity-75 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="">Voltar para Dashboard</span>
+</a>
+</div>
+<!-- Header de Conteúdo com Status Badge -->
+<div class="flex items-center justify-between mb-4">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Hotéis Cadastrados</h1>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">28 Ativos</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-xs mt-0.5">Gestão de unidades e canais WhatsApp sincronizados</p>
+</div>
+</div>
+<!-- Grade 2x2 de Ações Rápidas -->
+<div class="grid grid-cols-2 gap-2.5 mb-4">
+<button class="flex items-center justify-center gap-1.5 h-11 px-3 rounded-xl bg-sidebar-start text-on-primary font-label-md text-label-md active:scale-[0.98] transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span class="truncate">Novo Hotel</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 h-11 px-3 rounded-xl bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md active:scale-[0.98] transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[18px]">category</span>
+<span class="truncate">Categorias</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 h-11 px-3 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md active:scale-[0.98] transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[18px]">file_download</span>
+<span class="truncate">Exportar</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 h-11 px-3 rounded-xl bg-surface-container-high text-on-surface font-label-md text-label-md active:scale-[0.98] transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[18px]">file_upload</span>
+<span class="truncate">Importar</span>
+</button>
+</div>
+<!-- Busca e Filtros na Mesma Linha -->
+<div class="flex items-center gap-2 mb-4">
+<div class="flex-1 flex items-center bg-surface-container-lowest rounded-xl px-3 h-11 shadow-sm">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-2">search</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none text-xs" placeholder="Buscar por hotel, cidade ou ID..." type="text">
+</div>
+<button class="flex items-center justify-center gap-1.5 px-3.5 h-11 rounded-xl bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm active:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px] text-secondary">tune</span>
+<span class="text-xs">Filtros</span>
+</button>
+</div>
+<!-- Cards de Indicadores (KPIs) 2x2 -->
+<div class="grid grid-cols-2 gap-2.5 mb-5">
+<div class="flex flex-col p-3 rounded-xl bg-secondary-fixed/40 shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-secondary-fixed-variant">Total de Hotéis</span>
+<span class="material-symbols-outlined text-[18px] text-secondary">domain</span>
+</div>
+<div class="font-headline-md text-headline-md text-on-secondary-fixed">32</div>
+<span class="font-label-sm text-label-sm text-on-secondary-fixed-variant/80 text-[11px] mt-0.5">4 em ativação</span>
+</div>
+<div class="flex flex-col p-3 rounded-xl bg-surface-container-high shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Hotéis Ativos</span>
+<span class="material-symbols-outlined text-[18px] text-primary-fixed-dim">check_circle</span>
+</div>
+<div class="font-headline-md text-headline-md text-on-surface">28</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold text-[11px] mt-0.5">87.5% operando</span>
+</div>
+<div class="flex flex-col p-3 rounded-xl bg-tertiary-fixed/50 shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-tertiary-fixed-variant">Quartos Totais</span>
+<span class="material-symbols-outlined text-[18px] text-on-tertiary-container">bed</span>
+</div>
+<div class="font-headline-md text-headline-md text-on-tertiary-fixed">864</div>
+<span class="font-label-sm text-label-sm text-on-tertiary-fixed-variant/80 text-[11px] mt-0.5">Taxa de 92% ocup.</span>
+</div>
+<div class="flex flex-col p-3 rounded-xl bg-surface-variant shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm text-on-primary-fixed-variant">WhatsApp Ativos</span>
+<span class="material-symbols-outlined text-[18px] text-secondary">chat</span>
+</div>
+<div class="font-headline-md text-headline-md text-on-surface">42</div>
+<span class="font-label-sm text-label-sm text-on-primary-fixed-variant/80 text-[11px] mt-0.5">3.8k msgs/dia</span>
+</div>
+</div>
+<!-- Lista de Hotéis Cadastrados -->
+<div class="flex flex-col gap-3.5 mb-5">
+<!-- Card Hotel 1 -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden p-3.5">
+<div class="flex gap-3 mb-2.5">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Modern tropical luxury beach resort facade in Porto de Galinhas with turquoise swimming pools, palm trees under bright natural morning light, clean architectural photography, premium hospitality aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbVWVcHVPj1G_5x4jmPYYxUN6_SHH6wSnTIpt-21Ev_5o4uWrbUEWhqQFflKQSpTA3KvDi-Rm-CuXTw2QXcf76l75kF8VkEM8joOJ2EDQ5bnYZJ-TxvmjCn257UBQq3MpyfP3dtt1kK_kv1T6PAWs1wgQlhGA2jbeXikcOj8RfKEQmy3X-BoNa_5yGGh40nHlEJAODk9-R2qAlc8fZs56Wyl2omJ6jMxRpgo7bH3V12xUvhk6LLmkr">
+</div>
+<div class="flex flex-col justify-between flex-1 min-w-0">
+<div>
+<div class="flex items-start justify-between gap-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface text-base truncate">Vivá Porto de Galinhas Resort</h2>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] uppercase flex-shrink-0">Ativo</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant text-xs truncate">Resort &amp; Spa • Porto de Galinhas/PE</p>
+</div>
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm text-[10px] font-semibold">Enterprise</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface font-label-sm text-label-sm text-[10px]">64 Quartos</span>
+<span class="px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-sm text-label-sm text-[10px] flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">chat</span> 3 Zaps
+            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 bg-surface-container-lowest">
+<div class="flex items-center gap-1.5 text-on-surface-variant min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px]">account_circle</span>
+<span class="font-body-md text-body-md text-xs truncate">Resp: Carlos Eduardo</span>
+</div>
+<div class="flex items-center gap-1.5 flex-shrink-0">
+<button class="h-8 px-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+<span class="">Ver</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Editar">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+<span class="">Editar</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Excluir">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+<span class="">Excluir</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card Hotel 2 -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden p-3.5">
+<div class="flex gap-3 mb-2.5">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Chic boutique urban hotel entrance in Gramado Brazil with stone architecture, cozy ambient exterior lighting, surrounding pine trees in evening mist, cinematic warm hospitality atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQqEAtCjgfC7GH8ybay1uqWEmqk57qWlEbMmp7eTdnAy61wXCo6x3a3TOujCHV62JEWJAqnqjIBbYkB9Lj4C3K4XlCKByKJVMdIaoxwAP6tYIR0n7KqXWPmcTPol4hf3g_ury6NMJl1QJTDFQ-PIFLlGfx5RftK98RFYOfIEr8Tz16Q8NorjnSv6PjctV_WMIefxCdu9U6Hl9RylYMRywj0Y7NX1q041XSaOk7VuR94xLf6I1bBpfc">
+</div>
+<div class="flex flex-col justify-between flex-1 min-w-0">
+<div>
+<div class="flex items-start justify-between gap-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface text-base truncate">Pousada Vale do Bosque</h2>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] uppercase flex-shrink-0">Ativo</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant text-xs truncate">Boutique • Gramado/RS</p>
+</div>
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm text-[10px] font-semibold">Professional</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface font-label-sm text-label-sm text-[10px]">24 Quartos</span>
+<span class="px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-sm text-label-sm text-[10px] flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">chat</span> 2 Zaps
+            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 bg-surface-container-lowest">
+<div class="flex items-center gap-1.5 text-on-surface-variant min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px]">account_circle</span>
+<span class="font-body-md text-body-md text-xs truncate">Resp: Marina Silveira</span>
+</div>
+<div class="flex items-center gap-1.5 flex-shrink-0">
+<button class="h-8 px-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+<span class="">Ver</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Editar">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+<span class="">Editar</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Excluir">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+<span class="">Excluir</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card Hotel 3 -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden p-3.5">
+<div class="flex gap-3 mb-2.5">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="High-rise modern business corporate hotel building in Sao Paulo under soft blue daylight with expansive glass windows, sophisticated hotel lobby driveway and lush urban landscaping" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCd7GZ849imaurXS-qOOr2ehxfnP6cee_1DcRXGKHoAI7N-DVzuVjf4KZra398R10mSG5kmNTK_-x4wPqRcELnpoQ33ACMCy3zlgmvFro9YWkn68cF3kUbD068V6cyj7PpGeXil0TDhWNUXk4hlfeTUjLaz7qE91-WuFsBmOVOXx3OhkM-yAaxK2WjIqBifiPwOYPRrEYmoqLNQY_sFnJ884zzEQxKp8r40Z7NJmlRDAJdECPyA-ueh">
+</div>
+<div class="flex flex-col justify-between flex-1 min-w-0">
+<div>
+<div class="flex items-start justify-between gap-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface text-base truncate">Grand Plaza Paulista Suítes</h2>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] uppercase flex-shrink-0">Ativo</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant text-xs truncate">Executivo • São Paulo/SP</p>
+</div>
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm text-[10px] font-semibold">Enterprise</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface font-label-sm text-label-sm text-[10px]">120 Quartos</span>
+<span class="px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-sm text-label-sm text-[10px] flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">chat</span> 6 Zaps
+            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 bg-surface-container-lowest">
+<div class="flex items-center gap-1.5 text-on-surface-variant min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px]">account_circle</span>
+<span class="font-body-md text-body-md text-xs truncate">Resp: Rodrigo Andrade</span>
+</div>
+<div class="flex items-center gap-1.5 flex-shrink-0">
+<button class="h-8 px-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+<span class="">Ver</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Editar">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+<span class="">Editar</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Excluir">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+<span class="">Excluir</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card Hotel 4 -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden p-3.5">
+<div class="flex gap-3 mb-2.5">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Charming oceanfront beach inn with wooden deck facing the crystal ocean in Arraial d'Ajuda Bahia with vibrant flowering bougainvillea and sunset golden hour illumination" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvDCk_YNmdmKc_hYkG2WPJWLa2pZ5c2bKHFTmRZERvjMB8TVpjjTnApBMyM7BJSLqxo4z4PyhyRl4dbGqHX-FAKJelxPTQQBo2_ecNpxVEenqFRpCqq3i8yCSKzIGJmyMjvJYBDD5L65luZs6m-DfNRS2rfh1cm3Ve-HjQZXYSsxmi0HRtMenfbmBlDbHEd88k6B_eGgQTrlZ_MF0iYtNRPKRe1Pbj8TwkNgWLg_kicB1DGvJJLv5s">
+</div>
+<div class="flex flex-col justify-between flex-1 min-w-0">
+<div>
+<div class="flex items-start justify-between gap-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface text-base truncate">Pousada Solar das Palmeiras</h2>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] uppercase flex-shrink-0">Ativo</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant text-xs truncate">Lazer • Arraial d'Ajuda/BA</p>
+</div>
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm text-[10px] font-semibold">Starter</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface font-label-sm text-label-sm text-[10px]">16 Quartos</span>
+<span class="px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-sm text-label-sm text-[10px] flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">chat</span> 1 Zap
+            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 bg-surface-container-lowest">
+<div class="flex items-center gap-1.5 text-on-surface-variant min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px]">account_circle</span>
+<span class="font-body-md text-body-md text-xs truncate">Resp: Fabiana Meireles</span>
+</div>
+<div class="flex items-center gap-1.5 flex-shrink-0">
+<button class="h-8 px-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+<span class="">Ver</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Editar">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+<span class="">Editar</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm text-xs flex items-center gap-1 active:scale-95 transition-transform" title="Excluir">
+<span class="material-symbols-outlined text-[15px]">delete</span>
+<span class="">Excluir</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Paginação Compacta Numerada -->
+<div class="flex items-center justify-between bg-surface-container-lowest rounded-xl p-2.5 shadow-sm">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant bg-surface-container-low active:bg-surface-container transition-colors disabled:opacity-40" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm flex items-center justify-center shadow-sm">1</button>
+<button class="w-8 h-8 rounded-lg bg-transparent text-on-surface-variant font-label-sm text-label-sm flex items-center justify-center active:bg-surface-container-low transition-colors">2</button>
+<button class="w-8 h-8 rounded-lg bg-transparent text-on-surface-variant font-label-sm text-label-sm flex items-center justify-center active:bg-surface-container-low transition-colors">3</button>
+<span class="text-on-surface-variant px-1 text-xs">...</span>
+<button class="w-8 h-8 rounded-lg bg-transparent text-on-surface-variant font-label-sm text-label-sm flex items-center justify-center active:bg-surface-container-low transition-colors">8</button>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface bg-surface-container-low active:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.06)]" data-active-classes="text-secondary font-label-sm bg-active-tab-bg rounded-xl"><div class="flex justify-around items-center h-16 px-2"><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant transition-all hover:text-on-surface" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[22px]">dashboard</span><span class="font-label-sm text-label-sm mt-0.5">Dashboard</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant transition-all hover:text-on-surface" data-path="quartos" href="#"><span class="material-symbols-outlined text-[22px]">meeting_room</span><span class="font-label-sm text-label-sm mt-0.5">Quartos</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 transition-all text-secondary font-label-sm bg-active-tab-bg rounded-xl" data-path="estoque" href="#"><span class="material-symbols-outlined text-[22px]">inventory_2</span><span class="font-label-sm text-label-sm mt-0.5">Estoque</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant transition-all hover:text-on-surface" data-path="reservas" href="#"><span class="material-symbols-outlined text-[22px]">calendar_month</span><span class="font-label-sm text-label-sm mt-0.5">Reservas</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant transition-all hover:text-on-surface" data-path="mais" href="#"><span class="material-symbols-outlined text-[22px]">more_horiz</span><span class="font-label-sm text-label-sm mt-0.5">Mais</span></a></div></nav>
+
+</body></html>

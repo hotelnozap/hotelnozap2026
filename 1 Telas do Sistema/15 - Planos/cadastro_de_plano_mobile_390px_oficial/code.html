@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary-fixed":"#e2e2e2","on-secondary-fixed":"#002113","primary-container":"#003400","on-surface-variant":"#42493e","surface-dim":"#cbdbf6","on-secondary-fixed-variant":"#005236","tertiary-fixed-dim":"#c6c6c6","on-tertiary-fixed":"#1b1b1b","error":"#ba1a1a","surface-container-low":"#eff4ff","surface-tint":"#386a2e","background":"#f8f9ff","on-tertiary-container":"#929292","surface-bright":"#f8f9ff","secondary":"#006c49","primary":"#001c00","gradient-end":"#000000","secondary-container":"#9af2c5","on-error":"#ffffff","error-container":"#ffdad6","on-surface":"#0b1c30","secondary-fixed":"#9df4c8","on-background":"#0b1c30","primary-fixed-dim":"#9dd58d","on-primary-fixed":"#002200","on-tertiary-fixed-variant":"#474747","surface-card":"#ffffff","outline-variant":"#c1c9ba","surface":"#f8f9ff","inverse-primary":"#9dd58d","border-subtle":"#c6c6cd","tertiary":"#171717","tertiary-container":"#2b2b2b","on-secondary-container":"#0c714d","surface-page":"#f8f9ff","on-primary":"#ffffff","surface-tint-active":"rgba(108, 248, 187, 0.15)","surface-container":"#e6eeff","primary-fixed":"#b9f2a7","gradient-start":"#003400","on-primary-container":"#6ba05d","secondary-fixed-dim":"#81d8ad","surface-container-lowest":"#ffffff","accent-mint":"#6cf8bb","surface-variant":"#d3e3ff","surface-container-high":"#dde9ff","on-secondary":"#ffffff","on-error-container":"#93000a","inverse-surface":"#213146","inverse-on-surface":"#ebf1ff","surface-container-highest":"#d3e3ff","on-primary-fixed-variant":"#205118","on-tertiary":"#ffffff","border-focused":"#003400","outline":"#72796d","error-base":"#ba1a1a"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-md":"1rem","space-lg":"1.5rem","gutter":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","space-xs":"0.25rem","margin":"2rem","gutter-mobile":"1rem","space-xl":"2rem"},"fontFamily":{"label-lg":["Inter"],"headline-md":["Inter"],"headline-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"body-sm":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"body-md":["Inter"]},"fontSize":{"label-lg":["14px",{"lineHeight":"20px","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface min-h-screen"><main class="w-full min-h-screen bg-surface flex flex-col justify-center items-center py-margin px-margin-mobile sm:px-margin"><div class="w-full max-w-[1040px] mx-auto"><div class="flex flex-col w-full items-center">
+<div class="w-full max-w-[390px] relative flex flex-col pb-28 text-on-surface">
+<!-- Top Bar Mobile Oficial: Degradê Verde Escuro ao Preto -->
+<header class="w-full h-16 bg-gradient-to-b from-gradient-start to-gradient-end px-4 flex items-center justify-between shadow-md select-none">
+<button aria-label="Menu principal" class="w-10 h-10 flex items-center justify-center text-on-primary active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+<div class="flex flex-col items-center justify-center">
+<span class="font-headline-sm text-headline-sm text-on-primary tracking-wider uppercase font-bold text-center">
+          HOTEL NO ZAP
+        </span>
+<span class="font-label-sm text-label-sm text-accent-mint tracking-widest uppercase scale-90">
+          ADMIN CONSOLE
+        </span>
+</div>
+<div class="flex items-center space-x-2">
+<button aria-label="Notificações" class="relative w-9 h-9 flex items-center justify-center text-on-primary rounded-full hover:bg-white/10 active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-accent-mint rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-lg text-label-lg font-bold shadow-sm ring-1 ring-white/20">
+          HZ
+        </div>
+</div>
+</header>
+<!-- Context Navigation -->
+<div class="px-4 pt-3 pb-1 flex flex-col">
+<a class="inline-flex items-center gap-1.5 text-secondary hover:text-primary-container font-label-md text-label-md font-semibold transition-colors py-1" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span>Voltar para Listagem de Planos</span>
+</a>
+<div class="mt-2 mb-1">
+<div class="flex items-center justify-between">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold">
+            Novo Plano de Assinatura
+          </h1>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Rascunho
+          </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Configure regras tarifárias, limites estruturais e provisionamento automatizado do WhatsApp.
+        </p>
+</div>
+</div>
+<!-- Formulário Vertical Fluid Stack -->
+<form class="flex flex-col gap-4 px-4 mt-2" onsubmit="event.preventDefault();">
+<!-- Bloco 1: Identificação & Status -->
+<section class="bg-surface-card rounded-xl p-4 shadow-sm flex flex-col gap-3.5">
+<div class="flex items-center gap-2 pb-1 border-b border-surface-container-high">
+<span class="material-symbols-outlined text-secondary text-[20px]">badge</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">1. Identificação & Status</h2>
+</div>
+<!-- Switches de Visibilidade e Destaque -->
+<div class="grid grid-cols-1 gap-2.5 bg-surface-container-low p-3 rounded-lg">
+<label class="flex items-center justify-between cursor-pointer">
+<div class="flex flex-col pr-2">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Plano Ativo</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Visível para contratação no portal</span>
+</div>
+<div class="relative inline-flex items-center">
+<input checked="" class="sr-only peer" id="switch-status" type="checkbox"/>
+<div class="w-11 h-6 bg-tertiary-fixed-dim peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer pt-2 border-t border-surface-container">
+<div class="flex flex-col pr-2">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Destaque Comercial</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Tag 'Mais Escolhido' e moldura verde</span>
+</div>
+<div class="relative inline-flex items-center">
+<input checked="" class="sr-only peer" id="switch-highlight" type="checkbox"/>
+<div class="w-11 h-6 bg-tertiary-fixed-dim peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</div>
+</label>
+</div>
+<!-- Campos de Texto -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-name">
+            Nome do Plano <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">hotel</span>
+<input class="w-full h-12 pl-10 pr-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="plan-name" placeholder="Ex: Plano Professional" required="" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-tag">
+              Tag / Badge
+            </label>
+<input class="w-full h-12 px-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="plan-tag" placeholder="Ex: Mais Vendido" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-order">
+              Ordem de Exibição
+            </label>
+<input class="w-full h-12 px-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all" id="plan-order" min="1" type="number" value="1"/>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-desc">
+            Descrição do Plano
+          </label>
+<textarea class="w-full p-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all resize-none placeholder:text-on-surface-variant/60" id="plan-desc" placeholder="Descreva brevemente o público ideal deste plano..." rows="2"></textarea>
+</div>
+</section>
+<!-- Bloco 2: Precificação & Ciclo -->
+<section class="bg-surface-card rounded-xl p-4 shadow-sm flex flex-col gap-3.5">
+<div class="flex items-center gap-2 pb-1 border-b border-surface-container-high">
+<span class="material-symbols-outlined text-secondary text-[20px]">payments</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">2. Precificação & Ciclo</h2>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-frequency">
+            Periodicidade de Faturamento <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<select class="w-full h-12 pl-3 pr-10 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none appearance-none transition-all" id="plan-frequency">
+<option value="mensal">Mensal (Cobrança a cada 30 dias)</option>
+<option value="trimestral">Trimestral (Cobrança a cada 90 dias)</option>
+<option selected="" value="anual">Anual (Faturamento consolidado)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 pointer-events-none text-on-surface-variant text-[20px]">expand_more</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-price">
+              Valor Base (R$) <span class="text-error">*</span>
+</label>
+<input class="w-full h-12 px-3 rounded bg-surface text-on-surface font-body-md text-body-md font-medium border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="plan-price" placeholder="R$ 389,00" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-discount">
+              Desconto (%)
+            </label>
+<input class="w-full h-12 px-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="plan-discount" placeholder="Ex: 15%" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-trial">
+              Dias de Teste Grátis (Trial)
+            </label>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Sem cartão obrigatório</span>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">event_available</span>
+<input class="w-full h-12 pl-10 pr-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all" id="plan-trial" min="0" type="number" value="7"/>
+</div>
+</div>
+</section>
+<!-- Bloco 3: Limite de Quartos -->
+<section class="bg-surface-card rounded-xl p-4 shadow-sm flex flex-col gap-3.5">
+<div class="flex items-center gap-2 pb-1 border-b border-surface-container-high">
+<span class="material-symbols-outlined text-secondary text-[20px]">bed</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">3. Limite de Quartos</h2>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="room-limit">
+            Quartos Inclusos no Plano <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">meeting_room</span>
+<input class="w-full h-12 pl-10 pr-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="room-limit" placeholder="Ex: 45 quartos" type="number"/>
+</div>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg flex flex-col gap-3">
+<label class="flex items-center justify-between cursor-pointer">
+<div class="flex flex-col pr-2">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Permitir Quartos Excedentes</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Taxa adicional por UH cadastrada acima da cota</span>
+</div>
+<div class="relative inline-flex items-center">
+<input checked="" class="sr-only peer" id="switch-extra-rooms" type="checkbox"/>
+<div class="w-11 h-6 bg-tertiary-fixed-dim peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</div>
+</label>
+<div class="flex flex-col gap-1 pt-2 border-t border-surface-container">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="room-extra-price">
+              Valor por Quarto Excedente (R$)
+            </label>
+<input class="w-full h-12 px-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="room-extra-price" placeholder="R$ 3,50/quarto" type="text"/>
+</div>
+</div>
+</section>
+<!-- Bloco 4: Conexões WhatsApp -->
+<section class="bg-surface-card rounded-xl p-4 shadow-sm flex flex-col gap-3.5">
+<div class="flex items-center gap-2 pb-1 border-b border-surface-container-high">
+<span class="material-symbols-outlined text-secondary text-[20px]">chat</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">4. Conexões WhatsApp</h2>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="zap-connections">
+            Conexões Oficiais Inclusas <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">phone_iphone</span>
+<input class="w-full h-12 pl-10 pr-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="zap-connections" placeholder="Ex: 2 conexões" type="number"/>
+</div>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg flex flex-col gap-3">
+<label class="flex items-center justify-between cursor-pointer">
+<div class="flex flex-col pr-2">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Permitir Conexões Extras</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Habilita contratação autônoma de números adicionais</span>
+</div>
+<div class="relative inline-flex items-center">
+<input checked="" class="sr-only peer" id="switch-extra-zap" type="checkbox"/>
+<div class="w-11 h-6 bg-tertiary-fixed-dim peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</div>
+</label>
+<div class="flex flex-col gap-1 pt-2 border-t border-surface-container">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="zap-extra-price">
+              Valor por Conexão Extra (R$)
+            </label>
+<input class="w-full h-12 px-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all placeholder:text-on-surface-variant/60" id="zap-extra-price" placeholder="R$ 49,90/mês" type="text"/>
+</div>
+</div>
+<!-- Nota Explicativa com Ícone de Destaque -->
+<div class="flex items-start gap-2.5 p-3 rounded-lg bg-surface-tint-active text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">verified</span>
+<p class="font-body-sm text-body-sm text-on-surface">
+            Cobrança apenas por conexões e quartos (mensagens ilimitadas).
+          </p>
+</div>
+</section>
+<!-- Bloco 5: Observações & Ações -->
+<section class="bg-surface-card rounded-xl p-4 shadow-sm flex flex-col gap-3.5">
+<div class="flex items-center gap-2 pb-1 border-b border-surface-container-high">
+<span class="material-symbols-outlined text-secondary text-[20px]">assignment</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">5. Observações & Conclusão</h2>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="plan-notes">
+            Observações Internas
+          </label>
+<textarea class="w-full p-3 rounded bg-surface text-on-surface font-body-md text-body-md border border-border-subtle focus:border-border-focused focus:ring-1 focus:ring-border-focused outline-none transition-all resize-none placeholder:text-on-surface-variant/60" id="plan-notes" placeholder="Anotações para a equipe de billing ou atendimento comercial..." rows="2"></textarea>
+</div>
+<!-- Ações do Formulário -->
+<div class="flex flex-col gap-2.5 pt-2">
+<button class="w-full h-12 bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg font-semibold rounded-lg flex items-center justify-center gap-2 shadow-md active:scale-[0.99] transition-all cursor-pointer" type="submit">
+<span class="material-symbols-outlined text-[20px]">save</span>
+<span>Salvar Plano</span>
+</button>
+<button class="w-full h-11 bg-transparent hover:bg-surface-container border border-border-subtle text-on-surface font-label-lg text-label-lg rounded-lg flex items-center justify-center transition-colors cursor-pointer" type="button">
+            Cancelar
+          </button>
+</div>
+</section>
+</form>
+<!-- Barra de Navegação Inferior Fixa (Mobile 390px Viewport) -->
+<nav aria-label="Navegação inferior" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] h-16 bg-surface-card border-t border-border-subtle z-50 px-2 flex items-center justify-around shadow-lg">
+<!-- Item: Dashboard -->
+<a class="flex flex-col items-center justify-center py-1 px-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">space_dashboard</span>
+<span class="font-label-sm text-label-sm font-normal mt-0.5">Dashboard</span>
+</a>
+<!-- Item: Quartos -->
+<a class="flex flex-col items-center justify-center py-1 px-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">meeting_room</span>
+<span class="font-label-sm text-label-sm font-normal mt-0.5">Quartos</span>
+</a>
+<!-- Item: Reservas -->
+<a class="flex flex-col items-center justify-center py-1 px-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">calendar_month</span>
+<span class="font-label-sm text-label-sm font-normal mt-0.5">Reservas</span>
+</a>
+<!-- Item Ativo: Planos -->
+<a class="flex flex-col items-center justify-center py-1 px-2 text-primary-container relative" href="#">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">sell</span>
+<span class="font-label-sm text-label-sm font-bold mt-0.5">Planos</span>
+<span class="w-1 h-1 bg-secondary rounded-full absolute -bottom-0.5"></span>
+</a>
+<!-- Item: Mais -->
+<a class="flex flex-col items-center justify-center py-1 px-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">more_horiz</span>
+<span class="font-label-sm text-label-sm font-normal mt-0.5">Mais</span>
+</a>
+</nav>
+</div>
+</div></div></main></body></html>

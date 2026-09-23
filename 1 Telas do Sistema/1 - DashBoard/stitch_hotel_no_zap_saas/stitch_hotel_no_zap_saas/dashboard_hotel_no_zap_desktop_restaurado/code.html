@@ -1,0 +1,440 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Dashboard - Hotel no Zap</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary-container": "#131b2e",
+                "error": "#ba1a1a",
+                "sidebar-start": "#003400",
+                "on-secondary-fixed-variant": "#005236",
+                "surface-container-low": "#eff4ff",
+                "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                "surface-bg": "#f8f9ff",
+                "on-primary-container": "#7c839b",
+                "on-secondary-fixed": "#002113",
+                "inverse-on-surface": "#eaf1ff",
+                "primary-fixed": "#dae2fd",
+                "surface-bright": "#f8f9ff",
+                "tertiary-container": "#2a1700",
+                "on-primary-fixed": "#131b2e",
+                "outline": "#76777d",
+                "surface": "#f8f9ff",
+                "on-error": "#ffffff",
+                "secondary-container": "#6cf8bb",
+                "on-surface": "#0b1c30",
+                "tertiary": "#000000",
+                "secondary-fixed-dim": "#4edea3",
+                "on-tertiary": "#ffffff",
+                "active-tab-text": "#6cf8bb",
+                "surface-variant": "#d3e4fe",
+                "on-secondary": "#ffffff",
+                "secondary": "#006c49",
+                "inverse-primary": "#bec6e0",
+                "tertiary-fixed": "#ffddb8",
+                "surface-container-lowest": "#ffffff",
+                "on-tertiary-container": "#b87500",
+                "on-tertiary-fixed": "#2a1700",
+                "inverse-surface": "#213145",
+                "tertiary-fixed-dim": "#ffb95f",
+                "surface-container-high": "#dce9ff",
+                "on-primary-fixed-variant": "#3f465c",
+                "background": "#f8f9ff",
+                "on-secondary-container": "#00714d",
+                "on-surface-variant": "#45464d",
+                "on-error-container": "#93000a",
+                "surface-tint": "#565e74",
+                "surface-container-highest": "#d3e4fe",
+                "primary": "#000000",
+                "outline-variant": "#c6c6cd",
+                "on-tertiary-fixed-variant": "#653e00",
+                "sidebar-end": "#000000",
+                "border-subtle": "#c6c6cd",
+                "surface-dim": "#cbdbf5",
+                "on-primary": "#ffffff",
+                "error-container": "#ffdad6",
+                "on-background": "#0b1c30",
+                "primary-fixed-dim": "#bec6e0",
+                "secondary-fixed": "#6ffbbe",
+                "surface-container": "#e5eeff"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "margin-mobile": "16px",
+                "unit": "4px",
+                "top-bar-height": "64px",
+                "gutter": "24px",
+                "margin-desktop": "32px",
+                "sidebar-width": "280px"
+        },
+        "fontFamily": {
+                "label-sm": [
+                        "Inter"
+                ],
+                "body-lg": [
+                        "Inter"
+                ],
+                "headline-sm": [
+                        "Inter"
+                ],
+                "headline-md": [
+                        "Inter"
+                ],
+                "headline-lg": [
+                        "Inter"
+                ],
+                "label-md": [
+                        "Inter"
+                ],
+                "body-md": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "label-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-sm": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body { background-color: theme('colors.background'); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .donut-chart {
+            background: conic-gradient(
+                theme('colors.secondary') 0% 45%,
+                theme('colors.primary-fixed-dim') 45% 75%,
+                theme('colors.surface-container-highest') 75% 100%
+            );
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="text-on-surface font-body-md text-body-md antialiased flex h-screen overflow-hidden">
+<!-- SideNavBar (from JSON) -->
+<aside class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-[280px] p-4 gap-2 z-40 bg-surface-container-lowest border-r border-outline-variant bg-gradient-to-b from-sidebar-start to-sidebar-end text-white">
+<div class="flex items-center gap-3 mb-8 px-4 py-2 mt-2">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">hotel</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-black text-white">Hotel no Zap</h1>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1 overflow-y-auto"><!-- Active Tab: Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 bg-active-tab-bg text-active-tab-text font-bold rounded-lg transition-all duration-200 translate-x-1" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Dashboard</span></span>
+</a>
+<!-- Inactive Tabs -->
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">calendar_view_month</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Mapa dos Quartos</span></span>
+</a><a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Hóspedes</span></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Cadastro de Produtos</span></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">book_online</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Reservas</span></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Controle de Caixa</span></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">sync</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Conexão</span></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Parceiros</span></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Configurações</span></span>
+</a><a class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white" href="#">
+<span class="material-symbols-outlined">manage_accounts</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Usuários</span></span>
+</a></nav>
+<div class="px-4 py-2 mt-auto"><span class="flex items-center gap-3 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/60"><span class="material-symbols-outlined">account_circle</span>Hotel Master</span></div><button class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high/20 rounded-lg transition-all duration-200 text-white w-full">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md"><span class="text-body-lg font-medium">Sair</span></span>
+</button>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col lg:ml-[280px] h-full overflow-hidden bg-background">
+<!-- TopNavBar (from JSON) -->
+<header class="sticky top-0 z-30 flex items-center w-full px-margin-desktop bg-surface h-16 border-b border-outline-variant shadow-sm shrink-0 justify-between"><div class="flex items-center gap-2">
+<span class="font-body-md text-on-surface-variant">Olá,</span>
+<span class="font-semibold text-on-surface">Administrador</span>
+</div>
+<!-- Actions & Profile -->
+<div class="flex items-center gap-4"><span class="font-body-md text-body-md text-on-surface-variant mr-4">15 de Mai, 14:30</span><div class="flex items-center gap-2"><button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">notifications</span></button><div class="w-px h-6 bg-outline-variant mx-1"></div><button class="flex items-center gap-2 hover:bg-surface-container-low p-1 rounded-full transition-colors"><img alt="User profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPBZzVzytznZfW2x-EUi62f2gp_ZJavR49EMzGasyptmYP4D_z1SzJ4IFpXqUJKGlqVHWy8HsZ_-hMoPLjAeriBMjiGs5rrzaHPUGmUpeuOL2JuqV8c_KipuMPkrhjbwEZ07uZZoBzzszUyOSJUdrPB07zPK-OQWK48p0yoGKa_dQITB0puqaEmpqX_KGDL8Ef65w2ICb73Zda_c2nwJ6zJ_eYvhk77D_0d2ljr1v_AXIULQGFqIiB"></button></div></div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 overflow-y-auto p-margin-desktop">
+<!-- Page Header & Filters -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<div>
+<h2 class="font-headline-lg text-[40px] leading-[48px] font-bold text-on-surface">Visão Geral</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 text-body-lg">Acompanhe o desempenho diário do hotel.</p>
+</div>
+<div class="inline-flex bg-surface-container-lowest border border-outline-variant rounded-lg p-1 shadow-sm">
+<button class="px-4 py-1.5 bg-primary-container text-on-primary rounded-md font-label-md text-label-md shadow-sm">Hoje</button>
+<button class="px-4 py-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md font-label-md text-label-md transition-colors">7 dias</button>
+<button class="px-4 py-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-md font-label-md text-label-md transition-colors">30 dias</button>
+</div>
+</div>
+<!-- KPIs Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter mb-gutter">
+<!-- Card 1: Quartos Disponíveis -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col justify-between p-4">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant"><span class="text-body-lg font-semibold">Quartos Disponíveis</span></span>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-[18px]">bed</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface text-[40px]">12</span>
+<span class="flex items-center text-secondary font-label-sm text-label-sm mb-1 bg-secondary/10 px-2 py-0.5 rounded-full">🟢 Livre</span>
+</div>
+</div>
+<!-- Card 2: Quartos Ocupados -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col justify-between p-4">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant"><span class="text-body-lg font-semibold">Quartos Ocupados</span></span>
+<div class="w-8 h-8 rounded-full bg-error-container flex items-center justify-center text-on-error-container">
+<span class="material-symbols-outlined text-[18px]">no_meeting_room</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface text-[40px]">18</span>
+<span class="flex items-center text-error font-label-sm text-label-sm mb-1 bg-error/10 px-2 py-0.5 rounded-full">🔴 Ocup.</span>
+</div>
+</div>
+<!-- Card 3: Quartos Reservados -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col justify-between p-4">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant"><span class="text-body-lg font-semibold">Quartos Reservados</span></span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">how_to_reg</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface text-[40px]">5</span>
+<span class="flex items-center text-primary font-label-sm text-label-sm mb-1 bg-primary/5 px-2 py-0.5 rounded-full">🔵 Previstos</span>
+</div>
+</div>
+<!-- Card 4: Em Limpeza -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col justify-between p-4">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant"><span class="text-body-lg font-semibold">Em Limpeza</span></span>
+<div class="w-8 h-8 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">cleaning_services</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface text-[40px]">3</span>
+</div>
+</div>
+<!-- Card 5: Em Check-Out -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col justify-between p-4">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant"><span class="text-body-lg font-semibold">Em Check-Out</span></span>
+<div class="w-8 h-8 rounded-full bg-outline-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</div>
+</div>
+<div class="flex items-end gap-2">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface text-[40px]">2</span>
+</div>
+</div>
+<!-- Card 6: Faturamento do Dia -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col justify-between p-4">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant"><span class="text-body-lg font-semibold">Faturamento do Dia</span></span>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-on-surface">R$ 1.250,00</span>
+</div>
+</div>
+</div>
+<!-- Main Dashboard Area (Bento Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Line Chart Area (Spans 2 cols) -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col p-4 h-64">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface text-headline-md">Faturamento Semanal</h3>
+<button class="text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Simulated Line Chart -->
+<div class="flex-1 relative w-full flex items-end h-32">
+<!-- Y-Axis Lines -->
+<div class="absolute inset-0 flex flex-col justify-between border-b border-l border-outline-variant/30 pb-6 pl-2">
+<div class="w-full border-t border-outline-variant/30 border-dashed h-0 flex items-center"><span class="absolute -left-8 text-xs text-on-surface-variant">5k</span></div>
+<div class="w-full border-t border-outline-variant/30 border-dashed h-0 flex items-center"><span class="absolute -left-8 text-xs text-on-surface-variant">4k</span></div>
+<div class="w-full border-t border-outline-variant/30 border-dashed h-0 flex items-center"><span class="absolute -left-8 text-xs text-on-surface-variant">3k</span></div>
+<div class="w-full border-t border-outline-variant/30 border-dashed h-0 flex items-center"><span class="absolute -left-8 text-xs text-on-surface-variant">2k</span></div>
+<div class="w-full border-t border-outline-variant/30 border-dashed h-0 flex items-center"><span class="absolute -left-8 text-xs text-on-surface-variant">1k</span></div>
+</div>
+<!-- X-Axis Labels & Bars (Simulating a chart structure) -->
+<div class="w-full flex justify-between items-end h-[85%] px-4 z-10">
+<div class="w-12 bg-primary-fixed-dim rounded-t-sm h-[40%] hover:bg-primary-container transition-colors relative group"><span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-on-surface-variant font-label-sm">Seg</span></div>
+<div class="w-12 bg-primary-fixed-dim rounded-t-sm h-[65%] hover:bg-primary-container transition-colors relative group"><span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-on-surface-variant font-label-sm">Ter</span></div>
+<div class="w-12 bg-primary-container rounded-t-sm h-[95%] hover:bg-primary transition-colors relative group shadow-[0_0_15px_rgba(19,27,46,0.2)]"><span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-on-surface font-label-sm font-bold">Qua</span></div>
+<div class="w-12 bg-primary-fixed-dim rounded-t-sm h-[50%] hover:bg-primary-container transition-colors relative group"><span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-on-surface-variant font-label-sm">Qui</span></div>
+<div class="w-12 bg-primary-fixed-dim rounded-t-sm h-[75%] hover:bg-primary-container transition-colors relative group"><span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-on-surface-variant font-label-sm">Sex</span></div>
+<div class="w-12 bg-primary-fixed-dim rounded-t-sm h-[85%] hover:bg-primary-container transition-colors relative group"><span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-on-surface-variant font-label-sm">Sáb</span></div>
+<div class="w-12 bg-primary-fixed-dim rounded-t-sm h-[30%] hover:bg-primary-container transition-colors relative group"><span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-on-surface-variant font-label-sm">Dom</span></div>
+</div>
+</div>
+</div>
+<!-- Donut Chart & Activity -->
+<div class="flex flex-col gap-gutter">
+<!-- Donut Chart -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col items-center h-64">
+<h3 class="font-headline-sm text-headline-sm text-on-surface w-full mb-6 text-headline-md">Ocupação por Categoria</h3>
+<div class="relative donut-chart mb-6 flex items-center justify-center w-24 h-24">
+<!-- Inner circle for Donut effect -->
+<div class="absolute w-24 h-24 bg-surface-container-lowest rounded-full flex flex-col items-center justify-center shadow-inner"><span class="font-bold text-on-surface text-headline-sm">60%</span><span class="text-[10px] text-on-surface-variant">Ocupação</span></div>
+</div>
+<div class="w-full flex flex-col gap-2">
+<div class="flex justify-between items-center text-sm">
+<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-secondary"></div><span class="font-body-md text-on-surface text-body-lg">Luxo</span></div>
+<span class="font-label-md font-bold text-body-lg">45%</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-primary-fixed-dim"></div><span class="font-body-md text-on-surface text-body-lg">Standard</span></div>
+<span class="font-label-md font-bold text-body-lg">30%</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-surface-container-highest"></div><span class="font-body-md text-on-surface text-body-lg">Econômico</span></div>
+<span class="font-label-md font-bold text-body-lg">25%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activities (Spans full width at bottom) -->
+<div class="lg:col-span-3 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-4">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface text-headline-md">Atividades Recentes</h3>
+<button class="text-primary font-label-sm text-label-sm hover:underline">Ver tudo</button>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Activity Item 1 -->
+<div class="flex items-start gap-4 p-3 hover:bg-surface-container-low rounded-lg transition-colors border border-transparent hover:border-outline-variant/30">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary">how_to_reg</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-surface text-body-lg"><strong class="font-semibold">Check-in realizado:</strong> João Silva e família chegaram.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 text-body-md">Quarto 204 (Luxo)</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap">Há 15 min</span>
+</div>
+<!-- Activity Item 2 -->
+<div class="flex items-start gap-4 p-3 hover:bg-surface-container-low rounded-lg transition-colors border border-transparent hover:border-outline-variant/30">
+<div class="w-10 h-10 rounded-full bg-secondary-container/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary">cleaning_services</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-surface text-body-lg"><strong class="font-semibold">Limpeza concluída:</strong> Quarto 105 liberado para check-in.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 text-body-md">Equipe: Maria Santos</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap">Há 45 min</span>
+</div>
+<!-- Activity Item 3 -->
+<div class="flex items-start gap-4 p-3 hover:bg-surface-container-low rounded-lg transition-colors border border-transparent hover:border-outline-variant/30">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary">local_atm</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-surface text-body-lg"><strong class="font-semibold">Pagamento processado:</strong> Reserva #8902.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 text-body-md">Valor: R$ 850,00 via Cartão de Crédito</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap">Há 2 horas</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+
+
+
+</body></html>

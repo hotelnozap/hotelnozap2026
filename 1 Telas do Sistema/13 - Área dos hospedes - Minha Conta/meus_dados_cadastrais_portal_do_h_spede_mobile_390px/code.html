@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0">
+  <title>Meus Dados - Portal do Hóspede (Mobile 390px)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+    .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1; }
+  </style>
+</head>
+<body class="bg-[#f8f9ff] text-slate-800 antialiased w-[390px] mx-auto min-h-screen pb-28 relative">
+
+  <!-- CABEÇALHO OFICIAL MOBILE PADRONIZADO (Degradê #003400 a #000000) -->
+  <header class="w-full bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3 sticky top-0 z-40 shadow-md flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <button class="p-1 rounded-lg hover:bg-white/10 text-white active:scale-95 transition">
+        <span class="material-symbols-outlined text-2xl">menu</span>
+      </button>
+      <div>
+        <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-400 block leading-tight">Portal do Hóspede</span>
+        <h1 class="text-sm font-extrabold tracking-wider leading-none text-white">HOTEL NO ZAP</h1>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button class="relative p-1.5 rounded-full hover:bg-white/10 text-white active:scale-95 transition">
+        <span class="material-symbols-outlined text-xl">notifications</span>
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400"></span>
+      </button>
+      <div class="w-8 h-8 rounded-full bg-emerald-800 border border-emerald-400/50 flex items-center justify-center font-bold text-xs text-white">
+        CT
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="px-4 py-3 space-y-4">
+    
+    <!-- Link Voltar Oficial & Título da Tela -->
+    <div class="flex items-center justify-between pt-1">
+      <a href="#" class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#003400] hover:text-emerald-800 transition-colors">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        Voltar para Minha Conta
+      </a>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-[#003400] border border-emerald-200">
+        Hóspede VIP
+      </span>
+    </div>
+
+    <!-- Título Principal -->
+    <div>
+      <h2 class="text-xl font-extrabold text-slate-900 tracking-tight leading-tight">Meus Dados Cadastrais</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Mantenha seus dados atualizados para check-in automático.</p>
+    </div>
+
+    <!-- Card de Perfil & Identificação Rápida -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3.5">
+      <div class="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#003400] to-emerald-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md flex-shrink-0">
+        CT
+        <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-white text-[10px] fill">check</span>
+        </span>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-slate-900 text-sm truncate">Camila Torres</h3>
+          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">100% Completo</span>
+        </div>
+        <p class="text-[11px] text-slate-500 truncate">camila.torres@gmail.com</p>
+        <p class="text-[11px] font-medium text-emerald-800 mt-0.5 flex items-center gap-1">
+          <span class="material-symbols-outlined text-xs fill text-emerald-600">chat</span>
+          (81) 99842-1104 • WhatsApp
+        </p>
+      </div>
+    </div>
+
+    <!-- CARDS DE INDICADORES (KPIs) EM GRADE 2x2 PADRÃO MOBILE -->
+    <div class="grid grid-cols-2 gap-2.5">
+      <!-- Card 1: Documento -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Documento</span>
+          <span class="material-symbols-outlined text-sm text-blue-600">credit_card</span>
+        </div>
+        <div class="font-extrabold text-slate-900 text-xs">382.910.448-92</div>
+        <div class="text-[10px] text-emerald-700 font-medium mt-0.5 flex items-center gap-0.5">
+          <span class="material-symbols-outlined text-[10px] fill">verified</span> CPF Validado
+        </div>
+      </div>
+
+      <!-- Card 2: Programa Fidelidade -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between text-purple-400 mb-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Fidelidade</span>
+          <span class="material-symbols-outlined text-sm text-purple-600">military_tech</span>
+        </div>
+        <div class="font-extrabold text-purple-700 text-sm">2.450 pts</div>
+        <div class="text-[10px] text-purple-600 font-semibold mt-0.5">Nível Ouro VIP</div>
+      </div>
+
+      <!-- Card 3: Estadias -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Hospedagens</span>
+          <span class="material-symbols-outlined text-sm text-emerald-600">hotel</span>
+        </div>
+        <div class="font-extrabold text-slate-900 text-sm">12 viagens</div>
+        <div class="text-[10px] text-emerald-700 font-medium mt-0.5">4 neste ano</div>
+      </div>
+
+      <!-- Card 4: Estadia Atual -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Estadia Ativa</span>
+          <span class="material-symbols-outlined text-sm text-emerald-600 fill">key</span>
+        </div>
+        <div class="font-extrabold text-emerald-800 text-xs truncate">Suíte 204 King</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Check-out 27/02</div>
+      </div>
+    </div>
+
+    <!-- BOTÕES DE AÇÃO 2x2 PADRÃO OFICIAL -->
+    <div class="grid grid-cols-2 gap-2">
+      <button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#003400] text-white text-xs font-bold active:scale-95 transition shadow-sm">
+        <span class="material-symbols-outlined text-sm">save</span>
+        Salvar Dados
+      </button>
+      <button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 active:scale-95 transition border border-slate-200">
+        <span class="material-symbols-outlined text-sm">lock_reset</span>
+        Mudar Senha
+      </button>
+    </div>
+
+    <!-- SEÇÃO 1: DADOS PESSOAIS -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <div class="w-6 h-6 rounded-lg bg-emerald-50 text-[#003400] flex items-center justify-center font-bold text-xs">1</div>
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Dados Pessoais & Documento</h3>
+      </div>
+
+      <div class="space-y-2.5">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nome Completo</label>
+          <input type="text" value="Camila Torres Mendonça" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] bg-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">CPF</label>
+            <input type="text" value="382.910.448-92" readonly class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-600">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nascimento</label>
+            <input type="date" value="1992-04-18" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Gênero</label>
+            <select class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+              <option selected>Feminino</option>
+              <option>Masculino</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nacionalidade</label>
+            <input type="text" value="Brasileira" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 2: CONTATO & WHATSAPP -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-lg bg-emerald-50 text-[#003400] flex items-center justify-center font-bold text-xs">2</div>
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Contatos & WhatsApp</h3>
+        </div>
+        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Ativo</span>
+      </div>
+
+      <div class="space-y-2.5">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">WhatsApp Principal</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-2.5 top-2 text-emerald-600 text-base fill">chat</span>
+            <input type="text" value="(81) 99842-1104" class="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">E-mail Cadastrado</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-2.5 top-2 text-slate-400 text-base">mail</span>
+            <input type="email" value="camila.torres@gmail.com" class="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Contato de Emergência</label>
+          <input type="text" value="Rodrigo Mendonça - (81) 98822-0091" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 3: ENDEREÇO RESIDENCIAL -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <div class="w-6 h-6 rounded-lg bg-emerald-50 text-[#003400] flex items-center justify-center font-bold text-xs">3</div>
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Endereço de Cobrança</h3>
+      </div>
+
+      <div class="space-y-2.5">
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">CEP</label>
+            <input type="text" value="51020-010" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Logradouro</label>
+            <input type="text" value="Av. Boa Viagem" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Número</label>
+            <input type="text" value="3420" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Complemento</label>
+            <input type="text" value="Apto 1402" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bairro</label>
+            <input type="text" value="Boa Viagem" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Cidade / UF</label>
+            <input type="text" value="Recife - PE" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 4: PREFERÊNCIAS & ACOMPANHANTES -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-lg bg-emerald-50 text-[#003400] flex items-center justify-center font-bold text-xs">4</div>
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Preferências & Família</h3>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+          <div>
+            <span class="font-bold text-slate-800 block">Cama & Quarto</span>
+            <span class="text-slate-500 text-[11px]">King Size • Andar Alto Vista Mar</span>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-base">check_circle</span>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+          <div>
+            <span class="font-bold text-slate-800 block">Acompanhante 1</span>
+            <span class="text-slate-500 text-[11px]">Rodrigo Mendonça (Esposo)</span>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-base">person</span>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+          <div>
+            <span class="font-bold text-slate-800 block">Acompanhante 2</span>
+            <span class="text-slate-500 text-[11px]">Lucas Mendonça (Filho - 8 anos)</span>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-base">child_care</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTÕES FINAIS DE SALVAR / CANCELAR ACIMA DA BOTTOM BAR -->
+    <div class="pt-2 space-y-2">
+      <button class="w-full py-3 rounded-xl bg-[#003400] text-white font-bold text-sm shadow-md active:scale-95 transition flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined text-base">check</span>
+        Salvar Todos os Dados
+      </button>
+      <button class="w-full py-2.5 rounded-xl bg-white border border-slate-300 text-slate-600 font-semibold text-xs hover:bg-slate-50 active:scale-95 transition">
+        Cancelar Alterações
+      </button>
+    </div>
+
+  </main>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR OFICIAL MOBILE (5 ABAS PADRÃO PORTAL DO HÓSPEDE) -->
+  <nav class="fixed bottom-0 left-0 right-0 w-[390px] mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200 py-2 px-3 z-50 flex justify-around items-center shadow-lg">
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">hotel</span>
+      <span class="text-[10px] font-medium">Estadia</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">calendar_month</span>
+      <span class="text-[10px] font-medium">Reservas</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">room_service</span>
+      <span class="text-[10px] font-medium">Pedidos</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
+      <span class="material-symbols-outlined text-xl">receipt_long</span>
+      <span class="text-[10px] font-medium">Consumo</span>
+    </a>
+    <a href="#" class="flex flex-col items-center gap-0.5 text-[#003400] font-bold">
+      <span class="material-symbols-outlined text-xl fill text-[#003400]">account_circle</span>
+      <span class="text-[10px] font-bold">Perfil</span>
+    </a>
+  </nav>
+
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cadastro de Hóspede - Hotel no Zap</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#b87500",
+                        "on-background": "#0b1c30",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface": "#f8f9ff",
+                        "primary-fixed": "#dae2fd",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed": "#2a1700",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-dim": "#cbdbf5",
+                        "surface-bg": "#f8f9ff",
+                        "primary-container": "#131b2e",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9ff",
+                        "active-tab-text": "#6cf8bb",
+                        "sidebar-end": "#000000",
+                        "sidebar-start": "#003400",
+                        "outline": "#76777d",
+                        "on-tertiary": "#ffffff",
+                        "border-subtle": "#c6c6cd",
+                        "secondary-container": "#6cf8bb",
+                        "surface-variant": "#d3e4fe",
+                        "on-primary-fixed": "#131b2e",
+                        "outline-variant": "#c6c6cd",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-surface-variant": "#45464d",
+                        "surface-tint": "#565e74",
+                        "surface-container": "#e5eeff",
+                        "on-surface": "#0b1c30",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#002113",
+                        "background": "#f8f9ff",
+                        "error-container": "#ffdad6",
+                        "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                        "primary-fixed-dim": "#bec6e0",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-secondary-container": "#00714d",
+                        "inverse-surface": "#213145",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-container": "#7c839b",
+                        "secondary": "#006c49",
+                        "primary": "#000000",
+                        "surface-container-high": "#dce9ff",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#bec6e0",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#2a1700",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "inverse-on-surface": "#eaf1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "sidebar-width": "280px",
+                        "unit": "4px",
+                        "top-bar-height": "64px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 w-full">
+<!-- Main Form Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop bg-background overflow-y-auto">
+<div class="max-w-5xl mx-auto space-y-6">
+<!-- Header Actions -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4"><div class="flex flex-col"><h2 class="font-headline-lg text-headline-lg text-on-background">Cadastro de Produto</h2><p class="font-body-md text-body-md text-on-surface-variant mt-1">Preencha os dados do item para controle de estoque e vendas.</p></div><a class="inline-flex items-center gap-2 font-label-md text-label-md text-secondary hover:text-secondary-fixed transition-colors" href="#"><span class="material-symbols-outlined text-[20px]">arrow_back</span>Voltar para Listagem de Produtos</a></div>
+<!-- Form Container -->
+<form class="space-y-6"><!-- 1. Status do Produto Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6 flex items-center justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">toggle_on</span>
+<span class="font-headline-sm text-headline-sm text-on-background">Status do Produto</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant mt-1">Defina se o produto está disponível para venda e lançamento</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" id="status-produto" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-subtle after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+<span class="ml-3 font-label-md text-label-md text-secondary font-semibold">Ativo</span>
+</label>
+</div>
+<!-- 2. Imagem do Produto Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">photo_camera</span>
+        Imagem do Produto
+    </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Carregar imagem do produto (coletar do computador). Formatos aceitos: JPG, PNG até 5MB</p>
+<div class="border-2 border-dashed border-outline-variant hover:border-secondary rounded-xl p-8 flex flex-col items-center justify-center text-center bg-surface transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-3 text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors">
+<span class="material-symbols-outlined text-[32px]">cloud_upload</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface mb-1 font-semibold">Arraste e solte o arquivo aqui ou clique para procurar</p>
+<p class="font-body-md text-label-sm text-on-surface-variant mb-4">JPG, PNG até 5MB (Recomendado: 800x800px)</p>
+<button class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-border-subtle text-on-surface font-label-md text-label-md hover:bg-surface-container flex items-center gap-2 shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px] text-secondary">add_photo_alternate</span>
+            Selecionar arquivo do computador
+        </button>
+</div>
+</div>
+<!-- 3. Informações Principais Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">inventory_2</span>
+        Informações Principais
+    </h3>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-4">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Categoria *</label>
+<select class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow appearance-none">
+<option value="">Selecione a categoria...</option>
+<option value="bebidas">Bebidas</option>
+<option value="frigobar">Frigobar</option>
+<option value="alimentos">Alimentos</option>
+<option value="amenities">Amenities</option>
+<option value="limpeza">Limpeza</option>
+</select>
+</div>
+<div class="md:col-span-5">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Nome do Produto *</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Ex: Água Mineral sem Gás 500ml" type="text"/>
+</div>
+<div class="md:col-span-3">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Unidade de Medida *</label>
+<select class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow appearance-none">
+<option value="UN">Unidade (UN)</option>
+<option value="PCT">Pacote (PCT)</option>
+<option value="CX">Caixa (CX)</option>
+<option value="GF">Garrafa (GF)</option>
+<option value="LT">Lata (LT)</option>
+<option value="KG">Kg</option>
+</select>
+</div>
+</div>
+</div>
+<!-- 4. Descrição Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">description</span>
+        Descrição
+    </h3>
+<textarea class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow resize-y" placeholder="Informações detalhadas sobre o produto..." rows="4"></textarea>
+</div>
+<!-- 5. Valores e Preços Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">payments</span>
+        Valores e Preços
+    </h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Preço de Custo *</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline font-label-md">R$</span>
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="2,50" type="text" value="2,50"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Preço de Venda *</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline font-label-md">R$</span>
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="6,00" type="text" value="6,00"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Lucro Estimado</label>
+<div class="h-10 px-4 rounded-lg bg-surface-container flex items-center justify-between border border-border-subtle">
+<span class="font-body-md text-body-md text-on-surface-variant">Margem Calculada:</span>
+<span class="font-label-md text-label-md text-secondary font-bold bg-secondary-container px-2.5 py-0.5 rounded-full">Margem: 140%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 6. Gestão de Estoque Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">warehouse</span>
+        Gestão de Estoque
+    </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1 flex items-center gap-1">
+                Estoque Mínimo *
+                <span class="material-symbols-outlined text-[16px] text-outline" title="Aviso de estoque baixo">warning</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Ex: 10" type="number" value="10"/>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1 block">Alerta automático para reposição quando atingir este limite</span>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Estoque Máximo</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Ex: 100" type="number" value="100"/>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1 block">Capacidade máxima recomendada para armazenagem</span>
+</div>
+</div>
+</div>
+<!-- 7. Rodapé com Ações -->
+<div class="flex items-center justify-end gap-4 pt-4 pb-8">
+<button class="px-6 py-2.5 rounded-xl border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors focus:ring-2 focus:ring-outline-variant focus:outline-none" type="button">
+        Cancelar
+    </button>
+<button class="px-6 py-2.5 rounded-xl bg-secondary text-on-secondary font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm flex items-center gap-2 focus:ring-2 focus:ring-secondary focus:outline-none" type="submit">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+        Salvar Produto
+    </button>
+</div></form>
+</div>
+</main>
+</div>
+</body></html>

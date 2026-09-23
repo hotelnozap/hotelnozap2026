@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Hotel no Zap - Motor de Reservas Diretas &amp; PMS no WhatsApp</title>
+<!-- Google Fonts: Inter & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              forest: '#003400',
+              forestDark: '#001a00',
+              emerald: '#10B981',
+              emeraldDeep: '#006c49',
+              gold: '#FDB116',
+              goldHover: '#e59f10',
+              darkSlate: '#0b1c30',
+              bodyGray: '#45464d',
+              bgIce: '#f8f9ff',
+              cardBg: '#ffffff'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(11, 28, 48, 0.06)',
+            'card': '0 8px 30px rgba(0, 0, 0, 0.04)',
+            'gold-glow': '0 4px 20px rgba(253, 177, 22, 0.35)',
+            'forest-glow': '0 6px 24px rgba(0, 52, 0, 0.25)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-utilities">
+    /* Fix mobile container to strictly simulate standard 390px iPhone width */
+    body {
+      background-color: #e5e7eb;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mobile-frame {
+      width: 100%;
+      max-width: 390px;
+      min-height: 100vh;
+      background-color: #f8f9ff;
+      overflow-x: hidden;
+      position: relative;
+      box-shadow: 0 0 40px rgba(0,0,0,0.15);
+    }
+    /* Hide scrollbar for tabs/carousels */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body>
+<div class="mobile-frame flex flex-col justify-start">
+<!-- BEGIN: MainHeader -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center justify-between shadow-sm" data-purpose="mobile-header">
+<div class="flex items-center gap-2">
+<!-- Logo HZ Hotel no Zap -->
+<div class="w-8 h-8 rounded-lg bg-brand-forest flex items-center justify-center text-brand-gold font-display font-extrabold text-xs shadow-sm">
+        HZ
+      </div>
+<div class="flex flex-col">
+<span class="font-display font-bold text-xs tracking-tight text-brand-darkSlate leading-tight">HOTEL NO ZAP</span>
+<span class="text-[9px] tracking-wider uppercase text-brand-emeraldDeep font-semibold">PMS &amp; Direct Booking</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-2">
+<a class="text-xs font-semibold text-brand-darkSlate hover:text-brand-forest transition-colors px-2 py-1" href="#planos">
+        Entrar
+      </a>
+<a class="bg-brand-gold hover:bg-brand-goldHover text-brand-darkSlate font-display font-bold text-xs px-3 py-1.5 rounded-full transition-all shadow-gold-glow flex items-center gap-1" href="#planos">
+<span>Testar 30 Dias</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</header>
+<!-- END: MainHeader -->
+<main class="flex-1 w-full flex flex-col">
+<!-- BEGIN: HeroSection -->
+<section class="pt-6 pb-8 px-4 flex flex-col items-center text-center bg-gradient-to-b from-white via-[#f8f9ff] to-[#eef4f0]" data-purpose="hero-mobile">
+<!-- Pill Badge -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 mb-4 shadow-xs">
+<span class="text-xs">🚀</span>
+<span class="text-[11px] font-semibold text-emerald-800 tracking-tight">
+          +40% em Reservas • Zero Comissões OTAs
+        </span>
+</div>
+<!-- Main Headline -->
+<h1 class="font-display font-extrabold text-2xl leading-[1.2] text-brand-darkSlate mb-3">
+        Transforme o WhatsApp do seu Hotel na sua <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-forest via-brand-emeraldDeep to-emerald-600">Maior Máquina</span> de Reservas Diretas
+      </h1>
+<!-- Subheadline -->
+<p class="text-xs text-brand-bodyGray leading-relaxed mb-6 px-1">
+        O primeiro sistema de gestão hoteleira (PMS) com inteligência automatizada no WhatsApp: controle mapa de quartos, check-in e pagamentos enquanto sua taxa de ocupação decola.
+      </p>
+<!-- CTA Buttons -->
+<div class="w-full flex flex-col gap-2.5 mb-4">
+<a class="w-full h-12 bg-brand-forest active:bg-brand-forestDark text-white font-display font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-forest-glow transition-transform active:scale-[0.98]" href="#planos">
+<span class="material-symbols-outlined text-emerald-400 text-lg">rocket_launch</span>
+<span>Iniciar Teste Gratuito de 30 Dias</span>
+</a>
+<a class="w-full h-11 bg-white border border-gray-200 text-brand-darkSlate font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm active:bg-gray-50 transition-colors" href="https://wa.me/">
+<span class="material-symbols-outlined text-emerald-600 text-base">chat</span>
+<span>Ver Demonstração ao Vivo no Zap</span>
+</a>
+</div>
+<!-- Trust Micro-pills -->
+<div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-gray-500 font-medium pt-1">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-emerald-600 text-xs">check_circle</span>
+          Sem cartão de crédito
+        </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-emerald-600 text-xs">bolt</span>
+          Configuração em 2 min
+        </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-emerald-600 text-xs">support_agent</span>
+          Suporte dedicado
+        </span>
+</div>
+<!-- Mockup Visual: Mobile Chat & PMS Preview -->
+<div class="w-full mt-6 relative" data-purpose="hero-mockup-container">
+<!-- Floating Status Notification Tag -->
+<div class="absolute -top-3 left-3 bg-brand-darkSlate text-white text-[10px] py-1 px-2.5 rounded-full shadow-lg flex items-center gap-1.5 z-20 border border-slate-700">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+<span>WhatsApp Conectado (Recebendo reservas)</span>
+</div>
+<!-- Phone Card Simulation -->
+<div class="w-full bg-white rounded-2xl border border-gray-200/90 shadow-xl overflow-hidden p-3 text-left">
+<!-- Mini Header do Chat -->
+<div class="bg-brand-forest rounded-xl p-2.5 text-white flex items-center justify-between mb-2.5 shadow-sm">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">
+                🏨
+              </div>
+<div>
+<p class="text-[11px] font-bold leading-tight">Hotel no Zap Bot</p>
+<p class="text-[9px] text-emerald-300">Online • Resposta Imediata</p>
+</div>
+</div>
+<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-1.5 py-0.5 rounded">24/7</span>
+</div>
+<!-- Mensagem Hóspede -->
+<div class="flex justify-end mb-2">
+<div class="bg-[#d9fdd3] text-gray-800 text-[11px] rounded-2xl rounded-tr-none px-3 py-1.5 max-w-[80%] shadow-xs">
+              Tem vaga para casal de 12 a 15 deste mês?
+              <span class="block text-[8px] text-gray-400 text-right mt-0.5">14:21</span>
+</div>
+</div>
+<!-- Resposta do Bot Automático -->
+<div class="flex justify-start mb-3">
+<div class="bg-gray-100 text-gray-800 text-[11px] rounded-2xl rounded-tl-none p-2.5 max-w-[90%] border border-gray-200/70 shadow-xs space-y-1.5">
+<p class="font-semibold text-brand-darkSlate text-[10px]">Temos 2 opções disponíveis:</p>
+<div class="bg-white p-2 rounded-lg border border-gray-100 text-[10px]">
+<p class="font-bold text-gray-900">1. Suíte Luxo: R$ 420/dia</p>
+<p class="text-gray-500 text-[9px]">2. Master King: R$ 510/dia</p>
+</div>
+<div class="flex items-center gap-1.5 pt-1">
+<span class="bg-emerald-600 text-white text-[9px] font-bold px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]">pix</span>
+                  Pagar via PIX e Receber Voucher
+                </span>
+</div>
+<span class="block text-[8px] text-gray-400 text-right">14:21 • Resposta em 2s</span>
+</div>
+</div>
+<!-- Mini Grid de Ocupação PMS -->
+<div class="border-t border-gray-100 pt-2.5 mt-2 bg-slate-50 rounded-xl p-2">
+<div class="flex items-center justify-between text-[10px] mb-1.5">
+<span class="font-bold text-gray-700">Mapa Visual em Tempo Real</span>
+<span class="text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.5 rounded text-[9px]">84% Ocupado</span>
+</div>
+<div class="grid grid-cols-3 gap-1.5">
+<div class="bg-emerald-50 border border-emerald-200 rounded p-1 text-center">
+<span class="text-[9px] font-bold text-emerald-800 block">Q-101</span>
+<span class="text-[8px] text-emerald-600">Livre</span>
+</div>
+<div class="bg-blue-50 border border-blue-200 rounded p-1 text-center">
+<span class="text-[9px] font-bold text-blue-800 block">Q-102</span>
+<span class="text-[8px] text-blue-600">Ocupado</span>
+</div>
+<div class="bg-amber-50 border border-amber-200 rounded p-1 text-center">
+<span class="text-[9px] font-bold text-amber-800 block">Q-103</span>
+<span class="text-[8px] text-amber-600">Higienização</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: HeroSection -->
+<!-- BEGIN: TrustBar -->
+<section class="py-6 px-4 bg-white border-y border-gray-100" data-purpose="metrics-trust-bar">
+<p class="text-center text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-4">
+        Mais de 180+ hotéis, pousadas e resorts confiam
+      </p>
+<!-- Metrics 2x2 Grid -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Metric 1 -->
+<div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+<p class="font-display font-extrabold text-xl text-brand-darkSlate">R$ 4.2M+</p>
+<p class="text-[10px] text-brand-bodyGray mt-0.5">Em diárias sem comissão</p>
+</div>
+<!-- Metric 2 -->
+<div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+<p class="font-display font-extrabold text-xl text-emerald-600">98.4%</p>
+<p class="text-[10px] text-brand-bodyGray mt-0.5">Resposta imediata 24/7</p>
+</div>
+<!-- Metric 3 -->
+<div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+<p class="font-display font-extrabold text-xl text-brand-darkSlate">+42%</p>
+<p class="text-[10px] text-brand-bodyGray mt-0.5">Aumento em reservas diretas</p>
+</div>
+<!-- Metric 4 -->
+<div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+<div class="flex items-center justify-center gap-0.5 text-amber-400 mb-0.5">
+<span class="font-display font-extrabold text-xl text-brand-darkSlate mr-1">4.9/5</span>
+<span class="material-symbols-outlined text-sm">star</span>
+</div>
+<p class="text-[10px] text-brand-bodyGray">Satisfação hoteleira</p>
+</div>
+</div>
+</section>
+<!-- END: TrustBar -->
+<!-- BEGIN: ComparisonSection -->
+<section class="py-8 px-4 bg-[#f8f9ff]" data-purpose="comparison-section">
+<div class="text-center mb-6">
+<span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2.5 py-1 rounded-full">
+          Diagnóstico Financeiro
+        </span>
+<h2 class="font-display font-extrabold text-xl text-brand-darkSlate mt-2">
+          O Custo Real de Ficar Preso a Intermediários
+        </h2>
+<p class="text-xs text-brand-bodyGray mt-1">
+          Veja o que acontece ao retomar o controle das suas vendas diretas.
+        </p>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Sem Hotel no Zap (Negativo) -->
+<div class="bg-white rounded-2xl p-4 border border-rose-200 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 bg-rose-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
+            MODO TRADICIONAL
+          </div>
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-rose-500 text-xl">cancel</span>
+<h3 class="font-display font-bold text-sm text-gray-900">Sem o Hotel no Zap</h3>
+</div>
+<ul class="space-y-2.5 text-xs text-gray-600">
+<li class="flex items-start gap-2">
+<span class="text-rose-500 font-bold">•</span>
+<span><strong>Comissões abusivas de até 25%</strong> faturadas a cada diária por Booking e Airbnb.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-rose-500 font-bold">•</span>
+<span><strong>Atendimento manual e lento:</strong> hóspede espera 40 min e reserva no concorrente.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-rose-500 font-bold">•</span>
+<span><strong>Risco constante de overbooking</strong> por desencontro entre cadernos e planilhas.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-rose-500 font-bold">•</span>
+<span>Hóspede pertence à agência, nunca volta direto com você.</span>
+</li>
+</ul>
+</div>
+<!-- Com Hotel no Zap (Positivo) -->
+<div class="bg-emerald-50/50 rounded-2xl p-4 border-2 border-emerald-500 shadow-md relative overflow-hidden">
+<div class="absolute top-0 right-0 bg-emerald-600 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-bl-lg">
+            RECOMENDADO
+          </div>
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-emerald-600 text-xl">check_circle</span>
+<h3 class="font-display font-bold text-sm text-brand-darkSlate">Com o Hotel no Zap</h3>
+</div>
+<ul class="space-y-2.5 text-xs text-brand-darkSlate">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm mt-0.5">verified</span>
+<span><strong>0% de taxa de intermediação:</strong> 100% do valor da diária direto no seu caixa.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm mt-0.5">verified</span>
+<span><strong>IA responde em até 5 segundos 24/7</strong> com fotos do quarto, cotação e chave PIX.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm mt-0.5">verified</span>
+<span><strong>Mapa de quartos unificado em tempo real</strong> sem erros humanos de agendamento.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm mt-0.5">verified</span>
+<span><strong>CRM completo de fidelização:</strong> mande campanhas de baixa temporada com 1 toque.</span>
+</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- END: ComparisonSection -->
+<!-- BEGIN: BentoGridFeatures -->
+<section class="py-8 px-4 bg-white" data-purpose="bento-features">
+<div class="text-center mb-6">
+<span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+          Ecossistema Integrado
+        </span>
+<h2 class="font-display font-extrabold text-xl text-brand-darkSlate mt-2">
+          Tudo o que seu Hotel Precisa em Uma Só Tela
+        </h2>
+</div>
+<div class="flex flex-col gap-3.5">
+<!-- Feature 1 -->
+<div class="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+<div class="w-8 h-8 rounded-lg bg-brand-forest text-emerald-400 flex items-center justify-center mb-2.5">
+<span class="material-symbols-outlined text-lg">grid_view</span>
+</div>
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Gestão Visual PMS</span>
+<h3 class="font-display font-bold text-sm text-brand-darkSlate mt-0.5">Mapa de Quartos Dinâmico</h3>
+<p class="text-xs text-brand-bodyGray mt-1">
+            Visualização relance de quartos livres, ocupados, limpeza e manutenção com alteração de status em 1 clique.
+          </p>
+</div>
+<!-- Feature 2 -->
+<div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40">
+<div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center mb-2.5">
+<span class="material-symbols-outlined text-lg">hotel_class</span>
+</div>
+<span class="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Vendas Automatizadas</span>
+<h3 class="font-display font-bold text-sm text-brand-darkSlate mt-0.5">Motor de Reservas no Zap</h3>
+<p class="text-xs text-brand-bodyGray mt-1">
+            Catálogo direto via link exclusivo. Gere vouchers automáticos com QR Code e receba via PIX ou Cartão sem intermediários.
+          </p>
+</div>
+<!-- Feature 3 -->
+<div class="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50">
+<div class="w-8 h-8 rounded-lg bg-brand-darkSlate text-white flex items-center justify-center mb-2.5">
+<span class="material-symbols-outlined text-lg">point_of_sale</span>
+</div>
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Fluxo de Caixa</span>
+<h3 class="font-display font-bold text-sm text-brand-darkSlate mt-0.5">Gestão Financeira &amp; Frigobar</h3>
+<p class="text-xs text-brand-bodyGray mt-1">
+            Controle de consumo, taxas de frigobar por quarto e fechamento de turno diário com relatório automático no seu WhatsApp.
+          </p>
+</div>
+<!-- Feature 4 -->
+<div class="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50">
+<div class="w-8 h-8 rounded-lg bg-emerald-800 text-white flex items-center justify-center mb-2.5">
+<span class="material-symbols-outlined text-lg">contacts</span>
+</div>
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Fidelização</span>
+<h3 class="font-display font-bold text-sm text-brand-darkSlate mt-0.5">CRM de Hóspedes &amp; Disparos</h3>
+<p class="text-xs text-brand-bodyGray mt-1">
+            Base completa de contatos e histórico de estadas. Mensagens automáticas de pós-check-out e campanhas promocionais.
+          </p>
+</div>
+<!-- Feature 5 -->
+<div class="p-4 rounded-xl border border-gray-200/80 bg-slate-50/50">
+<div class="w-8 h-8 rounded-lg bg-brand-forest text-brand-gold flex items-center justify-center mb-2.5">
+<span class="material-symbols-outlined text-lg">cell_tower</span>
+</div>
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Multi-dispositivo</span>
+<h3 class="font-display font-bold text-sm text-brand-darkSlate mt-0.5">Múltiplas Conexões WhatsApp</h3>
+<p class="text-xs text-brand-bodyGray mt-1">
+            Recepção, governança e comercial operando na mesma linha sem risco de queda ou bloqueio de chip.
+          </p>
+</div>
+</div>
+</section>
+<!-- END: BentoGridFeatures -->
+<!-- BEGIN: EconomySimulator -->
+<section class="py-8 px-4 bg-[#f8f9ff]" data-purpose="economy-calculator">
+<div class="text-center mb-5">
+<span class="text-[10px] font-bold uppercase tracking-wider text-brand-forest bg-emerald-100 px-2.5 py-1 rounded-full">
+          Simulador em Tempo Real
+        </span>
+<h2 class="font-display font-extrabold text-xl text-brand-darkSlate mt-2">
+          Quanto Dinheiro Seu Hotel Deixa na Mesa das OTAs?
+        </h2>
+<p class="text-xs text-brand-bodyGray mt-1">
+          Ajuste os controles abaixo para calcular a economia de comissões.
+        </p>
+</div>
+<!-- Simulator Card -->
+<div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-card">
+<!-- Slider 1: Quartos -->
+<div class="mb-4">
+<div class="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1.5">
+<span>Número de Quartos:</span>
+<span class="font-display font-bold text-brand-forest text-sm bg-emerald-50 px-2 py-0.5 rounded" id="roomValText">20 quartos</span>
+</div>
+<input class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-forest" id="roomSlider" max="100" min="5" step="1" type="range" value="20"/>
+<div class="flex justify-between text-[10px] text-gray-400 mt-1">
+<span>5 quartos</span>
+<span>50 quartos</span>
+<span>100 quartos</span>
+</div>
+</div>
+<!-- Slider 2: Diária Média -->
+<div class="mb-5">
+<div class="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1.5">
+<span>Diária Média (R$):</span>
+<span class="font-display font-bold text-brand-forest text-sm bg-emerald-50 px-2 py-0.5 rounded" id="rateValText">R$ 350</span>
+</div>
+<input class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-forest" id="rateSlider" max="1200" min="100" step="25" type="range" value="350"/>
+<div class="flex justify-between text-[10px] text-gray-400 mt-1">
+<span>R$ 100</span>
+<span>R$ 600</span>
+<span>R$ 1.200</span>
+</div>
+</div>
+<!-- Result Box -->
+<div class="bg-gradient-to-br from-brand-forest to-brand-forestDark text-white p-4 rounded-xl text-center shadow-md">
+<p class="text-[10px] uppercase font-bold tracking-wider text-emerald-300">Economia Estimada em Comissões (20% médio)</p>
+<div class="font-display font-extrabold text-2xl my-1 text-brand-gold" id="calculatedEconomy">
+            R$ 25.200,00 <span class="text-xs text-white font-normal">/mês</span>
+</div>
+<p class="text-[10px] text-gray-300 leading-tight mb-3">
+            Esse montante fica 100% no caixa do seu negócio ao direcionar suas vendas para o WhatsApp oficial.
+          </p>
+<a class="w-full py-2.5 bg-brand-gold hover:bg-brand-goldHover text-brand-darkSlate font-display font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 shadow-gold-glow transition-all" href="#planos">
+<span>Quero Reter 100% das Minhas Reservas</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- END: EconomySimulator -->
+<!-- BEGIN: PricingPlans -->
+<section class="py-8 px-4 bg-white" data-purpose="pricing-plans" id="planos">
+<div class="text-center mb-6">
+<span class="text-[10px] font-bold uppercase tracking-wider text-brand-emeraldDeep bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+          Preços Claros &amp; Transparentes
+        </span>
+<h2 class="font-display font-extrabold text-xl text-brand-darkSlate mt-2">
+          Escolha o Plano Ideal para Sua Operação
+        </h2>
+<p class="text-xs text-brand-bodyGray mt-1">
+          Sem taxas sobre reservas, sem pegadinhas contratuais. Teste grátis por 30 dias.
+        </p>
+</div>
+<!-- Billing Toggle Switch -->
+<div class="flex items-center justify-center gap-2 mb-6">
+<div class="bg-gray-100 p-1 rounded-xl flex items-center text-xs font-semibold">
+<button class="px-3 py-1.5 rounded-lg bg-white shadow-xs text-brand-darkSlate" id="toggleMonthly">
+            Faturamento Mensal
+          </button>
+<button class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-brand-darkSlate flex items-center gap-1" id="toggleAnnual">
+<span>Anual</span>
+<span class="bg-brand-gold text-brand-darkSlate text-[9px] font-bold px-1 py-0.2 rounded">20% OFF</span>
+</button>
+</div>
+</div>
+<!-- Plan Cards Stack -->
+<div class="flex flex-col gap-4">
+<!-- Plano Starter -->
+<div class="rounded-2xl border border-gray-200 p-4 bg-white shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div>
+<span class="text-[10px] font-bold uppercase text-gray-400">Pousadas Familiares</span>
+<h3 class="font-display font-bold text-base text-brand-darkSlate">Plano Starter</h3>
+</div>
+<span class="material-symbols-outlined text-gray-400">meeting_room</span>
+</div>
+<p class="text-xs text-gray-500 mb-3">Ideal para pousadas e chalés iniciando automação.</p>
+<div class="mb-4">
+<span class="font-display font-extrabold text-2xl text-brand-darkSlate" id="starterPrice">R$ 149</span>
+<span class="text-xs text-gray-400">/mês</span>
+</div>
+<ul class="space-y-2 text-xs text-gray-600 mb-4 border-t border-gray-100 pt-3">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check</span>
+<span>Capacidade para até <strong>10 quartos</strong></span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check</span>
+<span>1 Conexão WhatsApp oficial integrada</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check</span>
+<span>Mapa de quartos e controle de check-in</span>
+</li>
+<li class="flex items-center gap-2 text-gray-400">
+<span class="material-symbols-outlined text-gray-300 text-sm">close</span>
+<span>Disparos de confirmação automática</span>
+</li>
+</ul>
+<a class="w-full py-2.5 border border-brand-forest text-brand-forest font-display font-bold text-xs rounded-xl flex items-center justify-center hover:bg-emerald-50 transition-colors" href="#">
+            Testar Starter Grátis
+          </a>
+</div>
+<!-- Plano Professional (Destaque) -->
+<div class="rounded-2xl border-2 border-brand-gold p-4 bg-gradient-to-b from-amber-50/40 via-white to-white shadow-md relative">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-gold text-brand-darkSlate text-[9px] font-extrabold uppercase px-3 py-0.5 rounded-full shadow-xs">
+            ★ Mais Escolhido
+          </div>
+<div class="flex justify-between items-start mb-2 mt-1">
+<div>
+<span class="text-[10px] font-bold uppercase text-brand-emeraldDeep">Hotéis de Médio Porte</span>
+<h3 class="font-display font-bold text-base text-brand-darkSlate">Plano Professional</h3>
+</div>
+<span class="material-symbols-outlined text-brand-gold">hotel</span>
+</div>
+<p class="text-xs text-gray-500 mb-3">A solução completa para desatar recepção com múltiplos atendentes.</p>
+<div class="mb-4">
+<span class="font-display font-extrabold text-2xl text-brand-forest" id="proPrice">R$ 299</span>
+<span class="text-xs text-gray-400">/mês</span>
+</div>
+<ul class="space-y-2 text-xs text-brand-darkSlate mb-4 border-t border-amber-100 pt-3">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+<span>Capacidade para até <strong>30 quartos</strong></span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+<span><strong>2 Conexões WhatsApp</strong> simultâneas</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+<span>Módulo Governança &amp; Limpeza em tempo real</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+<span>Disparos de confirmação automática no Zap</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+<span>Usuários ilimitados com permissões</span>
+</li>
+</ul>
+<a class="w-full py-2.5 bg-brand-gold hover:bg-brand-goldHover text-brand-darkSlate font-display font-bold text-xs rounded-xl flex items-center justify-center gap-1 shadow-gold-glow transition-transform active:scale-95" href="#">
+<span>Testar Professional 30 Dias Grátis</span>
+</a>
+</div>
+<!-- Plano Enterprise -->
+<div class="rounded-2xl border border-gray-200 p-4 bg-white shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div>
+<span class="text-[10px] font-bold uppercase text-gray-400">Resorts &amp; Redes</span>
+<h3 class="font-display font-bold text-base text-brand-darkSlate">Plano Enterprise</h3>
+</div>
+<span class="material-symbols-outlined text-gray-400">domain</span>
+</div>
+<p class="text-xs text-gray-500 mb-3">Máximo desempenho, suporte VIP e alta escala.</p>
+<div class="mb-4">
+<span class="font-display font-extrabold text-2xl text-brand-darkSlate" id="entPrice">R$ 590</span>
+<span class="text-xs text-gray-400">/mês</span>
+</div>
+<ul class="space-y-2 text-xs text-gray-600 mb-4 border-t border-gray-100 pt-3">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check</span>
+<span><strong>Até 150 quartos</strong> (sem sobretaxas)</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check</span>
+<span>5 Conexões WhatsApp dedicadas</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check</span>
+<span>IA de Atendimento 24/7 (Reservas Automáticas)</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-sm">check</span>
+<span>Gerente de contas e onboarding dedicado</span>
+</li>
+</ul>
+<a class="w-full py-2.5 border border-gray-300 text-brand-darkSlate font-display font-bold text-xs rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors" href="#">
+            Falar com Consultor
+          </a>
+</div>
+</div>
+<p class="text-center text-[10px] text-gray-400 mt-4">
+        🔒 Quartos excedentes a partir de apenas R$ 2,50/adicional • Mensagens ilimitadas sem custo por disparo • Cancele a qualquer momento sem multa.
+      </p>
+</section>
+<!-- END: PricingPlans -->
+<!-- BEGIN: TestimonialsSection -->
+<section class="py-8 px-4 bg-[#f8f9ff]" data-purpose="customer-reviews">
+<div class="text-center mb-6">
+<span class="text-[10px] font-bold uppercase tracking-wider text-brand-forest bg-emerald-100 px-2 py-0.5 rounded">
+          Histórias de Sucesso
+        </span>
+<h2 class="font-display font-extrabold text-xl text-brand-darkSlate mt-2">
+          Quem Usa o Hotel no Zap Não Volta Para o Método Antigo
+        </h2>
+</div>
+<div class="flex flex-col gap-3.5">
+<!-- Review 1 -->
+<div class="p-4 bg-white rounded-xl border border-gray-200/80 shadow-soft">
+<div class="flex text-amber-400 text-xs mb-2">★★★★★</div>
+<p class="text-xs text-brand-bodyGray italic mb-3">
+            "Saímos de 30% para 78% de reservas diretas no primeiro mês usando a confirmação no WhatsApp. A economia mensal em comissões pagou o sistema do ano inteiro em apenas 15 dias!"
+          </p>
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-brand-forest text-brand-gold flex items-center justify-center text-xs font-bold font-display">
+              ES
+            </div>
+<div>
+<p class="text-xs font-bold text-brand-darkSlate">Eduardo Silveira</p>
+<p class="text-[10px] text-gray-400">Pousada Sol &amp; Mar • Fernando de Noronha</p>
+</div>
+</div>
+</div>
+<!-- Review 2 -->
+<div class="p-4 bg-white rounded-xl border border-gray-200/80 shadow-soft">
+<div class="flex text-amber-400 text-xs mb-2">★★★★★</div>
+<p class="text-xs text-brand-bodyGray italic mb-3">
+            "Eliminamos completamente o overbooking e a resposta automática fecha clientes enquanto durmo. O cliente clica no link, escolhe a suíte e o PIX cai direto na minha conta."
+          </p>
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-bold font-display">
+              CR
+            </div>
+<div>
+<p class="text-xs font-bold text-brand-darkSlate">Camila Rodrigues</p>
+<p class="text-[10px] text-gray-400">Hotel Pampa Imperial • Gramado, RS</p>
+</div>
+</div>
+</div>
+<!-- Review 3 -->
+<div class="p-4 bg-white rounded-xl border border-gray-200/80 shadow-soft">
+<div class="flex text-amber-400 text-xs mb-2">★★★★★</div>
+<p class="text-xs text-brand-bodyGray italic mb-3">
+            "A equipe de recepção e a camareira usam no celular sem nenhuma dificuldade. O suporte técnico é rápido e a ferramenta é muito mais simples que os PMS antigos pesados."
+          </p>
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-brand-darkSlate text-white flex items-center justify-center text-xs font-bold font-display">
+              MV
+            </div>
+<div>
+<p class="text-xs font-bold text-brand-darkSlate">Marcos Vinícius</p>
+<p class="text-[10px] text-gray-400">Pousada Recanto das Cores • Pipa, RN</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: TestimonialsSection -->
+<!-- BEGIN: FAQSection -->
+<section class="py-8 px-4 bg-white" data-purpose="faq-accordion">
+<div class="text-center mb-6">
+<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+          Tire suas Dúvidas
+        </span>
+<h2 class="font-display font-extrabold text-xl text-brand-darkSlate mt-2">
+          Perguntas Frequentes
+        </h2>
+</div>
+<div class="space-y-2.5" id="faqAccordion">
+<!-- Item 1 -->
+<details class="group bg-slate-50 border border-gray-200 rounded-xl p-3.5 [&amp;_summary::-webkit-details-marker]:none">
+<summary class="flex justify-between items-center cursor-pointer list-none">
+<span class="text-xs font-bold text-brand-darkSlate">Preciso trocar meu número atual de WhatsApp?</span>
+<span class="material-symbols-outlined text-sm text-gray-500 group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<p class="mt-2 text-xs text-brand-bodyGray leading-relaxed pt-2 border-t border-gray-200/60">
+            Não! Você pode conectar o mesmo número fixo ou móvel que já utiliza no WhatsApp Business da sua pousada sem perder nenhum contato existente.
+          </p>
+</details>
+<!-- Item 2 -->
+<details class="group bg-slate-50 border border-gray-200 rounded-xl p-3.5 [&amp;_summary::-webkit-details-marker]:none">
+<summary class="flex justify-between items-center cursor-pointer list-none">
+<span class="text-xs font-bold text-brand-darkSlate">Como funciona o teste grátis de 30 dias?</span>
+<span class="material-symbols-outlined text-sm text-gray-500 group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<p class="mt-2 text-xs text-brand-bodyGray leading-relaxed pt-2 border-t border-gray-200/60">
+            Você cadastra seus quartos, conecta seu WhatsApp em 2 minutos via QR Code e tem acesso a todos os recursos por 30 dias sem compromisso e sem necessidade de cadastrar cartão de crédito prévio.
+          </p>
+</details>
+<!-- Item 3 -->
+<details class="group bg-slate-50 border border-gray-200 rounded-xl p-3.5 [&amp;_summary::-webkit-details-marker]:none">
+<summary class="flex justify-between items-center cursor-pointer list-none">
+<span class="text-xs font-bold text-brand-darkSlate">Consigo importar meus hóspedes e dados antigos?</span>
+<span class="material-symbols-outlined text-sm text-gray-500 group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<p class="mt-2 text-xs text-brand-bodyGray leading-relaxed pt-2 border-t border-gray-200/60">
+            Sim! Disponibilizamos importação instantânea de planilhas Excel/CSV ou nosso time de suporte realiza o procedimento sem custos adicionais.
+          </p>
+</details>
+<!-- Item 4 -->
+<details class="group bg-slate-50 border border-gray-200 rounded-xl p-3.5 [&amp;_summary::-webkit-details-marker]:none">
+<summary class="flex justify-between items-center cursor-pointer list-none">
+<span class="text-xs font-bold text-brand-darkSlate">Como recebo o dinheiro das reservas?</span>
+<span class="material-symbols-outlined text-sm text-gray-500 group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<p class="mt-2 text-xs text-brand-bodyGray leading-relaxed pt-2 border-t border-gray-200/60">
+            O valor cai diretamente na conta bancária do seu hotel via PIX instantâneo ou na sua credenciadora de cartão favorita. O Hotel no Zap não retém seu faturamento.
+          </p>
+</details>
+<!-- Item 5 -->
+<details class="group bg-slate-50 border border-gray-200 rounded-xl p-3.5 [&amp;_summary::-webkit-details-marker]:none">
+<summary class="flex justify-between items-center cursor-pointer list-none">
+<span class="text-xs font-bold text-brand-darkSlate">Funciona no celular para mim e minha equipe?</span>
+<span class="material-symbols-outlined text-sm text-gray-500 group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<p class="mt-2 text-xs text-brand-bodyGray leading-relaxed pt-2 border-t border-gray-200/60">
+            100% responsivo e otimizado para dispositivos móveis iOS e Android. Você pode gerenciar sua pousada de qualquer lugar do mundo na palma da mão.
+          </p>
+</details>
+</div>
+</section>
+<!-- END: FAQSection -->
+<!-- BEGIN: FinalCTA -->
+<section class="py-10 px-4 bg-gradient-to-b from-brand-forest to-black text-white text-center relative overflow-hidden" data-purpose="final-cta">
+<!-- Glow effect -->
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+<span class="text-[10px] font-bold uppercase tracking-wider text-emerald-300 border border-emerald-500/40 bg-emerald-950/40 px-3 py-1 rounded-full relative z-10">
+        Comece Hoje Mesmo • Configuração em 2 Minutos
+      </span>
+<h2 class="font-display font-extrabold text-2xl leading-tight mt-3 mb-3 relative z-10">
+        Pronto Para Encher Seus Quartos e Parar de Pagar Comissões Abusivas?
+      </h2>
+<p class="text-xs text-gray-300 mb-6 leading-relaxed relative z-10 px-1">
+        Junte-se a centenas de proprietários de pousadas e hotéis que retomaram a autonomia do seu negócio e transformaram o WhatsApp no seu canal mais rentável.
+      </p>
+<div class="flex flex-col gap-3 relative z-10">
+<a class="w-full h-12 bg-brand-gold hover:bg-brand-goldHover text-brand-darkSlate font-display font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-gold-glow transition-transform active:scale-[0.98]" href="#planos">
+<span>Criar Minha Conta Grátis Agora</span>
+<span class="material-symbols-outlined text-base">arrow_forward</span>
+</a>
+<a class="w-full h-11 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors" href="https://wa.me/">
+<span class="material-symbols-outlined text-emerald-400 text-base">chat</span>
+<span>Tirar Dúvidas com Especialista</span>
+</a>
+</div>
+<p class="text-[9px] text-gray-400 mt-4 relative z-10">
+        ✓ 30 dias de garantia incondicional • Sem fidelidade contratual • Ativação imediata
+      </p>
+</section>
+<!-- END: FinalCTA -->
+</main>
+<!-- BEGIN: MainFooter -->
+<footer class="bg-black text-gray-400 text-xs py-8 px-4 border-t border-white/10" data-purpose="mobile-footer">
+<div class="flex flex-col gap-6">
+<!-- Brand & Mission -->
+<div>
+<div class="flex items-center gap-2 mb-2">
+<div class="w-7 h-7 rounded-lg bg-emerald-700 flex items-center justify-center text-brand-gold font-display font-bold text-xs">
+            HZ
+          </div>
+<span class="font-display font-bold text-sm text-white tracking-tight">HOTEL NO ZAP</span>
+</div>
+<p class="text-[11px] text-gray-400 leading-relaxed">
+          A inteligência que seu hotel precisa no canal que seu hóspede usa. Gestão operacional completa e motor de reservas diretas sem comissões.
+        </p>
+</div>
+<!-- Quick Links Grid -->
+<div class="grid grid-cols-2 gap-4 text-[11px]">
+<div>
+<h4 class="font-bold text-white uppercase text-[10px] tracking-wider mb-2">Produto</h4>
+<ul class="space-y-1.5 text-gray-400">
+<li><a class="hover:text-white" href="#">Mapa de Quartos (PMS)</a></li>
+<li><a class="hover:text-white" href="#">Motor no WhatsApp</a></li>
+<li><a class="hover:text-white" href="#">Controle Financeiro</a></li>
+<li><a class="hover:text-white" href="#">Tabela de Planos</a></li>
+<li><a class="hover:text-white" href="#">Calculadora de Economia</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-white uppercase text-[10px] tracking-wider mb-2">Empresa</h4>
+<ul class="space-y-1.5 text-gray-400">
+<li><a class="hover:text-white" href="#">Sobre Nós</a></li>
+<li><a class="hover:text-white" href="#">Blog do Hoteleiro</a></li>
+<li><a class="hover:text-white" href="#">Programa de Parceiros &amp; Afiliados</a></li>
+<li><a class="hover:text-white" href="#">Termos de Uso</a></li>
+<li><a class="hover:text-white" href="#">Política de Privacidade</a></li>
+</ul>
+</div>
+</div>
+<!-- Live Service Status Badge -->
+<div class="bg-white/5 p-3 rounded-xl border border-white/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span class="text-[10px] text-gray-300 font-medium">Todos os serviços operacionais</span>
+</div>
+<span class="text-[9px] text-gray-400">Central: 08h às 20h</span>
+</div>
+<!-- Copyright -->
+<div class="pt-4 border-t border-white/10 flex flex-col gap-2 text-[10px] text-gray-400">
+<p>© 2026 Hotel no Zap Tecnologia Hoteleira Ltda.<br/>Todos os direitos reservados • Em conformidade com a LGPD.</p>
+<p class="text-[9px] text-gray-400">Desenvolvido para revolucionar a hotelaria independente no Brasil.</p>
+</div>
+</div>
+</footer>
+<!-- END: MainFooter -->
+</div>
+<!-- BEGIN: InteractivityScripts -->
+<script data-purpose="economy-calculator-script">
+  // Calculator logic matching mobile inputs
+  const roomSlider = document.getElementById('roomSlider');
+  const rateSlider = document.getElementById('rateSlider');
+  const roomValText = document.getElementById('roomValText');
+  const rateValText = document.getElementById('rateValText');
+  const calculatedEconomy = document.getElementById('calculatedEconomy');
+
+  function calculateSavings() {
+    const rooms = parseInt(roomSlider.value, 10);
+    const dailyRate = parseInt(rateSlider.value, 10);
+    
+    // Update labels
+    roomValText.textContent = `${rooms} quartos`;
+    rateValText.textContent = `R$ ${dailyRate}`;
+
+    // Calculation: 30 days * rooms * occupancy rate (approx 60%) * daily rate * OTA fee (approx 20%)
+    const estimatedMonthlyRevenue = rooms * dailyRate * 30 * 0.60;
+    const otaCommissionsSaved = estimatedMonthlyRevenue * 0.20;
+
+    calculatedEconomy.innerHTML = `R$ ${otaCommissionsSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="text-xs text-white font-normal">/mês</span>`;
+  }
+
+  roomSlider.addEventListener('input', calculateSavings);
+  rateSlider.addEventListener('input', calculateSavings);
+</script>
+<script data-purpose="pricing-toggle-script">
+  // Toggle between monthly and annual plans with 20% off
+  const toggleMonthly = document.getElementById('toggleMonthly');
+  const toggleAnnual = document.getElementById('toggleAnnual');
+  const starterPrice = document.getElementById('starterPrice');
+  const proPrice = document.getElementById('proPrice');
+  const entPrice = document.getElementById('entPrice');
+
+  let isAnnual = false;
+
+  toggleMonthly.addEventListener('click', () => {
+    if (isAnnual) {
+      isAnnual = false;
+      toggleMonthly.className = "px-3 py-1.5 rounded-lg bg-white shadow-xs text-brand-darkSlate font-bold";
+      toggleAnnual.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:text-brand-darkSlate flex items-center gap-1 font-medium";
+      starterPrice.textContent = 'R$ 149';
+      proPrice.textContent = 'R$ 299';
+      entPrice.textContent = 'R$ 590';
+    }
+  });
+
+  toggleAnnual.addEventListener('click', () => {
+    if (!isAnnual) {
+      isAnnual = true;
+      toggleAnnual.className = "px-3 py-1.5 rounded-lg bg-white shadow-xs text-brand-darkSlate font-bold flex items-center gap-1";
+      toggleMonthly.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:text-brand-darkSlate font-medium";
+      // 20% discount applied to monthly equivalent
+      starterPrice.textContent = 'R$ 119';
+      proPrice.textContent = 'R$ 239';
+      entPrice.textContent = 'R$ 472';
+    }
+  });
+</script>
+<!-- END: InteractivityScripts -->
+</body></html>

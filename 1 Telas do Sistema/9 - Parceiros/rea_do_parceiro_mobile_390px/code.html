@@ -1,0 +1,252 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Área do Parceiro - Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              dark: '#003400',
+              black: '#000000',
+              emerald: '#10B981',
+              amber: '#FDB116',
+              blue: '#2563EB',
+              red: '#EF4444'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#F4F6F8] font-sans text-slate-800 antialiased flex justify-center">
+  <!-- Container Mobile Oficial 390px -->
+  <div class="w-[390px] min-h-screen bg-[#F8F9FA] shadow-2xl relative flex flex-col pb-24">
+    
+    <!-- Cabeçalho Padrão Mobile Oficial (Degradê #003400 -> #000000) -->
+    <header class="bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 h-14 flex items-center justify-between sticky top-0 z-40 shadow-md">
+      <div class="flex items-center gap-3">
+        <button class="material-symbols-outlined text-white text-xl">menu</button>
+        <span class="font-extrabold tracking-wider text-base uppercase">HOTEL NO ZAP</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-white text-xl relative">
+          notifications
+          <span class="w-2 h-2 rounded-full bg-emerald-400 absolute top-0 right-0"></span>
+        </span>
+        <div class="w-8 h-8 rounded-full bg-[#10B981] text-[#003400] font-bold text-xs flex items-center justify-center">
+          RC
+        </div>
+      </div>
+    </header>
+
+    <!-- Subheader com Identificação e Nível -->
+    <div class="bg-white px-4 py-3.5 border-b border-slate-200/80 flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-sm font-bold text-slate-900">Rodrigo Carvalho</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </div>
+        <p class="text-[11px] text-slate-500">Portal do Parceiro • Nível Ouro (15%)</p>
+      </div>
+      <span class="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+        B2B Afiliado
+      </span>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="p-4 space-y-4">
+      
+      <!-- Link de Afiliado Exclusivo -->
+      <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[#10B981] text-sm">link</span>
+            Seu Link de Indicação
+          </span>
+          <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">HOTELRODRIGO10</span>
+        </div>
+        <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+          <span class="text-[11px] font-mono text-slate-700 truncate select-all flex-1">hotelnozap.com.br?ref=HOTELRODRIGO10</span>
+          <button class="px-2.5 py-1 bg-[#003400] text-white text-[10px] font-bold rounded flex items-center gap-1 active:scale-95">
+            <span class="material-symbols-outlined text-xs">content_copy</span>
+            Copiar
+          </button>
+        </div>
+      </div>
+
+      <!-- KPIs em Grade 2x2 (Padrão do Sistema) -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 mb-1">
+            <span class="text-[10px] uppercase font-bold text-slate-500">Hotéis Indicados</span>
+            <span class="material-symbols-outlined text-blue-600 text-base">domain</span>
+          </div>
+          <p class="text-xl font-black text-slate-900">24</p>
+          <span class="text-[10px] text-emerald-600 font-bold">+3 este mês</span>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 mb-1">
+            <span class="text-[10px] uppercase font-bold text-slate-500">Assinaturas Ativas</span>
+            <span class="material-symbols-outlined text-emerald-600 text-base">verified</span>
+          </div>
+          <p class="text-xl font-black text-slate-900">18</p>
+          <span class="text-[10px] text-slate-500 font-medium">75% conversão</span>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 mb-1">
+            <span class="text-[10px] uppercase font-bold text-slate-500">A Receber</span>
+            <span class="material-symbols-outlined text-amber-600 text-base">hourglass_top</span>
+          </div>
+          <p class="text-lg font-black text-slate-900">R$ 2.450</p>
+          <span class="text-[10px] text-amber-600 font-medium">Pgto dia 05/11</span>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 mb-1">
+            <span class="text-[10px] uppercase font-bold text-slate-500">Total Pago</span>
+            <span class="material-symbols-outlined text-emerald-600 text-base">paid</span>
+          </div>
+          <p class="text-lg font-black text-slate-900">R$ 14.820</p>
+          <span class="text-[10px] text-emerald-600 font-medium">Via Chave PIX</span>
+        </div>
+      </div>
+
+      <!-- Abas Rápidas no Mobile: Indicações / Meus Dados / Senha -->
+      <div class="flex bg-slate-200/80 p-1 rounded-xl gap-1 text-xs font-bold"><button class="flex-1 py-1.5 bg-[#003400] text-white rounded-lg shadow-sm flex items-center justify-center gap-1"><span class="material-symbols-outlined text-xs">hotel</span>Meus Hotéis</button><button class="flex-1 py-1.5 text-slate-600 hover:text-slate-900 rounded-lg flex items-center justify-center gap-1"><span class="material-symbols-outlined text-xs">manage_accounts</span>Dados</button><button class="flex-1 py-1.5 text-slate-600 hover:text-slate-900 rounded-lg flex items-center justify-center gap-1"><span class="material-symbols-outlined text-xs">lock</span>Senha</button></div>
+
+      <!-- Card de Indicações Recentes (Modo Mobile) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[#10B981] text-base">hotel</span>
+            Hotéis Indicados (24)
+          </h3>
+          <span class="text-[10px] text-slate-400 font-medium">Filtrar</span>
+        </div>
+
+        <div class="divide-y divide-slate-100">
+          <!-- Item 1 -->
+          <div class="p-3.5 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="text-xs font-bold text-slate-900">Grand Palace Hotel</h4>
+                <p class="text-[10px] text-slate-500">Gramado - RS • Plano Premium</p>
+              </div>
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                Ativo
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-50">
+              <span class="text-slate-400">Comissão Mensal:</span>
+              <span class="font-bold text-emerald-700">R$ 74,85 / mês</span>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="p-3.5 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="text-xs font-bold text-slate-900">Pousada Vento Solar</h4>
+                <p class="text-[10px] text-slate-500">Porto Seguro - BA • Plano Pro</p>
+              </div>
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                Ativo
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-50">
+              <span class="text-slate-400">Comissão Mensal:</span>
+              <span class="font-bold text-emerald-700">R$ 44,85 / mês</span>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="p-3.5 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="text-xs font-bold text-slate-900">Resort Beira Mar</h4>
+                <p class="text-[10px] text-slate-500">Fortaleza - CE • Enterprise</p>
+              </div>
+              <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                Em Trial
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-50">
+              <span class="text-slate-400">Comissão Prevista:</span>
+              <span class="font-bold text-amber-600">R$ 133,50 / mês</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulário: Meus Dados & Chave PIX -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+          <span class="material-symbols-outlined text-[#10B981] text-base">manage_accounts</span>
+          Alterar Dados &amp; PIX
+        </h3>
+
+        <div class="space-y-2.5">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 uppercase">E-mail Principal</label>
+            <input type="email" value="afiliado@email.com" class="w-full mt-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 uppercase">WhatsApp Notificações</label>
+            <input type="text" value="(11) 98765-4321" class="w-full mt-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 uppercase">Chave PIX (E-mail)</label>
+            <input type="text" value="rodrigo.influencer@gmail.com" class="w-full mt-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none font-mono">
+          </div>
+          <button class="w-full py-2 bg-[#003400] text-white text-xs font-bold rounded-lg shadow-sm active:scale-95 transition">
+            Atualizar Dados Cadastrais
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulário: Trocar Senha -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+          <span class="material-symbols-outlined text-[#10B981] text-base">lock_reset</span>
+          Alterar Senha de Acesso
+        </h3>
+
+        <div class="space-y-2.5">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 uppercase">Senha Atual</label>
+            <div class="relative mt-1">
+              <input type="password" value="********" class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none font-mono pr-8">
+              <span class="material-symbols-outlined absolute right-2.5 top-2 text-slate-400 text-xs">visibility</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 uppercase">Nova Senha</label>
+            <div class="relative mt-1">
+              <input type="password" placeholder="Mínimo 8 caracteres" class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none font-mono pr-8">
+              <span class="material-symbols-outlined absolute right-2.5 top-2 text-slate-400 text-xs">visibility</span>
+            </div>
+          </div>
+          <button class="w-full py-2 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-sm active:scale-95 transition">
+            Salvar Nova Senha
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Barra de Navegação Inferior Mobile Oficial (Bottom Bar) -->
+    <nav class="fixed bottom-0 w-[390px] bg-white border-t border-slate-200 h-16 flex items-center justify-around px-2 z-50 shadow-lg"><a href="#" class="flex flex-col items-center justify-center text-[#003400] font-bold"><span class="material-symbols-outlined text-xl">handshake</span><span class="text-[10px] mt-0.5">Parceria</span></a><a href="#" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined text-xl">hotel</span><span class="text-[10px] mt-0.5">Meus Hotéis</span></a><a href="#" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined text-xl">payments</span><span class="text-[10px] mt-0.5">Extrato</span></a><a href="#" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined text-xl">person</span><span class="text-[10px] mt-0.5">Perfil</span></a></nav>
+  </div>
+
+
+
+</body></html>

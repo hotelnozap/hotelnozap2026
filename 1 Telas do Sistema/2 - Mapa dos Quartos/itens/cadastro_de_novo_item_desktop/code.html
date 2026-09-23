@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Novo Item - Desktop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8f9fc;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 sm:p-10">
+
+  <div class="w-full max-w-2xl">
+    
+    <!-- Link de Voltar -->
+    <div class="mb-5">
+      <a href="#" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-emerald-800 transition-colors">
+        <i class="fa-solid fa-arrow-left text-xs"></i>
+        <span>Voltar para Itens dos Quartos</span>
+      </a>
+    </div>
+
+    <!-- Card Principal do Formulário -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200/80 overflow-hidden">
+      
+      <!-- Cabeçalho do Card -->
+      <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-box-archive"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 leading-tight">Cadastro de Novo Item</h1>
+            <p class="text-xs text-gray-500 mt-0.5">Cadastre itens e comodidades para vincular aos quartos do hotel</p>
+          </div>
+        </div>
+
+        <!-- Switch de Status -->
+        <div class="flex items-center gap-3 bg-gray-50 px-3.5 py-1.5 rounded-full border border-gray-200/60">
+          <span class="text-xs font-semibold text-gray-600">Status:</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" checked class="sr-only peer" id="statusSwitch">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003400]"></div>
+          </label>
+          <span class="text-xs font-bold text-emerald-800" id="statusLabel">Ativo</span>
+        </div>
+      </div>
+
+      <!-- Corpo do Formulário -->
+      <form class="p-8 space-y-6">
+        
+        <!-- Campo Nome -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2" for="nomeItem">
+            Nome do Item <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <i class="fa-solid fa-tag text-sm"></i>
+            </div>
+            <input 
+              type="text" 
+              id="nomeItem"
+              placeholder="Ex: Cama King Size, Ar-condicionado Split, Frigobar..." 
+              required
+              class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+            >
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1.5">Nome exibido na ficha do quarto e nas listas de comodidades.</p>
+        </div>
+
+        <!-- Campo Descrição -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2" for="descricaoItem">
+            Descrição / Detalhes
+          </label>
+          <div class="relative">
+            <textarea 
+              id="descricaoItem"
+              rows="4" 
+              placeholder="Descreva detalhes adicionais sobre o item, modelo, voltagem ou especificações..."
+              class="w-full p-3.5 bg-gray-50/50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all resize-none"
+            ></textarea>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1.5">Informações opcionais para controle da equipe ou governança.</p>
+        </div>
+
+        <!-- Rodapé de Ações -->
+        <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+          <button 
+            type="button" 
+            class="px-5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all cursor-pointer"
+          >
+            Cancelar
+          </button>
+          
+          <button 
+            type="submit" 
+            class="px-6 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002500] text-white text-sm font-semibold shadow-sm hover:shadow transition-all inline-flex items-center gap-2 cursor-pointer"
+          >
+            <i class="fa-solid fa-floppy-disk text-xs"></i>
+            <span>Salvar Item</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    const statusSwitch = document.getElementById('statusSwitch');
+    const statusLabel = document.getElementById('statusLabel');
+    if (statusSwitch && statusLabel) {
+      statusSwitch.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          statusLabel.textContent = 'Ativo';
+          statusLabel.className = 'text-xs font-bold text-emerald-800';
+        } else {
+          statusLabel.textContent = 'Inativo';
+          statusLabel.className = 'text-xs font-bold text-gray-500';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html><html class="light" lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Dashboard Mobile - Hotel no Zap</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#6cf8bb",
+                        "on-background": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface-dim": "#cbdbf5",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-tertiary-container": "#b87500",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary-container": "#131b2e",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-surface-variant": "#45464d",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "on-surface": "#0b1c30",
+                        "tertiary": "#000000",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-secondary-fixed": "#002113",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "inverse-surface": "#213145",
+                        "primary-fixed": "#dae2fd",
+                        "outline": "#76777d",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-fixed": "#131b2e",
+                        "on-primary-container": "#7c839b",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#00714d",
+                        "inverse-primary": "#bec6e0",
+                        "surface-container-highest": "#d3e4fe",
+                        "tertiary-container": "#2a1700",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-variant": "#d3e4fe",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#565e74",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#eff4ff",
+                        "surface": "#f8f9ff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-bright": "#f8f9ff",
+                        "surface-container-high": "#dce9ff",
+                        "secondary": "#006c49",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c6c6cd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin-desktop": "32px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-margin-mobile h-16 border-b border-outline-variant shadow-sm" style="background: linear-gradient(to right, rgb(0, 52, 0), rgb(0, 0, 0));">
+<div class="flex items-center gap-4">
+<button aria-label="Menu" class="p-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="menu" style="color: rgb(255, 255, 255);">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold truncate" style="color: rgb(255, 255, 255);">Hotel no Zap</span>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Notifications" class="p-2 rounded-full hover:bg-surface-container-low transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications" style="color: rgb(255, 255, 255);">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden ml-2 flex-shrink-0">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A close up, professional headshot of a hotel manager in a brightly lit modern office environment. High quality, crisp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX8xbfkbQaW7rVNeqYihDtn5xHzwlTdyszJRlx3tatA-8JznYdCN0sMZzVRchv-vjcszDWHBm3grOcoCTL7a0dr9DDWTKhHcaHJXWPIz4Kxz8JFphq1EKQ0s5L8UHktpntEdnLFcyg3u__CJuTzoPN48zOBu-K-uLdZfcl5sYh11qdoK-vke4mRyWaBlPcO1zC3WrmVYw3HUUh8pGsHA6YQ0e4XR8lyr8KqdwtTXlIgLWgfvfy4PXU">
+</div>
+</div>
+</header>
+<!-- Main Content Canvas (Mobile Optimized) -->
+<main class="flex-1 w-full px-margin-mobile py-6 flex flex-col gap-6 pb-20">
+<!-- Welcome Header -->
+<div class="flex flex-col gap-1">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background">Dashboard</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Visão geral da operação hoteleira de hoje.</p>
+</div>
+<!-- KPI Cards Stack (Compact & Touchable) -->
+<div class="grid grid-cols-2 gap-4"><!-- KPI 1: Quartos Disponíveis -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm flex flex-col justify-between active:scale-[0.98] transition-transform duration-150">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Quartos Disponíveis</span>
+<span class="material-symbols-outlined text-secondary-container" data-icon="bed">bed</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-on-background">12</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Prontos para uso</div>
+</div>
+</div>
+<!-- KPI 2: Quartos Ocupados -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm flex flex-col justify-between active:scale-[0.98] transition-transform duration-150">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Quartos Ocupados</span>
+<span class="material-symbols-outlined text-primary-container" data-icon="door_front">door_front</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-on-background">42</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Hóspedes ativos</div>
+</div>
+</div>
+<!-- KPI 3: Quartos Reservados -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm flex flex-col justify-between active:scale-[0.98] transition-transform duration-150">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Quartos Reservados</span>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="event_available">event_available</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-on-background">8</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Para hoje</div>
+</div>
+</div>
+<!-- KPI 4: Em Limpeza -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm flex flex-col justify-between active:scale-[0.98] transition-transform duration-150">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Em Limpeza</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim" data-icon="cleaning_services">cleaning_services</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-on-background">5</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Em andamento</div>
+</div>
+</div>
+<!-- KPI 5: Em Check-Out -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm flex flex-col justify-between active:scale-[0.98] transition-transform duration-150">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Em Check-Out</span>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="logout">logout</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-on-background">3</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Aguardando saída</div>
+</div>
+</div>
+<!-- KPI 6: Faturamento do Dia -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm flex flex-col justify-between active:scale-[0.98] transition-transform duration-150">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Faturamento do Dia</span>
+<span class="material-symbols-outlined text-primary-container" data-icon="payments">payments</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-on-background">R$ 0,00</div>
+<div class="font-body-sm text-body-sm text-secondary flex items-center mt-1">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_flat">trending_flat</span> Estável
+        </div>
+</div>
+</div></div>
+<!-- Quick Actions (Large Touch Targets) -->
+<!-- Simplified Revenue Chart -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm mt-2 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-background">Faturamento da Semana</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<!-- Simple CSS Bar Chart -->
+<div class="flex items-end justify-between h-32 pt-4 gap-2">
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-full bg-surface-container rounded-t-sm h-[40%] relative hover:bg-surface-container-high transition-colors"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">S</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-full bg-surface-container rounded-t-sm h-[65%] relative hover:bg-surface-container-high transition-colors"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">T</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-full bg-primary-container rounded-t-sm h-[85%] relative shadow-[0_2px_8px_-2px_rgba(19,27,46,0.3)]"></div>
+<span class="font-label-sm text-label-sm text-primary-container">Q</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-full bg-surface-container rounded-t-sm h-[50%] relative hover:bg-surface-container-high transition-colors"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Q</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-full bg-surface-container rounded-t-sm h-[70%] relative hover:bg-surface-container-high transition-colors"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">S</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-full bg-surface-container rounded-t-sm h-[90%] relative hover:bg-surface-container-high transition-colors"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">S</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full">
+<div class="w-full bg-surface-container rounded-t-sm h-[60%] relative hover:bg-surface-container-high transition-colors"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">D</span>
+</div>
+</div>
+</section>
+<!-- Recent Activities Simple List -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm mt-2 overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-background">Atividades Recentes</h2>
+</div>
+<div class="flex flex-col">
+<!-- Activity Item -->
+<div class="p-4 border-b border-surface-variant flex items-start gap-4 active:bg-surface-container-low transition-colors">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center flex-shrink-0 text-secondary">
+<span class="material-symbols-outlined text-[20px]" data-icon="login">login</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-background leading-tight">Check-in realizado: <span class="font-medium">Carlos Silva</span></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Quarto 204 • Há 10 min</p>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="p-4 border-b border-surface-variant flex items-start gap-4 active:bg-surface-container-low transition-colors">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed/30 flex items-center justify-center flex-shrink-0 text-tertiary-container">
+<span class="material-symbols-outlined text-[20px]" data-icon="cleaning_services">cleaning_services</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-background leading-tight">Quarto liberado: <span class="font-medium">105</span></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Equipe: Maria • Há 45 min</p>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="p-4 flex items-start gap-4 active:bg-surface-container-low transition-colors">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center flex-shrink-0 text-primary-container">
+<span class="material-symbols-outlined text-[20px]" data-icon="book_online">book_online</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-background leading-tight">Nova reserva via <span class="font-medium">WhatsApp</span></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Ana Paula • Para 12/Out • Há 2 hrs</p>
+</div>
+</div>
+</div>
+<button class="w-full py-3 text-center border-t border-outline-variant font-label-md text-label-md text-primary-container hover:bg-surface-container-low transition-colors">
+                Ver todo o histórico
+            </button>
+</section>
+</main>
+<nav class="sticky bottom-0 w-full bg-surface-container-lowest border-t border-outline-variant px-margin-mobile py-2 flex justify-between items-center z-50 shadow-[0_-2px_8px_-2px_rgba(19,27,46,0.1)]">
+<a class="flex flex-col items-center gap-1 flex-1 text-secondary" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="dashboard">dashboard</span>
+<span class="text-label-sm font-bold">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 flex-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="text-label-sm">Mapa</span>
+</a>
+<a class="flex flex-col items-center gap-1 flex-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="text-label-sm">Reservas</span>
+</a>
+<a class="flex flex-col items-center gap-1 flex-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="text-label-sm">Financeiro</span>
+</a>
+</nav><div class="fixed inset-0 z-[100] flex" id="nav-drawer-container">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+<!-- Sidebar Drawer -->
+<aside class="relative w-sidebar-width h-full flex flex-col shadow-xl" style="background: linear-gradient(to bottom, #003400, #000000);">
+<!-- Header -->
+<div class="h-16 flex items-center px-margin-mobile border-b border-white/10">
+<span class="font-headline-md text-headline-md font-bold text-white truncate">Hotel no Zap</span>
+</div>
+<!-- Navigation Items -->
+<nav class="flex-1 py-4 overflow-y-auto">
+<div class="flex flex-col gap-1 px-2">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg bg-secondary-container/20 text-secondary-container" href="#">
+<span class="material-symbols-outlined icon-fill">dashboard</span>
+<span class="font-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#"><span class="material-symbols-outlined">calendar_view_month</span>
+<span class="font-label-md">Mapa dos Quartos</span></a><a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">Hóspedes</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md">Cadastro de Produtos</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#"><span class="material-symbols-outlined">book_online</span>
+<span class="font-label-md">Reservas</span></a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-md">Controle de Caixa</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#"><span class="material-symbols-outlined">sync</span>
+<span class="font-label-md">Conexão</span></a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span class="font-label-md">Parceiros</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md">Configurações</span>
+</a><a class="flex items-center gap-4 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 transition-colors" href="#">
+<span class="material-symbols-outlined">manage_accounts</span>
+<span class="font-label-md">Usuários</span>
+</a>
+</div>
+</nav>
+<!-- Footer / Logout -->
+<div class="p-4 border-t border-white/10"><div class="px-4 mb-2 text-white/50 font-label-sm uppercase tracking-wider flex items-center"><span class="material-symbols-outlined mr-4" style="opacity: 0;">account_circle</span>Hotel Master</div>
+<button class="flex items-center gap-4 w-full px-4 py-3 rounded-lg hover:bg-error/10 transition-colors text-white">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Sair</span>
+</button>
+</div>
+</aside>
+</div>
+
+
+
+
+
+
+
+
+
+</body></html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><title>Hotel no Zap</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"inverse-surface":"#213145","on-secondary-container":"#00714d","surface-container-low":"#eff4ff","on-tertiary":"#ffffff","on-error":"#ffffff","on-tertiary-container":"#b87500","tertiary-fixed":"#ffddb8","outline":"#76777d","surface":"#f8f9ff","on-primary-fixed-variant":"#3f465c","surface-container":"#e5eeff","on-tertiary-fixed":"#2a1700","primary-container":"#131b2e","surface-dim":"#cbdbf5","surface-container-highest":"#d3e4fe","secondary-fixed-dim":"#4edea3","on-secondary-fixed-variant":"#005236","surface-container-lowest":"#ffffff","tertiary-fixed-dim":"#ffb95f","sidebar-start":"#003400","primary-fixed-dim":"#bec6e0","on-secondary-fixed":"#002113","on-error-container":"#93000a","inverse-on-surface":"#eaf1ff","on-surface-variant":"#45464d","error":"#ba1a1a","primary":"#000000","active-tab-text":"#6cf8bb","outline-variant":"#c6c6cd","surface-variant":"#d3e4fe","on-primary-fixed":"#131b2e","secondary-container":"#6cf8bb","on-surface":"#0b1c30","tertiary":"#000000","border-subtle":"#c6c6cd","secondary":"#006c49","surface-bg":"#f8f9ff","on-primary":"#ffffff","surface-bright":"#f8f9ff","on-background":"#0b1c30","sidebar-end":"#000000","primary-fixed":"#dae2fd","background":"#f8f9ff","on-tertiary-fixed-variant":"#653e00","error-container":"#ffdad6","on-secondary":"#ffffff","active-tab-bg":"rgba(108, 248, 187, 0.2)","on-primary-container":"#7c839b","surface-tint":"#565e74","surface-container-high":"#dce9ff","tertiary-container":"#2a1700","secondary-fixed":"#6ffbbe","inverse-primary":"#bec6e0"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"top-bar-height":"64px",gutter:"24px","margin-mobile":"16px","margin-desktop":"32px",unit:"4px","sidebar-width":"280px"},fontFamily:{"body-md":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"headline-md":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"headline-lg":["Inter"]},fontSize:{"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-sm":["20px",{lineHeight:"28px",fontWeight:"600"}],"headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-md":["14px",{lineHeight:"20px",fontWeight:"500"}],"label-sm":["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"600"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"700"}]}}}}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-secondary-container selection:text-on-secondary-fixed"><header class="fixed top-0 inset-x-0 z-50 pt-safe bg-gradient-to-r from-sidebar-start to-sidebar-end shadow-[0_2px_12px_rgba(0,0,0,0.25)]"><div class="h-16 px-4 flex items-center justify-between"><button aria-label="Abrir Menu" class="w-11 h-11 flex items-center justify-center text-on-primary rounded-xl active:bg-white/10 transition-colors" type="button"><span class="material-symbols-outlined text-[24px]">menu</span></button><div class="flex-1 flex items-center justify-center px-2"><span class="font-label-sm text-label-sm font-bold tracking-widest text-on-primary uppercase text-center truncate">HOTEL NO ZAP</span></div><div class="flex items-center gap-1.5"><button aria-label="Notificações" class="relative w-11 h-11 flex items-center justify-center text-on-primary rounded-xl active:bg-white/10 transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary-container ring-2 ring-sidebar-end"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ring-1 ring-white/20"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col w-full max-w-[390px] mx-auto pt-16 pb-24 bg-surface px-margin-mobile"><div class="flex flex-col w-full gap-4 pb-6">
+<!-- Navegação superior interna & Cabeçalho -->
+<header class="flex flex-col gap-2 pt-2">
+<a class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="font-label-sm text-label-sm">Voltar para Dashboard</span>
+</a>
+<div class="flex items-center justify-between mt-1">
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight">Controle de Caixa</h1>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold shadow-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+        Caixa Aberto
+      </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+      Aberto por <strong class="font-label-md text-on-surface">Lucas M.</strong> às 07:00
+    </p>
+</header>
+<!-- Grade de Botões de Ação 2x2 -->
+<section class="grid grid-cols-2 gap-2.5">
+<!-- + Suprimento -->
+<button class="flex items-center justify-center gap-2 h-12 px-3 rounded-xl bg-[#10B981] text-white shadow-sm active:scale-[0.98] transition-transform font-label-md text-label-md font-semibold" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span class="">+ Entrada</span>
+</button>
+<!-- - Sangria -->
+<button class="flex items-center justify-center gap-2 h-12 px-3 rounded-xl bg-[#FDB116] text-[#2a1700] shadow-sm active:scale-[0.98] transition-transform font-label-md text-label-md font-semibold" type="button">
+<span class="material-symbols-outlined text-[20px]">remove_circle</span>
+<span class="">- Sangria</span>
+</button>
+<!-- Fechar Caixa -->
+<button class="flex items-center justify-center gap-2 h-12 px-3 rounded-xl bg-[#0f172a] text-white shadow-sm active:scale-[0.98] transition-transform font-label-md text-label-md font-semibold" type="button">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+<span class="">Fechar Caixa</span>
+</button>
+<!-- Exportar / Relatório -->
+<button class="flex items-center justify-center gap-2 h-12 px-3 rounded-xl bg-[#2563EB] text-white shadow-sm active:scale-[0.98] transition-transform font-label-md text-label-md font-semibold" type="button">
+<span class="material-symbols-outlined text-[20px]">ios_share</span>
+<span class="">Exportar / Relatório</span>
+</button>
+</section>
+<!-- Cards de Indicadores (KPIs 2x2) -->
+<section class="grid grid-cols-2 gap-2.5">
+<!-- Saldo Inicial -->
+<div class="flex flex-col p-3.5 rounded-xl bg-[#EFF6FF] text-[#1E3A8A] shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-medium opacity-80">Saldo Inicial</span>
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">R$ 350,00</span>
+</div>
+<!-- Entradas -->
+<div class="flex flex-col p-3.5 rounded-xl bg-[#ECFDF5] text-[#065F46] shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-medium opacity-80">Entradas</span>
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">R$ 4.820,00</span>
+</div>
+<!-- Saídas -->
+<div class="flex flex-col p-3.5 rounded-xl bg-[#FEF2F2] text-[#991B1B] shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-medium opacity-80">Saídas</span>
+<span class="material-symbols-outlined text-[18px]">trending_down</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">R$ 620,00</span>
+</div>
+<!-- Saldo Atual -->
+<div class="flex flex-col p-3.5 rounded-xl bg-[#F3E8FF] text-[#581C87] shadow-sm">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-medium opacity-80">Saldo Atual</span>
+<span class="material-symbols-outlined text-[18px]">savings</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">R$ 4.550,00</span>
+</div>
+</section>
+<!-- Barra de Pesquisa e Filtro -->
+<section class="flex items-center gap-2">
+<div class="relative flex-1 flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline text-[20px] pointer-events-none">search</span>
+<input class="w-full h-11 pl-10 pr-3 rounded-xl bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md shadow-sm outline-none focus:ring-2 focus:ring-secondary/30 transition-all" placeholder="Buscar no caixa..." type="search">
+</div>
+<button class="h-11 px-3.5 flex items-center gap-1.5 rounded-xl bg-surface-container text-on-surface font-label-md text-label-md active:bg-surface-container-high transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="">Filtros</span>
+</button>
+</section>
+<!-- Lista de Lançamentos em Cards Verticais -->
+<section class="flex flex-col gap-3">
+<div class="flex items-center justify-between px-0.5">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Movimentações de Hoje</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">4 registros</span>
+</div>
+<!-- Card 1: Quarto 203 -->
+<article class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[15px]">schedule</span> 10:45
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">PIX</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span> Entrada
+        </span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface leading-tight">Diária Quarto 203 - Carlos Silveira</h2>
+<span class="font-headline-sm text-headline-sm font-bold text-[#10B981] mt-1">+ R$ 750,00</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm py-1 bg-surface-container-low px-2.5 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">category</span> Hospedagem
+        </span>
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">badge</span> Op: Lucas M.
+        </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1">
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#2563EB] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span> Ver
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#FDB116] text-[#2a1700] font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Editar
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#DC2626] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span> Excluir
+        </button>
+</div>
+</article>
+<!-- Card 2: Frigobar -->
+<article class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[15px]">schedule</span> 10:12
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">Cartão Débito</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span> Entrada
+        </span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface leading-tight">Consumo Frigobar - Mariana Costa</h2>
+<span class="font-headline-sm text-headline-sm font-bold text-[#10B981] mt-1">+ R$ 48,00</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm py-1 bg-surface-container-low px-2.5 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">kitchen</span> Bar / Frigobar
+        </span>
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">badge</span> Op: Lucas M.
+        </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1">
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#2563EB] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span> Ver
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#FDB116] text-[#2a1700] font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Editar
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#DC2626] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span> Excluir
+        </button>
+</div>
+</article>
+<!-- Card 3: Sangria Depósito Bancário -->
+<article class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[15px]">schedule</span> 09:30
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">Dinheiro</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-[#FEF2F2] text-[#991B1B] font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> Saída
+        </span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface leading-tight">Sangria p/ Depósito Bancário</h2>
+<span class="font-headline-sm text-headline-sm font-bold text-[#DC2626] mt-1">- R$ 400,00</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm py-1 bg-surface-container-low px-2.5 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">payments</span> Sangria Caixa
+        </span>
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">badge</span> Op: Lucas M.
+        </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1">
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#2563EB] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span> Ver
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#FDB116] text-[#2a1700] font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Editar
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#DC2626] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span> Excluir
+        </button>
+</div>
+</article>
+<!-- Card 4: Suprimento Troco Inicial -->
+<article class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[15px]">schedule</span> 07:05
+          </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">Dinheiro</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span> Entrada
+        </span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface leading-tight">Suprimento Troco Inicial</h2>
+<span class="font-headline-sm text-headline-sm font-bold text-[#10B981] mt-1">+ R$ 350,00</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm py-1 bg-surface-container-low px-2.5 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">price_change</span> Abertura Caixa
+        </span>
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-[15px] text-outline">badge</span> Op: Lucas M.
+        </span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1">
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#2563EB] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span> Ver
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#FDB116] text-[#2a1700] font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Editar
+        </button>
+<button class="h-9 flex items-center justify-center gap-1 rounded-xl bg-[#DC2626] text-white font-label-sm text-label-sm font-semibold active:opacity-90 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span> Excluir
+        </button>
+</div>
+</article>
+</section>
+</div>
+<script>
+  // Feedback tátil sutil para os botões de ação e pesquisa
+  document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.add('opacity-80');
+      setTimeout(() => btn.classList.remove('opacity-80'), 150);
+    });
+  });
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_12px_rgba(11,28,48,0.06)]" data-active-classes="text-secondary font-semibold bg-active-tab-bg rounded-xl"><div class="max-w-[390px] mx-auto h-16 px-2 flex items-center justify-around"><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[22px]">grid_view</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Dashboard</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="quartos" href="#"><span class="material-symbols-outlined text-[22px]">meeting_room</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Quartos</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="reservas" href="#"><span class="material-symbols-outlined text-[22px]">calendar_month</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Reservas</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 transition-all text-secondary font-semibold bg-active-tab-bg rounded-xl" data-path="caixa-financeiro" href="#"><span class="material-symbols-outlined text-[22px]">point_of_sale</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Caixa</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="mais" href="#"><span class="material-symbols-outlined text-[22px]">more_horiz</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Mais</span></a></div></nav>
+
+</body></html>

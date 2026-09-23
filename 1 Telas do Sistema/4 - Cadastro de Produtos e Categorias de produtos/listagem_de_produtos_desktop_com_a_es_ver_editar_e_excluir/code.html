@@ -1,0 +1,448 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Hotel no Zap - Product Listing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#eff4ff",
+                        "background": "#f8f9ff",
+                        "on-background": "#0b1c30",
+                        "surface-bright": "#f8f9ff",
+                        "outline-variant": "#c6c6cd",
+                        "surface-dim": "#cbdbf5",
+                        "inverse-surface": "#213145",
+                        "surface": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-secondary-fixed": "#002113",
+                        "surface-variant": "#d3e4fe",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#b87500",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#dae2fd",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary-container": "#00714d",
+                        "tertiary-container": "#2a1700",
+                        "secondary-fixed-dim": "#4edea3",
+                        "secondary-fixed": "#6ffbbe",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "active-tab-text": "#6cf8bb",
+                        "surface-bg": "#f8f9ff",
+                        "surface-container": "#e5eeff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary": "#000000",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#6cf8bb",
+                        "outline": "#76777d",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#45464d",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface-tint": "#565e74",
+                        "on-surface": "#0b1c30",
+                        "sidebar-end": "#000000",
+                        "surface-container-high": "#dce9ff",
+                        "tertiary": "#000000",
+                        "secondary": "#006c49",
+                        "on-primary-fixed": "#131b2e",
+                        "sidebar-start": "#003400",
+                        "border-subtle": "#c6c6cd",
+                        "primary-fixed-dim": "#bec6e0",
+                        "inverse-primary": "#bec6e0",
+                        "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                        "primary-container": "#131b2e",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#7c839b",
+                        "on-tertiary-fixed": "#2a1700"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "top-bar-height": "64px",
+                        "sidebar-width": "280px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<main class="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12">
+<!-- Back Link -->
+<div class="mb-8">
+<a class="inline-flex items-center text-primary-container font-label-md text-label-md hover:text-secondary transition-colors group font-semibold" href="#">
+<span class="material-symbols-outlined mr-2 text-xl group-hover:-translate-x-1 transition-transform" data-icon="arrow_back">arrow_back</span>
+                Voltar para Dashboard
+            </a>
+</div>
+<!-- KPI Cards Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-gutter mb-8">
+<!-- Total de Produtos -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow" style="background-color: rgb(239, 246, 255); border-color: rgb(191, 219, 254);">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-label-md text-label-md text-on-surface-variant font-medium">Total de Produtos</h3>
+<div class="p-2 bg-primary-fixed rounded-lg text-primary-container">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</div>
+</div>
+<div>
+<p class="font-headline-lg text-headline-lg text-on-background font-bold">1,248</p>
+<p class="font-body-md text-body-md text-secondary mt-1 flex items-center font-medium">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_up">trending_up</span>
+                        +12% neste mês
+                    </p>
+</div>
+</div>
+<!-- Produtos Ativos -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow" style="background-color: rgb(236, 253, 245); border-color: rgb(167, 243, 208);">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-label-md text-label-md text-on-surface-variant font-medium">Produtos Ativos</h3>
+<div class="p-2 bg-surface-container rounded-lg text-secondary">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+</div>
+</div>
+<div>
+<p class="font-headline-lg text-headline-lg text-on-background font-bold">1,092</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">
+                        87.5% do total
+                    </p>
+</div>
+</div>
+<!-- Produtos com Estoque Baixo -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow" style="background-color: rgb(255, 251, 235); border-color: rgb(253, 230, 138);">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-label-md text-label-md text-on-surface-variant font-medium">Estoque Baixo</h3>
+<div class="p-2 bg-orange-50 rounded-lg text-orange-500">
+<span class="material-symbols-outlined" data-icon="low_priority">low_priority</span>
+</div>
+</div>
+<div>
+<p class="font-headline-lg text-headline-lg text-on-background font-bold">12</p>
+<p class="font-body-md text-body-md text-orange-500 mt-1 flex items-center font-medium">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="warning">warning</span>
+                        Abaixo do limite
+                    </p>
+</div>
+</div>
+<!-- Produtos sem Estoque -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow" style="background-color: rgb(254, 242, 242); border-color: rgb(254, 205, 211);">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-label-md text-label-md text-on-surface-variant font-medium">Produtos sem Estoque</h3>
+<div class="p-2 bg-error-container rounded-lg text-error">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+</div>
+</div>
+<div>
+<p class="font-headline-lg text-headline-lg text-on-background font-bold">24</p>
+<p class="font-body-md text-body-md text-error mt-1 flex items-center font-medium">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="error">error</span>
+                        Requer atenção
+                    </p>
+</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm flex flex-col">
+<!-- Toolbar -->
+<div class="p-6 border-b border-border-subtle flex flex-col lg:flex-row gap-4 items-center justify-between bg-surface-bright rounded-t-xl">
+<!-- Filters -->
+<div class="flex flex-col md:flex-row gap-4 w-full lg:w-auto flex-grow">
+<!-- Search -->
+<div class="relative w-full md:w-64">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg leading-5 bg-surface-container-lowest text-on-background placeholder-outline focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary sm:text-sm font-body-md text-body-md transition-colors" placeholder="Buscar produtos..." type="text">
+</div>
+<!-- Category Filter -->
+<div class="relative w-full md:w-48">
+<select class="block w-full pl-3 pr-10 py-2 text-on-background border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary sm:text-sm bg-surface-container-lowest font-body-md text-body-md appearance-none">
+<option value="">Todas as Categorias</option>
+<option value="bebidas">Bebidas</option>
+<option value="snacks">Snacks</option>
+<option value="higiene">Higiene</option>
+<option value="souvenirs">Souvenirs</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_drop_down">arrow_drop_down</span>
+</div>
+</div>
+<!-- Status Filter -->
+<div class="relative w-full md:w-48">
+<select class="block w-full pl-3 pr-10 py-2 text-on-background border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary sm:text-sm bg-surface-container-lowest font-body-md text-body-md appearance-none">
+<option value="">Todos os Status</option>
+<option value="ativo">Ativo</option>
+<option value="inativo">Inativo</option>
+<option value="esgotado">Esgotado</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_drop_down">arrow_drop_down</span>
+</div>
+</div>
+<!-- Clear Filters -->
+<button class="inline-flex items-center justify-center px-4 py-2 border border-outline-variant shadow-sm text-sm font-label-md text-label-md rounded-lg text-on-surface-variant bg-surface-container-lowest hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors whitespace-nowrap w-full md:w-auto">
+<span class="material-symbols-outlined text-[18px] mr-2" data-icon="filter_alt_off">filter_alt_off</span>
+                        Limpar Filtros
+                    </button>
+</div>
+<!-- View Toggles -->
+<div class="flex items-center gap-2 self-end lg:self-auto">
+<div class="flex border border-outline-variant rounded-lg overflow-hidden bg-surface-container-lowest shadow-sm">
+<button aria-label="List View" class="px-3 py-1.5 bg-surface-container-highest text-primary-container focus:outline-none">
+<span class="material-symbols-outlined text-[20px]" data-icon="list">list</span>
+</button>
+<button aria-label="Grid View" class="px-3 py-1.5 text-on-surface-variant hover:bg-surface-container-low focus:outline-none transition-colors border-l border-outline-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="grid_view">grid_view</span>
+</button>
+</div>
+<button class="ml-2 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm font-label-md text-label-md text-on-primary bg-primary hover:bg-on-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+<span class="material-symbols-outlined text-[18px] mr-2" data-icon="add">add</span>
+                        Novo Produto
+                    </button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-border-subtle">
+<thead class="bg-surface-container">
+<tr>
+<th class="px-6 py-4 text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-20 font-semibold" scope="col">ID</th>
+<th class="px-6 py-4 text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold" scope="col">Nome</th>
+<th class="px-6 py-4 text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider hidden sm:table-cell font-semibold" scope="col">Categoria</th>
+<th class="px-6 py-4 text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold" scope="col">Estoque</th>
+<th class="px-6 py-4 text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold" scope="col">Preço</th>
+<th class="px-6 py-4 text-center font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold" scope="col">Status</th>
+<th class="px-6 py-4 text-center font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold" scope="col">Ações</th>
+</tr>
+</thead>
+<tbody class="bg-surface-container-lowest divide-y divide-border-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant">#1042</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-10 w-10 flex-shrink-0 bg-surface-container-high rounded-lg flex items-center justify-center text-on-surface-variant border border-outline-variant mr-3">
+<span class="material-symbols-outlined text-xl" data-icon="water_drop">water_drop</span>
+</div>
+<div class="font-label-md text-label-md text-on-background font-medium">Água Mineral com Gás 500ml</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant hidden sm:table-cell">Bebidas</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-background text-right font-medium">145</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-background text-right font-medium">R$ 5,00</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary/10 text-secondary border border-secondary/20">
+                                    Ativo
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<div class="flex items-center justify-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="visibility">visibility</span> Ver
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span> Editar
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span> Excluir
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant">#1043</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-10 w-10 flex-shrink-0 bg-surface-container-high rounded-lg flex items-center justify-center text-on-surface-variant border border-outline-variant mr-3">
+<span class="material-symbols-outlined text-xl" data-icon="cookie">cookie</span>
+</div>
+<div class="font-label-md text-label-md text-on-background font-medium">Amendoim Japonês 150g</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant hidden sm:table-cell">Snacks</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-error text-right font-medium">0</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-background text-right font-medium">R$ 8,50</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error/10 text-error border border-error/20">
+                                    Esgotado
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<div class="flex items-center justify-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="visibility">visibility</span> Ver
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span> Editar
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span> Excluir
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant">#1044</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-10 w-10 flex-shrink-0 bg-surface-container-high rounded-lg flex items-center justify-center text-on-surface-variant border border-outline-variant mr-3">
+<span class="material-symbols-outlined text-xl" data-icon="sports_bar">sports_bar</span>
+</div>
+<div class="font-label-md text-label-md text-on-background font-medium">Cerveja Artesanal IPA 600ml</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant hidden sm:table-cell">Bebidas</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-background text-right font-medium">42</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-background text-right font-medium">R$ 25,00</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary/10 text-secondary border border-secondary/20">
+                                    Ativo
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<div class="flex items-center justify-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="visibility">visibility</span> Ver
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span> Editar
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span> Excluir
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant">#1045</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center">
+<div class="h-10 w-10 flex-shrink-0 bg-surface-container-high rounded-lg flex items-center justify-center text-on-surface-variant border border-outline-variant mr-3">
+<span class="material-symbols-outlined text-xl" data-icon="soap">soap</span>
+</div>
+<div class="font-label-md text-label-md text-on-background font-medium">Kit Banho Premium</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-surface-variant hidden sm:table-cell">Higiene</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-background text-right font-medium">18</td>
+<td class="px-6 py-4 whitespace-nowrap font-body-md text-body-md text-on-background text-right font-medium">R$ 45,00</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
+                                    Inativo
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<div class="flex items-center justify-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="visibility">visibility</span> Ver
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span> Editar
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span> Excluir
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-border-subtle flex items-center justify-between sm:px-6 bg-surface-container-lowest rounded-b-xl">
+<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                            Mostrando <span class="font-medium text-on-background">1</span> a <span class="font-medium text-on-background">4</span> de <span class="font-medium text-on-background">1248</span> resultados
+                        </p>
+</div>
+<div>
+<nav aria-label="Pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+<a class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-outline-variant bg-surface-container-lowest text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="sr-only">Anterior</span>
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_left">chevron_left</span>
+</a>
+<a class="relative inline-flex items-center px-4 py-2 border border-outline-variant bg-sidebar-start text-sm font-medium text-white z-10 transition-colors" href="#">
+                                1
+                            </a>
+<a class="relative inline-flex items-center px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+                                2
+                            </a>
+<a class="relative inline-flex items-center px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+                                3
+                            </a>
+<span class="relative inline-flex items-center px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm font-medium text-on-surface-variant">
+                                ...
+                            </span>
+<a class="relative inline-flex items-center px-4 py-2 border border-outline-variant bg-surface-container-lowest text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+                                312
+                            </a>
+<a class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-outline-variant bg-surface-container-lowest text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="sr-only">Próximo</span>
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</a>
+</nav>
+</div>
+</div>
+<!-- Mobile Pagination -->
+<div class="flex items-center justify-between w-full sm:hidden">
+<a class="relative inline-flex items-center px-4 py-2 border border-outline-variant font-label-md text-label-md rounded-lg text-on-surface-variant bg-surface-container-lowest hover:bg-surface-container-low" href="#">
+                        Anterior
+                    </a>
+<span class="font-body-md text-body-md text-on-surface-variant">
+                        Página 1 de 312
+                    </span>
+<a class="relative inline-flex items-center px-4 py-2 border border-outline-variant font-label-md text-label-md rounded-lg text-on-surface-variant bg-surface-container-lowest hover:bg-surface-container-low" href="#">
+                        Próximo
+                    </a>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

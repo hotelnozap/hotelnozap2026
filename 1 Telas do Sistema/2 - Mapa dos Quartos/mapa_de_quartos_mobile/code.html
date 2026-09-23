@@ -1,0 +1,355 @@
+<!DOCTYPE html><html class="light" lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Mapa de Quartos - ZapHotel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#cbdbf5",
+                        "primary-container": "#131b2e",
+                        "sidebar-start": "#003400",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-fixed": "#131b2e",
+                        "inverse-surface": "#213145",
+                        "border-subtle": "#c6c6cd",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-surface-variant": "#45464d",
+                        "on-secondary-fixed": "#002113",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary-container": "#00714d",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "tertiary": "#000000",
+                        "surface-container-high": "#dce9ff",
+                        "inverse-primary": "#bec6e0",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface-container-low": "#eff4ff",
+                        "outline-variant": "#c6c6cd",
+                        "background": "#f8f9ff",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "secondary-container": "#6cf8bb",
+                        "secondary-fixed-dim": "#4edea3",
+                        "outline": "#76777d",
+                        "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                        "surface-bright": "#f8f9ff",
+                        "active-tab-text": "#6cf8bb",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#0b1c30",
+                        "surface-tint": "#565e74",
+                        "tertiary-container": "#2a1700",
+                        "primary-fixed": "#dae2fd",
+                        "surface-container": "#e5eeff",
+                        "primary": "#000000",
+                        "surface-bg": "#f8f9ff",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface": "#f8f9ff",
+                        "secondary": "#006c49",
+                        "sidebar-end": "#000000",
+                        "on-tertiary-container": "#b87500",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "on-surface": "#0b1c30",
+                        "on-primary-container": "#7c839b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "sidebar-width": "280px",
+                        "top-bar-height": "64px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-surface-container-lowest/80 backdrop-blur-md border border-border-subtle shadow-sm;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md text-body-md pt-top-bar-height pb-16 md:hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 right-0 w-full z-50 h-16 px-4 flex items-center justify-between shadow-md" style="background: linear-gradient(to right, rgb(0, 52, 0), rgb(0, 0, 0));">
+  <button class="p-2 text-white hover:bg-white/10 rounded-full transition-colors flex items-center justify-center">
+    <span class="material-symbols-outlined text-2xl">menu</span>
+  </button>
+  <span class="font-bold text-lg text-white tracking-wider uppercase">HOTEL NO ZAP</span>
+  <div class="flex items-center gap-1">
+    <button class="p-2 text-white hover:bg-white/10 rounded-full transition-colors flex items-center justify-center relative">
+      <span class="material-symbols-outlined text-2xl">notifications</span>
+      <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+    </button>
+    <button class="p-2 text-white hover:bg-white/10 rounded-full transition-colors flex items-center justify-center">
+      <span class="material-symbols-outlined text-2xl">account_circle</span>
+    </button>
+  </div>
+</header>
+<!-- Main Content Canvas -->
+<main class="p-4 space-y-5 pb-24">
+  <!-- Back to Dashboard -->
+  <div>
+    <a href="#" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
+      <span class="material-symbols-outlined text-base">arrow_back</span>
+      Voltar para Dashboard
+    </a>
+  </div>
+
+  <!-- Page Title -->
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Mapa de Quartos</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Visão geral e status das acomodações.</p>
+  </div>
+
+  <!-- Action Buttons (2x2 Grid) -->
+  <div class="grid grid-cols-2 gap-2.5">
+    <button class="w-full py-2.5 px-3 bg-slate-900 text-white rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-transform">
+      <span class="material-symbols-outlined text-base">add</span>
+      Novo Quarto
+    </button>
+    <button class="w-full py-2.5 px-3 bg-[#10B981] text-white rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-transform">
+      <span class="material-symbols-outlined text-base">add</span>
+      Nova Categoria
+    </button>
+    <button class="w-full py-2 px-3 bg-[#2563EB] text-white rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-transform">
+      <span class="material-symbols-outlined text-base">file_upload</span>
+      Importar
+    </button>
+    <button class="w-full py-2 px-3 bg-[#FDB116] text-slate-900 rounded-lg font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-transform">
+      <span class="material-symbols-outlined text-base">file_download</span>
+      Exportar
+    </button>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="flex items-center gap-2">
+    <div class="relative flex-1">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+      <input type="text" placeholder="Buscar por número ou hóspede..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm">
+    </div>
+    <button class="flex items-center gap-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors whitespace-nowrap active:scale-95">
+      <span class="material-symbols-outlined text-base text-slate-600">filter_list</span>
+      Filtros
+    </button>
+  </div>
+
+  <!-- KPI Status Cards (2x2 Grid with Semantics) -->
+  <section class="grid grid-cols-2 gap-3">
+    <!-- Livre -->
+    <div class="bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-3.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Livre</span>
+        <span class="material-symbols-outlined text-emerald-600 text-xl">check_circle</span>
+      </div>
+      <div class="mt-2">
+        <span class="text-3xl font-extrabold text-emerald-900">12</span>
+      </div>
+    </div>
+
+    <!-- Ocupado -->
+    <div class="bg-[#FEF2F2] border border-[#FECDD3] rounded-xl p-3.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-red-800">Ocupado</span>
+        <span class="material-symbols-outlined text-red-600 text-xl">lock</span>
+      </div>
+      <div class="mt-2">
+        <span class="text-3xl font-extrabold text-red-900">24</span>
+      </div>
+    </div>
+
+    <!-- Em Limpeza -->
+    <div class="bg-[#FFFBEB] border border-[#FDE68A] rounded-xl p-3.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Em Limpeza</span>
+        <span class="material-symbols-outlined text-amber-600 text-xl">cleaning_services</span>
+      </div>
+      <div class="mt-2">
+        <span class="text-3xl font-extrabold text-amber-900">5</span>
+      </div>
+    </div>
+
+    <!-- Manutenção -->
+    <div class="bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-3.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-blue-800">Manutenção</span>
+        <span class="material-symbols-outlined text-blue-600 text-xl">build</span>
+      </div>
+      <div class="mt-2">
+        <span class="text-3xl font-extrabold text-blue-900">2</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Room List Header & Items -->
+  <section class="space-y-3">
+    <div class="flex justify-between items-center">
+      <h2 class="text-base font-bold text-slate-900">Todos os Quartos (43)</h2>
+      <span class="text-xs text-slate-500 font-medium">Ordenado por número</span>
+    </div>
+
+    <!-- Room 101 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold text-base">
+          101
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">Standard</h3>
+          <p class="text-xs text-slate-500">Cama Queen • 1º Andar</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-xs">Livre</span>
+        <button class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-lg">more_vert</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Room 102 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-lg bg-red-50 text-red-700 border border-red-200 flex items-center justify-center font-bold text-base">
+          102
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">Luxo</h3>
+          <p class="text-xs text-slate-500">Vista Mar, Cama King</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-full bg-red-100 text-red-800 font-semibold text-xs">Ocupado</span>
+        <button class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-lg">more_vert</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Room 103 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-base">
+          103
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">Standard</h3>
+          <p class="text-xs text-slate-500">Duas Camas Solteiro</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold text-xs">Limpeza</span>
+        <button class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-lg">more_vert</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Room 104 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between shadow-sm hover:border-slate-300 transition-all opacity-85">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-base">
+          104
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">Suíte</h3>
+          <p class="text-xs text-slate-500">Ar condicionado • Reparo</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-xs">Manutenção</span>
+        <button class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-lg">more_vert</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Room 105 -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between shadow-sm hover:border-slate-300 transition-all">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold text-base">
+          105
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-900 text-sm">Standard</h3>
+          <p class="text-xs text-slate-500">Cama Casal • 1º Andar</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-xs">Livre</span>
+        <button class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-lg">more_vert</span>
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-white fixed bottom-0 left-0 right-0 w-full z-50 border-t border-slate-200 shadow-lg flex justify-around items-center h-16 px-2">
+  <!-- Dashboard -->
+  <button class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 active:scale-95 transition-transform p-1.5">
+    <span class="material-symbols-outlined text-2xl">grid_view</span>
+    <span class="text-[11px] font-medium mt-0.5">Dashboard</span>
+  </button>
+  <!-- Mapa de Quartos (Active) -->
+  <button class="flex flex-col items-center justify-center text-emerald-700 bg-emerald-50 rounded-xl px-4 py-1.5 active:scale-95 transition-transform">
+    <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">hotel</span>
+    <span class="text-[11px] font-bold mt-0.5">Quartos</span>
+  </button>
+  <!-- Reservas -->
+  <button class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 active:scale-95 transition-transform p-1.5">
+    <span class="material-symbols-outlined text-2xl">calendar_month</span>
+    <span class="text-[11px] font-medium mt-0.5">Reservas</span>
+  </button>
+  <!-- Financeiro -->
+  <button class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-800 active:scale-95 transition-transform p-1.5">
+    <span class="material-symbols-outlined text-2xl">payments</span>
+    <span class="text-[11px] font-medium mt-0.5">Financeiro</span>
+  </button>
+</nav>
+
+
+
+
+</body></html>

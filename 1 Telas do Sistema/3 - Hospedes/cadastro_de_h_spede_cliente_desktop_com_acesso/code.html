@@ -1,0 +1,258 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Cadastro de Hóspede - Hotel no Zap</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#b87500",
+                        "on-background": "#0b1c30",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface": "#f8f9ff",
+                        "primary-fixed": "#dae2fd",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed": "#2a1700",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-dim": "#cbdbf5",
+                        "surface-bg": "#f8f9ff",
+                        "primary-container": "#131b2e",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9ff",
+                        "active-tab-text": "#6cf8bb",
+                        "sidebar-end": "#000000",
+                        "sidebar-start": "#003400",
+                        "outline": "#76777d",
+                        "on-tertiary": "#ffffff",
+                        "border-subtle": "#c6c6cd",
+                        "secondary-container": "#6cf8bb",
+                        "surface-variant": "#d3e4fe",
+                        "on-primary-fixed": "#131b2e",
+                        "outline-variant": "#c6c6cd",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-surface-variant": "#45464d",
+                        "surface-tint": "#565e74",
+                        "surface-container": "#e5eeff",
+                        "on-surface": "#0b1c30",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#002113",
+                        "background": "#f8f9ff",
+                        "error-container": "#ffdad6",
+                        "active-tab-bg": "rgba(108, 248, 187, 0.2)",
+                        "primary-fixed-dim": "#bec6e0",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-secondary-container": "#00714d",
+                        "inverse-surface": "#213145",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-container": "#7c839b",
+                        "secondary": "#006c49",
+                        "primary": "#000000",
+                        "surface-container-high": "#dce9ff",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#bec6e0",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#2a1700",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "inverse-on-surface": "#eaf1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "sidebar-width": "280px",
+                        "unit": "4px",
+                        "top-bar-height": "64px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 w-full">
+<!-- Main Form Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop bg-background overflow-y-auto">
+<div class="max-w-5xl mx-auto space-y-6">
+<!-- Header Actions -->
+<div class="flex items-center justify-between"><h2 class="font-headline-lg text-headline-lg text-on-background">Novo Cadastro</h2><a class="inline-flex items-center gap-2 font-label-md text-label-md text-secondary hover:text-secondary-fixed transition-colors mt-2" href="#"><span class="material-symbols-outlined text-[20px]">arrow_back</span>Voltar para Listagem</a></div>
+<!-- Form Container -->
+<form class="space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6 flex flex-col justify-between h-full"><span class="font-label-md text-label-md text-on-surface mb-3 block">Tipo de Cadastro</span><div class="inline-flex rounded-lg bg-surface-container p-1 w-full justify-center"><button class="px-4 py-2 rounded-md font-label-md text-label-md bg-secondary text-on-secondary shadow-sm flex-1 text-center" type="button">Pessoa Física</button><button class="px-4 py-2 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex-1 text-center" type="button">Pessoa Jurídica</button></div></div><div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6 flex items-center justify-between h-full"><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface mb-1">Status do Hóspede</span><span class="font-body-md text-body-md text-on-surface-variant">Defina a situação atual</span></div><label class="relative inline-flex items-center cursor-pointer"><input checked="" class="sr-only peer" id="status" type="checkbox"><div class="w-11 h-6 bg-outline-variant peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-subtle after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div><span class="ml-3 font-label-md text-label-md text-secondary">Ativo</span></label></div></div>
+<!-- Profile & Status Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6 flex items-center gap-6"><div class="w-24 h-24 rounded-full bg-surface-container-high border border-dashed border-outline flex flex-col items-center justify-center cursor-pointer hover:bg-surface-variant transition-colors group relative overflow-hidden"><span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[32px]">add_a_photo</span><span class="font-label-sm text-label-sm text-outline group-hover:text-primary mt-1">Upload</span></div><div><h3 class="font-headline-sm text-headline-sm text-on-background">Foto do Perfil</h3><p class="font-body-md text-body-md text-on-surface-variant">Recomendado: 500x500px (JPG ou PNG)</p></div></div>
+<!-- Personal Info Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">badge</span>
+                            Informações Pessoais
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="col-span-1 md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Nome Completo *</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Ex: João da Silva" type="text">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">CPF *</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="000.000.000-00" type="text">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">RG</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="00.000.000-0" type="text">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Data de Nascimento</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="DD/MM/AAAA" type="text">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Sexo</label>
+<select class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow appearance-none">
+<option value="">Selecione...</option>
+<option value="M">Masculino</option>
+<option value="F">Feminino</option>
+<option value="O">Outro</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Nacionalidade</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Ex: Brasileiro" type="text" value="Brasileiro">
+</div>
+</div>
+</div>
+<!-- Contact Info Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">contact_phone</span>
+                            Contato
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="col-span-1 md:col-span-1">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Telefone / WhatsApp *</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+<i class="material-symbols-outlined text-[20px]">chat</i>
+</span>
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="(00) 00000-0000" type="text">
+</div>
+</div>
+<div class="col-span-1 md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">E-mail</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+<i class="material-symbols-outlined text-[20px]">mail</i>
+</span>
+<input class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="email@exemplo.com" type="email">
+</div>
+</div>
+</div>
+</div>
+<!-- Address Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+                            Endereço
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-3">
+<label class="block font-label-md text-label-md text-on-surface mb-1">CEP</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="00000-000" type="text">
+</div>
+<div class="md:col-span-7">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Endereço</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Rua, Avenida, etc." type="text">
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Número</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Ex: 123" type="text">
+</div>
+<div class="md:col-span-4">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Complemento</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Apto, Sala, Bloco" type="text">
+</div>
+<div class="md:col-span-3">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Bairro</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Bairro" type="text">
+</div>
+<div class="md:col-span-3">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Cidade</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="Cidade" type="text">
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Estado</label>
+<select class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow appearance-none">
+<option value="">UF</option>
+<option value="SP">SP</option>
+<option value="RJ">RJ</option>
+<option value="MG">MG</option>
+<!-- Add other states -->
+</select>
+</div>
+</div>
+</div>
+<!-- Notes Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6">
+<h3 class="font-headline-sm text-headline-sm text-on-background mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">edit_note</span>
+                            Observações
+                        </h3>
+<textarea class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow resize-y" placeholder="Preferências, alergias, ou outras informações relevantes..." rows="4"></textarea>
+</div>
+<!-- Footer Actions -->
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle shadow-sm p-6"><h3 class="font-headline-sm text-headline-sm text-on-background mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary">lock</span>Acesso ao Sistema</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="col-span-1 md:col-span-1"><label class="block font-label-md text-label-md text-on-surface mb-1">E-mail de Acesso</label><div class="relative"><span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline"><i class="material-symbols-outlined text-[20px]">mail</i></span><input class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" placeholder="email@acesso.com" type="email"></div></div><div class="col-span-1 md:col-span-1"><label class="block font-label-md text-label-md text-on-surface mb-1">Senha</label><div class="relative"><input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 pr-10 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" id="senha-input" placeholder="••••••••" type="password"><button class="absolute inset-y-0 right-0 flex items-center pr-3 text-outline hover:text-on-surface" onclick="const el=document.getElementById('senha-input'); el.type = el.type === 'password' ? 'text' : 'password';" type="button"><span class="material-symbols-outlined text-[20px]">visibility</span></button></div></div><div class="col-span-1 md:col-span-1"><label class="block font-label-md text-label-md text-on-surface mb-1">Repetir Senha</label><div class="relative"><input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2 pr-10 font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-shadow" id="rep-senha-input" placeholder="••••••••" type="password"><button class="absolute inset-y-0 right-0 flex items-center pr-3 text-outline hover:text-on-surface" onclick="const el=document.getElementById('rep-senha-input'); el.type = el.type === 'password' ? 'text' : 'password';" type="button"><span class="material-symbols-outlined text-[20px]">visibility</span></button></div></div></div></div><div class="flex items-center justify-end gap-4 pt-4 pb-8">
+<button class="px-6 py-2.5 rounded-xl border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors focus:ring-2 focus:ring-outline-variant focus:outline-none" type="button">
+                            Cancelar
+                        </button>
+<button class="px-6 py-2.5 rounded-xl bg-secondary text-on-secondary font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm flex items-center gap-2 focus:ring-2 focus:ring-secondary focus:outline-none" type="submit">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                            Salvar Cadastro
+                        </button>
+</div>
+</form>
+</div>
+</main>
+</div>
+
+
+</body></html>

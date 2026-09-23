@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><title>Hotel no Zap</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"inverse-surface":"#213145","on-secondary-container":"#00714d","surface-container-low":"#eff4ff","on-tertiary":"#ffffff","on-error":"#ffffff","on-tertiary-container":"#b87500","tertiary-fixed":"#ffddb8","outline":"#76777d","surface":"#f8f9ff","on-primary-fixed-variant":"#3f465c","surface-container":"#e5eeff","on-tertiary-fixed":"#2a1700","primary-container":"#131b2e","surface-dim":"#cbdbf5","surface-container-highest":"#d3e4fe","secondary-fixed-dim":"#4edea3","on-secondary-fixed-variant":"#005236","surface-container-lowest":"#ffffff","tertiary-fixed-dim":"#ffb95f","sidebar-start":"#003400","primary-fixed-dim":"#bec6e0","on-secondary-fixed":"#002113","on-error-container":"#93000a","inverse-on-surface":"#eaf1ff","on-surface-variant":"#45464d","error":"#ba1a1a","primary":"#000000","active-tab-text":"#6cf8bb","outline-variant":"#c6c6cd","surface-variant":"#d3e4fe","on-primary-fixed":"#131b2e","secondary-container":"#6cf8bb","on-surface":"#0b1c30","tertiary":"#000000","border-subtle":"#c6c6cd","secondary":"#006c49","surface-bg":"#f8f9ff","on-primary":"#ffffff","surface-bright":"#f8f9ff","on-background":"#0b1c30","sidebar-end":"#000000","primary-fixed":"#dae2fd","background":"#f8f9ff","on-tertiary-fixed-variant":"#653e00","error-container":"#ffdad6","on-secondary":"#ffffff","active-tab-bg":"rgba(108, 248, 187, 0.2)","on-primary-container":"#7c839b","surface-tint":"#565e74","surface-container-high":"#dce9ff","tertiary-container":"#2a1700","secondary-fixed":"#6ffbbe","inverse-primary":"#bec6e0"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"top-bar-height":"64px",gutter:"24px","margin-mobile":"16px","margin-desktop":"32px",unit:"4px","sidebar-width":"280px"},fontFamily:{"body-md":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"headline-md":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"headline-lg":["Inter"]},fontSize:{"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-sm":["20px",{lineHeight:"28px",fontWeight:"600"}],"headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-md":["14px",{lineHeight:"20px",fontWeight:"500"}],"label-sm":["12px",{lineHeight:"16px",letterSpacing:"0.05em",fontWeight:"600"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"700"}]}}}}</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-secondary-container selection:text-on-secondary-fixed"><header class="fixed top-0 inset-x-0 z-50 pt-safe bg-gradient-to-r from-sidebar-start to-sidebar-end shadow-[0_2px_12px_rgba(0,0,0,0.25)]"><div class="h-16 px-4 flex items-center justify-between"><button aria-label="Abrir Menu" class="w-11 h-11 flex items-center justify-center text-on-primary rounded-xl active:bg-white/10 transition-colors" type="button"><span class="material-symbols-outlined text-[24px]">menu</span></button><div class="flex-1 flex items-center justify-center px-2"><span class="font-label-sm text-label-sm font-bold tracking-widest text-on-primary uppercase text-center truncate">HOTEL NO ZAP</span></div><div class="flex items-center gap-1.5"><button aria-label="Notificações" class="relative w-11 h-11 flex items-center justify-center text-on-primary rounded-xl active:bg-white/10 transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary-container ring-2 ring-sidebar-end"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ring-1 ring-white/20"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col w-full max-w-[390px] mx-auto pt-16 pb-24 bg-surface px-margin-mobile"><div class="flex flex-col w-full pb-28">
+<section class="flex flex-col gap-unit py-2">
+<a class="inline-flex items-center gap-1 text-secondary font-label-md text-label-md active:opacity-75 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span>Voltar para Dashboard</span>
+</a>
+<div class="flex flex-col">
+<h1 class="font-headline-sm text-headline-sm text-on-surface font-bold">Usuários do Sistema</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-normal">Gestão de acessos, credenciais e permissões do hotel</p>
+</div>
+</section>
+<section class="grid grid-cols-2 gap-2 mt-2">
+<button class="h-11 px-3 bg-sidebar-start text-on-primary rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+<span class="font-label-md text-label-md font-semibold truncate">+ Novo Usuário</span>
+</button>
+<button class="h-11 px-3 bg-[#fdb116] text-[#2a1700] rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span class="font-label-md text-label-md font-semibold truncate">Exportar</span>
+</button>
+</section>
+<section class="flex items-center gap-2 mt-3">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full h-11 pl-9 pr-3 rounded-xl bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant/60 font-body-md text-body-md shadow-sm outline-none focus:bg-surface-container-high transition-colors" id="user-search" placeholder="Buscar por nome, cargo ou e-mail..." type="text"/>
+</div>
+<button aria-label="Filtrar Usuários" class="w-11 h-11 bg-surface-container-lowest rounded-xl flex items-center justify-center text-on-surface-variant shadow-sm active:bg-surface-container-high transition-colors relative" type="button">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary"></span>
+</button>
+</section>
+<section class="grid grid-cols-2 gap-2.5 mt-4">
+<div class="p-3 bg-[#eff6ff] rounded-xl flex items-center gap-2.5 shadow-sm">
+<div class="w-9 h-9 rounded-xl bg-[#2563eb]/15 flex items-center justify-center text-[#2563eb]">
+<span class="material-symbols-outlined text-[20px]">group</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-[#1e40af] font-semibold">Total</span>
+<span class="font-headline-sm text-headline-sm text-[#1e3a8a] font-bold leading-tight">12 Usuários</span>
+</div>
+</div>
+<div class="p-3 bg-[#ecfdf5] rounded-xl flex items-center gap-2.5 shadow-sm">
+<div class="w-9 h-9 rounded-xl bg-[#059669]/15 flex items-center justify-center text-[#059669]">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-[#065f46] font-semibold">Ativos</span>
+<span class="font-headline-sm text-headline-sm text-[#064e3b] font-bold leading-tight">10 Online</span>
+</div>
+</div>
+<div class="p-3 bg-[#faf5ff] rounded-xl flex items-center gap-2.5 shadow-sm">
+<div class="w-9 h-9 rounded-xl bg-[#9333ea]/15 flex items-center justify-center text-[#9333ea]">
+<span class="material-symbols-outlined text-[20px]">shield_person</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-[#6b21a8] font-semibold">Admins</span>
+<span class="font-headline-sm text-headline-sm text-[#581c87] font-bold leading-tight">4 Perfis</span>
+</div>
+</div>
+<div class="p-3 bg-[#fef2f2] rounded-xl flex items-center gap-2.5 shadow-sm">
+<div class="w-9 h-9 rounded-xl bg-[#dc2626]/15 flex items-center justify-center text-[#dc2626]">
+<span class="material-symbols-outlined text-[20px]">person_off</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-[#991b1b] font-semibold">Inativos</span>
+<span class="font-headline-sm text-headline-sm text-[#7f1d1d] font-bold leading-tight">2 Usuários</span>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-3 mt-4">
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm flex flex-col gap-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2.5 min-w-0">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Portrait photography of a Brazilian senior hotel general manager in a smart casual dark suit smiling warm indoor lobby lighting high resolution" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXZhHB-STxGbXoBhIOkY6X3g7iQEuecekEnayotgnHn04OkUAg92snfAtGZe5uQrm6OohfGNYTnRDd8bChIT092hdVsqShckmlljFtDQEmO6i3sUO82gmqMH8-y4aw4-4UwBksHs_p0cas-2moFEdcVN6SEPJC_NP3KVoeXgVxATnNM3CkLGimY5zWjv0MBy7zOX5TbIQ4k8OHAI2UsINsxwPt8rnBMs6q87IH4vL9js_8BVVucUbJ"/>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-bold truncate">Carlos Alberto Ramos</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Gerente Geral</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-[#faf5ff] text-[#6b21a8] font-label-sm text-[11px] font-bold">Administrador</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#065f46] font-label-sm text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
+            Ativo
+          </span>
+</div>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low flex flex-col gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">mail</span>
+<span class="truncate text-on-surface">carlos.ramos@hotelnozap.com.br</span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-1.5 truncate text-[#00714d] font-medium">
+<span class="material-symbols-outlined text-[16px] text-[#00714d]">chat</span>
+<span>(54) 99123-4567</span>
+</div>
+<div class="flex items-center gap-1 text-[11px] text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Hoje às 10:15</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-8 rounded-lg bg-[#2563eb] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span class="font-label-sm text-label-sm font-semibold">Ver</span>
+</button>
+<button class="h-8 rounded-lg bg-[#ea580c] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span class="font-label-sm text-label-sm font-semibold">Editar</span>
+</button>
+<button class="h-8 rounded-lg bg-[#dc2626] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+<span class="font-label-sm text-label-sm font-semibold">Excluir</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm flex flex-col gap-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-fixed flex items-center justify-center font-label-md text-label-md font-bold shrink-0">
+            FL
+          </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-bold truncate">Fernanda Lima</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Recepcionista Líder</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#065f46] font-label-sm text-[11px] font-bold">Recepção</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#065f46] font-label-sm text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
+            Ativo
+          </span>
+</div>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low flex flex-col gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">mail</span>
+<span class="truncate text-on-surface">fernanda.lima@hotelnozap.com.br</span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-1.5 truncate text-[#00714d] font-medium">
+<span class="material-symbols-outlined text-[16px] text-[#00714d]">chat</span>
+<span>(54) 99876-1122</span>
+</div>
+<div class="flex items-center gap-1 text-[11px] text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Hoje às 09:40</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-8 rounded-lg bg-[#2563eb] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span class="font-label-sm text-label-sm font-semibold">Ver</span>
+</button>
+<button class="h-8 rounded-lg bg-[#ea580c] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span class="font-label-sm text-label-sm font-semibold">Editar</span>
+</button>
+<button class="h-8 rounded-lg bg-[#dc2626] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+<span class="font-label-sm text-label-sm font-semibold">Excluir</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm flex flex-col gap-3">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2.5 min-w-0">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Corporate headshot of an energetic male hospitality finance supervisor wearing glasses clean neutral studio lighting clear focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKS5_VpaiUd4KS_TBNb3TuNOJKaYx3C3pBARAnhp5Nxq8dmlgtRwgTsVxpziQw4YeAEoyvKFoQJdm5Drtn8ZycRWe5mWVx2LIPrxtf9EB3YbMiscUBCEkM_7cDhjDxa-EbVb34qfS_Id5CqbeeO9l37loskM8Aro-6oek2ECNU74IpoZahyMG4SAhmYbWuUy7MN9cIPXjZFFuscHmni5p6g-8Y0KMo8HoTRy_cugMQ8SS1bZZ8571d"/>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-bold truncate">Marcos Vinicius Paiva</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Supervisor de Caixa</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-[#eff6ff] text-[#1e40af] font-label-sm text-[11px] font-bold">Financeiro</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#065f46] font-label-sm text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
+            Ativo
+          </span>
+</div>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low flex flex-col gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">mail</span>
+<span class="truncate text-on-surface">marcos.paiva@hotelnozap.com.br</span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-1.5 truncate text-[#00714d] font-medium">
+<span class="material-symbols-outlined text-[16px] text-[#00714d]">chat</span>
+<span>(54) 99654-8899</span>
+</div>
+<div class="flex items-center gap-1 text-[11px] text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Ontem às 18:32</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-8 rounded-lg bg-[#2563eb] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span class="font-label-sm text-label-sm font-semibold">Ver</span>
+</button>
+<button class="h-8 rounded-lg bg-[#ea580c] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span class="font-label-sm text-label-sm font-semibold">Editar</span>
+</button>
+<button class="h-8 rounded-lg bg-[#dc2626] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+<span class="font-label-sm text-label-sm font-semibold">Excluir</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm flex flex-col gap-3 opacity-90">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center font-label-md text-label-md font-bold shrink-0">
+            JS
+          </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-bold truncate">Juliana Souza</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Atendente Noturna</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<span class="px-2 py-0.5 rounded-full bg-[#ecfdf5] text-[#065f46] font-label-sm text-[11px] font-bold">Recepção</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fef2f2] text-[#991b1b] font-label-sm text-[11px] font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#dc2626]"></span>
+            Inativo
+          </span>
+</div>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low flex flex-col gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">mail</span>
+<span class="truncate text-on-surface">juliana.souza@hotelnozap.com.br</span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-1.5 truncate text-[#00714d] font-medium">
+<span class="material-symbols-outlined text-[16px] text-[#00714d]">chat</span>
+<span>(54) 99345-7788</span>
+</div>
+<div class="flex items-center gap-1 text-[11px] text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined text-[14px]">history</span>
+<span>Há 5 dias</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="h-8 rounded-lg bg-[#2563eb] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span class="font-label-sm text-label-sm font-semibold">Ver</span>
+</button>
+<button class="h-8 rounded-lg bg-[#ea580c] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span class="font-label-sm text-label-sm font-semibold">Editar</span>
+</button>
+<button class="h-8 rounded-lg bg-[#dc2626] text-white flex items-center justify-center gap-1 shadow-sm active:opacity-85 transition-opacity" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+<span class="font-label-sm text-label-sm font-semibold">Excluir</span>
+</button>
+</div>
+</div>
+</section>
+<section class="flex items-center justify-between mt-5 pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">
+      1 a 4 de 12 usuários
+    </span>
+<div class="flex items-center gap-1.5">
+<button class="w-8 h-8 rounded-lg bg-[#003400] text-on-primary font-label-sm text-label-sm font-bold flex items-center justify-center shadow-sm" type="button">
+        1
+      </button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-medium flex items-center justify-center shadow-sm active:bg-surface-container-high transition-colors" type="button">
+        2
+      </button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-medium flex items-center justify-center shadow-sm active:bg-surface-container-high transition-colors" type="button">
+        3
+      </button>
+<button aria-label="Próxima página" class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center shadow-sm active:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</section>
+</div></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_12px_rgba(11,28,48,0.06)]" data-active-classes="text-secondary font-semibold bg-active-tab-bg rounded-xl"><div class="max-w-[390px] mx-auto h-16 px-2 flex items-center justify-around"><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[22px]">grid_view</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Dashboard</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="quartos" href="#"><span class="material-symbols-outlined text-[22px]">meeting_room</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Quartos</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="reservas" href="#"><span class="material-symbols-outlined text-[22px]">calendar_month</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Reservas</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 transition-all text-secondary font-semibold bg-active-tab-bg rounded-xl" data-path="caixa-financeiro" href="#"><span class="material-symbols-outlined text-[22px]">point_of_sale</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Caixa</span></a><a class="flex flex-col items-center justify-center min-w-[56px] h-12 px-1 text-on-surface-variant hover:text-on-surface transition-all" data-path="mais" href="#"><span class="material-symbols-outlined text-[22px]">more_horiz</span><span class="font-label-sm text-[10px] leading-tight tracking-normal">Mais</span></a></div></nav></body></html>

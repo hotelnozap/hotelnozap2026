@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Listagem de Reservas - Mobile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: '#003400',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+    .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1; }
+  </style>
+</head>
+<body class="bg-[#f8f9ff] text-slate-800 antialiased min-h-screen pb-24 w-full max-w-none">
+<!-- 1. Cabeçalho Mobile Oficial -->
+<header class="sticky top-0 z-40 bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3 flex items-center justify-between shadow-md">
+<button aria-label="Menu" class="p-1 -ml-1 text-white hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+<h1 class="text-sm font-bold tracking-widest uppercase text-white select-none">HOTEL NO ZAP</h1>
+<div class="flex items-center gap-2">
+<button aria-label="Notificações" class="relative p-1 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-[#001700]"></span>
+</button>
+<button aria-label="Perfil de Usuário" class="p-1 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">account_circle</span>
+</button>
+</div>
+</header>
+<main class="p-4 space-y-4">
+<!-- 2. Barra de Navegação de Retorno -->
+<div>
+<a class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#003400] hover:underline" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Voltar para Dashboard
+      </a>
+<!-- 3. Título da Página -->
+<h1 class="text-xl font-bold text-[#0f172a] mt-1 tracking-tight">Listagem de Reservas</h1>
+<p class="text-xs text-slate-500">Gerencie as reservas e estadias com facilidade.</p>
+</div>
+<!-- 4. Grade de Botões de Ação Principais (2 linhas de 2 botões) -->
+<div class="grid grid-cols-2 gap-2">
+<!-- Linha 1 -->
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#0f172a] hover:bg-slate-800 active:scale-[0.98] text-white rounded-lg text-xs font-semibold shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+        Nova Reserva
+      </button>
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#10B981] hover:bg-emerald-600 active:scale-[0.98] text-white rounded-lg text-xs font-semibold shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+        Disponibilidade
+      </button>
+<!-- Linha 2 -->
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#2563EB] hover:bg-blue-700 active:scale-[0.98] text-white rounded-lg text-xs font-semibold shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+        Importar
+      </button>
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FDB116] hover:bg-amber-500 active:scale-[0.98] text-white rounded-lg text-xs font-bold shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+        Exportar
+      </button>
+</div>
+<!-- 5. Campo de Busca e Filtros -->
+<div class="flex items-center gap-2">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-700 text-slate-800 placeholder-slate-400 shadow-sm" placeholder="Buscar reservas ou hóspedes..." type="text"/>
+</div>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 shadow-sm transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[18px] text-slate-600">tune</span>
+        Filtros
+      </button>
+</div>
+<!-- 6. Cartões de Indicadores / KPIs (Grade 2x2 compacta) -->
+<div class="grid grid-cols-2 gap-2.5">
+<!-- Total Reservas -->
+<div class="bg-[#eff6ff] border border-blue-100 rounded-xl p-3 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-blue-700 mb-1">
+<span class="text-[10px] font-bold uppercase tracking-wider">Total Reservas</span>
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+</div>
+<div class="text-xl font-bold text-[#0f172a]">148</div>
+<div class="mt-1">
+<span class="inline-block text-[10px] text-emerald-700 bg-emerald-100/60 font-semibold px-1.5 py-0.5 rounded">+8% no mês</span>
+</div>
+</div>
+<!-- Check-in Hoje -->
+<div class="bg-[#f0fdf4] border border-emerald-100 rounded-xl p-3 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-emerald-700 mb-1">
+<span class="text-[10px] font-bold uppercase tracking-wider">Check-in Hoje</span>
+<span class="material-symbols-outlined text-[18px]">login</span>
+</div>
+<div class="text-xl font-bold text-[#0f172a]">12</div>
+<div class="mt-1">
+<span class="text-[10px] text-slate-500 font-medium">Próx. 4 horas</span>
+</div>
+</div>
+<!-- Check-out Hoje -->
+<div class="bg-[#fffbeb] border border-amber-100 rounded-xl p-3 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-amber-700 mb-1">
+<span class="text-[10px] font-bold uppercase tracking-wider">Check-out Hoje</span>
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</div>
+<div class="text-xl font-bold text-[#0f172a]">8</div>
+<div class="mt-1">
+<span class="text-[10px] text-slate-500 font-medium">Até às 12:00</span>
+</div>
+</div>
+<!-- Taxa Ocupação -->
+<div class="bg-[#faf5ff] border border-purple-100 rounded-xl p-3 shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-purple-700 mb-1">
+<span class="text-[10px] font-bold uppercase tracking-wider">Taxa Ocupação</span>
+<span class="material-symbols-outlined text-[18px]">bed</span>
+</div>
+<div class="text-xl font-bold text-[#0f172a]">82%</div>
+<div class="mt-1">
+<span class="text-[10px] text-emerald-600 font-semibold">Alta temp.</span>
+</div>
+</div>
+</div>
+<!-- 7. Lista de Cards de Reservas -->
+<div class="space-y-3 pt-1">
+<!-- Card 1: #RES-501 Carlos Silveira -->
+<div class="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-sm space-y-2.5">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[10px] font-bold text-slate-400 block tracking-wider">#RES-501</span>
+<h3 class="font-bold text-sm text-[#0f172a]">Carlos Silveira</h3>
+<p class="text-xs text-slate-500">Quarto 203 • Luxo Duplo</p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Confirmada
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+<div>
+<span class="text-[10px] text-slate-400 block">Período</span>
+<span class="font-medium text-slate-700">10/10 a 15/10/2023</span>
+</div>
+<div>
+<span class="text-[10px] text-slate-400 block">Valor Total</span>
+<span class="font-bold text-[#0f172a]">R$ 750,00</span>
+</div>
+</div>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-1.5">
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">visibility</span> Ver
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#f97316] hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span> Editar
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">delete</span> Excluir
+          </button>
+</div>
+</div>
+<!-- Card 2: #RES-502 Mariana Costa -->
+<div class="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-sm space-y-2.5">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[10px] font-bold text-slate-400 block tracking-wider">#RES-502</span>
+<h3 class="font-bold text-sm text-[#0f172a]">Mariana Costa</h3>
+<p class="text-xs text-slate-500">Suíte Master 101 • Premium</p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            Hospedado
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+<div>
+<span class="text-[10px] text-slate-400 block">Período</span>
+<span class="font-medium text-slate-700">10/10 a 14/10/2023</span>
+</div>
+<div>
+<span class="text-[10px] text-slate-400 block">Valor Total</span>
+<span class="font-bold text-[#0f172a]">R$ 1.600,00</span>
+</div>
+</div>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-1.5">
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">visibility</span> Ver
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#f97316] hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span> Editar
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">delete</span> Excluir
+          </button>
+</div>
+</div>
+<!-- Card 3: #RES-503 Roberto Alves -->
+<div class="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-sm space-y-2.5">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[10px] font-bold text-slate-400 block tracking-wider">#RES-503</span>
+<h3 class="font-bold text-sm text-[#0f172a]">Roberto Alves</h3>
+<p class="text-xs text-slate-500">Quarto 112 • Standard Solteiro</p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+            Concluída
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+<div>
+<span class="text-[10px] text-slate-400 block">Período</span>
+<span class="font-medium text-slate-700">01/10 a 05/10/2023</span>
+</div>
+<div>
+<span class="text-[10px] text-slate-400 block">Valor Total</span>
+<span class="font-bold text-[#0f172a]">R$ 600,00</span>
+</div>
+</div>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-1.5">
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">visibility</span> Ver
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#f97316] hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span> Editar
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">delete</span> Excluir
+          </button>
+</div>
+</div>
+<!-- Card 4: #RES-504 Fernanda Lima -->
+<div class="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-sm space-y-2.5">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-[10px] font-bold text-slate-400 block tracking-wider">#RES-504</span>
+<h3 class="font-bold text-sm text-[#0f172a]">Fernanda Lima</h3>
+<p class="text-xs text-slate-500">Quarto 305 • Casal Standard</p>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+            Cancelada
+          </span>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+<div>
+<span class="text-[10px] text-slate-400 block">Período</span>
+<span class="font-medium text-slate-700">15/10 a 18/10/2023</span>
+</div>
+<div>
+<span class="text-[10px] text-slate-400 block">Valor Total</span>
+<span class="font-bold text-[#0f172a]">R$ 920,00</span>
+</div>
+</div>
+<div class="pt-2 border-t border-slate-100 flex items-center justify-end gap-1.5">
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">visibility</span> Ver
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#f97316] hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">edit</span> Editar
+          </button>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">delete</span> Excluir
+          </button>
+</div>
+</div>
+</div>
+</main>
+<!-- 8. Barra de Navegação Inferior (Bottom Bar) fixa no rodapé -->
+<nav class="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+<a class="flex flex-col items-center justify-center py-1 px-2 text-slate-400 hover:text-slate-600 transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-[10px] font-medium mt-0.5">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center py-1 px-2 text-slate-400 hover:text-slate-600 transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">bed</span>
+<span class="text-[10px] font-medium mt-0.5">Quartos</span>
+</a>
+<a class="flex flex-col items-center justify-center py-1 px-3 bg-[#e8f5e9] text-[#003400] rounded-full transition-colors font-semibold" href="#">
+<span class="material-symbols-outlined text-[22px] fill">calendar_month</span>
+<span class="text-[10px] font-bold mt-0.5">Reservas</span>
+</a>
+<a class="flex flex-col items-center justify-center py-1 px-2 text-slate-400 hover:text-slate-600 transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">inventory_2</span>
+<span class="text-[10px] font-medium mt-0.5">Estoque</span>
+</a>
+<a class="flex flex-col items-center justify-center py-1 px-2 text-slate-400 hover:text-slate-600 transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">more_horiz</span>
+<span class="text-[10px] font-medium mt-0.5">Mais</span>
+</a>
+</nav>
+</body></html>
