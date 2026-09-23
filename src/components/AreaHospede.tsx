@@ -563,18 +563,6 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             </button>
 
             <button
-              onClick={() => setActiveSubTab('enderecos')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                activeSubTab === 'enderecos'
-                  ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <span className={`material-symbols-outlined text-xl ${activeSubTab === 'enderecos' ? 'text-emerald-400' : 'text-slate-400'}`}>location_on</span>
-              <span>Endereços Cadastrados</span>
-            </button>
-
-            <button
               onClick={() => setActiveSubTab('seguranca')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                 activeSubTab === 'seguranca'
@@ -739,13 +727,6 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">badge</span>
                     Meus Dados Cadastrais
-                  </button>
-                  <button
-                    onClick={() => { setActiveSubTab('enderecos'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
-                  >
-                    <span className="material-symbols-outlined text-emerald-400 text-lg">location_on</span>
-                    Endereços Cadastrados
                   </button>
                   <button
                     onClick={() => { setActiveSubTab('seguranca'); setIsMobileDrawerOpen(false); }}
@@ -1288,37 +1269,6 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               onNavigateBack={() => setActiveSubTab('dashboard')}
               onNavigateToLogin={onNavigateToLogin}
             />
-          )}
-
-          {/* ================================================================= */}
-          {/* ABA: ENDEREÇOS CADASTRADOS                                        */}
-          {/* ================================================================= */}
-          {activeSubTab === 'enderecos' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600">location_on</span>
-                    Endereços Cadastrados
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">Endereço residencial e correspondência do hóspede</p>
-                </div>
-                <button onClick={() => setActiveSubTab('dados-cadastrais')} className="px-3.5 py-2 rounded-xl bg-[#003400] text-white text-xs font-bold hover:bg-[#002200] transition">
-                  Editar Endereço
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {enderecos.map((end) => (
-                  <div key={end.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                    <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">{end.tipo}</span>
-                    <p className="font-bold text-slate-900 text-sm">{end.logradouro}, nº {end.numero} {end.complemento}</p>
-                    <p className="text-xs text-slate-500">{end.bairro} • {end.cidade} - {end.uf}</p>
-                    <p className="text-xs text-slate-400">CEP: {end.cep}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
 
           {/* ================================================================= */}

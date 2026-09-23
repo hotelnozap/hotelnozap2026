@@ -11,15 +11,6 @@ export interface MeusDadosCadastraisProps {
   onNavigateToLogin?: () => void;
 }
 
-interface Acompanhante {
-  id: string;
-  nome: string;
-  parentesco: string;
-  documento: string;
-  iniciais: string;
-  avatarColor: string;
-}
-
 interface Endereco {
   id: string;
   tipo: string;
@@ -40,15 +31,14 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
   onNavigateBack,
   onNavigateToLogin,
 }) => {
-  // Controle de Abas Internas da Tela
-  const [activeTab, setActiveTab] = useState<'dados-pessoais' | 'enderecos' | 'preferencias' | 'acompanhantes' | 'lgpd'>('dados-pessoais');
+  // Controle de Abas Internas da Tela (Apenas Dados Pessoais e Endereços Salvos)
+  const [activeTab, setActiveTab] = useState<'dados-pessoais' | 'enderecos'>('dados-pessoais');
 
   // Mensagem Toast de Sucesso
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Modais de Alteração
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [isAddCompanionModalOpen, setIsAddCompanionModalOpen] = useState(false);
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
 
   // Estados dos Dados Cadastrais
@@ -72,6 +62,22 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
     estado: 'Mato Grosso (MT)',
     pais: 'Brasil',
   });
+
+  // Lista de Endereços
+  const [enderecos, setEnderecos] = useState<Endereco[]>([
+    {
+      id: '1',
+      tipo: 'Residencial (Principal)',
+      cep: '78720-750',
+      logradouro: 'Rua João Paulo II',
+      numero: '891',
+      complemento: '',
+      bairro: 'Jardim Sumaré',
+      cidade: 'Rondonópolis',
+      uf: 'MT',
+      pais: 'Brasil',
+    },
+  ]);
 
   useEffect(() => {
     const carregarDadosReais = async () => {
@@ -120,37 +126,17 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
     carregarDadosReais();
   }, [userEmail, userName]);
 
-  // Preferências de Hospedagem
-  const [preferencias, setPreferencias] = useState({
-    cama: 'King Size preferencial',
-    andar: 'Andar alto (Vista Mar)',
-    travesseiros: '2x Viscoelástico Macio',
-    restricao: 'Sem restrições',
+  // Novo Endereço Form State
+  const [newAddress, setNewAddress] = useState({
+    cep: '',
+    logradouro: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    uf: 'MT'
   });
 
-  // Lista de Acompanhantes Frequentes
-  const [acompanhantes, setAcompanhantes] = useState<Acompanhante[]>([]);
-
-  // Lista de Endereços
-  const [enderecos, setEnderecos] = useState<Endereco[]>([
-    {
-      id: '1',
-      tipo: 'Residencial (Principal)',
-      cep: '78720-750',
-      logradouro: 'Rua João Paulo II',
-      numero: '891',
-      complemento: '',
-      bairro: 'Jardim Sumaré',
-      cidade: 'Rondonópolis',
-      uf: 'MT',
-      pais: 'Brasil',
-    },
-  ]);
-
-  // Novo Acompanhante Form State
-  const [newCompanion, setNewCompanion] = useState({ nome: '', parentesco: '', documento: '' });
-  // Novo Endereço Form State
-  const [newAddress, setNewAddress] = useState({ cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: 'MT' });
   // Passwords Form State
   const [passwords, setPasswords] = useState({ atual: '', nova: '', confirma: '' });
 
@@ -175,6 +161,17 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
         uf: formData.estado?.slice(-3, -1) || 'MT',
       });
       if (ok) {
+        // Atualiza o endereço principal na lista local
+        setEnderecos(prev => prev.map(end => end.id === '1' ? {
+          ...end,
+          cep: formData.cep,
+          logradouro: formData.logradouro,
+          numero: formData.numero,
+          complemento: formData.complemento,
+          bairro: formData.bairro,
+          cidade: formData.cidade,
+          uf: formData.estado?.slice(-3, -1) || 'MT',
+        } : end));
         showToast('Dados cadastrais salvos e sincronizados com sucesso no Supabase!');
       } else {
         showToast('Erro ao salvar dados no Supabase.');
@@ -182,23 +179,6 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
     } catch {
       showToast('Erro ao salvar dados.');
     }
-  };
-
-  const handleAddCompanionSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCompanion.nome) return;
-    const item: Acompanhante = {
-      id: String(Date.now()),
-      nome: newCompanion.nome,
-      parentesco: newCompanion.parentesco || 'Família',
-      documento: newCompanion.documento || 'Documento Anexado',
-      iniciais: newCompanion.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
-      avatarColor: 'bg-emerald-100 text-emerald-800',
-    };
-    setAcompanhantes([...acompanhantes, item]);
-    setNewCompanion({ nome: '', parentesco: '', documento: '' });
-    setIsAddCompanionModalOpen(false);
-    showToast(`Acompanhante ${item.nome} adicionado com sucesso!`);
   };
 
   const handleAddAddressSubmit = (e: React.FormEvent) => {
@@ -217,7 +197,7 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
       pais: 'Brasil',
     };
     setEnderecos([...enderecos, end]);
-    setNewAddress({ cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: 'PE' });
+    setNewAddress({ cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: 'MT' });
     setIsAddAddressModalOpen(false);
     showToast('Novo endereço cadastrado com sucesso!');
   };
@@ -248,53 +228,46 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
       {/* ========================================================================= */}
       <header className="lg:hidden w-full bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3 sticky top-0 z-40 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <button onClick={onNavigateBack} className="p-1 rounded-lg hover:bg-white/10 text-white active:scale-95 transition">
-            <span className="material-symbols-outlined text-2xl">arrow_back</span>
+          <button onClick={onNavigateBack} className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
+            <span className="material-symbols-outlined text-xl">arrow_back</span>
           </button>
-          <div>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 block leading-tight">Portal do Hóspede</span>
-            <h1 className="text-sm font-extrabold tracking-wider leading-none text-white">HOTEL NO ZAP</h1>
-          </div>
+          <span className="font-extrabold text-xs tracking-wider uppercase text-emerald-400">MEUS DADOS</span>
         </div>
-
         <div className="flex items-center gap-2">
-          <button onClick={() => showToast('Notificações atualizadas')} className="relative p-1.5 rounded-full hover:bg-white/10 text-white active:scale-95 transition">
-            <span className="material-symbols-outlined text-xl">notifications</span>
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400"></span>
+          <button
+            onClick={handleSaveAll}
+            className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition"
+          >
+            Salvar
           </button>
-          <div className="w-8 h-8 rounded-full bg-emerald-800 border border-emerald-400/50 flex items-center justify-center font-bold text-xs text-white">
-            CT
-          </div>
         </div>
       </header>
 
-      {/* MAIN CONTAINER (DESKTOP & MOBILE WRAPPER) */}
-      <main className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6 lg:space-y-8 pb-28 lg:pb-12">
-        
-        {/* TOPO / NAVEGAÇÃO E TÍTULO DA TELA */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      {/* ========================================================================= */}
+      {/* CONTEÚDO PRINCIPAL (DESKTOP & TABLET CONTAINER)                           */}
+      {/* ========================================================================= */}
+      <main className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6 pb-28 lg:pb-12">
+
+        {/* CABEÇALHO DA TELA & BOTÕES DE AÇÃO */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
           <div>
-            <button
-              onClick={onNavigateBack}
-              className="inline-flex items-center gap-2 text-xs md:text-sm font-semibold text-[#003400] hover:text-emerald-700 transition-colors mb-2 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-lg">arrow_back</span>
-              Voltar para Minha Conta
-            </button>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Meus Dados Cadastrais</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-[#003400] border border-emerald-200 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Hóspede VIP
-              </span>
+            <div className="flex items-center gap-2 text-xs md:text-sm text-slate-500 mb-1">
+              <button onClick={onNavigateBack} className="hover:text-emerald-800 transition flex items-center gap-1 font-medium cursor-pointer">
+                <span className="material-symbols-outlined text-sm">home</span>
+                Início
+              </button>
+              <span>/</span>
+              <span className="text-slate-800 font-bold">Meus Dados</span>
             </div>
-            <p className="text-slate-500 text-xs md:text-sm mt-1">Gerencie suas informações pessoais, contatos, preferências de hospedagem e documentos fiscais.</p>
+            <h1 className="text-xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Meus Dados Cadastrais</h1>
+            <p className="text-xs md:text-sm text-slate-500 mt-0.5">Gerencie suas informações pessoais e endereços salvos</p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsPasswordModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs md:text-sm hover:bg-slate-50 transition shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs md:text-sm hover:bg-slate-50 transition shadow-xs cursor-pointer"
             >
               <span className="material-symbols-outlined text-lg text-slate-500">lock_reset</span>
               Alterar Senha
@@ -367,11 +340,12 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
           </div>
         </div>
 
-        {/* ABAS / FILTROS DE SEÇÃO DA TELA */}
+        {/* ABAS / FILTROS DE SEÇÃO: SOMENTE DADOS PESSOAIS E ENDEREÇOS SALVOS */}
         <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto custom-scrollbar">
           <button
+            type="button"
             onClick={() => setActiveTab('dados-pessoais')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === 'dados-pessoais' ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -380,53 +354,23 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('enderecos')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === 'enderecos' ? 'bg-[#003400] text-white font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+            className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+              activeTab === 'enderecos' ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
             <span className="material-symbols-outlined text-lg">pin_drop</span>
             Endereços Salvos
           </button>
-
-          <button
-            onClick={() => setActiveTab('preferencias')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === 'preferencias' ? 'bg-[#003400] text-white font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg">favorite</span>
-            Preferências de Estadia
-          </button>
-
-          <button
-            onClick={() => setActiveTab('acompanhantes')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === 'acompanhantes' ? 'bg-[#003400] text-white font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg">group</span>
-            Acompanhantes Frequentes
-          </button>
-
-          <button
-            onClick={() => setActiveTab('lgpd')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === 'lgpd' ? 'bg-[#003400] text-white font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg">shield</span>
-            Segurança & Privacidade
-          </button>
         </div>
 
-        {/* CONTEÚDO PRINCIPAL DIVIDIDO EM COLUNAS */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          
-          {/* COLUNA PRINCIPAL (2/3 NO DESKTOP): FORMULÁRIO DETALHADO */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* 1. INFORMACÕES PESSOAIS & DOCUMENTAÇÃO */}
+        {/* ========================================================================= */}
+        {/* ABA 1: DADOS PESSOAIS (LARGURA TOTAL DESK & MOBILE)                       */}
+        {/* ========================================================================= */}
+        {activeTab === 'dados-pessoais' && (
+          <div className="space-y-6">
+            {/* 1. INFORMAÇÕES PESSOAIS & DOCUMENTAÇÃO */}
             <div className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
@@ -590,21 +534,65 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* 3. ENDEREÇO RESIDENCIAL & COBRANÇA */}
-            <div className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-emerald-50 text-[#003400] flex items-center justify-center font-bold text-xs md:text-sm">3</div>
-                  <h2 className="text-sm md:text-base font-bold text-slate-900">Endereço Residencial & Cobrança</h2>
+        {/* ========================================================================= */}
+        {/* ABA 2: ENDEREÇOS SALVOS (CONCENTRAÇÃO DOS DADOS DE ENDEREÇO)              */}
+        {/* ========================================================================= */}
+        {activeTab === 'enderecos' && (
+          <div className="space-y-6">
+            {/* LISTA DE ENDEREÇOS CADASTRADOS */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                <div>
+                  <h3 className="text-base md:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-600">location_on</span>
+                    Endereços Salvos & Correspondência
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Endereço principal e adicionais salvos na sua conta</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsAddAddressModalOpen(true)}
-                  className="text-xs font-semibold text-[#003400] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003400] text-white text-xs font-bold hover:bg-[#002200] transition shadow-xs cursor-pointer self-start sm:self-auto"
                 >
-                  <span className="material-symbols-outlined text-sm">add_location_alt</span> Adicionar outro endereço
+                  <span className="material-symbols-outlined text-base">add_location_alt</span>
+                  Novo Endereço
                 </button>
+              </div>
+
+              {/* Grid de Cards de Endereços */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {enderecos.map((end) => (
+                  <div key={end.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 transition-colors space-y-2 relative">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                        {end.tipo}
+                      </span>
+                    </div>
+                    <p className="font-bold text-slate-900 text-sm">
+                      {end.logradouro}, nº {end.numero} {end.complemento ? `(${end.complemento})` : ''}
+                    </p>
+                    <p className="text-xs text-slate-600">{end.bairro} • {end.cidade} - {end.uf}</p>
+                    <p className="text-xs text-slate-400 font-mono">CEP: {end.cep}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* FORMULÁRIO DE EDIÇÃO DO ENDEREÇO PRINCIPAL */}
+            <div className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-emerald-50 text-[#003400] flex items-center justify-center font-bold text-xs md:text-sm">
+                    <span className="material-symbols-outlined text-base">home</span>
+                  </div>
+                  <div>
+                    <h2 className="text-sm md:text-base font-bold text-slate-900">Editar Endereço Principal</h2>
+                    <p className="text-xs text-slate-500">Atualize as informações do seu endereço residencial padrão</p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs md:text-sm">
@@ -614,7 +602,7 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
                     type="text"
                     value={formData.cep}
                     onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-medium text-slate-800 focus:outline-none focus:border-[#003400] focus:ring-1 focus:ring-[#003400] bg-white"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-medium text-slate-800 focus:outline-none focus:border-[#003400] focus:ring-1 focus:ring-[#003400] bg-white font-mono"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -642,6 +630,7 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
                     type="text"
                     value={formData.complemento}
                     onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
+                    placeholder="Apto, Bloco, etc."
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-medium text-slate-800 focus:outline-none focus:border-[#003400] focus:ring-1 focus:ring-[#003400] bg-white"
                   />
                 </div>
@@ -683,132 +672,26 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
                   />
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* COLUNA LATERAL (1/3 NO DESKTOP): PREFERÊNCIAS, ACOMPANHANTES & LGPD */}
-          <div className="space-y-6">
-            
-            {/* CARTÃO DE PREFERÊNCIAS DE HOSPEDAGEM */}
-            <div className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#003400]">hotel</span>
-                  <h3 className="font-bold text-slate-900 text-sm">Preferências de Hospedagem</h3>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <div className="text-xs">
-                    <span className="font-semibold text-slate-800 block">Tipo de Cama</span>
-                    <span className="text-slate-500">{preferencias.cama}</span>
-                  </div>
-                  <button onClick={() => showToast('Editando preferência de cama')} className="p-1 text-slate-400 hover:text-slate-600">
-                    <span className="material-symbols-outlined text-sm">edit</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <div className="text-xs">
-                    <span className="font-semibold text-slate-800 block">Andar Preferido</span>
-                    <span className="text-slate-500">{preferencias.andar}</span>
-                  </div>
-                  <button onClick={() => showToast('Editando preferência de andar')} className="p-1 text-slate-400 hover:text-slate-600">
-                    <span className="material-symbols-outlined text-sm">edit</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <div className="text-xs">
-                    <span className="font-semibold text-slate-800 block">Travesseiros</span>
-                    <span className="text-slate-500">{preferencias.travesseiros}</span>
-                  </div>
-                  <button onClick={() => showToast('Editando preferência de travesseiros')} className="p-1 text-slate-400 hover:text-slate-600">
-                    <span className="material-symbols-outlined text-sm">edit</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <div className="text-xs">
-                    <span className="font-semibold text-slate-800 block">Restrição Alimentar</span>
-                    <span className="text-slate-500">{preferencias.restricao}</span>
-                  </div>
-                  <button onClick={() => showToast('Editando restrição alimentar')} className="p-1 text-slate-400 hover:text-slate-600">
-                    <span className="material-symbols-outlined text-sm">edit</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* CARTÃO DE ACOMPANHANTES FREQUENTES */}
-            <div className="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#003400]">group</span>
-                  <h3 className="font-bold text-slate-900 text-sm">Acompanhantes Frequentes</h3>
-                </div>
+              <div className="pt-2 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setIsAddCompanionModalOpen(true)}
-                  className="text-xs font-semibold text-[#003400] hover:underline cursor-pointer"
+                  onClick={handleSaveAll}
+                  className="px-5 py-2.5 rounded-xl bg-[#003400] text-white font-bold text-xs md:text-sm hover:bg-[#002800] transition flex items-center gap-2 cursor-pointer shadow-sm"
                 >
-                  + Adicionar
-                </button>
-              </div>
-
-              <div className="space-y-2.5">
-                {acompanhantes.map((ac) => (
-                  <div key={ac.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center ${ac.avatarColor}`}>
-                        {ac.iniciais}
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-800">{ac.nome}</div>
-                        <div className="text-[11px] text-slate-500">{ac.parentesco} • {ac.documento}</div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => showToast(`Editando acompanhante ${ac.nome}`)}
-                      className="p-1 text-slate-400 hover:text-slate-600"
-                    >
-                      <span className="material-symbols-outlined text-sm">edit</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* CARTÃO DE SEGURANÇA & PRIVACIDADE (LGPD) */}
-            <div className="bg-emerald-950 text-white rounded-2xl p-5 md:p-6 shadow-sm space-y-4 border border-emerald-900">
-              <div className="flex items-center gap-2.5 text-emerald-400">
-                <span className="material-symbols-outlined text-xl">security</span>
-                <h3 className="font-bold text-sm text-white">Privacidade & Dados (LGPD)</h3>
-              </div>
-              <p className="text-xs text-emerald-200/80 leading-relaxed">
-                Seus dados são armazenados com segurança de ponta a ponta e utilizados exclusivamente para faturamento e personalização da sua estadia na rede Hotel no Zap.
-              </p>
-              <div className="pt-2 flex items-center justify-between border-t border-emerald-900/60 text-xs">
-                <span className="text-emerald-300 font-medium">Exportar Relatório LGPD</span>
-                <button
-                  type="button"
-                  onClick={() => showToast('Relatório completo de dados LGPD baixado em PDF!')}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-900 text-emerald-200 font-semibold hover:bg-emerald-800 transition cursor-pointer"
-                >
-                  Baixar PDF
+                  <span className="material-symbols-outlined text-base">save</span>
+                  Salvar Endereço
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* BARRA DE RODAPÉ COM AÇÕES DE SALVAMENTO E CANCELAMENTO */}
         <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className="material-symbols-outlined text-emerald-600 text-base">sync_saved_locally</span>
-            Última atualização cadastral realizada em 24/02/2026 às 10:45.
+            Dados cadastrais sincronizados com segurança no Supabase.
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
@@ -816,21 +699,21 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
               onClick={onNavigateBack}
               className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs md:text-sm hover:bg-slate-50 transition cursor-pointer"
             >
-              Descartar
+              Voltar
             </button>
             <button
               type="button"
               onClick={handleSaveAll}
               className="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-[#003400] text-white font-semibold text-xs md:text-sm hover:bg-[#002800] transition shadow-md shadow-emerald-950/20 cursor-pointer"
             >
-              Salvar Dados Cadastrais
+              Salvar Alterações
             </button>
           </div>
         </div>
       </main>
 
       {/* ========================================================================= */}
-      {/* BARRA DE NAVEGAÇÃO INFERIOR FIXA MOBILE (5 ABAS PADRÃO PORTAL DO HÓSPEDE) */}
+      {/* BARRA DE NAVEGAÇÃO INFERIOR FIXA MOBILE                                    */}
       {/* ========================================================================= */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2 px-3 z-50 flex justify-around items-center shadow-lg">
         <button onClick={onNavigateBack} className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600">
@@ -927,74 +810,6 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL DE NOVO ACOMPANHANTE                                               */}
-      {/* ========================================================================= */}
-      {isAddCompanionModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 relative">
-            <button onClick={() => setIsAddCompanionModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
-              <span className="material-symbols-outlined">close</span>
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">group_add</span>
-              </div>
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900">Novo Acompanhante</h3>
-                <p className="text-xs text-slate-500">Cadastre familiares para check-in rápido</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleAddCompanionSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Nome Completo</label>
-                <input
-                  type="text"
-                  value={newCompanion.nome}
-                  onChange={(e) => setNewCompanion({ ...newCompanion, nome: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Parentesco / Relação</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Cônjuge, Filho, Amigo"
-                  value={newCompanion.parentesco}
-                  onChange={(e) => setNewCompanion({ ...newCompanion, parentesco: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">CPF ou Documento</label>
-                <input
-                  type="text"
-                  placeholder="000.000.000-00"
-                  value={newCompanion.documento}
-                  onChange={(e) => setNewCompanion({ ...newCompanion, documento: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setIsAddCompanionModalOpen(false)} className="px-4 py-2 rounded-xl border border-slate-300 font-bold text-slate-600">
-                  Cancelar
-                </button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-[#003400] text-white font-bold">
-                  Cadastrar Acompanhante
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
       {/* MODAL DE NOVO ENDEREÇO                                                    */}
       {/* ========================================================================= */}
       {isAddAddressModalOpen && (
@@ -1022,7 +837,7 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
                     type="text"
                     value={newAddress.cep}
                     onChange={(e) => setNewAddress({ ...newAddress, cep: e.target.value })}
-                    className="w-full p-2 rounded-xl border border-slate-300"
+                    className="w-full p-2 rounded-xl border border-slate-300 font-mono"
                   />
                 </div>
                 <div className="col-span-2">
