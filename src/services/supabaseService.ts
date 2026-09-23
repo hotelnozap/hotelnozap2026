@@ -6247,18 +6247,57 @@ export const hotelConfigService = {
 
   async saveConfig(config: HotelConfigData, hotelId?: string): Promise<boolean> {
     try {
-      const hId = resolveHotelDbId(hotelId);
-      const row = this.mapConfigToRow(config, hId);
-      
-      const { error } = await supabase
-        .from('hotel_configuracoes')
-        .upsert(row, { onConflict: 'hotel_id' });
-
-      if (error) {
-        console.warn('Erro ao salvar hotel_configuracoes no Supabase:', error);
-        return false;
+      let hId: string | null = null;
+      if (hotelId) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(hotelId)) {
+          const { data: h } = await supabase.from('hoteis').select('id').eq('id', hotelId).maybeSingle();
+          if (h?.id) hId = h.id;
+        }
       }
-      return true;
+      if (!hId) {
+        const currentH = currentHotelService.getCurrentHotel();
+        if (currentH?.id) {
+          const { data: h } = await supabase.from('hoteis').select('id').eq('id', currentH.id).maybeSingle();
+          if (h?.id) hId = h.id;
+        }
+      }
+      if (!hId) {
+        const { data: firstH } = await supabase.from('hoteis').select('id').order('criado_em', { ascending: true }).limit(1).maybeSingle();
+        if (firstH?.id) hId = firstH.id;
+      }
+
+      const row = this.mapConfigToRow(config, hId || resolveHotelDbId(hotelId));
+      
+      // 1. Tenta Upsert por hotel_id
+      if (hId) {
+        const { error } = await supabase
+          .from('hotel_configuracoes')
+          .upsert(row, { onConflict: 'hotel_id' });
+
+        if (!error) return true;
+        console.warn('Upsert com hotel_id avisou:', error);
+      }
+
+      // 2. Se hotel_id não existir na tabela hoteis, tenta atualizar registro existente ou inserir novo
+      const { data: existing } = await supabase
+        .from('hotel_configuracoes')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('hotel_configuracoes')
+          .update(row)
+          .eq('id', existing.id);
+        return !error;
+      } else {
+        const { error } = await supabase
+          .from('hotel_configuracoes')
+          .insert(row);
+        return !error;
+      }
     } catch (e) {
       console.warn('Exceção ao salvar hotel_configuracoes no Supabase:', e);
       return false;

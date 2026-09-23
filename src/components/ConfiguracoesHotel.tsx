@@ -221,15 +221,21 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
     }, 1200);
   };
 
-  const handleSave = (e?: React.FormEvent) => {
+  const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSaving(true);
     try {
+      // 1. Salva no cache local e dispara eventos
       saveHotelConfigToStorage(config, hotelId);
-      setTimeout(() => {
-        setIsSaving(false);
+
+      // 2. Executa operação CRUD (UPSERT) direto no Supabase
+      const success = await hotelConfigService.saveConfig(config, hotelId);
+      setIsSaving(false);
+      if (success) {
+        showToast('Configurações salvas diretamente no Supabase com sucesso!');
+      } else {
         showToast('Configurações salvas e aplicadas em todo o sistema!');
-      }, 300);
+      }
     } catch (err) {
       setIsSaving(false);
       showToast('Erro ao salvar configurações.');
