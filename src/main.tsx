@@ -8,6 +8,17 @@ if (typeof window !== 'undefined' && window.location.protocol === 'http:' && !wi
   window.location.href = window.location.href.replace('http:', 'https:');
 }
 
+// Registro do Service Worker para PWA (Progressive Web App)
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      console.log('PWA Service Worker registrado com sucesso:', reg.scope);
+    }).catch((err) => {
+      console.warn('Falha ao registrar Service Worker:', err);
+    });
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

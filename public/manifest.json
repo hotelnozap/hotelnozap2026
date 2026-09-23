@@ -1,0 +1,79 @@
+{
+  "name": "Hotel no Zap - Sistema de Gestão Hoteleira",
+  "short_name": "Hotel no Zap",
+  "description": "Plataforma Inteligente de Gestão Hoteleira, Recepção, Reservas e Atendimento via WhatsApp",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#003400",
+  "theme_color": "#003400",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["business", "travel", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Visão Geral",
+      "short_name": "Início",
+      "description": "Acessar painel principal do sistema",
+      "url": "/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pedidos & Recepção",
+      "short_name": "Pedidos",
+      "description": "Acompanhar pedidos e solicitações dos quartos",
+      "url": "/?tab=pedidos",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Minhas Reservas",
+      "short_name": "Reservas",
+      "description": "Verificar mapa e histórico de reservas",
+      "url": "/?tab=reservas",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Área do Hóspede",
+      "short_name": "Hóspede",
+      "description": "Acessar portal exclusivo do hóspede",
+      "url": "/?tab=hospede",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
