@@ -13,7 +13,16 @@ import {
   getCpfValidationStatus,
   getCnpjValidationStatus
 } from '../utils/masks';
-import { hoteisService, currentHotelService, resolveHotelDbId, planosService, parceirosService, usuariosService } from '../services/supabaseService';
+import {
+  hoteisService,
+  currentHotelService,
+  resolveHotelDbId,
+  planosService,
+  parceirosService,
+  usuariosService,
+  categoriasHoteisService,
+  CategoriaHotelData
+} from '../services/supabaseService';
 import { creditosService, InfoCreditoHotel } from '../services/creditosService';
 import { supabase } from '../lib/supabase';
 
@@ -122,7 +131,19 @@ export const FormHotel: React.FC<FormHotelProps> = ({
 
   const [cnpj, setCnpj] = useState(hotelToEdit?.cnpj || '');
   const [category, setCategory] = useState(hotelToEdit?.category || 'Pousada Boutique / Charme');
+  const [categoriasList, setCategoriasList] = useState<CategoriaHotelData[]>([]);
   const [stars, setStars] = useState('4');
+
+  // Carregamento dinâmico das categorias de hotéis do banco/serviço
+  useEffect(() => {
+    let isMounted = true;
+    categoriasHoteisService.getCategorias().then((data) => {
+      if (isMounted && Array.isArray(data) && data.length > 0) {
+        setCategoriasList(data.filter(c => c.status === 'ativo'));
+      }
+    });
+    return () => { isMounted = false; };
+  }, []);
   const [capacity, setCapacity] = useState<number | string>(hotelToEdit?.capacity !== undefined ? hotelToEdit.capacity : '');
   const [phone, setPhone] = useState(hotelToEdit?.managerPhone || '');
   
@@ -1149,13 +1170,26 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                 <select 
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-white cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-white cursor-pointer font-medium"
                 >
-                  <option value="Resort 5 estrelas">Resort All-Inclusive / Lazer</option>
-                  <option value="Hotel Urbano / Executivo">Hotel Urbano / Executivo</option>
-                  <option value="Pousada Boutique / Charme">Pousada Boutique / Charme</option>
-                  <option value="Chalés & Eco Village">Chalés & Eco Village</option>
-                  <option value="Flat / Apart-hotel">Flat / Apart-hotel</option>
+                  {categoriasList.length > 0 ? (
+                    categoriasList.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Resort All-Inclusive / Lazer">Resort All-Inclusive / Lazer</option>
+                      <option value="Hotel Urbano / Executivo">Hotel Urbano / Executivo</option>
+                      <option value="Pousada Boutique / Charme">Pousada Boutique / Charme</option>
+                      <option value="Chalés & Eco Village">Chalés & Eco Village</option>
+                      <option value="Flat / Apart-hotel">Flat / Apart-hotel</option>
+                    </>
+                  )}
+                  {category && !categoriasList.some(c => c.name === category) && (
+                    <option value={category}>{category}</option>
+                  )}
                 </select>
               </div>
 

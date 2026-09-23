@@ -34,6 +34,8 @@ import ListagemParceiros, { Partner } from './components/ListagemParceiros';
 import CadastroParceiro from './components/CadastroParceiro';
 import CadastroHoteis, { Hotel, INITIAL_HOTEIS } from './components/CadastroHoteis';
 import { FormHotel } from './components/FormHotel';
+import ListagemCategoriasHotel from './components/ListagemCategoriasHotel';
+import CadastroCategoriaHotel from './components/CadastroCategoriaHotel';
 import { GestaoCreditosSaaS } from './components/GestaoCreditosSaaS';
 import { ConfiguracoesMercadoPago } from './components/ConfiguracoesMercadoPago';
 import RelatoriosHotel from './components/RelatoriosHotel';
@@ -53,7 +55,7 @@ import ListagemPlanos, { Plano } from './components/ListagemPlanos';
 import CadastroPlano from './components/CadastroPlano';
 import AreaHospede from './components/AreaHospede';
 import { HotelSelector } from './components/HotelSelector';
-import { CategoriaQuartoData, RoomItemData, RoomTypeData, currentHotelService, hoteisService, parceirosService, planosService, HotelAtivo, reservasService, usuariosService } from './services/supabaseService';
+import { CategoriaQuartoData, CategoriaHotelData, RoomItemData, RoomTypeData, currentHotelService, hoteisService, parceirosService, planosService, HotelAtivo, reservasService, usuariosService } from './services/supabaseService';
 import { AdminMasterDashboard } from './components/AdminMasterDashboard';
 import { LandingPage } from './components/LandingPage';
 import { PaginaEmConstrucao } from './components/PaginaEmConstrucao';
@@ -270,6 +272,7 @@ export const App: React.FC = () => {
   const [userToEdit, setUserToEdit] = useState<Usuario | null>(null);
   const [tipoUsuarioToEdit, setTipoUsuarioToEdit] = useState<TipoUsuarioDB | null>(null);
   const [categoriaToEdit, setCategoriaToEdit] = useState<CategoriaQuartoData | null>(null);
+  const [categoriaHotelToEdit, setCategoriaHotelToEdit] = useState<CategoriaHotelData | null>(null);
   const [itemToEdit, setItemToEdit] = useState<RoomItemData | null>(null);
   const [tipoQuartoToEdit, setTipoQuartoToEdit] = useState<RoomTypeData | null>(null);
   const [planToEdit, setPlanToEdit] = useState<Plano | null>(null);
@@ -2412,6 +2415,7 @@ export const App: React.FC = () => {
           {activeTab === 'cadastro-hoteis' && (
             <CadastroHoteis 
               onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onNavigateToCategories={() => setActiveTab('categorias-hoteis')}
               onNavigateToCreate={() => {
                 setHotelToEdit(null);
                 setPreselectedPartner(null);
@@ -2435,6 +2439,32 @@ export const App: React.FC = () => {
                 currentHotelService.setCurrentHotel(freshActive);
                 setActiveHotel(freshActive);
                 setActiveTab('dashboard');
+              }}
+            />
+          )}
+          {activeTab === 'categorias-hoteis' && (
+            <ListagemCategoriasHotel
+              onBackToHoteis={() => setActiveTab('cadastro-hoteis')}
+              onNavigateToCreate={() => {
+                setCategoriaHotelToEdit(null);
+                setActiveTab('cadastro-categoria-hotel');
+              }}
+              onNavigateToEdit={(cat) => {
+                setCategoriaHotelToEdit(cat);
+                setActiveTab('cadastro-categoria-hotel');
+              }}
+            />
+          )}
+          {activeTab === 'cadastro-categoria-hotel' && (
+            <CadastroCategoriaHotel
+              categoriaToEdit={categoriaHotelToEdit}
+              onBack={() => {
+                setCategoriaHotelToEdit(null);
+                setActiveTab('categorias-hoteis');
+              }}
+              onSaveSuccess={() => {
+                setCategoriaHotelToEdit(null);
+                setActiveTab('categorias-hoteis');
               }}
             />
           )}
@@ -2612,7 +2642,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
+          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
             <div className="p-8 text-center text-[#45464d]">
               <h2 className="text-xl font-bold text-[#0b1c30] mb-2">Tela em construção</h2>
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>

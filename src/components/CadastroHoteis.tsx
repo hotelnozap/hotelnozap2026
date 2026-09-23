@@ -160,13 +160,15 @@ export interface CadastroHoteisProps {
   onNavigateToCreate?: () => void;
   onNavigateToEdit?: (hotel: Hotel) => void;
   onNavigateToHotelDashboard?: (hotel: Hotel) => void;
+  onNavigateToCategories?: () => void;
 }
 
 export const CadastroHoteis: React.FC<CadastroHoteisProps> = ({
   onBackToDashboard,
   onNavigateToCreate,
   onNavigateToEdit,
-  onNavigateToHotelDashboard
+  onNavigateToHotelDashboard,
+  onNavigateToCategories
 }) => {
   const [hoteis, setHoteis] = useState<Hotel[]>([]);
   const [planos, setPlanos] = useState<any[]>([]);
@@ -633,6 +635,16 @@ export const CadastroHoteis: React.FC<CadastroHoteisProps> = ({
             >
               <span className="material-symbols-outlined text-base text-slate-950">download</span>
               <span>Exportar</span>
+            </button>
+
+            <button 
+              type="button"
+              onClick={onNavigateToCategories}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs transition cursor-pointer whitespace-nowrap"
+              title="Gerenciar Categorias de Hotéis & Pousadas"
+            >
+              <span className="material-symbols-outlined text-base text-emerald-700">category</span>
+              <span>Categorias</span>
             </button>
 
             <button 

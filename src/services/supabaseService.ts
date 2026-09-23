@@ -5884,3 +5884,246 @@ export const comodidadesService = {
   },
 };
 
+// ============================================================================
+//  SERVIÇO DE CATEGORIAS DE HOTÉIS & POUSADAS (categorias_hoteis)
+// ============================================================================
+export interface CategoriaHotelData {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  status: 'ativo' | 'inativo';
+  order?: number;
+  hotelsCount?: number;
+  created_at?: string;
+}
+
+export const INITIAL_CATEGORIAS_HOTEL: CategoriaHotelData[] = [
+  {
+    id: 'cat-hotel-1',
+    name: 'Resort All-Inclusive / Lazer',
+    description: 'Complexos turísticos com ampla estrutura de lazer, gastronomia inclusa e entretenimento.',
+    icon: 'beach_access',
+    status: 'ativo',
+    order: 1
+  },
+  {
+    id: 'cat-hotel-2',
+    name: 'Hotel Urbano / Executivo',
+    description: 'Hotéis localizados em centros comerciais, ideais para viagens corporativas e negócios.',
+    icon: 'apartment',
+    status: 'ativo',
+    order: 2
+  },
+  {
+    id: 'cat-hotel-3',
+    name: 'Pousada Boutique / Charme',
+    description: 'Hospedagens aconchegantes com atendimento exclusivo, decoração refinada e ambiente intimista.',
+    icon: 'villa',
+    status: 'ativo',
+    order: 3
+  },
+  {
+    id: 'cat-hotel-4',
+    name: 'Chalés & Eco Village',
+    description: 'Acomodações integradas à natureza, estilo rústico ou sustentável em áreas de serra e praia.',
+    icon: 'cabin',
+    status: 'ativo',
+    order: 4
+  },
+  {
+    id: 'cat-hotel-5',
+    name: 'Flat / Apart-hotel',
+    description: 'Unidades residenciais com serviços de hotelaria e cozinha própria para estadias flexíveis.',
+    icon: 'holiday_village',
+    status: 'ativo',
+    order: 5
+  },
+  {
+    id: 'cat-hotel-6',
+    name: 'Hotel Fazenda & Ecoturismo',
+    description: 'Estruturas rurais com passeios a cavalo, contato com animais e turismo de aventura.',
+    icon: 'forest',
+    status: 'ativo',
+    order: 6
+  },
+  {
+    id: 'cat-hotel-7',
+    name: 'Hostel / Albergue Turístico',
+    description: 'Hospedagens comunitárias e compartilhadas, com ambiente jovem e econômico.',
+    icon: 'bed',
+    status: 'ativo',
+    order: 7
+  }
+];
+
+const LOCAL_STORAGE_CATEGORIAS_HOTEL = 'hotelnozap_categorias_hotel';
+
+export const categoriasHoteisService = {
+  getLocalCategorias(): CategoriaHotelData[] {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_CATEGORIAS_HOTEL);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { /* ignore */ }
+    return INITIAL_CATEGORIAS_HOTEL;
+  },
+
+  setLocalCategorias(list: CategoriaHotelData[]): void {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_CATEGORIAS_HOTEL, JSON.stringify(list));
+    } catch { /* ignore */ }
+  },
+
+  async getCategorias(): Promise<CategoriaHotelData[]> {
+    let categories: CategoriaHotelData[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('categorias_hoteis')
+        .select('*')
+        .order('ordem', { ascending: true });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        categories = data.map((row: any) => ({
+          id: String(row.id),
+          name: row.nome || row.name || 'Categoria',
+          description: row.descricao || row.description || '',
+          icon: row.icone || row.icon || 'domain',
+          status: (row.status === 'inativo' ? 'inativo' : 'ativo') as 'ativo' | 'inativo',
+          order: Number(row.ordem ?? row.order ?? 1),
+          created_at: row.created_at || row.criado_em
+        }));
+      }
+    } catch {
+      // Fallback local caso tabela ainda não exista no Supabase
+    }
+
+    if (categories.length === 0) {
+      categories = this.getLocalCategorias();
+    } else {
+      this.setLocalCategorias(categories);
+    }
+
+    // Calcula quantidade de hotéis vinculados por categoria
+    try {
+      const dbHoteis = await hoteisService.getHoteis();
+      if (Array.isArray(dbHoteis)) {
+        categories = categories.map(cat => ({
+          ...cat,
+          hotelsCount: dbHoteis.filter(h => (h.category || '').trim().toLowerCase() === cat.name.trim().toLowerCase()).length
+        }));
+      }
+    } catch { /* ignore */ }
+
+    return categories;
+  },
+
+  async createCategoria(cat: Partial<CategoriaHotelData>): Promise<{ success: boolean; data?: CategoriaHotelData; error?: string }> {
+    const newId = `cat-hotel-${Date.now()}`;
+    const newCategory: CategoriaHotelData = {
+      id: newId,
+      name: (cat.name || 'Nova Categoria').trim(),
+      description: (cat.description || '').trim(),
+      icon: (cat.icon || 'domain').trim(),
+      status: cat.status === 'inativo' ? 'inativo' : 'ativo',
+      order: Number(cat.order || 1),
+      created_at: new Date().toISOString()
+    };
+
+    // 1. Tenta salvar no Supabase
+    try {
+      const { data, error } = await supabase
+        .from('categorias_hoteis')
+        .insert([{
+          nome: newCategory.name,
+          descricao: newCategory.description,
+          icone: newCategory.icon,
+          status: newCategory.status,
+          ordem: newCategory.order
+        }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        newCategory.id = String(data.id);
+      }
+    } catch { /* ignore */ }
+
+    // 2. Atualiza local storage
+    const currentList = this.getLocalCategorias();
+    currentList.push(newCategory);
+    this.setLocalCategorias(currentList);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('hotel_categoria_modificada'));
+    }
+
+    return { success: true, data: newCategory };
+  },
+
+  async updateCategoria(id: string, changes: Partial<CategoriaHotelData>): Promise<{ success: boolean; error?: string }> {
+    // 1. Tenta atualizar no Supabase
+    try {
+      const payload: any = {};
+      if (changes.name !== undefined) payload.nome = changes.name.trim();
+      if (changes.description !== undefined) payload.descricao = changes.description.trim();
+      if (changes.icon !== undefined) payload.icone = changes.icon.trim();
+      if (changes.status !== undefined) payload.status = changes.status;
+      if (changes.order !== undefined) payload.ordem = Number(changes.order);
+
+      await supabase
+        .from('categorias_hoteis')
+        .update(payload)
+        .eq('id', id);
+    } catch { /* ignore */ }
+
+    // 2. Atualiza local storage
+    const currentList = this.getLocalCategorias();
+    const updatedList = currentList.map(c => {
+      if (c.id === id) {
+        return {
+          ...c,
+          ...changes,
+          name: changes.name !== undefined ? changes.name.trim() : c.name,
+          description: changes.description !== undefined ? changes.description.trim() : c.description,
+          icon: changes.icon !== undefined ? changes.icon.trim() : c.icon,
+          status: changes.status !== undefined ? changes.status : c.status,
+          order: changes.order !== undefined ? Number(changes.order) : c.order
+        };
+      }
+      return c;
+    });
+    this.setLocalCategorias(updatedList);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('hotel_categoria_modificada'));
+    }
+
+    return { success: true };
+  },
+
+  async deleteCategoria(id: string): Promise<{ success: boolean; error?: string }> {
+    // 1. Tenta deletar no Supabase
+    try {
+      await supabase
+        .from('categorias_hoteis')
+        .delete()
+        .eq('id', id);
+    } catch { /* ignore */ }
+
+    // 2. Atualiza local storage
+    const currentList = this.getLocalCategorias();
+    const filtered = currentList.filter(c => c.id !== id);
+    this.setLocalCategorias(filtered);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('hotel_categoria_modificada'));
+    }
+
+    return { success: true };
+  }
+};
+
+
