@@ -302,7 +302,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
 
         {/* KPI 6: Faturamento do Período */}
         <div 
-          onClick={() => onNavigateTab && onNavigateTab('controle-caixa')}
+          onClick={() => onNavigateTab && onNavigateTab('caixa')}
           className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-emerald-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
           title="Ver Controle de Caixa"
         >
@@ -342,7 +342,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
             {onNavigateTab && (
               <button 
                 type="button"
-                onClick={() => onNavigateTab('controle-caixa')}
+                onClick={() => onNavigateTab('caixa')}
                 className="text-xs font-semibold text-[#006c49] hover:underline cursor-pointer"
               >
                 Ver financeiro
