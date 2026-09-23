@@ -426,7 +426,8 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
     }
 
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const targetUrl = isLocalhost ? `${window.location.protocol}//${window.location.host}/` : 'https://hotelnozap.com.br/';
+    const defaultProd = import.meta.env?.VITE_APP_BASE_URL || 'https://app.hotelnozap.com.br/';
+    const targetUrl = isLocalhost ? `${window.location.protocol}//${window.location.host}/` : (window.location.origin || defaultProd);
     window.location.href = targetUrl;
   };
 

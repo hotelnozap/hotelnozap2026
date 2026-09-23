@@ -11,7 +11,7 @@ const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL || 'https://painelevolut
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:5173';
+const APP_BASE_URL = process.env.APP_BASE_URL || 'https://app.hotelnozap.com.br';
 
 if (!EVOLUTION_API_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
   console.error('[Bot] ❌ Variáveis de ambiente obrigatórias não definidas. Configure EVOLUTION_API_KEY, SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.');

@@ -36,7 +36,7 @@ const cacheUltimosEnvios = new Map<string, number>();
  */
 export function montarLinkPublicoHotel(hotel: any): string {
   try {
-    let domain = 'https://hotelnozap.com.br';
+    let domain = 'https://app.hotelnozap.com.br';
     if (typeof window !== 'undefined' && window.location && window.location.origin) {
       domain = window.location.origin;
     }
@@ -65,7 +65,7 @@ export function montarLinkPublicoHotel(hotel: any): string {
 
     return `${domain}/hoteis/hotel`;
   } catch {
-    return 'https://hotelnozap.com.br/hoteis/hotel';
+    return 'https://app.hotelnozap.com.br/hoteis/hotel';
   }
 }
 
@@ -79,7 +79,7 @@ export function formatarTextoConfirmacao(tags: {
 }): string {
   const nomeHospede = tags.nome_hospede || 'Hóspede';
   const nomeHotel = tags.nome_hotel || 'Hotel';
-  const linkHotel = tags.link_hotel || 'https://hotelnozap.com.br';
+  const linkHotel = tags.link_hotel || (typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://app.hotelnozap.com.br');
 
   return TEXTO_PADRAO_CONFIRMACAO_N8N
     .replace(/{nome_hospede}/g, nomeHospede)

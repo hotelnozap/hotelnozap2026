@@ -10,9 +10,14 @@ const { createClient } = require('@supabase/supabase-js');
 
 const PORT = process.env.PORT || 3333;
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL || 'https://painelevolution.hotelnozap.com.br';
-const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm';
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ia3ZnbHV1bmJua3R6dWx6amZnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Nzg0OTMyOCwiZXhwIjoyMTAzNDI1MzI4fQ.VlbPt6MgzjMJHbUt9nuCWhBNEv_6dmkeZnaVH9zJe3E';
+const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!EVOLUTION_API_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
+  console.error('[Webhook] ❌ Variáveis de ambiente obrigatórias não definidas.');
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -123,7 +128,8 @@ const server = http.createServer(async (req, res) => {
           console.warn('Erro ao consultar hotel no Supabase:', e.message);
         }
 
-        const hotelLink = `https://hotelnozap.com.br/hoteis/${hotelSlug}`;
+        const domain = process.env.APP_BASE_URL || 'https://app.hotelnozap.com.br';
+        const hotelLink = `${domain}/hoteis/${hotelSlug}`;
         const mensagem = `${saudacao} Bem-vindo(a) ao ${hotelNome}.\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 ${hotelLink}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição por aqui!`;
 
         // Disparo para Evolution API

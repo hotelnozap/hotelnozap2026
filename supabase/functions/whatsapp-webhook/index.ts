@@ -116,7 +116,8 @@ serve(async (req: Request) => {
       }
     }
 
-    const hotelLink = `https://hotelnozap.com.br/hoteis/${hotelSlug}`;
+    const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://app.hotelnozap.com.br";
+    const hotelLink = `${appBaseUrl}/hoteis/${hotelSlug}`;
 
     // 5. Monta o texto de Boas-Vindas inteligente
     const saudacao = pushName ? `Olá ${pushName}! 👋` : `Olá! 👋`;

@@ -5,10 +5,10 @@
  */
 
 export const getAppBaseUrl = (): string => {
-  if (typeof window !== 'undefined' && window.location.origin) {
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
     return window.location.origin;
   }
-  return 'https://hotelnozap.com.br';
+  return import.meta.env?.VITE_APP_BASE_URL || 'https://app.hotelnozap.com.br';
 };
 
 export const getPartnerReferralLink = (coupon?: string): string => {

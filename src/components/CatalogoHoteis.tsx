@@ -857,7 +857,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {sortedSearchResults.map(hotel => (
                 <article
                   key={hotel.id}
@@ -966,7 +966,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {sortedHoteis.map(hotel => (
               <article 
                 key={hotel.id} 
@@ -984,7 +984,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
               >
                 
                 {/* FOTO E BADGES */}
-                <div className="relative h-56 w-full overflow-hidden bg-slate-100">
+                <div className="relative h-48 w-full overflow-hidden bg-slate-100">
                   <img 
                     src={hotel.imageUrl} 
                     alt={hotel.name}
@@ -997,88 +997,88 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                   
                   {/* Tag Superior */}
                   {hotel.tag && (
-                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
-                      <span className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-semibold">
+                    <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
+                      <span className="px-2 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-semibold">
                         {hotel.tag}
                       </span>
                     </div>
                   )}
 
                   {/* Avaliação */}
-                  <div className="absolute top-3 right-3 z-10">
-                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md shadow-xs text-xs font-bold text-slate-900">
+                  <div className="absolute top-2.5 right-2.5 z-10">
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md shadow-xs text-xs font-bold text-slate-900">
                       <span className="material-symbols-outlined text-amber-500 text-sm">star</span>
                       <span>{hotel.rating.toFixed(2)}</span>
-                      <span className="text-slate-400 font-normal text-[11px]">({hotel.reviewsCount})</span>
+                      <span className="text-slate-400 font-normal text-[10px]">({hotel.reviewsCount})</span>
                     </div>
                   </div>
 
                   {/* Localização Footer da Foto */}
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white z-10">
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-white z-10">
                     <div className="flex items-center gap-1">
                       <span className="material-symbols-outlined text-emerald-400 text-sm">location_on</span>
-                      <span className="text-xs font-semibold text-white drop-shadow-xs">{hotel.neighborhood}</span>
+                      <span className="text-xs font-semibold text-white drop-shadow-xs truncate">{hotel.neighborhood}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* CORPO DO CARD */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block mb-1 truncate">
                       {hotel.category} • {hotel.city}
                     </span>
-                    <h3 className="font-extrabold text-slate-900 text-base sm:text-lg leading-tight line-clamp-1">
+                    <h3 className="font-extrabold text-slate-900 text-base leading-tight line-clamp-1">
                       {hotel.name}
                     </h3>
 
                     {/* COMODIDADES GRID - Apenas para hotéis com quartos reais verificados (removido para hotéis do Google Maps) */}
                     {!hotel.isImportedFromGoogle && hotel.hasRooms && (hotel.capacity || 0) > 0 && (
-                      <div className="grid grid-cols-2 gap-2 mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-700">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className="material-symbols-outlined text-emerald-700 text-base">bedroom_parent</span>
-                          <span className="truncate text-[11px] font-semibold">{hotel.capacity} {hotel.capacity === 1 ? 'Quarto' : 'Quartos'}</span>
+                      <div className="grid grid-cols-2 gap-1.5 mt-2.5 bg-slate-50 p-2 rounded-xl border border-slate-100 text-[11px] text-slate-700">
+                        <div className="flex items-center gap-1 truncate">
+                          <span className="material-symbols-outlined text-emerald-700 text-[15px]">bedroom_parent</span>
+                          <span className="truncate text-[10px] font-semibold">{hotel.capacity} {hotel.capacity === 1 ? 'Quarto' : 'Quartos'}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className="material-symbols-outlined text-emerald-700 text-base">wifi</span>
-                          <span className="truncate text-[11px] font-semibold">Wi-Fi Grátis</span>
+                        <div className="flex items-center gap-1 truncate">
+                          <span className="material-symbols-outlined text-emerald-700 text-[15px]">wifi</span>
+                          <span className="truncate text-[10px] font-semibold">Wi-Fi Grátis</span>
                         </div>
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className="material-symbols-outlined text-emerald-700 text-base">directions_car</span>
-                          <span className="truncate text-[11px] font-semibold">Garagem: Sim</span>
+                        <div className="flex items-center gap-1 truncate">
+                          <span className="material-symbols-outlined text-emerald-700 text-[15px]">directions_car</span>
+                          <span className="truncate text-[10px] font-semibold">Garagem: Sim</span>
                         </div>
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span className="material-symbols-outlined text-emerald-700 text-base">ac_unit</span>
-                          <span className="truncate text-[11px] font-semibold">Ar Condicionado</span>
+                        <div className="flex items-center gap-1 truncate">
+                          <span className="material-symbols-outlined text-emerald-700 text-[15px]">ac_unit</span>
+                          <span className="truncate text-[10px] font-semibold">Ar Condicionado</span>
                         </div>
                       </div>
                     )}
                   </div>
 
                   {/* PREÇO E BOTÃO ÚNICO */}
-                  <div className="pt-2 border-t border-slate-100 space-y-3">
+                  <div className="pt-2 border-t border-slate-100 space-y-2.5">
                     {hotel.hasRooms && hotel.pricePerNight > 0 ? (
                       <div className="flex items-baseline justify-between">
                         <div>
-                          <span className="text-[11px] font-semibold text-slate-500 block">Diárias a partir de</span>
+                          <span className="text-[10px] font-semibold text-slate-500 block">Diárias a partir de</span>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-xl sm:text-2xl font-black text-slate-900">R$ {hotel.pricePerNight}</span>
+                            <span className="text-lg font-black text-slate-900">R$ {hotel.pricePerNight}</span>
                           </div>
                         </div>
-                        <span className="text-[10px] text-slate-400 uppercase font-bold">Sem taxas extras</span>
+                        <span className="text-[9px] text-slate-400 uppercase font-bold">Sem taxas extras</span>
                       </div>
                     ) : (
                       <div className="flex items-baseline justify-between">
                         <div>
-                          <span className="text-[11px] font-semibold text-slate-500 block">Tarifas e Reservas</span>
+                          <span className="text-[10px] font-semibold text-slate-500 block">Tarifas e Reservas</span>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-xs sm:text-sm font-black text-emerald-800 flex items-center gap-1">
+                            <span className="text-xs font-black text-emerald-800 flex items-center gap-1">
                               <span className="material-symbols-outlined text-sm text-emerald-600">chat</span>
                               Consulte via WhatsApp
                             </span>
                           </div>
                         </div>
-                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full uppercase font-bold border border-emerald-200/60">Contato Direto</span>
+                        <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full uppercase font-bold border border-emerald-200/60">Contato Direto</span>
                       </div>
                     )}
 
@@ -1088,9 +1088,9 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                         e.stopPropagation();
                         handleVerHotel(hotel);
                       }}
-                      className="w-full py-3 px-4 rounded-xl bg-[#003400] group-hover:bg-[#002500] hover:bg-[#002500] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
+                      className="w-full py-2.5 px-3.5 rounded-xl bg-[#003400] group-hover:bg-[#002500] hover:bg-[#002500] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[18px]">{hotel.hasRooms ? 'visibility' : 'contact_phone'}</span>
+                      <span className="material-symbols-outlined text-[16px]">{hotel.hasRooms ? 'visibility' : 'contact_phone'}</span>
                       <span>{hotel.hasRooms ? 'Ver Quartos & Tarifas' : 'Ver Hotel & Contato'}</span>
                     </button>
                   </div>

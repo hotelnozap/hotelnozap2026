@@ -198,7 +198,7 @@ export const templateMensagemService = {
                 .replace(/(^-|-$)+/g, '')
             : 'hotel');
 
-      let domain = 'https://hotelnozap.com.br';
+      let domain = 'https://app.hotelnozap.com.br';
       if (typeof window !== 'undefined' && window.location && window.location.origin) {
         domain = window.location.origin;
       }
@@ -207,7 +207,7 @@ export const templateMensagemService = {
     } catch {
       return typeof window !== 'undefined' && window.location?.origin
         ? `${window.location.origin}/hoteis/hotel`
-        : 'https://hotelnozap.com.br/hoteis/hotel';
+        : 'https://app.hotelnozap.com.br/hoteis/hotel';
     }
   },
 

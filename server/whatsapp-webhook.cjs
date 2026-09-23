@@ -141,7 +141,7 @@ const server = http.createServer(async (req, res) => {
           console.warn('[Webhook] Erro ao consultar hotel no Supabase:', e.message);
         }
 
-        const domain = process.env.APP_BASE_URL || 'http://localhost:5173';
+        const domain = process.env.APP_BASE_URL || 'https://app.hotelnozap.com.br';
         const hotelLink = `${domain}/hoteis/${hotelSlug}`;
         const mensagem = `${saudacao} Bem-vindo(a) ao ${hotelNome}.\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 ${hotelLink}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição por aqui!`;
 
