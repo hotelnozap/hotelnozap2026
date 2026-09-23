@@ -722,6 +722,7 @@ export const App: React.FC = () => {
   const menuItems = !isHotelUser ? [
     { id: 'admin-dashboard', label: 'Área Administrativa', icon: 'admin_panel_settings' },
     { id: 'cadastro-hoteis', label: 'Hotéis & Pousadas', icon: 'domain' },
+    { id: 'categorias-hoteis', label: 'Categorias de Hotéis', icon: 'category' },
     { id: 'parceiros', label: 'Parceiros', icon: 'handshake' },
     { id: 'planos', label: 'Planos & Preços', icon: 'sell' },
     { id: 'usuarios', label: 'Usuários do Sistema', icon: 'manage_accounts' },
@@ -1326,6 +1327,19 @@ export const App: React.FC = () => {
 
                   <button
                     type="button"
+                    onClick={() => { setActiveTab('categorias-hoteis'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                      activeTab === 'categorias-hoteis' || activeTab === 'cadastro-categoria-hotel'
+                        ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined ${activeTab === 'categorias-hoteis' || activeTab === 'cadastro-categoria-hotel' ? 'text-emerald-400' : ''}`}>category</span>
+                    <span>Categorias de Hotéis</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => { setActiveTab('parceiros'); setIsMobileMenuOpen(false); }}
                     className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
                       activeTab === 'parceiros' || activeTab === 'cadastro-parceiro'
@@ -1665,6 +1679,19 @@ export const App: React.FC = () => {
                 <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-emerald-300">
                   {adminCounts.hoteis}
                 </span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setActiveTab('categorias-hoteis')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                  activeTab === 'categorias-hoteis' || activeTab === 'cadastro-categoria-hotel'
+                    ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className={`material-symbols-outlined ${activeTab === 'categorias-hoteis' || activeTab === 'cadastro-categoria-hotel' ? 'text-emerald-400' : ''}`}>category</span>
+                <span>Categorias de Hotéis</span>
               </button>
 
               <button 

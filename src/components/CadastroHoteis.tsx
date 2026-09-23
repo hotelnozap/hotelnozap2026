@@ -609,7 +609,7 @@ export const CadastroHoteis: React.FC<CadastroHoteisProps> = ({
           </div>
 
           {/* Header Actions */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
             <button 
               type="button"
               onClick={() => setIsImportModalOpen(true)}
@@ -640,7 +640,7 @@ export const CadastroHoteis: React.FC<CadastroHoteisProps> = ({
             <button 
               type="button"
               onClick={onNavigateToCategories}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs transition cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-xs sm:text-sm font-bold text-emerald-900 shadow-xs transition cursor-pointer whitespace-nowrap"
               title="Gerenciar Categorias de Hotéis & Pousadas"
             >
               <span className="material-symbols-outlined text-base text-emerald-700">category</span>
