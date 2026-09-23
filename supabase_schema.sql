@@ -486,5 +486,49 @@ BEGIN
   BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.categorias_produtos; EXCEPTION WHEN others THEN NULL; END;
   BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.categorias_contas_pagar; EXCEPTION WHEN others THEN NULL; END;
   BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.categorias_contas_receber; EXCEPTION WHEN others THEN NULL; END;
+  BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.categorias_hoteis; EXCEPTION WHEN others THEN NULL; END;
 END $$;
+
+-- -----------------------------------------------------------------------------
+-- TABELA: categorias_hoteis (Categorias e Tipos de Hospedagem)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.categorias_hoteis (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nome TEXT NOT NULL UNIQUE,
+    descricao TEXT DEFAULT '',
+    icone TEXT NOT NULL DEFAULT 'domain',
+    status TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo')),
+    ordem INTEGER NOT NULL DEFAULT 1,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.categorias_hoteis ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Leitura pública de categorias_hoteis" ON public.categorias_hoteis;
+    CREATE POLICY "Leitura pública de categorias_hoteis" ON public.categorias_hoteis FOR SELECT USING (true);
+
+    DROP POLICY IF EXISTS "Inserção de categorias_hoteis" ON public.categorias_hoteis;
+    CREATE POLICY "Inserção de categorias_hoteis" ON public.categorias_hoteis FOR INSERT WITH CHECK (true);
+
+    DROP POLICY IF EXISTS "Atualização de categorias_hoteis" ON public.categorias_hoteis;
+    CREATE POLICY "Atualização de categorias_hoteis" ON public.categorias_hoteis FOR UPDATE USING (true) WITH CHECK (true);
+
+    DROP POLICY IF EXISTS "Exclusão de categorias_hoteis" ON public.categorias_hoteis;
+    CREATE POLICY "Exclusão de categorias_hoteis" ON public.categorias_hoteis FOR DELETE USING (true);
+END $$;
+
+INSERT INTO public.categorias_hoteis (nome, descricao, icone, status, ordem)
+VALUES
+    ('Resort All-Inclusive / Lazer', 'Complexos turísticos com ampla estrutura de lazer, gastronomia inclusa e entretenimento.', 'beach_access', 'ativo', 1),
+    ('Hotel Urbano / Executivo', 'Hotéis localizados em centros comerciais, ideais para viagens corporativas e negócios.', 'apartment', 'ativo', 2),
+    ('Pousada Boutique / Charme', 'Hospedagens aconchegantes com atendimento exclusivo, decoração refinada e ambiente intimista.', 'villa', 'ativo', 3),
+    ('Chalés & Eco Village', 'Acomodações integradas à natureza, estilo rústico ou sustentável em áreas de serra e praia.', 'cabin', 'ativo', 4),
+    ('Flat / Apart-hotel', 'Unidades residenciais com serviços de hotelaria e cozinha própria para estadias flexíveis.', 'holiday_village', 'ativo', 5),
+    ('Hotel Fazenda & Ecoturismo', 'Estruturas rurais com passeios a cavalo, contato com animais e turismo de aventura.', 'forest', 'ativo', 6),
+    ('Hostel / Albergue Turístico', 'Hospedagens comunitárias e compartilhadas, com ambiente jovem e econômico.', 'bed', 'ativo', 7)
+ON CONFLICT (nome) DO NOTHING;
+
 
