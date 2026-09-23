@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MeusDadosCadastrais } from './MeusDadosCadastrais';
 import { MinhasReservasHospede } from './MinhasReservasHospede';
 import { PedidosRecepcaoHospede } from './PedidosRecepcaoHospede';
-import { hospedesService, quartosService, usuariosService, currentHotelService, hotelConfigService } from '../services/supabaseService';
+import { hospedesService, quartosService, usuariosService, currentHotelService, hotelConfigService, extractConfigFromObservacoes } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { DEFAULT_CONFIG, HotelConfigData, loadHotelConfigFromStorage, saveHotelConfigToStorage } from './ConfiguracoesHotel';
 
@@ -111,6 +111,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
       }
       if (data) {
         setPerfil(data);
+        if (data.hotelConfig) {
+          setHotelConfig(data.hotelConfig);
+          saveHotelConfigToStorage(data.hotelConfig, data.hotelId);
+        }
         setFormData({
           nome: data.nome,
           email: data.email,
@@ -168,9 +172,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
       }
     }).catch(err => console.warn('Aviso Supabase config:', err));
 
-    // 3. Listener do Supabase Realtime (WebSockets) na tabela hotel_configuracoes
+    // 3. Listener do Supabase Realtime (WebSockets) nas tabelas hotel_configuracoes e hoteis
+    const channelName = `realtime_hotel_config_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const rtChannel = supabase
-      .channel('realtime_hotel_configuracoes_channel')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'hotel_configuracoes' },
@@ -179,6 +184,19 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             const mapped = hotelConfigService.mapRowToConfig(payload.new);
             setHotelConfig(mapped);
             saveHotelConfigToStorage(mapped, perfil?.hotelId);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'hoteis' },
+        (payload: any) => {
+          if (payload?.new?.observacoes) {
+            const extracted = extractConfigFromObservacoes(payload.new.observacoes);
+            if (extracted) {
+              setHotelConfig(extracted);
+              saveHotelConfigToStorage(extracted, perfil?.hotelId);
+            }
           }
         }
       )
