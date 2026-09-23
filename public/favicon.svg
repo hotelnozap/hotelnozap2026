@@ -1,36 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="hotelZapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#004d00"/>
-      <stop offset="50%" stop-color="#003400"/>
-      <stop offset="100%" stop-color="#001800"/>
+    <linearGradient id="hotelBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a3019"/>
+      <stop offset="100%" stop-color="#03140a"/>
     </linearGradient>
-    <linearGradient id="zapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="100%" stop-color="#10b981"/>
+    <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4af2ac"/>
+      <stop offset="100%" stop-color="#22c55e"/>
     </linearGradient>
   </defs>
-  <!-- Background Rounded Squircle -->
-  <rect width="512" height="512" rx="128" fill="url(#hotelZapGrad)"/>
-  
-  <!-- Outer subtle glow border -->
-  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="#10b981" stroke-width="8" stroke-opacity="0.25"/>
 
-  <!-- Hotel Building Outline -->
-  <path d="M128 396V176c0-13.3 10.7-24 24-24h208c13.3 0 24 10.7 24 24v220" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <!-- Hotel Roof Peak -->
-  <path d="M116 186l140-76 140 76" fill="none" stroke="#34d399" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Background Squircle / Container -->
+  <rect width="512" height="512" rx="135" ry="135" fill="url(#hotelBg)"/>
+  <rect x="3.5" y="3.5" width="505" height="505" rx="131.5" ry="131.5" fill="none" stroke="#34d399" stroke-width="7" stroke-opacity="0.35"/>
 
-  <!-- Windows Grid -->
-  <rect x="180" y="200" width="36" height="36" rx="6" fill="#34d399" opacity="0.9"/>
-  <rect x="296" y="200" width="36" height="36" rx="6" fill="#34d399" opacity="0.9"/>
-  <rect x="180" y="260" width="36" height="36" rx="6" fill="#34d399" opacity="0.9"/>
-  <rect x="296" y="260" width="36" height="36" rx="6" fill="#34d399" opacity="0.9"/>
+  <!-- Building Silhouette with Cutout Windows & Door -->
+  <path fill="url(#buildingGrad)" fill-rule="evenodd" d="
+    M 196 120
+    H 316
+    V 246
+    H 376
+    V 396
+    H 274
+    V 330
+    H 238
+    V 396
+    H 136
+    V 186
+    H 196
+    Z
 
-  <!-- Hotel Doorway -->
-  <path d="M228 396v-64c0-6.6 5.4-12 12-12h32c6.6 0 12 5.4 12 12v64" fill="#ffffff" fill-opacity="0.15" stroke="#ffffff" stroke-width="20" stroke-linecap="round"/>
+    M 216 144 H 244 V 172 H 216 Z
+    M 268 144 H 296 V 172 H 268 Z
 
-  <!-- Lightning / Zap Badge Over Doorway -->
-  <polygon points="266,220 236,290 262,290 246,350 286,276 258,276" fill="url(#zapGrad)" stroke="#003400" stroke-width="6"/>
+    M 152 206 H 180 V 234 H 152 Z
+    M 216 206 H 244 V 234 H 216 Z
+    M 268 206 H 296 V 234 H 268 Z
+
+    M 152 268 H 180 V 296 H 152 Z
+    M 216 268 H 244 V 296 H 216 Z
+    M 268 268 H 296 V 296 H 268 Z
+    M 332 268 H 360 V 296 H 332 Z
+
+    M 152 330 H 180 V 358 H 152 Z
+    M 332 330 H 360 V 358 H 332 Z
+  "/>
 </svg>
