@@ -105,20 +105,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         console.warn('Erro ao consultar tabela usuarios:', dbErr);
       }
 
-      // 3. FALLBACK DE CONTINGÊNCIA — SÓ ACEITA SE O AUTENTICADOR SUPABASE FALHOU
-      //    REGRA RIGOROSÍSSIMA:
-      //    - fallback NUNCA sobrepõe autenticação Auth bem-sucedida
-      //    - exige e-mail EXATO + senha EXATA do Super Admin
-      //    - isso existe para caso o Supabase Auth fique offline temporariamente
-      let usouFallbackMaster = false;
-      if (!authSuccess && cleanEmail === 'everaldozs@gmail.com' && password === '@20EndriuS26@#') {
-        usouFallbackMaster = true;
-        authSuccess = true;
-        authUser = { email: cleanEmail, user_metadata: { nome: 'Everaldo Souza', perfil: 'Super Admin' } };
-        if (!dbUser) {
-          dbUser = { id: 'fallback-master', nome: 'Everaldo Souza', email: cleanEmail, perfil: 'Super Admin', status: 'ativo' };
-        }
-      }
+      // 3. FALLBACK REMOVIDO POR SEGURANÇA
+      //    O acesso deve ser feito exclusivamente via Supabase Auth.
+      //    Não existe mais bypass com credenciais hardcoded.
+      const usouFallbackMaster = false;
 
       // 4. SE NÃO AUTENTICOU DE NENHUMA FORMA → ERRO (nunca loga)
       if (!authSuccess) {

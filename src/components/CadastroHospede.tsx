@@ -135,7 +135,11 @@ export const CadastroHospede: React.FC<CadastroHospedeProps> = ({ onBack, onSave
       telefone: phone,
       cidade_uf: cityStateStr,
       status: status,
-      senha: password || 'Hospede123!',
+      senha: password || (() => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+        return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map(b => chars[b % chars.length]).join('');
+      })(),
       observacoes: notes,
       cep: cep,
       logradouro: address,

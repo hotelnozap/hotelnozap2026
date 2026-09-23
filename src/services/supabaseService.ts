@@ -284,7 +284,11 @@ export const usuariosService = {
         return { success: false, user: null, authUserId: null, error: `Este e-mail/telefone já está vinculado a um parceiro cadastrado. Utilize outro contato.` };
       }
 
-      const finalPassword = password || 'HotelNoZap2026!';
+      const finalPassword = password || (() => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+        return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map(b => chars[b % chars.length]).join('');
+      })();
       if (!options?.skipAuth) {
         // 2. Registrar no Auth do Supabase com tratamento real de erro
         try {
@@ -1900,7 +1904,11 @@ export const parceirosService = {
       }
 
       // 2. Criar no Auth (com senha)
-      const finalPassword = extras?.password || 'ParceiroNoZap2026!';
+      const finalPassword = extras?.password || (() => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+        return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map(b => chars[b % chars.length]).join('');
+      })();
       try {
         const signUpOptsParc: any = {
           data: { name: parceiro.name, nome: parceiro.name, perfil: 'Parceiro' }
