@@ -847,12 +847,12 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
         <main className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-8 space-y-6 lg:space-y-8 pb-24 lg:pb-8">
           
           {/* ================================================================= */}
-          {/* BANNER HERO DE BOAS-VINDAS / ESTADIA EM ANDAMENTO                */}
+          {/* CONTEÚDO DINÂMICO: ABA VISÃO GERAL & ESTADIA                      */}
           {/* ================================================================= */}
-          {/* ================================================================= */}
-          {/* BANNER HERO DE BOAS-VINDAS / ESTADIA EM ANDAMENTO                */}
-          {/* ================================================================= */}
-          <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white shadow-xl border border-slate-800 p-5 lg:p-7">
+          {activeSubTab === 'dashboard' && (
+            <>
+              {/* BANNER HERO DE BOAS-VINDAS / ESTADIA EM ANDAMENTO */}
+              <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white shadow-xl border border-slate-800 p-5 lg:p-7">
             <div className="absolute -right-10 -bottom-10 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
             <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
               <div className="space-y-3 max-w-2xl">
@@ -999,13 +999,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             </div>
           </section>
 
-          {/* ================================================================= */}
-          {/* CONTEÚDO DINÂMICO BASEADO NA ABA SELECIONADA                      */}
-          {/* ================================================================= */}
-          {activeSubTab === 'dashboard' && (
-            <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
-              {/* COLUNA ESQUERDA: PEDIDOS RÁPIDOS & HISTÓRICO (7 COLUNAS) */}
-              <div className="lg:col-span-7 space-y-6">
+          {/* COLUNA PRINCIPAL DA VISÃO GERAL: PEDIDOS RÁPIDOS & CONSUMO */}
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+            {/* COLUNA ESQUERDA: PEDIDOS RÁPIDOS & HISTÓRICO (7 COLUNAS) */}
+            <div className="lg:col-span-7 space-y-6">
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6">
                   <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
                     <div>
@@ -1248,7 +1245,8 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                 </div>
               </div>
             </section>
-          )}
+          </>
+        )}
 
           {/* ================================================================= */}
           {/* ABA: PEDIDOS & RECEPÇÃO                                           */}
