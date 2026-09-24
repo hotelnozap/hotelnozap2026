@@ -1108,29 +1108,6 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           </div>
         )}
 
-        {/* BANNER DE SUPORTE CONCIERGE VIA WHATSAPP */}
-        <div className="bg-gradient-to-r from-emerald-900 via-[#003400] to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-400/30">
-              <span className="material-symbols-outlined text-3xl">support_agent</span>
-            </div>
-            <div>
-              <h3 className="font-extrabold text-base sm:text-lg">Não encontrou as datas que desejava em {selectedCity}?</h3>
-              <p className="text-xs sm:text-sm text-emerald-200 mt-1 max-w-xl">
-                Nosso time de Concierge Zap consulta vagas de reserva técnica e cancelamentos diretamente com os proprietários dos hotéis parceiros em tempo real.
-              </p>
-            </div>
-          </div>
-
-          <button 
-            onClick={() => window.open(`https://wa.me/5581998765432?text=Ola%2C%20gostaria%20de%20ajuda%20para%20encontrar%20vagas%20em%20${encodeURIComponent(selectedCity)}`, '_blank')}
-            className="w-full md:w-auto shrink-0 px-6 py-3.5 rounded-xl bg-[#10B981] hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[20px]">chat</span>
-            <span>Falar com Concierge Zap</span>
-          </button>
-        </div>
-
       </main>
       )}
 
