@@ -160,15 +160,19 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
   // Carrega e sincroniza em tempo real as configurações de horários do hotel (Supabase + Realtime + Storage)
   useEffect(() => {
+    if (!perfil?.hotelId) {
+      return;
+    }
+
     // 1. Carregamento inicial rápido do cache local para resposta sem delay
-    const initialConfig = loadHotelConfigFromStorage(perfil?.hotelId);
+    const initialConfig = loadHotelConfigFromStorage(perfil.hotelId);
     setHotelConfig(initialConfig);
 
     // 2. Busca do Supabase e sincroniza se houver dados cadastrados
-    hotelConfigService.getConfig(perfil?.hotelId).then(dbConfig => {
+    hotelConfigService.getConfig(perfil.hotelId).then(dbConfig => {
       if (dbConfig) {
         setHotelConfig(dbConfig);
-        saveHotelConfigToStorage(dbConfig, perfil?.hotelId);
+        saveHotelConfigToStorage(dbConfig, perfil.hotelId);
       }
     }).catch(err => console.warn('Aviso Supabase config:', err));
 
@@ -303,6 +307,11 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
   // Cálculo de total de consumo
   const totalConsumo = perfil?.temCheckinAtivo ? consumo.reduce((acc, item) => acc + item.valor, 0) : 0;
+
+  // Detecção inteligente das duas situações de hóspede logado:
+  // Situação 1: Com reserva feita OU check-in ativo confirmado (mostra opções do hotel)
+  // Situação 2: Sem reserva e sem check-in (NÃO mostra nada de hotel, exibe portal da conta do hóspede)
+  const temEstadiaOuReserva = Boolean(perfil?.temEstadiaOuReserva ?? (perfil?.temCheckinAtivo || perfil?.temReservaAtiva || perfil?.hotelId));
 
   // Helper para exibir toast
   const showToast = (msg: string) => {
@@ -598,17 +607,21 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           {/* Card Resumo do Quarto Atual / Status da Estadia */}
           <div className="mx-4 mt-5 p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
             <div className="w-11 h-11 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg shrink-0">
-              {perfil?.temCheckinAtivo ? (perfil?.quartoNumero || '100') : '—'}
+              {temEstadiaOuReserva ? (perfil?.temCheckinAtivo ? (perfil?.quartoNumero || '100') : 'RES') : <span className="material-symbols-outlined text-2xl">person</span>}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-semibold uppercase tracking-wider ${perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-400'}`}>
-                  {perfil?.statusEstadia || (perfil?.temCheckinAtivo ? 'Hospedado' : 'Sem Estadia Ativa')}
+                <span className={`text-xs font-semibold uppercase tracking-wider ${temEstadiaOuReserva && perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-400'}`}>
+                  {temEstadiaOuReserva ? (perfil?.statusEstadia || (perfil?.temCheckinAtivo ? 'Hospedado' : 'Reserva Ativa')) : 'Conta Pessoal'}
                 </span>
-                {perfil?.temCheckinAtivo && <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>}
+                {temEstadiaOuReserva && perfil?.temCheckinAtivo && <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>}
               </div>
-              <p className="text-sm font-bold text-white truncate">{perfil?.temCheckinAtivo ? (perfil?.quartoNome || 'Quarto Casal') : 'Nenhum quarto ocupado'}</p>
-              <p className="text-[11px] text-slate-400 truncate">{perfil?.hotelNome || 'Hotel'}</p>
+              <p className="text-sm font-bold text-white truncate">
+                {temEstadiaOuReserva ? (perfil?.quartoNome || 'Quarto') : 'Nenhuma estadia ativa'}
+              </p>
+              <p className="text-[11px] text-slate-400 truncate">
+                {temEstadiaOuReserva ? (perfil?.hotelNome || 'Hotel') : 'Portal Hotel no Zap'}
+              </p>
             </div>
           </div>
 
@@ -623,25 +636,28 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               }`}
             >
               <span className={`material-symbols-outlined text-xl ${activeSubTab === 'dashboard' ? 'text-emerald-400' : 'text-slate-400'}`}>dashboard</span>
-              <span>Visão Geral & Estadia</span>
+              <span>{temEstadiaOuReserva ? 'Visão Geral & Estadia' : 'Visão Geral'}</span>
             </button>
 
-            <button
-              onClick={() => setActiveSubTab('pedidos')}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                activeSubTab === 'pedidos'
-                  ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`material-symbols-outlined text-xl ${activeSubTab === 'pedidos' ? 'text-emerald-400' : 'text-slate-400'}`}>room_service</span>
-                <span>Pedidos & Recepção</span>
-              </div>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {pedidos.length}
-              </span>
-            </button>
+            {/* Opções operacionais do hotel exibidas SOMENTE quando há reserva/estadia ativa */}
+            {temEstadiaOuReserva && (
+              <button
+                onClick={() => setActiveSubTab('pedidos')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  activeSubTab === 'pedidos'
+                    ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`material-symbols-outlined text-xl ${activeSubTab === 'pedidos' ? 'text-emerald-400' : 'text-slate-400'}`}>room_service</span>
+                  <span>Pedidos & Recepção</span>
+                </div>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  {pedidos.length}
+                </span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveSubTab('minhas-reservas')}
@@ -655,17 +671,19 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               <span>Minhas Reservas</span>
             </button>
 
-            <button
-              onClick={() => setActiveSubTab('horarios')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                activeSubTab === 'horarios'
-                  ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <span className={`material-symbols-outlined text-xl ${activeSubTab === 'horarios' ? 'text-emerald-400' : 'text-slate-400'}`}>schedule</span>
-              <span>Horários & Hotel</span>
-            </button>
+            {temEstadiaOuReserva && (
+              <button
+                onClick={() => setActiveSubTab('horarios')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  activeSubTab === 'horarios'
+                    ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <span className={`material-symbols-outlined text-xl ${activeSubTab === 'horarios' ? 'text-emerald-400' : 'text-slate-400'}`}>schedule</span>
+                <span>Horários & Hotel</span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveSubTab('dados-cadastrais')}
@@ -691,22 +709,24 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               <span>Segurança & Senha</span>
             </button>
 
-            <button
-              onClick={() => setActiveSubTab('consumo')}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                activeSubTab === 'consumo'
-                  ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`material-symbols-outlined text-xl ${activeSubTab === 'consumo' ? 'text-emerald-400' : 'text-slate-400'}`}>receipt_long</span>
-                <span>Extrato de Consumo</span>
-              </div>
-              <span className="text-[11px] font-bold text-amber-300">
-                R$ {totalConsumo.toFixed(2).replace('.', ',')}
-              </span>
-            </button>
+            {temEstadiaOuReserva && (
+              <button
+                onClick={() => setActiveSubTab('consumo')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  activeSubTab === 'consumo'
+                    ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`material-symbols-outlined text-xl ${activeSubTab === 'consumo' ? 'text-emerald-400' : 'text-slate-400'}`}>receipt_long</span>
+                  <span>Extrato de Consumo</span>
+                </div>
+                <span className="text-[11px] font-bold text-amber-300">
+                  R$ {totalConsumo.toFixed(2).replace('.', ',')}
+                </span>
+              </button>
+            )}
           </nav>
         </div>
 
@@ -769,20 +789,22 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => showToast('Wi-Fi da Pousada: HotelMaster_VIP | Senha: zap12345')}
-              className="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/10 text-[11px] font-medium transition-all text-emerald-300 border border-emerald-500/30"
-            >
-              <span className="material-symbols-outlined text-[15px]">wifi</span>
-              <span>Wi-Fi</span>
-            </button>
+            {temEstadiaOuReserva && perfil?.hotelWifi && (
+              <button
+                onClick={() => showToast(`Wi-Fi: ${perfil.hotelWifi}`)}
+                className="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/10 text-[11px] font-medium transition-all text-emerald-300 border border-emerald-500/30"
+              >
+                <span className="material-symbols-outlined text-[15px]">wifi</span>
+                <span>Wi-Fi</span>
+              </button>
+            )}
 
             <button
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
               className="relative p-1.5 rounded-full hover:bg-white/10 text-white transition-transform"
             >
               <span className="material-symbols-outlined text-[22px]">notifications</span>
-              <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-black"></span>
+              {temEstadiaOuReserva && <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-black"></span>}
             </button>
 
             <div className="w-8 h-8 rounded-full bg-emerald-800 border border-emerald-400 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
@@ -807,10 +829,13 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                 </div>
 
                 <div className="mt-4 p-3 rounded-xl bg-white/10 border border-white/15">
-                  <span className={`text-[10px] uppercase font-bold ${perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-300'}`}>
-                    {perfil?.temCheckinAtivo ? `Quarto ${perfil?.quartoNumero} • ${perfil?.statusEstadia}` : (perfil?.statusEstadia || 'Sem Estadia Ativa')}
+                  <span className={`text-[10px] uppercase font-bold ${temEstadiaOuReserva && perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-300'}`}>
+                    {temEstadiaOuReserva ? (perfil?.temCheckinAtivo ? `Quarto ${perfil?.quartoNumero} • ${perfil?.statusEstadia}` : 'Reserva Ativa') : 'Conta Pessoal'}
                   </span>
-                  <p className="text-sm font-bold text-white">{perfil?.temCheckinAtivo ? (perfil?.quartoNome || 'Quarto') : 'Nenhum quarto ocupado'}</p>
+                  <p className="text-sm font-bold text-white">{temEstadiaOuReserva ? (perfil?.quartoNome || 'Quarto') : 'Nenhum quarto ocupado'}</p>
+                  {temEstadiaOuReserva && perfil?.hotelNome && (
+                    <p className="text-[11px] text-slate-300 truncate">{perfil.hotelNome}</p>
+                  )}
                 </div>
 
                 <nav className="mt-5 space-y-1">
@@ -819,18 +844,22 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">dashboard</span>
-                    Visão Geral & Estadia
+                    {temEstadiaOuReserva ? 'Visão Geral & Estadia' : 'Visão Geral'}
                   </button>
-                  <button
-                    onClick={() => { setActiveSubTab('pedidos'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-emerald-400 text-lg">room_service</span>
-                      Pedidos & Recepção
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px]">{pedidos.length}</span>
-                  </button>
+
+                  {temEstadiaOuReserva && (
+                    <button
+                      onClick={() => { setActiveSubTab('pedidos'); setIsMobileDrawerOpen(false); }}
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-emerald-400 text-lg">room_service</span>
+                        Pedidos & Recepção
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px]">{pedidos.length}</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => { setActiveSubTab('minhas-reservas'); setIsMobileDrawerOpen(false); }}
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
@@ -838,13 +867,17 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     <span className="material-symbols-outlined text-emerald-400 text-lg">calendar_month</span>
                     Minhas Reservas
                   </button>
-                  <button
-                    onClick={() => { setActiveSubTab('horarios'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
-                  >
-                    <span className="material-symbols-outlined text-emerald-400 text-lg">schedule</span>
-                    Horários & Hotel
-                  </button>
+
+                  {temEstadiaOuReserva && (
+                    <button
+                      onClick={() => { setActiveSubTab('horarios'); setIsMobileDrawerOpen(false); }}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    >
+                      <span className="material-symbols-outlined text-emerald-400 text-lg">schedule</span>
+                      Horários & Hotel
+                    </button>
+                  )}
+
                   <button
                     onClick={() => { setActiveSubTab('dados-cadastrais'); setIsMobileDrawerOpen(false); }}
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
@@ -852,6 +885,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     <span className="material-symbols-outlined text-emerald-400 text-lg">badge</span>
                     Meus Dados Cadastrais
                   </button>
+
                   <button
                     onClick={() => { setActiveSubTab('seguranca'); setIsMobileDrawerOpen(false); }}
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
@@ -859,13 +893,16 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     <span className="material-symbols-outlined text-emerald-400 text-lg">lock</span>
                     Segurança & Senha
                   </button>
-                  <button
-                    onClick={() => { setActiveSubTab('consumo'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
-                  >
-                    <span className="material-symbols-outlined text-emerald-400 text-lg">receipt_long</span>
-                    Extrato de Consumo
-                  </button>
+
+                  {temEstadiaOuReserva && (
+                    <button
+                      onClick={() => { setActiveSubTab('consumo'); setIsMobileDrawerOpen(false); }}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    >
+                      <span className="material-symbols-outlined text-emerald-400 text-lg">receipt_long</span>
+                      Extrato de Consumo
+                    </button>
+                  )}
                 </nav>
               </div>
 
@@ -896,17 +933,19 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Olá, {perfil?.nome || formData.nome || userName}! 👋</h2>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200">
-              {perfil?.status === 'ativo' ? 'Hóspede Ativo' : 'Hóspede VIP'}
+              {temEstadiaOuReserva ? (perfil?.status === 'ativo' ? 'Hóspede Ativo' : 'Hóspede VIP') : 'Conta do Hóspede'}
             </span>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700">
-              <span className="material-symbols-outlined text-base text-emerald-600">wifi</span>
-              <span className="font-medium">
-                Wi-Fi: <strong className="font-bold text-slate-900">{perfil?.hotelWifi || 'HotelNoZap_VIP'}</strong>
-              </span>
-            </div>
+            {temEstadiaOuReserva && perfil?.hotelWifi && (
+              <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700">
+                <span className="material-symbols-outlined text-base text-emerald-600">wifi</span>
+                <span className="font-medium">
+                  Wi-Fi: <strong className="font-bold text-slate-900">{perfil.hotelWifi}</strong>
+                </span>
+              </div>
+            )}
 
             <div className="relative">
               <button
@@ -914,37 +953,56 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                 className="relative p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200"
               >
                 <span className="material-symbols-outlined text-xl">notifications</span>
-                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                {temEstadiaOuReserva && <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>}
               </button>
 
               {/* POPUP DE NOTIFICAÇÕES */}
               {isNotificationsOpen && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl p-4 z-50">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-3">
-                    <h4 className="text-xs font-extrabold uppercase text-slate-700">Notificações da Estadia</h4>
-                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">2 Novas</span>
+                    <h4 className="text-xs font-extrabold uppercase text-slate-700">{temEstadiaOuReserva ? 'Notificações da Estadia' : 'Notificações da Conta'}</h4>
+                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">{temEstadiaOuReserva ? '2 Novas' : 'Atualizado'}</span>
                   </div>
                   <div className="space-y-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
-                      <p className="font-bold text-slate-900">Café da Manhã Servido</p>
-                      <p className="text-[11px] text-slate-600 mt-0.5">O buffet principal está pronto no restaurante até as 10:30.</p>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                      <p className="font-bold text-slate-900">Solicitação em Andamento</p>
-                      <p className="text-[11px] text-slate-600 mt-0.5">A camareira Maria está a caminho do Quarto 204.</p>
-                    </div>
+                    {temEstadiaOuReserva ? (
+                      <>
+                        <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                          <p className="font-bold text-slate-900">Café da Manhã</p>
+                          <p className="text-[11px] text-slate-600 mt-0.5">Consulte os horários oficiais do hotel na aba "Horários & Hotel".</p>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                          <p className="font-bold text-slate-900">Atendimento 24h</p>
+                          <p className="text-[11px] text-slate-600 mt-0.5">Equipe pronta para atender suas solicitações pelo chat ou recepção.</p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <p className="font-bold text-slate-900">Portal Hotel no Zap</p>
+                        <p className="text-[11px] text-slate-600 mt-0.5">Mantenha seus dados cadastrais em dia para agilizar suas próximas reservas.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
 
-            <button
-              onClick={() => setIsNewOrderModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold shadow-md shadow-[#003400]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span className="material-symbols-outlined text-base text-emerald-400">room_service</span>
-              <span>+ Fazer Pedido</span>
-            </button>
+            {temEstadiaOuReserva ? (
+              <button
+                onClick={() => setIsNewOrderModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold shadow-md shadow-[#003400]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-base text-emerald-400">room_service</span>
+                <span>+ Fazer Pedido</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setActiveSubTab('minhas-reservas')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold shadow-md shadow-[#003400]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-base text-emerald-400">calendar_month</span>
+                <span>Minhas Reservas</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -955,8 +1013,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           {/* CONTEÚDO DINÂMICO: ABA VISÃO GERAL & ESTADIA                      */}
           {/* ================================================================= */}
           {activeSubTab === 'dashboard' && (
-            <>
-              {/* BANNER HERO DE BOAS-VINDAS / ESTADIA EM ANDAMENTO */}
+            temEstadiaOuReserva ? (
+              <>
+                {/* SITUAÇÃO 1: HÓSPEDE COM RESERVA OU CHECK-IN ATIVO */}
+                {/* BANNER HERO DE BOAS-VINDAS / ESTADIA EM ANDAMENTO */}
               <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white shadow-xl border border-slate-800 p-5 lg:p-7">
             <div className="absolute -right-10 -bottom-10 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
             <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
@@ -1322,21 +1382,289 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               </div>
             </section>
           </>
-        )}
+        ) : (
+          <>
+            {/* ========================================================================= */}
+            {/* SITUAÇÃO 2: HÓSPEDE LOGADO SEM NENHUMA RESERVA E SEM CHECK-IN              */}
+            {/* O SISTEMA NÃO MOSTRA NADA DE NENHUM HOTEL. EXIBE A CONTA DO HÓSPEDE.      */}
+            {/* ========================================================================= */}
+
+            {/* BANNER HERO NEUTRO DA CONTA DO HÓSPEDE */}
+            <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#002800] via-[#003800] to-slate-900 text-white shadow-xl border border-emerald-900/30 p-6 lg:p-8">
+              <div className="absolute -right-10 -bottom-10 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+              <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                <div className="space-y-3 max-w-2xl">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-slate-800/90 text-slate-300 border border-slate-700/60 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                      Nenhuma Estadia Ativa
+                    </span>
+                    <span className="text-xs text-emerald-300 font-semibold">Conta Oficial do Hóspede</span>
+                  </div>
+                  <h3 className="text-2xl lg:text-3xl font-black tracking-tight text-white">
+                    Olá, {perfil?.nome || formData.nome || userName}! Bem-vindo ao seu Portal
+                  </h3>
+                  <p className="text-xs lg:text-sm text-slate-200 leading-relaxed">
+                    Você não possui nenhuma hospedagem ou reserva em andamento no momento. Navegue pelos hotéis da rede para reservar sua próxima viagem ou consulte o histórico das suas estadias anteriores.
+                  </p>
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      onClick={() => setActiveSubTab('minhas-reservas')}
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base text-emerald-400">calendar_month</span>
+                      Minhas Reservas
+                    </button>
+                    <button
+                      onClick={() => setActiveSubTab('dados-cadastrais')}
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base text-emerald-400">badge</span>
+                      Meus Dados Cadastrais
+                    </button>
+                  </div>
+                </div>
+
+                {/* Card de Ação Rápida */}
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 flex flex-col gap-3 min-w-[280px] shadow-lg">
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <span className="material-symbols-outlined text-2xl">travel_explore</span>
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-white">Planejar Próxima Viagem</span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Encontre as melhores diárias com confirmação instantânea e check-in inteligente via WhatsApp.
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (onNavigateToSystem) {
+                        onNavigateToSystem();
+                      } else {
+                        setActiveSubTab('minhas-reservas');
+                      }
+                    }}
+                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base">hotel</span>
+                    Explorar Hotéis & Reservar
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* CARDS DE INDICADORES DA CONTA PESSOAL (SEM VÍNCULO A NENHUM HOTEL) */}
+            <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+              {/* 1. Histórico */}
+              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico</span>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-lg lg:text-xl">hotel</span>
+                  </div>
+                </div>
+                <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                  {perfil?.totalHospedagens || 0} {(perfil?.totalHospedagens || 0) === 1 ? 'Hospedagem' : 'Hospedagens'}
+                </div>
+                <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
+                  {(perfil?.totalHospedagens || 0) > 0 ? `${perfil?.totalHospedagens} estadias no histórico` : 'Nenhuma estadia concluída'}
+                </p>
+              </div>
+
+              {/* 2. Pontos Fidelidade */}
+              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Pontos Fidelidade</span>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-lg lg:text-xl">workspace_premium</span>
+                  </div>
+                </div>
+                <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                  {(perfil?.pontosFidelidade || 0).toLocaleString('pt-BR')} Pontos
+                </div>
+                <p className="text-xs text-purple-700 font-medium mt-1">
+                  {(perfil?.pontosFidelidade || 0) > 0 ? `${perfil?.pontosFidelidade} pts acumulados` : '10 pts a cada hospedagem'}
+                </p>
+              </div>
+
+              {/* 3. Meus Dados */}
+              <div
+                onClick={() => setActiveSubTab('dados-cadastrais')}
+                className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Dados Cadastrais</span>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-lg lg:text-xl">badge</span>
+                  </div>
+                </div>
+                <div className="text-base lg:text-lg font-bold text-slate-900">
+                  {formData.cpf ? 'Documento Salvo' : 'Cadastro Básico'}
+                </div>
+                <p className="text-xs text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                  <span>Gerenciar meus dados</span>
+                  <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                </p>
+              </div>
+
+              {/* 4. Segurança */}
+              <div
+                onClick={() => setActiveSubTab('seguranca')}
+                className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Segurança</span>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-lg lg:text-xl">lock</span>
+                  </div>
+                </div>
+                <div className="text-base lg:text-lg font-bold text-slate-900">
+                  Conta Protegida
+                </div>
+                <p className="text-xs text-slate-600 font-medium mt-1 flex items-center gap-1">
+                  <span>Alterar senha</span>
+                  <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                </p>
+              </div>
+            </section>
+
+            {/* SEÇÕES CENTRAIS: BENEFÍCIOS E HISTÓRICO RECENTE */}
+            <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+              {/* COLUNA ESQUERDA: Benefícios da Plataforma (7 colunas) */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6 space-y-5">
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <div>
+                      <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-emerald-600">stars</span>
+                        Vantagens do Hóspede Hotel no Zap
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">Benefícios exclusivos para reservas efetuadas na plataforma.</p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                      100% Digital
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-lg">bolt</span>
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-900">Check-in Imediato</h5>
+                      <p className="text-[11px] text-slate-600">Sem filas na recepção: confirme sua chegada pelo WhatsApp com 1 toque.</p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-lg">room_service</span>
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-900">Serviços no Quarto</h5>
+                      <p className="text-[11px] text-slate-600">Peça toalhas, amenities e cardápio diretamente do celular durante sua estadia.</p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-lg">workspace_premium</span>
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-900">Pontos de Fidelidade</h5>
+                      <p className="text-[11px] text-slate-600">Acumule 10 pontos por hospedagem concluída para resgates e descontos.</p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-lg">support_agent</span>
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-900">Suporte 24 Horas</h5>
+                      <p className="text-[11px] text-slate-600">Equipe dedicada pronta para atender todas as suas necessidades.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* COLUNA DIREITA: Histórico Recente de Reservas (5 colunas) */}
+              <div className="lg:col-span-5 space-y-6">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6 space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-slate-600">receipt_long</span>
+                      Histórico de Reservas
+                    </h4>
+                    <button
+                      onClick={() => setActiveSubTab('minhas-reservas')}
+                      className="text-xs text-emerald-700 font-bold hover:underline cursor-pointer"
+                    >
+                      Ver todas
+                    </button>
+                  </div>
+
+                  {reservas.length > 0 ? (
+                    <div className="space-y-3">
+                      {reservas.slice(0, 3).map((res: any) => (
+                        <div key={res.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-900 truncate">{res.hotel || res.hotelNome || 'Hotel'}</p>
+                            <p className="text-[11px] text-slate-500">{res.checkIn} — {res.checkOut}</p>
+                            <p className="text-[11px] text-slate-400 font-medium">{res.codigo}</p>
+                          </div>
+                          <span className="px-2 py-1 rounded-full text-[10px] font-extrabold uppercase bg-slate-200 text-slate-700 shrink-0">
+                            {res.status || 'Concluída'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center space-y-3">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl">luggage</span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-700">Nenhuma reserva anterior</p>
+                        <p className="text-[11px] text-slate-500 max-w-xs mx-auto mt-0.5">
+                          Assim que você reservar em um hotel, seu histórico e vouchers aparecerão aqui automaticamente.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          </>
+        )
+      )}
 
           {/* ================================================================= */}
           {/* ABA: PEDIDOS & RECEPÇÃO                                           */}
           {/* ================================================================= */}
           {activeSubTab === 'pedidos' && (
-            <PedidosRecepcaoHospede
-              userRole={userRole}
-              userName={perfil?.nome || userName}
-              userEmail={perfil?.email || userEmail}
-              perfil={perfil}
-              temCheckinAtivo={perfil?.temCheckinAtivo}
-              hotelId={perfil?.hotelId}
-              onNavigateBack={() => setActiveSubTab('dashboard')}
-            />
+            temEstadiaOuReserva ? (
+              <PedidosRecepcaoHospede
+                userRole={userRole}
+                userName={perfil?.nome || userName}
+                userEmail={perfil?.email || userEmail}
+                perfil={perfil}
+                temCheckinAtivo={perfil?.temCheckinAtivo}
+                hotelId={perfil?.hotelId}
+                onNavigateBack={() => setActiveSubTab('dashboard')}
+              />
+            ) : (
+              <div className="max-w-2xl mx-auto py-16 text-center space-y-4 animate-in fade-in duration-200">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                  <span className="material-symbols-outlined text-3xl">room_service</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Pedidos e Serviços Indisponíveis</h3>
+                <p className="text-sm text-slate-500 max-w-md mx-auto">
+                  Você não possui nenhuma estadia ativa no momento. Pedidos de toalhas, amenities e refeições ficam disponíveis exclusivamente durante sua hospedagem no hotel.
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => setActiveSubTab('dashboard')}
+                    className="px-5 py-2.5 rounded-xl bg-[#003400] text-white text-xs font-bold hover:bg-[#002600] transition-colors cursor-pointer"
+                  >
+                    Voltar para o Início
+                  </button>
+                </div>
+              </div>
+            )
           )}
 
           {/* ================================================================= */}
@@ -1355,7 +1683,8 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           {/* ABA: HORÁRIOS & COMODIDADES DO HOTEL                              */}
           {/* ================================================================= */}
           {activeSubTab === 'horarios' && (
-            <div className="space-y-6 max-w-5xl animate-in fade-in duration-200">
+            temEstadiaOuReserva ? (
+              <div className="space-y-6 max-w-5xl animate-in fade-in duration-200">
               {/* Cabeçalho da Aba */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                 <div className="flex items-center gap-3">
@@ -1656,6 +1985,25 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                 </div>
               </div>
             </div>
+          ) : (
+              <div className="max-w-2xl mx-auto py-16 text-center space-y-4 animate-in fade-in duration-200">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                  <span className="material-symbols-outlined text-3xl">schedule</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Horários Indisponíveis</h3>
+                <p className="text-sm text-slate-500 max-w-md mx-auto">
+                  Você não possui nenhuma estadia ou reserva ativa vinculada a um hotel no momento para consultar horários, normas ou serviços.
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => setActiveSubTab('dashboard')}
+                    className="px-5 py-2.5 rounded-xl bg-[#003400] text-white text-xs font-bold hover:bg-[#002600] transition-colors cursor-pointer"
+                  >
+                    Voltar para o Início
+                  </button>
+                </div>
+              </div>
+            )
           )}
 
           {/* ================================================================= */}
@@ -1734,44 +2082,64 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           {/* ABA: EXTRATO DE CONSUMO COMPLETO                                  */}
           {/* ================================================================= */}
           {activeSubTab === 'consumo' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-amber-600">receipt_long</span>
-                    Extrato de Consumo Completo (Quarto 204)
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">Lançamentos detalhados de frigobar, restaurante e serviços</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => showToast('Comprovante gerado em PDF!')} className="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
-                    Imprimir / PDF
-                  </button>
-                  <button onClick={() => setIsPixModalOpen(true)} className="px-4 py-2 rounded-xl bg-[#003400] text-white text-xs font-bold shadow-md">
-                    Pagar via PIX
-                  </button>
-                </div>
-              </div>
-
-              <div className="divide-y divide-slate-100 text-xs">
-                {consumo.map((item) => (
-                  <div key={item.id} className="py-3 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-slate-900 text-sm">{item.descricao}</div>
-                      <div className="text-slate-500 text-[11px] mt-0.5">
-                        {item.dataHora} • Local: <strong className="text-slate-700">{item.local}</strong>
-                      </div>
-                    </div>
-                    <span className="font-black text-slate-900 text-base">R$ {item.valor.toFixed(2).replace('.', ',')}</span>
+            temEstadiaOuReserva ? (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-600">receipt_long</span>
+                      Extrato de Consumo Completo {perfil?.quartoNumero && perfil.quartoNumero !== '—' ? `(Quarto ${perfil.quartoNumero})` : ''}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Lançamentos detalhados de frigobar, restaurante e serviços</p>
                   </div>
-                ))}
-              </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => showToast('Comprovante gerado em PDF!')} className="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer">
+                      Imprimir / PDF
+                    </button>
+                    <button onClick={() => setIsPixModalOpen(true)} className="px-4 py-2 rounded-xl bg-[#003400] text-white text-xs font-bold shadow-md cursor-pointer">
+                      Pagar via PIX
+                    </button>
+                  </div>
+                </div>
 
-              <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-sm font-extrabold">
-                <span className="text-slate-700">TOTAL ACUMULADO</span>
-                <span className="text-xl text-slate-900">R$ {totalConsumo.toFixed(2).replace('.', ',')}</span>
+                <div className="divide-y divide-slate-100 text-xs">
+                  {consumo.map((item) => (
+                    <div key={item.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-slate-900 text-sm">{item.descricao}</div>
+                        <div className="text-slate-500 text-[11px] mt-0.5">
+                          {item.dataHora} • Local: <strong className="text-slate-700">{item.local}</strong>
+                        </div>
+                      </div>
+                      <span className="font-black text-slate-900 text-base">R$ {item.valor.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-sm font-extrabold">
+                  <span className="text-slate-700">TOTAL ACUMULADO</span>
+                  <span className="text-xl text-slate-900">R$ {totalConsumo.toFixed(2).replace('.', ',')}</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="max-w-2xl mx-auto py-16 text-center space-y-4 animate-in fade-in duration-200">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                  <span className="material-symbols-outlined text-3xl">receipt_long</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Extrato Indisponível</h3>
+                <p className="text-sm text-slate-500 max-w-md mx-auto">
+                  Você não possui nenhuma estadia ativa no momento. O extrato detalhado de frigobar e serviços fica disponível durante o período de hospedagem.
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => setActiveSubTab('dashboard')}
+                    className="px-5 py-2.5 rounded-xl bg-[#003400] text-white text-xs font-bold hover:bg-[#002600] transition-colors cursor-pointer"
+                  >
+                    Voltar para o Início
+                  </button>
+                </div>
+              </div>
+            )
           )}
         </main>
 
@@ -1786,34 +2154,52 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             }`}
           >
             <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'dashboard' ? 'bg-emerald-100' : ''}`}>
-              <span className="material-symbols-outlined text-[20px]">hotel</span>
+              <span className="material-symbols-outlined text-[20px]">
+                {temEstadiaOuReserva ? 'hotel' : 'home'}
+              </span>
             </div>
-            <span className="text-[10px] tracking-tight">Estadia</span>
+            <span className="text-[10px] tracking-tight">{temEstadiaOuReserva ? 'Estadia' : 'Início'}</span>
           </button>
 
-          <button
-            onClick={() => setActiveSubTab('pedidos')}
-            className={`flex flex-col items-center justify-center py-1 px-3 text-xs font-bold ${
-              activeSubTab === 'pedidos' ? 'text-[#003400]' : 'text-slate-500'
-            }`}
-          >
-            <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'pedidos' ? 'bg-emerald-100' : ''}`}>
-              <span className="material-symbols-outlined text-[20px]">room_service</span>
-            </div>
-            <span className="text-[10px] tracking-tight">Pedidos</span>
-          </button>
+          {temEstadiaOuReserva ? (
+            <>
+              <button
+                onClick={() => setActiveSubTab('pedidos')}
+                className={`flex flex-col items-center justify-center py-1 px-3 text-xs font-bold ${
+                  activeSubTab === 'pedidos' ? 'text-[#003400]' : 'text-slate-500'
+                }`}
+              >
+                <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'pedidos' ? 'bg-emerald-100' : ''}`}>
+                  <span className="material-symbols-outlined text-[20px]">room_service</span>
+                </div>
+                <span className="text-[10px] tracking-tight">Pedidos</span>
+              </button>
 
-          <button
-            onClick={() => setActiveSubTab('consumo')}
-            className={`flex flex-col items-center justify-center py-1 px-3 text-xs font-bold ${
-              activeSubTab === 'consumo' ? 'text-[#003400]' : 'text-slate-500'
-            }`}
-          >
-            <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'consumo' ? 'bg-emerald-100' : ''}`}>
-              <span className="material-symbols-outlined text-[20px]">receipt_long</span>
-            </div>
-            <span className="text-[10px] tracking-tight">Consumo</span>
-          </button>
+              <button
+                onClick={() => setActiveSubTab('consumo')}
+                className={`flex flex-col items-center justify-center py-1 px-3 text-xs font-bold ${
+                  activeSubTab === 'consumo' ? 'text-[#003400]' : 'text-slate-500'
+                }`}
+              >
+                <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'consumo' ? 'bg-emerald-100' : ''}`}>
+                  <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+                </div>
+                <span className="text-[10px] tracking-tight">Consumo</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setActiveSubTab('minhas-reservas')}
+              className={`flex flex-col items-center justify-center py-1 px-3 text-xs font-bold ${
+                activeSubTab === 'minhas-reservas' ? 'text-[#003400]' : 'text-slate-500'
+              }`}
+            >
+              <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'minhas-reservas' ? 'bg-emerald-100' : ''}`}>
+                <span className="material-symbols-outlined text-[20px]">calendar_month</span>
+              </div>
+              <span className="text-[10px] tracking-tight">Reservas</span>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveSubTab('dados-cadastrais')}

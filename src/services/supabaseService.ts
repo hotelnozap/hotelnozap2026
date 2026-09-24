@@ -1386,16 +1386,12 @@ export const hospedesService = {
           uData = u;
         }
       }
-      if (!hData && !uData) {
-        const { data: hList } = await supabase.from('hospedes').select('*').order('criado_em', { ascending: false }).limit(1);
-        if (hList && hList.length > 0) hData = hList[0];
-      }
     } catch (err) {
       console.warn('Erro ao carregar dados do hóspede no Supabase:', err);
     }
 
-    const realNome = hData?.nome || uData?.nome || searchName || 'Everaldo Souza da Silva';
-    const realEmail = hData?.email || uData?.email || searchEmail || 'everaldozshospede@gmail.com';
+    const realNome = hData?.nome || uData?.nome || searchName || 'Hóspede';
+    const realEmail = hData?.email || uData?.email || searchEmail || '';
     const realCpf = hData?.cpf_passaporte || uData?.cpf || '';
     const realTelefone = maskPhone(hData?.telefone || uData?.telefone || '');
     const realCep = hData?.cep || uData?.cep || '';
@@ -1404,107 +1400,207 @@ export const hospedesService = {
     const realBairro = hData?.bairro || uData?.bairro || '';
     const realCidade = uData?.cidade || (hData?.cidade_uf ? hData.cidade_uf.split('/')[0]?.trim() : '') || '';
     const realUf = uData?.uf || (hData?.cidade_uf ? hData.cidade_uf.split('/')[1]?.trim() : '') || '';
-    const hotelId = hData?.hotel_id || uData?.hotel_id || null;
 
-    let hotelData: any = null;
-    try {
-      if (hotelId) {
-        const { data: ht } = await supabase.from('hoteis').select('*').eq('id', hotelId).maybeSingle();
-        hotelData = ht;
-      }
-      if (!hotelData) {
-        const currentH = currentHotelService.getCurrentHotel();
-        if (currentH && currentH.id && !currentH.id.startsWith('hotel-master')) {
-          const { data: ht } = await supabase.from('hoteis').select('*').eq('id', currentH.id).maybeSingle();
-          hotelData = ht;
-        }
-      }
-      if (!hotelData) {
-        const { data: morada } = await supabase.from('hoteis').select('*').ilike('nome', '%Morada da Lua%').maybeSingle();
-        if (morada) hotelData = morada;
-      }
-      if (!hotelData) {
-        const { data: htList } = await supabase.from('hoteis').select('*').limit(1);
-        if (htList && htList.length > 0) hotelData = htList[0];
-      }
-    } catch (htErr) {
-      console.warn('Erro ao carregar hotel do hóspede:', htErr);
-    }
-
-    const hotelConfig = extractConfigFromObservacoes(hotelData?.observacoes);
-    const hotelNome = hotelData?.nome || 'Hotel Morada da Lua';
-    const hotelCidade = hotelData?.cidade || 'Vila Rica';
-    const hotelUf = hotelData?.uf || 'MT';
-    const hotelCidadeUf = `${hotelCidade} / ${hotelUf}`;
-    const hotelTelefone = hotelData?.whatsapp || hotelData?.telefone_gerente || '(66) 98158-5014';
-    const hotelWifi = `${hotelNome.replace(/[^a-zA-Z0-9]/g, '')}_VIP`;
-
-    let quartoData: any = null;
-    try {
-      if (hotelData?.id) {
-        const { data: qList } = await supabase.from('quartos').select('*').eq('hotel_id', hotelData.id).limit(1);
-        if (qList && qList.length > 0) quartoData = qList[0];
-      }
-    } catch (qErr) {
-      console.warn('Erro ao carregar quarto do hóspede:', qErr);
-    }
-
-    const quartoNumero = quartoData?.numero || '100';
-    const quartoTipo = quartoData?.tipo || 'CASAL';
-    const quartoNome = `Quarto ${quartoNumero} (${quartoTipo})`;
-    const quartoValor = Number(quartoData?.valor_diaria) || 220;
-
-    const comodidades: string[] = [];
-    if (quartoData?.items?.arCondicionado) comodidades.push('Ar Climatizado');
-    if (quartoData?.items?.camaKing) comodidades.push('Cama King Size');
-    if (quartoData?.items?.frigobar) comodidades.push('Frigobar');
-    if (quartoData?.items?.wifi) comodidades.push('Wi-Fi Alta Velocidade');
-    if (quartoData?.items?.tvSmart) comodidades.push('Smart TV');
-    if (quartoData?.items?.banheira) comodidades.push('Banheira de Hidromassagem');
-    if (comodidades.length === 0) {
-      comodidades.push('Cama Casal', 'Ar Climatizado', 'Wi-Fi', 'Smart TV');
-    }
-
+    // =========================================================================
+    // 1. BUSCA INTELIGENTE DE TODAS AS RESERVAS DESTE HÓSPEDE NO SISTEMA
+    // =========================================================================
     let reservasReais: any[] = [];
     try {
-      let queryR = supabase.from('reservas').select('*').order('criado_em', { ascending: false });
-      if (hotelData?.id) queryR = queryR.eq('hotel_id', hotelData.id);
-      const { data: rList } = await queryR;
-      if (rList && rList.length > 0) {
-        const matched = rList.filter((r: any) =>
-          (r.nome_hospede && realNome && r.nome_hospede.trim().toLowerCase() === realNome.trim().toLowerCase()) ||
-          (r.nome_hospede && realNome && r.nome_hospede.toLowerCase().includes(realNome.toLowerCase())) ||
-          (r.observacoes && realEmail && r.observacoes.toLowerCase().includes(realEmail.toLowerCase())) ||
-          (r.hospede_id && hData?.id && r.hospede_id === hData.id)
-        );
-        // Apenas reservas estritamente do hóspede logado (sem fallback para todas do hotel)
-        reservasReais = matched;
+      const candidates: any[] = [];
+
+      // A. Busca por ID do hóspede
+      if (hData?.id) {
+        const { data: byHospedeId } = await supabase
+          .from('reservas')
+          .select('*')
+          .eq('hospede_id', hData.id)
+          .order('criado_em', { ascending: false });
+        if (byHospedeId) candidates.push(...byHospedeId);
       }
+
+      // B. Busca por e-mail nas observações da reserva
+      if (realEmail) {
+        const { data: byObsEmail } = await supabase
+          .from('reservas')
+          .select('*')
+          .ilike('observacoes', `%${realEmail}%`)
+          .order('criado_em', { ascending: false });
+        if (byObsEmail) candidates.push(...byObsEmail);
+      }
+
+      // C. Busca por nome do hóspede
+      if (realNome && realNome !== 'Hóspede' && realNome.length >= 3) {
+        const { data: byNome } = await supabase
+          .from('reservas')
+          .select('*')
+          .ilike('nome_hospede', `%${realNome}%`)
+          .order('criado_em', { ascending: false });
+        if (byNome) candidates.push(...byNome);
+      }
+
+      // Desduplicação por ID único da reserva
+      const seenIds = new Set<string>();
+      for (const item of candidates) {
+        if (item && item.id && !seenIds.has(item.id)) {
+          seenIds.add(item.id);
+          reservasReais.push(item);
+        }
+      }
+
+      reservasReais.sort((a, b) => {
+        const tA = new Date(a.data_checkin || a.criado_em || 0).getTime();
+        const tB = new Date(b.data_checkin || b.criado_em || 0).getTime();
+        return tB - tA;
+      });
     } catch (rErr) {
       console.warn('Erro ao buscar reservas do hóspede:', rErr);
     }
 
-    const historicoReservas = reservasReais.map((r: any) => ({
-      id: r.id,
-      codigo: `#RES-${r.id.substring(0, 6).toUpperCase()}`,
-      quarto: r.numero_quarto ? `Quarto ${r.numero_quarto}` : quartoNome,
-      quartoNumero: r.numero_quarto || quartoNumero,
-      hotel: hotelNome,
-      hotelCidade: hotelCidadeUf,
-      checkIn: r.data_checkin ? new Date(r.data_checkin).toLocaleDateString('pt-BR') : '',
-      checkOut: r.data_checkout ? new Date(r.data_checkout).toLocaleDateString('pt-BR') : '',
-      diarias: r.diarias || 1,
-      valorTotal: Number(r.valor_total) || 0,
-      status: r.status || 'Pendente'
-    }));
+    // =========================================================================
+    // 2. DETECÇÃO INTELIGENTE DAS DUAS SITUAÇÕES:
+    //    Situação 1: Check-in ativo OU reserva confirmada
+    //    Situação 2: Sem nenhuma reserva e sem check-in
+    // =========================================================================
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    // Verifica se há alguma estadia / check-in ativo em andamento
-    const reservaAtiva = reservasReais.find((r: any) => {
-      const s = (r.status || '').toLowerCase();
-      return s === 'hospedado' || s === 'em andamento' || s === 'em_andamento' || s === 'ativo';
+    // Situação 1A: Check-in ativo / Hospedado no momento
+    const reservaCheckinAtivo = reservasReais.find((r: any) => {
+      const s = (r.status || '').toLowerCase().trim();
+      const isStatusHospedado = s === 'hospedado' || s === 'checkin' || s === 'check-in' || s === 'em andamento' || s === 'em_andamento' || s === 'ativo';
+      if (!isStatusHospedado) return false;
+      if (r.data_checkout) {
+        const checkout = new Date(r.data_checkout);
+        checkout.setHours(23, 59, 59, 999);
+        return checkout >= today;
+      }
+      return true;
     });
 
-    const temCheckinAtivo = Boolean(reservaAtiva);
+    // Situação 1B: Reserva futura confirmada ativa
+    const reservaFuturaAtiva = reservasReais.find((r: any) => {
+      const s = (r.status || '').toLowerCase().trim();
+      const isStatusConfirmada = s === 'confirmada' || s === 'garantida' || s === 'pendente' || s === 'paga';
+      if (!isStatusConfirmada) return false;
+      if (r.data_checkout) {
+        const checkout = new Date(r.data_checkout);
+        checkout.setHours(23, 59, 59, 999);
+        return checkout >= today;
+      }
+      return true;
+    });
+
+    const reservaAtivaPrincipal = reservaCheckinAtivo || reservaFuturaAtiva || null;
+    const temCheckinAtivo = Boolean(reservaCheckinAtivo);
+    const temReservaAtiva = Boolean(reservaFuturaAtiva);
+    const temEstadiaOuReserva = Boolean(reservaAtivaPrincipal);
+
+    // =========================================================================
+    // 3. CARREGAMENTO DOS HOTÉIS VINCULADOS
+    // =========================================================================
+    const hotelIds = Array.from(new Set(reservasReais.map((r: any) => r.hotel_id).filter(Boolean)));
+    const hoteisMap: Record<string, any> = {};
+    if (hotelIds.length > 0) {
+      try {
+        const { data: hList } = await supabase.from('hoteis').select('*').in('id', hotelIds);
+        if (hList) {
+          hList.forEach((h: any) => {
+            hoteisMap[h.id] = h;
+          });
+        }
+      } catch (hErr) {
+        console.warn('Erro ao carregar hotéis do histórico:', hErr);
+      }
+    }
+
+    // Hotel da estadia ativa: estritamente da reserva ativa do hóspede!
+    // NUNCA força Morada da Lua nem hotel genérico se o hóspede não tiver reserva ativa.
+    let hotelData: any = null;
+    if (temEstadiaOuReserva && reservaAtivaPrincipal?.hotel_id) {
+      hotelData = hoteisMap[reservaAtivaPrincipal.hotel_id] || null;
+      if (!hotelData) {
+        try {
+          const { data: ht } = await supabase.from('hoteis').select('*').eq('id', reservaAtivaPrincipal.hotel_id).maybeSingle();
+          if (ht) {
+            hotelData = ht;
+            hoteisMap[ht.id] = ht;
+          }
+        } catch (htErr) {
+          console.warn('Erro ao carregar hotel da reserva ativa:', htErr);
+        }
+      }
+    }
+
+    // Situação 2: Se NÃO tem estadia ou reserva ativa, nenhum hotel é retornado!
+    const hotelId = temEstadiaOuReserva ? (hotelData?.id || null) : null;
+    const hotelConfig = (temEstadiaOuReserva && hotelData) ? extractConfigFromObservacoes(hotelData.observacoes) : null;
+    const hotelNome = temEstadiaOuReserva ? (hotelData?.nome || null) : null;
+    const hotelCidade = temEstadiaOuReserva ? (hotelData?.cidade || null) : null;
+    const hotelUf = temEstadiaOuReserva ? (hotelData?.uf || null) : null;
+    const hotelCidadeUf = (temEstadiaOuReserva && hotelData) ? `${hotelData.cidade || ''} / ${hotelData.uf || ''}`.trim() : null;
+    const hotelTelefone = temEstadiaOuReserva ? (hotelData?.whatsapp || hotelData?.telefone_gerente || null) : null;
+    const hotelWhatsapp = hotelTelefone;
+    const hotelWifi = (temEstadiaOuReserva && hotelNome) ? `${hotelNome.replace(/[^a-zA-Z0-9]/g, '')}_VIP` : null;
+
+    // =========================================================================
+    // 4. QUARTO DA ESTADIA ATIVA
+    // =========================================================================
+    let quartoData: any = null;
+    if (temEstadiaOuReserva && (reservaAtivaPrincipal?.quarto_id || (reservaAtivaPrincipal?.numero_quarto && hotelData?.id))) {
+      try {
+        if (reservaAtivaPrincipal.quarto_id) {
+          const { data: q } = await supabase.from('quartos').select('*').eq('id', reservaAtivaPrincipal.quarto_id).maybeSingle();
+          quartoData = q;
+        } else if (reservaAtivaPrincipal.numero_quarto && hotelData?.id) {
+          const { data: q } = await supabase.from('quartos').select('*').eq('hotel_id', hotelData.id).eq('numero', reservaAtivaPrincipal.numero_quarto).maybeSingle();
+          quartoData = q;
+        }
+      } catch (qErr) {
+        console.warn('Erro ao carregar quarto da reserva:', qErr);
+      }
+    }
+
+    const quartoNumero = temEstadiaOuReserva ? (reservaAtivaPrincipal?.numero_quarto || quartoData?.numero || '—') : '—';
+    const quartoTipo = temEstadiaOuReserva ? (quartoData?.tipo || 'CASAL') : '—';
+    const quartoNome = temEstadiaOuReserva
+      ? (reservaAtivaPrincipal?.numero_quarto ? `Quarto ${reservaAtivaPrincipal.numero_quarto} (${quartoTipo})` : quartoData?.numero ? `Quarto ${quartoData.numero} (${quartoTipo})` : 'Acomodação')
+      : 'Nenhum quarto ocupado';
+    const quartoValor = temEstadiaOuReserva ? (Number(quartoData?.valor_diaria) || Number(reservaAtivaPrincipal?.valor_total) || 0) : 0;
+
+    const comodidades: string[] = [];
+    if (temEstadiaOuReserva) {
+      if (quartoData?.items?.arCondicionado) comodidades.push('Ar Climatizado');
+      if (quartoData?.items?.camaKing) comodidades.push('Cama King Size');
+      if (quartoData?.items?.frigobar) comodidades.push('Frigobar');
+      if (quartoData?.items?.wifi) comodidades.push('Wi-Fi Alta Velocidade');
+      if (quartoData?.items?.tvSmart) comodidades.push('Smart TV');
+      if (quartoData?.items?.banheira) comodidades.push('Banheira de Hidromassagem');
+      if (comodidades.length === 0) {
+        comodidades.push('Cama Confortável', 'Ar Climatizado', 'Wi-Fi', 'Smart TV');
+      }
+    }
+
+    // =========================================================================
+    // 5. HISTÓRICO DE RESERVAS DO HÓSPEDE (Com seus respectivos hotéis reais)
+    // =========================================================================
+    const historicoReservas = reservasReais.map((r: any) => {
+      const rHotel = hoteisMap[r.hotel_id];
+      const rHotelNome = rHotel?.nome || 'Hotel';
+      const rHotelCidadeUf = rHotel ? `${rHotel.cidade || ''} / ${rHotel.uf || ''}`.trim() : '';
+      return {
+        id: r.id,
+        codigo: `#RES-${r.id.substring(0, 6).toUpperCase()}`,
+        quarto: r.numero_quarto ? `Quarto ${r.numero_quarto}` : 'Acomodação',
+        quartoNumero: r.numero_quarto || '—',
+        hotel: rHotelNome,
+        hotelCidade: rHotelCidadeUf,
+        checkIn: r.data_checkin ? new Date(r.data_checkin).toLocaleDateString('pt-BR') : '',
+        checkOut: r.data_checkout ? new Date(r.data_checkout).toLocaleDateString('pt-BR') : '',
+        diarias: r.diarias || 1,
+        valorTotal: Number(r.valor_total) || 0,
+        status: r.status || 'Pendente'
+      };
+    });
 
     // Contagem de hospedagens concluídas
     const hospedagensConcluidas = reservasReais.filter((r: any) => {
@@ -1512,9 +1608,14 @@ export const hospedesService = {
       return s.includes('conclu') || s.includes('finaliz');
     }).length;
 
-    // Regra do usuário: cada hospedagem concluída gera 10 pontos de fidelidade
     const totalHospedagens = hospedagensConcluidas;
     const pontosFidelidade = totalHospedagens * 10;
+
+    const statusEstadia = temCheckinAtivo
+      ? (reservaCheckinAtivo?.status || 'Hospedado')
+      : temReservaAtiva
+        ? 'Reserva Confirmada'
+        : 'Sem Estadia Ativa';
 
     return {
       id: hData?.id || uData?.id || 'guest-1',
@@ -1524,35 +1625,37 @@ export const hospedesService = {
       telefone: realTelefone,
       cidade: realCidade,
       uf: realUf,
-      cidadeUf: realCidade && realUf ? `${realCidade}/${realUf}` : realCidade || realUf || 'Rondonópolis/MT',
+      cidadeUf: realCidade && realUf ? `${realCidade}/${realUf}` : realCidade || realUf || '',
       cep: realCep,
       logradouro: realLogradouro,
       numero: realNumero,
       bairro: realBairro,
       complemento: '',
       status: hData?.status || uData?.status || 'ativo',
-      hotelId: hotelData?.id,
+      temCheckinAtivo,
+      temReservaAtiva,
+      temEstadiaOuReserva,
+      hotelId,
       hotelNome,
       hotelCidade,
       hotelUf,
       hotelCidadeUf,
       hotelTelefone,
-      hotelWhatsapp: hotelTelefone,
+      hotelWhatsapp,
       hotelWifi,
       hotelConfig,
-      temCheckinAtivo,
-      quartoNumero: temCheckinAtivo ? (reservaAtiva?.numero_quarto || quartoNumero) : '—',
-      quartoTipo: temCheckinAtivo ? quartoTipo : '—',
-      quartoNome: temCheckinAtivo ? (reservaAtiva?.numero_quarto ? `Quarto ${reservaAtiva.numero_quarto}` : quartoNome) : 'Nenhum quarto ocupado',
-      quartoValor: temCheckinAtivo ? quartoValor : 0,
-      quartoComodidades: temCheckinAtivo ? comodidades : [],
-      quartoFotos: Array.isArray(quartoData?.fotos) ? quartoData.fotos : [],
-      quartoFotoCapa: quartoData?.foto_capa || (Array.isArray(quartoData?.fotos) && quartoData.fotos[0]) || hotelData?.url_imagem || '',
-      statusEstadia: temCheckinAtivo ? (reservaAtiva?.status || 'Hospedado') : 'Sem Estadia Ativa',
-      reservaCodigo: temCheckinAtivo ? (reservaAtiva ? `#RES-${reservaAtiva.id.substring(0, 6).toUpperCase()}` : '—') : '—',
-      dataCheckin: temCheckinAtivo && reservaAtiva?.data_checkin ? new Date(reservaAtiva.data_checkin).toLocaleDateString('pt-BR') : '—',
-      dataCheckout: temCheckinAtivo && reservaAtiva?.data_checkout ? new Date(reservaAtiva.data_checkout).toLocaleDateString('pt-BR') : '—',
-      totalDiarias: temCheckinAtivo ? (reservaAtiva?.diarias || 1) : 0,
+      quartoNumero,
+      quartoTipo,
+      quartoNome,
+      quartoValor,
+      quartoComodidades: comodidades,
+      quartoFotos: temEstadiaOuReserva && Array.isArray(quartoData?.fotos) ? quartoData.fotos : [],
+      quartoFotoCapa: temEstadiaOuReserva ? (quartoData?.foto_capa || (Array.isArray(quartoData?.fotos) && quartoData.fotos[0]) || hotelData?.url_imagem || '') : '',
+      statusEstadia,
+      reservaCodigo: temEstadiaOuReserva && reservaAtivaPrincipal ? `#RES-${reservaAtivaPrincipal.id.substring(0, 6).toUpperCase()}` : '—',
+      dataCheckin: temEstadiaOuReserva && reservaAtivaPrincipal?.data_checkin ? new Date(reservaAtivaPrincipal.data_checkin).toLocaleDateString('pt-BR') : '—',
+      dataCheckout: temEstadiaOuReserva && reservaAtivaPrincipal?.data_checkout ? new Date(reservaAtivaPrincipal.data_checkout).toLocaleDateString('pt-BR') : '—',
+      totalDiarias: temEstadiaOuReserva ? (reservaAtivaPrincipal?.diarias || 1) : 0,
       diariaAtual: temCheckinAtivo ? 1 : 0,
       totalHospedagens,
       pontosFidelidade,

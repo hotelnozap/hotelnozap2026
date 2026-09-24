@@ -195,55 +195,79 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
         </div>
 
         {/* CARDS DE INDICADORES (KPIS DO HÓSPEDE) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {/* Total de Reservas */}
-          <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-500">Total de Reservas</p>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mt-1">{reservas.length}</h3>
-              <p className="text-[10px] md:text-xs text-emerald-600 font-medium mt-1">4 estadias este ano</p>
-            </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-xl md:text-2xl">hotel</span>
-            </div>
-          </div>
+        {(() => {
+          const ativasCount = reservas.filter(r => r.isAtiva || (r.status || '').toLowerCase() === 'hospedado').length;
+          const activeRes = reservas.find(r => r.isAtiva || (r.status || '').toLowerCase() === 'hospedado');
+          const proximasCount = reservas.filter(r => r.status === 'Confirmada' || r.status === 'Garantida').length;
+          const concluidasCount = reservas.filter(r => (r.status || '').toLowerCase().includes('conclu') || (r.status || '').toLowerCase().includes('finaliz')).length;
+          const pontosCalculados = concluidasCount * 10;
 
-          {/* Em Andamento / Ativa */}
-          <div className="bg-white rounded-2xl p-4 md:p-5 border border-emerald-200 bg-gradient-to-br from-white to-emerald-50/40 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-emerald-700">Estadia Ativa</p>
-              <h3 className="text-xl md:text-2xl font-bold text-emerald-900 mt-1">1 Ativa</h3>
-              <p className="text-[10px] md:text-xs text-emerald-700 font-medium mt-1 truncate">Suíte Master King • 204</p>
-            </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
-              <span className="material-symbols-outlined text-xl md:text-2xl">key</span>
-            </div>
-          </div>
+          return (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              {/* Total de Reservas */}
+              <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-500">Total de Reservas</p>
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 mt-1">{reservas.length}</h3>
+                  <p className="text-[10px] md:text-xs text-emerald-600 font-medium mt-1">
+                    {concluidasCount} {concluidasCount === 1 ? 'concluída' : 'concluídas'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-xl md:text-2xl">hotel</span>
+                </div>
+              </div>
 
-          {/* Futuras / Confirmadas */}
-          <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-500">Próximas Viagens</p>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-900 mt-1">2 Confirmadas</h3>
-              <p className="text-[10px] md:text-xs text-slate-500 mt-1">Próxima em 18 de Abril</p>
-            </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-xl md:text-2xl">calendar_month</span>
-            </div>
-          </div>
+              {/* Em Andamento / Ativa */}
+              <div className="bg-white rounded-2xl p-4 md:p-5 border border-emerald-200 bg-gradient-to-br from-white to-emerald-50/40 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-emerald-700">Estadia Ativa</p>
+                  <h3 className="text-xl md:text-2xl font-bold text-emerald-900 mt-1">
+                    {ativasCount > 0 ? `${ativasCount} Ativa` : 'Nenhuma'}
+                  </h3>
+                  <p className="text-[10px] md:text-xs text-emerald-700 font-medium mt-1 truncate">
+                    {activeRes ? `${activeRes.quartoNome} • ${activeRes.hotelNome}` : 'Sem estadia ativa'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                  <span className="material-symbols-outlined text-xl md:text-2xl">key</span>
+                </div>
+              </div>
 
-          {/* Pontos de Fidelidade */}
-          <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-500">Programa Fidelidade</p>
-              <h3 className="text-xl md:text-2xl font-bold text-purple-700 mt-1">2.450 pts</h3>
-              <p className="text-[10px] md:text-xs text-purple-600 font-medium mt-1">Nível Ouro VIP</p>
+              {/* Futuras / Confirmadas */}
+              <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-500">Próximas Viagens</p>
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 mt-1">
+                    {proximasCount} {proximasCount === 1 ? 'Confirmada' : 'Confirmadas'}
+                  </h3>
+                  <p className="text-[10px] md:text-xs text-slate-500 mt-1">
+                    {proximasCount > 0 ? 'Datas programadas' : 'Nenhuma viagem agendada'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-xl md:text-2xl">calendar_month</span>
+                </div>
+              </div>
+
+              {/* Pontos de Fidelidade */}
+              <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-500">Programa Fidelidade</p>
+                  <h3 className="text-xl md:text-2xl font-bold text-purple-700 mt-1">
+                    {pontosCalculados.toLocaleString('pt-BR')} pts
+                  </h3>
+                  <p className="text-[10px] md:text-xs text-purple-600 font-medium mt-1">
+                    {pontosCalculados > 0 ? `${pontosCalculados} pts acumulados` : '10 pts por hospedagem'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-xl md:text-2xl">military_tech</span>
+                </div>
+              </div>
             </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-xl md:text-2xl">military_tech</span>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* BARRA DE FILTROS, BUSCA E ALTERNÂNCIA DE ABAS */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
