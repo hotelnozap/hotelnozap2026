@@ -43,6 +43,7 @@ export interface Hotel {
   initials?: string;
   isImportedFromGoogle?: boolean;
   agenteIa?: string;
+  isTop10?: boolean;
 }
 
 export const INITIAL_HOTEIS: Hotel[] = [

@@ -91,6 +91,14 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   // States
   const [status, setStatus] = useState<'ativo' | 'inativo'>(hotelToEdit?.status === 'bloqueado' ? 'inativo' : 'ativo');
   const [isGoogleMaps, setIsGoogleMaps] = useState<boolean>(() => isHotelGoogleMaps(hotelToEdit));
+  const [isTop10, setIsTop10] = useState<boolean>(() => {
+    if (!hotelToEdit) return false;
+    return Boolean(
+      (hotelToEdit as any).isTop10 ||
+      (hotelToEdit as any).is_top_10 ||
+      (hotelToEdit.notes && hotelToEdit.notes.includes('[TOP10]'))
+    );
+  });
   const [logoPreview, setLogoPreview] = useState<string | null>(hotelToEdit?.imageUrl || null);
   const [infoCreditosState, setInfoCreditosState] = useState<InfoCreditoHotel | null>(() => {
     return hotelToEdit ? creditosService.calcularInfoCreditos(hotelToEdit) : null;
@@ -99,6 +107,11 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   useEffect(() => {
     if (hotelToEdit) {
       setInfoCreditosState(creditosService.calcularInfoCreditos(hotelToEdit));
+      setIsTop10(Boolean(
+        (hotelToEdit as any).isTop10 ||
+        (hotelToEdit as any).is_top_10 ||
+        (hotelToEdit.notes && hotelToEdit.notes.includes('[TOP10]'))
+      ));
     }
   }, [hotelToEdit]);
 
@@ -725,6 +738,11 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       if (isGoogleMaps && !finalNotes.toLowerCase().includes('google') && !finalNotes.toLowerCase().includes('places')) {
         finalNotes = finalNotes ? `${finalNotes} | Cadastro manual - Origem Google Maps` : `Cadastro manual - Origem Google Maps (${new Date().toLocaleDateString('pt-BR')})`;
       }
+      if (isTop10 && !finalNotes.includes('[TOP10]')) {
+        finalNotes = finalNotes ? `${finalNotes} [TOP10]` : '[TOP10]';
+      } else if (!isTop10 && finalNotes.includes('[TOP10]')) {
+        finalNotes = finalNotes.replace(/\s*\[TOP10\]/g, '').trim();
+      }
 
       // Capacidade total de quartos gerenciados definida de acordo com o plano selecionado
       const calculatedCapacity = isGoogleMaps
@@ -767,7 +785,8 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         facebook: facebook.trim() || undefined,
         tiktok: tiktok.trim() || undefined,
         whatsapp: whatsappSocial.trim() || undefined,
-        isImportedFromGoogle: isGoogleMaps
+        isImportedFromGoogle: isGoogleMaps,
+        isTop10: isTop10
       };
 
       const currentHotelId = hotelToEdit?.id || currentHotelService.getCurrentHotel().id;
@@ -996,6 +1015,31 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                 {isGoogleMaps && (
                   <span className="text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full">
                     Ativo
+                  </span>
+                )}
+              </div>
+
+              {/* Checkbox Destacar no Top 10 */}
+              <div className={`flex items-center gap-2.5 p-2.5 px-4 rounded-xl border transition-all ${
+                isTop10 
+                  ? 'bg-amber-50/90 border-amber-300 text-amber-950 shadow-xs' 
+                  : 'bg-white border-slate-200 text-slate-700 shadow-xs'
+              }`}>
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={isTop10}
+                    onChange={(e) => setIsTop10(e.target.checked)}
+                    className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer accent-amber-600"
+                  />
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-lg text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
+                    <span className="text-xs md:text-sm font-bold">Destacar no Top 10</span>
+                  </div>
+                </label>
+                {isTop10 && (
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white px-2 py-0.5 rounded-full">
+                    Top 10
                   </span>
                 )}
               </div>

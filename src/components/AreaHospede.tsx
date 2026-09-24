@@ -604,26 +604,28 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             </div>
           </div>
 
-          {/* Card Resumo do Quarto Atual / Status da Estadia */}
-          <div className="mx-4 mt-5 p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
-            <div className="w-11 h-11 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg shrink-0">
-              {temEstadiaOuReserva ? (perfil?.temCheckinAtivo ? (perfil?.quartoNumero || '100') : 'RES') : <span className="material-symbols-outlined text-2xl">person</span>}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className={`text-xs font-semibold uppercase tracking-wider ${temEstadiaOuReserva && perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-400'}`}>
-                  {temEstadiaOuReserva ? (perfil?.statusEstadia || (perfil?.temCheckinAtivo ? 'Hospedado' : 'Reserva Ativa')) : 'Conta Pessoal'}
-                </span>
-                {temEstadiaOuReserva && perfil?.temCheckinAtivo && <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>}
+          {/* Card Resumo do Quarto Atual / Status da Estadia (apenas exibido se houver estadia ativa) */}
+          {temEstadiaOuReserva && (
+            <div className="mx-4 mt-5 p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
+              <div className="w-11 h-11 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg shrink-0">
+                {perfil?.temCheckinAtivo ? (perfil?.quartoNumero || '100') : 'RES'}
               </div>
-              <p className="text-sm font-bold text-white truncate">
-                {temEstadiaOuReserva ? (perfil?.quartoNome || 'Quarto') : 'Nenhuma estadia ativa'}
-              </p>
-              <p className="text-[11px] text-slate-400 truncate">
-                {temEstadiaOuReserva ? (perfil?.hotelNome || 'Hotel') : 'Portal Hotel no Zap'}
-              </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-semibold uppercase tracking-wider ${perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-400'}`}>
+                    {perfil?.statusEstadia || (perfil?.temCheckinAtivo ? 'Hospedado' : 'Reserva Ativa')}
+                  </span>
+                  {perfil?.temCheckinAtivo && <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>}
+                </div>
+                <p className="text-sm font-bold text-white truncate">
+                  {perfil?.quartoNome || 'Quarto'}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate">
+                  {perfil?.hotelNome || 'Hotel'}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Menu de Navegação da Sidebar */}
           <nav className="mt-6 px-3 space-y-1">
@@ -828,15 +830,17 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   </button>
                 </div>
 
-                <div className="mt-4 p-3 rounded-xl bg-white/10 border border-white/15">
-                  <span className={`text-[10px] uppercase font-bold ${temEstadiaOuReserva && perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-300'}`}>
-                    {temEstadiaOuReserva ? (perfil?.temCheckinAtivo ? `Quarto ${perfil?.quartoNumero} • ${perfil?.statusEstadia}` : 'Reserva Ativa') : 'Conta Pessoal'}
-                  </span>
-                  <p className="text-sm font-bold text-white">{temEstadiaOuReserva ? (perfil?.quartoNome || 'Quarto') : 'Nenhum quarto ocupado'}</p>
-                  {temEstadiaOuReserva && perfil?.hotelNome && (
-                    <p className="text-[11px] text-slate-300 truncate">{perfil.hotelNome}</p>
-                  )}
-                </div>
+                {temEstadiaOuReserva && (
+                  <div className="mt-4 p-3 rounded-xl bg-white/10 border border-white/15">
+                    <span className={`text-[10px] uppercase font-bold ${perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-300'}`}>
+                      {perfil?.temCheckinAtivo ? `Quarto ${perfil?.quartoNumero} • ${perfil?.statusEstadia}` : 'Reserva Ativa'}
+                    </span>
+                    <p className="text-sm font-bold text-white">{perfil?.quartoNome || 'Quarto'}</p>
+                    {perfil?.hotelNome && (
+                      <p className="text-[11px] text-slate-300 truncate">{perfil.hotelNome}</p>
+                    )}
+                  </div>
+                )}
 
                 <nav className="mt-5 space-y-1">
                   <button

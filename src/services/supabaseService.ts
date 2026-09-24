@@ -732,7 +732,12 @@ export const hoteisService = {
           whatsapp: h.whatsapp || '',
           agenteIa: h.agente_ia || (h.id && typeof window !== 'undefined' ? localStorage.getItem(`hotel_agente_ia_${h.id}`) : '') || '',
           createdAt: h.criado_em || '',
-          isImportedFromGoogle
+          isImportedFromGoogle,
+          isTop10: Boolean(
+            h.is_top_10 ||
+            (h.observacoes && (h.observacoes.includes('[TOP10]') || h.observacoes.includes('TOP 10') || h.observacoes.includes('TOP_10'))) ||
+            (h.notes && (h.notes.includes('[TOP10]') || h.notes.includes('TOP 10') || h.notes.includes('TOP_10')))
+          )
         };
       });
     } catch (err) {
@@ -782,7 +787,8 @@ export const hoteisService = {
         tiktok: hotel.tiktok || null,
         whatsapp: hotel.whatsapp || null,
         agente_ia: hotel.agenteIa?.trim() || (hotel as any).nomeAgenteIa?.trim() || null,
-        parceiro_referencia: (hotel as any).partnerRef || null
+        parceiro_referencia: (hotel as any).partnerRef || null,
+        is_top_10: Boolean(hotel.isTop10)
       };
 
       let result = await supabase.from('hoteis').insert([payload]).select('*').single();
@@ -790,7 +796,7 @@ export const hoteisService = {
       let data = result.data;
 
       // Fallback gracioso se o usuário ainda não tiver rodado o SQL das novas colunas
-      if (error && (error.code === '42703' || error.message?.includes('link') || error.message?.includes('instagram') || error.message?.includes('facebook') || error.message?.includes('tiktok') || error.message?.includes('whatsapp') || error.message?.includes('parceiro_referencia') || error.message?.includes('numero') || error.message?.includes('agente_ia'))) {
+      if (error && (error.code === '42703' || error.message?.includes('link') || error.message?.includes('is_top_10') || error.message?.includes('instagram') || error.message?.includes('facebook') || error.message?.includes('tiktok') || error.message?.includes('whatsapp') || error.message?.includes('parceiro_referencia') || error.message?.includes('numero') || error.message?.includes('agente_ia'))) {
         delete payload.link;
         delete payload.instagram;
         delete payload.facebook;
@@ -799,6 +805,7 @@ export const hoteisService = {
         delete payload.parceiro_referencia;
         delete payload.numero;
         delete payload.agente_ia;
+        delete payload.is_top_10;
         const retry = await supabase.from('hoteis').insert([payload]).select('*').single();
         error = retry.error;
         data = retry.data;
@@ -860,6 +867,7 @@ export const hoteisService = {
       if (hotel.facebook !== undefined) payload.facebook = hotel.facebook || null;
       if (hotel.tiktok !== undefined) payload.tiktok = hotel.tiktok || null;
       if (hotel.whatsapp !== undefined) payload.whatsapp = hotel.whatsapp || null;
+      if (hotel.isTop10 !== undefined) payload.is_top_10 = Boolean(hotel.isTop10);
       if (hotel.agenteIa !== undefined || (hotel as any).nomeAgenteIa !== undefined) {
         const agVal = (hotel.agenteIa || (hotel as any).nomeAgenteIa || '').trim();
         payload.agente_ia = agVal || null;
@@ -876,7 +884,7 @@ export const hoteisService = {
       let { error } = await supabase.from('hoteis').update(payload).eq('id', targetId);
 
       // Fallback gracioso se o usuário ainda não tiver rodado o SQL das novas colunas
-      if (error && (error.code === '42703' || error.message?.includes('link') || error.message?.includes('instagram') || error.message?.includes('facebook') || error.message?.includes('tiktok') || error.message?.includes('whatsapp') || error.message?.includes('numero') || error.message?.includes('agente_ia'))) {
+      if (error && (error.code === '42703' || error.message?.includes('is_top_10') || error.message?.includes('link') || error.message?.includes('instagram') || error.message?.includes('facebook') || error.message?.includes('tiktok') || error.message?.includes('whatsapp') || error.message?.includes('numero') || error.message?.includes('agente_ia'))) {
         delete payload.link;
         delete payload.instagram;
         delete payload.facebook;
@@ -884,6 +892,7 @@ export const hoteisService = {
         delete payload.whatsapp;
         delete payload.numero;
         delete payload.agente_ia;
+        delete payload.is_top_10;
         const retryResult = await supabase.from('hoteis').update(payload).eq('id', targetId);
         error = retryResult.error;
       }
