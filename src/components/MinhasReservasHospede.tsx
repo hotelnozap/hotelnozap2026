@@ -49,7 +49,7 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
   useEffect(() => {
     const carregarReservasReais = async () => {
       try {
-        const perfil = await hospedesService.getPerfilHospedeLogado(userEmail || userName);
+        const perfil = await hospedesService.getPerfilHospedeLogado(userEmail, userName);
         if (perfil?.historicoReservas && perfil.historicoReservas.length > 0) {
           const mapped: ReservaItemFull[] = perfil.historicoReservas.map((r: any, idx: number) => {
             const isAtiva = (r.status || '').toLowerCase() === 'hospedado' || (r.status || '').toLowerCase() === 'em andamento';
@@ -166,12 +166,18 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
               Voltar para Minha Conta
             </button>
             <div className="flex items-center gap-3 pt-1">
-              <h1 className="text-xl md:text-3xl font-bold text-slate-900 tracking-tight">Minhas Reservas</h1>
+              <h1 className="text-xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                {reservas.some(r => r.isAtiva) ? 'Minhas Reservas' : 'Histórico de Hospedagens'}
+              </h1>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
                 Hóspede VIP
               </span>
             </div>
-            <p className="text-xs md:text-sm text-slate-500">Histórico completo, estadias ativas e vouchers confirmados para {userName}.</p>
+            <p className="text-xs md:text-sm text-slate-500">
+              {reservas.some(r => r.isAtiva)
+                ? `Histórico completo, estadias ativas e vouchers confirmados para ${userName}.`
+                : `Histórico completo de todas as estadias anteriores realizadas na rede Hotel no Zap para ${userName}.`}
+            </p>
           </div>
 
           {/* Ações Rápidas do Topo */}

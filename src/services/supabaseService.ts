@@ -1346,9 +1346,16 @@ export const hospedesService = {
     }
   },
 
-  async getPerfilHospedeLogado(emailOrName?: string): Promise<any> {
+  async getPerfilHospedeLogado(emailOrName?: string, explicitName?: string): Promise<any> {
+    const normalizeStr = (val: string) =>
+      (val || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
     let searchEmail = (emailOrName && emailOrName.includes('@')) ? emailOrName.trim().toLowerCase() : '';
-    let searchName = (emailOrName && !emailOrName.includes('@')) ? emailOrName.trim().toLowerCase() : '';
+    let searchName = (explicitName || (emailOrName && !emailOrName.includes('@') ? emailOrName : '')).trim();
 
     if (!searchEmail && typeof window !== 'undefined') {
       const savedEmail = localStorage.getItem('hotelnozap_user_email');
@@ -1356,7 +1363,7 @@ export const hospedesService = {
     }
     if (!searchName && typeof window !== 'undefined') {
       const savedName = localStorage.getItem('hotelnozap_user_name');
-      if (savedName) searchName = savedName.trim().toLowerCase();
+      if (savedName) searchName = savedName.trim();
     }
 
     if (!searchEmail) {
@@ -1372,18 +1379,46 @@ export const hospedesService = {
     let uData: any = null;
 
     try {
+      // 1. Busca por e-mail em hospedes e usuarios
       if (searchEmail) {
         const { data: h } = await supabase.from('hospedes').select('*').ilike('email', searchEmail).maybeSingle();
         hData = h;
         const { data: u } = await supabase.from('usuarios').select('*').ilike('email', searchEmail).maybeSingle();
         uData = u;
       }
-      if (!hData && searchName) {
-        const { data: h } = await supabase.from('hospedes').select('*').ilike('nome', `%${searchName}%`).limit(1).maybeSingle();
-        hData = h;
+
+      // 2. Busca inteligente por Nome (se não achou por e-mail ou para enriquecer dados)
+      if (searchName && searchName !== 'Hóspede' && searchName.length >= 2) {
+        const nameTokens = searchName.split(/\s+/).filter((t: string) => t.length >= 2);
+        const fName = nameTokens[0] || searchName;
+        const lName = nameTokens.length > 1 ? nameTokens[nameTokens.length - 1] : '';
+
+        if (!hData) {
+          const { data: hList } = await supabase.from('hospedes').select('*').ilike('nome', `%${fName}%`).limit(10);
+          if (hList && hList.length > 0) {
+            const matched = hList.find((h: any) => {
+              const hNorm = normalizeStr(h.nome);
+              const sNorm = normalizeStr(searchName);
+              return hNorm.includes(sNorm) || sNorm.includes(hNorm) ||
+                (hNorm.includes(normalizeStr(fName)) && (!lName || hNorm.includes(normalizeStr(lName))));
+            });
+            if (matched) hData = matched;
+            else if (hList.length === 1) hData = hList[0];
+          }
+        }
+
         if (!uData) {
-          const { data: u } = await supabase.from('usuarios').select('*').ilike('nome', `%${searchName}%`).limit(1).maybeSingle();
-          uData = u;
+          const { data: uList } = await supabase.from('usuarios').select('*').ilike('nome', `%${fName}%`).limit(10);
+          if (uList && uList.length > 0) {
+            const matched = uList.find((u: any) => {
+              const uNorm = normalizeStr(u.nome);
+              const sNorm = normalizeStr(searchName);
+              return uNorm.includes(sNorm) || sNorm.includes(uNorm) ||
+                (uNorm.includes(normalizeStr(fName)) && (!lName || uNorm.includes(normalizeStr(lName))));
+            });
+            if (matched) uData = matched;
+            else if (uList.length === 1) uData = uList[0];
+          }
         }
       }
     } catch (err) {
@@ -1428,14 +1463,40 @@ export const hospedesService = {
         if (byObsEmail) candidates.push(...byObsEmail);
       }
 
-      // C. Busca por nome do hóspede
-      if (realNome && realNome !== 'Hóspede' && realNome.length >= 3) {
-        const { data: byNome } = await supabase
+      // C. Busca flexível e bidirecional por NOME do hóspede
+      if (realNome && realNome !== 'Hóspede' && realNome.length >= 2) {
+        const tokens = realNome.trim().split(/\s+/).filter((t: string) => t.length >= 2);
+        const fName = tokens[0];
+        const lName = tokens.length > 1 ? tokens[tokens.length - 1] : '';
+
+        // Busca ampla por primeiro nome
+        const { data: byNameQuery } = await supabase
           .from('reservas')
           .select('*')
-          .ilike('nome_hospede', `%${realNome}%`)
+          .ilike('nome_hospede', `%${fName}%`)
           .order('criado_em', { ascending: false });
-        if (byNome) candidates.push(...byNome);
+
+        if (byNameQuery) {
+          const matched = byNameQuery.filter((r: any) => {
+            const rNorm = normalizeStr(r.nome_hospede);
+            const uNorm = normalizeStr(realNome);
+            return rNorm.includes(uNorm) || uNorm.includes(rNorm) ||
+              (rNorm.includes(normalizeStr(fName)) && (!lName || rNorm.includes(normalizeStr(lName))));
+          });
+          candidates.push(...matched);
+        }
+      }
+
+      // D. Busca por Telefone nas observações
+      const phoneDigits = (realTelefone || '').replace(/\D/g, '');
+      if (phoneDigits.length >= 8) {
+        const lastDigits = phoneDigits.slice(-8);
+        const { data: byPhone } = await supabase
+          .from('reservas')
+          .select('*')
+          .ilike('observacoes', `%${lastDigits}%`)
+          .order('criado_em', { ascending: false });
+        if (byPhone) candidates.push(...byPhone);
       }
 
       // Desduplicação por ID único da reserva
@@ -1444,6 +1505,16 @@ export const hospedesService = {
         if (item && item.id && !seenIds.has(item.id)) {
           seenIds.add(item.id);
           reservasReais.push(item);
+        }
+      }
+
+      // Auto-vínculo permanente: se houver reserva sem hospede_id, associa ao hóspede
+      if (hData?.id) {
+        for (const res of reservasReais) {
+          if (!res.hospede_id) {
+            res.hospede_id = hData.id;
+            supabase.from('reservas').update({ hospede_id: hData.id }).eq('id', res.id).then(() => {}, () => {});
+          }
         }
       }
 
@@ -1605,10 +1676,10 @@ export const hospedesService = {
     // Contagem de hospedagens concluídas
     const hospedagensConcluidas = reservasReais.filter((r: any) => {
       const s = (r.status || '').toLowerCase();
-      return s.includes('conclu') || s.includes('finaliz');
+      return s.includes('conclu') || s.includes('finaliz') || s.includes('hosped');
     }).length;
 
-    const totalHospedagens = hospedagensConcluidas;
+    const totalHospedagens = hospedagensConcluidas > 0 ? hospedagensConcluidas : reservasReais.length;
     const pontosFidelidade = totalHospedagens * 10;
 
     const statusEstadia = temCheckinAtivo

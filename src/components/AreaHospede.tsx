@@ -105,7 +105,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
   const carregarPerfilReal = async () => {
     try {
       setLoadingPerfil(true);
-      const data = await hospedesService.getPerfilHospedeLogado(userEmail || userName);
+      const data = await hospedesService.getPerfilHospedeLogado(userEmail, userName);
       if (userEmail || data?.email) {
         usuariosService.registrarUltimoAcesso(userEmail || data?.email);
       }
@@ -668,7 +668,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               }`}
             >
               <span className={`material-symbols-outlined text-xl ${activeSubTab === 'minhas-reservas' ? 'text-emerald-400' : 'text-slate-400'}`}>calendar_month</span>
-              <span>Minhas Reservas</span>
+              <span>{temEstadiaOuReserva ? 'Minhas Reservas' : 'Histórico de Hospedagens'}</span>
             </button>
 
             {temEstadiaOuReserva && (
@@ -865,7 +865,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">calendar_month</span>
-                    Minhas Reservas
+                    {temEstadiaOuReserva ? 'Minhas Reservas' : 'Histórico de Hospedagens'}
                   </button>
 
                   {temEstadiaOuReserva && (
@@ -1413,7 +1413,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                       className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-base text-emerald-400">calendar_month</span>
-                      Minhas Reservas
+                      Histórico de Hospedagens
                     </button>
                     <button
                       onClick={() => setActiveSubTab('dados-cadastrais')}
@@ -1434,19 +1434,13 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   <p className="text-xs text-slate-300">
                     Encontre as melhores diárias com confirmação instantânea e check-in inteligente via WhatsApp.
                   </p>
-                  <button
-                    onClick={() => {
-                      if (onNavigateToSystem) {
-                        onNavigateToSystem();
-                      } else {
-                        setActiveSubTab('minhas-reservas');
-                      }
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                  <a
+                    href="https://hotelnozap.com.br"
+                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer no-underline"
                   >
                     <span className="material-symbols-outlined text-base">hotel</span>
                     Explorar Hotéis & Reservar
-                  </button>
+                  </a>
                 </div>
               </div>
             </section>
@@ -1587,7 +1581,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                       <span className="material-symbols-outlined text-slate-600">receipt_long</span>
-                      Histórico de Reservas
+                      Histórico de Hospedagens
                     </h4>
                     <button
                       onClick={() => setActiveSubTab('minhas-reservas')}
@@ -1599,15 +1593,15 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                   {reservas.length > 0 ? (
                     <div className="space-y-3">
-                      {reservas.slice(0, 3).map((res: any) => (
-                        <div key={res.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+                      {reservas.slice(0, 4).map((res: any) => (
+                        <div key={res.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-colors">
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-slate-900 truncate">{res.hotel || res.hotelNome || 'Hotel'}</p>
-                            <p className="text-[11px] text-slate-500">{res.checkIn} — {res.checkOut}</p>
-                            <p className="text-[11px] text-slate-400 font-medium">{res.codigo}</p>
+                            <p className="text-[11px] text-slate-500">{res.checkIn} — {res.checkOut} • {res.quarto || 'Quarto'}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{res.codigo} • {res.hotelCidade || 'Rede Hotel no Zap'}</p>
                           </div>
-                          <span className="px-2 py-1 rounded-full text-[10px] font-extrabold uppercase bg-slate-200 text-slate-700 shrink-0">
-                            {res.status || 'Concluída'}
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                            {res.status?.toLowerCase().includes('conclu') ? 'Hospedagem Concluída' : (res.status || 'Hospedagem')}
                           </span>
                         </div>
                       ))}
@@ -1618,9 +1612,9 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                         <span className="material-symbols-outlined text-2xl">luggage</span>
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-slate-700">Nenhuma reserva anterior</p>
+                        <p className="text-xs font-bold text-slate-700">Nenhuma hospedagem anterior</p>
                         <p className="text-[11px] text-slate-500 max-w-xs mx-auto mt-0.5">
-                          Assim que você reservar em um hotel, seu histórico e vouchers aparecerão aqui automaticamente.
+                          Assim que você concluir uma estadia em um hotel da rede, todo o seu histórico de hospedagens e comprovantes aparecerão aqui automaticamente.
                         </p>
                       </div>
                     </div>
@@ -2197,7 +2191,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'minhas-reservas' ? 'bg-emerald-100' : ''}`}>
                 <span className="material-symbols-outlined text-[20px]">calendar_month</span>
               </div>
-              <span className="text-[10px] tracking-tight">Reservas</span>
+              <span className="text-[10px] tracking-tight">{temEstadiaOuReserva ? 'Reservas' : 'Hospedagens'}</span>
             </button>
           )}
 
