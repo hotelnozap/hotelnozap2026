@@ -1259,6 +1259,44 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           /* MODO PÁGINA INICIAL: DIVIDIDO POR CIDADES COM CARROSSÉIS CONFORME AIRBNB  */
           /* ========================================================================= */
           <>
+            {/* SEÇÃO OS TOP 10 DA REDE (SEMPRE EXIBIDA NO INÍCIO DA HOME SE HOUVER HOTÉIS MARCADOS) */}
+            {top10Hotels.length > 0 && (
+              <section className="space-y-4 pb-4 border-b border-slate-100">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                      <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
+                    </div>
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                        Os Top 10 da Rede
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
+                          {top10Hotels.length} {top10Hotels.length === 1 ? 'hotel' : 'hotéis'}
+                        </span>
+                      </h2>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Seleção exclusiva das melhores hospedagens e parceiros recomendados pela nossa equipe
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GRADE: Desktop 2 linhas de 5 (md:grid-cols-5) | Mobile 2 cards por linha (grid-cols-2) */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 sm:gap-5">
+                  {top10Hotels.map((hotel) => (
+                    <AirbnbHotelCard
+                      key={`top10-home-${hotel.id}`}
+                      hotel={hotel}
+                      onHotelClick={handleVerHotel}
+                      isFav={favorites.has(hotel.id)}
+                      toggleFavorite={toggleFavorite}
+                      className="w-full"
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* CARROSSÉIS RENDERIZADOS POR CIDADE (INICIA COM AS PRIMEIRAS CIDADES E ROLA SUAVE) */}
             {cityGroups.slice(0, visibleCitiesCount).map((group) => (
               <CityCarousel
