@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { currentHotelService, HotelAtivo, usuariosService } from '../services/supabaseService';
 
@@ -11,10 +11,149 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Estados para Recuperação de Senha (Esqueceu a senha)
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [forgotError, setForgotError] = useState('');
+
+  // Estados para Definir Nova Senha (quando o usuário acessa via link do e-mail de recuperação)
+  const [isResetPasswordView, setIsResetPasswordView] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState('');
+  const [resetError, setResetError] = useState('');
+
+  // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem('hotelnozap_remember_email');
+      const isRemembered = localStorage.getItem('hotelnozap_remember_me');
+      if (savedEmail && isRemembered !== 'false') {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar dados salvos:', e);
+    }
+  }, []);
+
+  // 2. Listener para capturar quando o usuário abre o link do e-mail de recuperação de senha
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
+      if (hash.includes('type=recovery') || search.includes('type=recovery')) {
+        setIsResetPasswordView(true);
+      }
+    }
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResetPasswordView(true);
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  // Manipulador para alternar "Lembrar meus dados"
+  const handleRememberMeChange = (checked: boolean) => {
+    setRememberMe(checked);
+    if (!checked) {
+      try {
+        localStorage.removeItem('hotelnozap_remember_email');
+        localStorage.setItem('hotelnozap_remember_me', 'false');
+      } catch { /* ignore */ }
+    } else if (email.trim()) {
+      try {
+        localStorage.setItem('hotelnozap_remember_email', email.trim().toLowerCase());
+        localStorage.setItem('hotelnozap_remember_me', 'true');
+      } catch { /* ignore */ }
+    }
+  };
+
+  // Manipulador para envio do e-mail de recuperação de senha
+  const handleSendRecoveryEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotSuccess('');
+
+    const targetEmail = forgotEmail.trim().toLowerCase();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setForgotError('Por favor, informe um endereço de e-mail válido.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const redirectUrl = window.location.origin + window.location.pathname;
+      const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
+        redirectTo: redirectUrl
+      });
+
+      if (error) {
+        console.warn('Erro ao solicitar reset de senha:', error);
+        if (error.message.includes('rate limit') || error.message.includes('over_email_send_rate_limit')) {
+          setForgotError('Muitas tentativas em pouco tempo. Aguarde alguns minutos ou fale diretamente com o suporte no WhatsApp.');
+        } else {
+          setForgotError(`Falha ao enviar: ${error.message}`);
+        }
+      } else {
+        setForgotSuccess(`Enviamos um link de recuperação para ${targetEmail}. Verifique sua caixa de entrada e pasta de spam.`);
+      }
+    } catch (err: any) {
+      console.error('Erro na recuperação:', err);
+      setForgotError('Ocorreu um erro ao processar sua solicitação. Tente novamente ou use o suporte WhatsApp.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Manipulador para salvar a nova senha redefinida
+  const handleSaveNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+    setResetSuccess('');
+
+    if (!newPassword || newPassword.length < 6) {
+      setResetError('A nova senha deve conter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setResetError('As senhas digitadas não coincidem. Digite novamente.');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setResetError(`Erro ao redefinir senha: ${error.message}`);
+      } else {
+        setResetSuccess('Sua senha foi redefinida com sucesso! Você já pode fazer login.');
+        setTimeout(() => {
+          setIsResetPasswordView(false);
+          setSuccessMessage('Senha atualizada com sucesso! Entre com sua nova senha.');
+        }, 1800);
+      }
+    } catch (err: any) {
+      setResetError('Erro ao atualizar a senha. Tente novamente.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   // Manipulador de submit do login com autenticação real
   const handleSubmit = async (e: React.FormEvent) => {
@@ -186,6 +325,17 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       localStorage.setItem('hotelnozap_last_authenticated_at', new Date().toISOString());
       usuariosService.registrarUltimoAcesso(cleanEmail);
 
+      // Salva ou remove dados de acordo com a opção "Lembrar meus dados"
+      try {
+        if (rememberMe) {
+          localStorage.setItem('hotelnozap_remember_email', cleanEmail);
+          localStorage.setItem('hotelnozap_remember_me', 'true');
+        } else {
+          localStorage.removeItem('hotelnozap_remember_email');
+          localStorage.setItem('hotelnozap_remember_me', 'false');
+        }
+      } catch { /* ignore */ }
+
       // Sincroniza o hotel ao qual este usuário pertence
       if (dbUser?.hotel_id) {
         try {
@@ -253,11 +403,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         <div className="relative z-10">
           <div className="flex items-center gap-3.5">
             <div className="w-13 h-13 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg p-2.5">
-              <span className="material-symbols-outlined text-emerald-400 text-3xl">apartment</span>
+              <span className="material-symbols-outlined text-emerald-400 text-3xl">hotel</span>
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-wider text-white">HOTEL NO ZAP</h1>
-              <p className="text-xs text-emerald-400 font-semibold tracking-wider">GESTÃO HOTELEIRA DIGITAL</p>
+              <p className="text-xs text-emerald-400 font-semibold tracking-wider">HOSPITALIDADE DIGITAL</p>
             </div>
           </div>
         </div>
@@ -331,13 +481,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </div>
             )}
 
-            {/* Header Mobile se necessário */}
-            <div className="flex items-center justify-between mb-8 lg:hidden">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-[#003400] text-emerald-400 flex items-center justify-center shadow">
-                  <span className="material-symbols-outlined text-xl">apartment</span>
+            {/* Header Mobile: Logo Centralizada no topo conforme solicitado */}
+            <div className="flex flex-col items-center justify-center text-center mb-6 lg:hidden">
+              <div className="flex items-center justify-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#006c49] flex items-center justify-center text-white shadow-md">
+                  <span className="material-symbols-outlined text-[24px]">hotel</span>
                 </div>
-                <span className="font-extrabold text-base tracking-wider text-slate-900">HOTEL NO ZAP</span>
+                <div className="flex flex-col text-left leading-none">
+                  <span className="font-extrabold text-xl text-slate-900 tracking-tight">Hotel no Zap</span>
+                  <span className="text-[10px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
+                </div>
               </div>
             </div>
 
@@ -413,23 +566,25 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-[#003400] border-slate-300 rounded focus:ring-[#003400] focus:ring-offset-0 cursor-pointer accent-[#003400]"
+                    onChange={(e) => handleRememberMeChange(e.target.checked)}
+                    className="w-4 h-4 text-[#006c49] border-slate-300 rounded focus:ring-[#006c49] focus:ring-offset-0 cursor-pointer accent-[#006c49]"
                   />
-                  <span className="text-sm font-medium text-slate-600">Lembrar este dispositivo por 30 dias</span>
+                  <span className="text-sm font-medium text-slate-600">Lembrar meus dados</span>
                 </label>
-                <a
-                  href="#esqueci"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('Instruções de recuperação foram enviadas para ' + (email || 'seu e-mail'));
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotEmail(email);
+                    setForgotError('');
+                    setForgotSuccess('');
+                    setIsForgotPasswordOpen(true);
                   }}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline transition-all duration-200 cursor-pointer focus:outline-none"
-                  title="Recuperar senha corporativa"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline transition-all duration-200 cursor-pointer focus:outline-none"
+                  title="Recuperar senha de acesso"
                 >
-                  <span className="material-symbols-outlined text-sm text-emerald-600">help</span>
+                  <span className="material-symbols-outlined text-sm text-emerald-700">help</span>
                   Esqueceu a senha?
-                </a>
+                </button>
               </div>
 
               {/* Botão de Ação Principal (Login) */}
@@ -454,26 +609,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-3 text-slate-400 font-semibold tracking-wider">Acesso de Parceiros & Suporte</span>
+                <span className="bg-white px-3 text-slate-400 font-semibold tracking-wider">Precisa de Ajuda?</span>
               </div>
             </div>
 
-            {/* Botão Secundário / Área do Parceiro */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Botão de Suporte no WhatsApp (Portal do Parceiro removido conforme solicitado) */}
+            <div>
               <a
-                href="#parceiro"
-                onClick={(e) => { e.preventDefault(); alert('Acessando Portal de Parceiros Hotel no Zap'); }}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                href="https://wa.me/5581999999999?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20meu%20acesso%20ao%20Hotel%20no%20Zap"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-[0.99]"
               >
-                <span className="material-symbols-outlined text-base text-emerald-600">handshake</span>
-                <span>Portal do Parceiro</span>
-              </a>
-              <a
-                href="#suporte"
-                onClick={(e) => { e.preventDefault(); alert('Conectando ao Suporte Técnico via WhatsApp'); }}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-base text-slate-500">support_agent</span>
+                <span className="material-symbols-outlined text-base text-emerald-600">support_agent</span>
                 <span>Suporte no WhatsApp</span>
               </a>
             </div>
@@ -493,6 +641,246 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         </div>
 
       </div>
+
+      {/* MODAL DE RECUPERAÇÃO DE SENHA (ESQUECEU A SENHA) */}
+      {isForgotPasswordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+            {/* Botão fechar */}
+            <button
+              onClick={() => {
+                setIsForgotPasswordOpen(false);
+                setForgotError('');
+                setForgotSuccess('');
+              }}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+              title="Fechar"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+
+            {/* Header do modal */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006c49] border border-emerald-200/60 flex items-center justify-center shadow-xs">
+                <span className="material-symbols-outlined text-2xl">lock_reset</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Recuperar Senha</h3>
+                <p className="text-xs text-[#006c49] font-bold uppercase tracking-wider">Hotel no Zap</p>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">
+              Informe o e-mail cadastrado na sua conta. Você receberá um link seguro para redefinir sua senha de acesso.
+            </p>
+
+            {forgotSuccess ? (
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-emerald-800">
+                    <span className="material-symbols-outlined text-base">check_circle</span>
+                    <span>Link enviado com sucesso!</span>
+                  </div>
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    {forgotSuccess}
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-col gap-2">
+                  <button
+                    onClick={() => {
+                      setIsForgotPasswordOpen(false);
+                      setForgotSuccess('');
+                    }}
+                    className="w-full py-3 bg-[#006c49] hover:bg-[#005438] text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+                  >
+                    Voltar ao Login
+                  </button>
+
+                  <a
+                    href={`https://wa.me/5581999999999?text=${encodeURIComponent(`Olá, solicitei a recuperação de senha no Hotel no Zap para o e-mail: ${forgotEmail}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base text-emerald-600">support_agent</span>
+                    <span>Ajuda imediata pelo WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSendRecoveryEmail} className="space-y-4">
+                {forgotError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base text-red-600">error</span>
+                    <span>{forgotError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" htmlFor="forgot-email">
+                    E-mail Cadastrado
+                  </label>
+                  <div className="relative rounded-xl shadow-xs">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <span className="material-symbols-outlined text-lg">mail</span>
+                    </div>
+                    <input
+                      type="email"
+                      id="forgot-email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="ex: seu.email@hotel.com.br"
+                      required
+                      autoFocus
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#006c49] focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPasswordOpen(false);
+                      setForgotError('');
+                    }}
+                    className="w-1/2 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-1/2 py-2.5 rounded-xl bg-[#006c49] hover:bg-[#005438] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  >
+                    {forgotLoading ? (
+                      <>
+                        <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                        <span>Enviando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-base">send</span>
+                        <span>Enviar Link</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 text-center">
+                  <a
+                    href={`https://wa.me/5581999999999?text=${encodeURIComponent('Olá, preciso de ajuda para recuperar minha senha de acesso ao Hotel no Zap.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-700 font-medium transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm text-emerald-600">chat</span>
+                    <span>Esqueceu seu e-mail? Fale com o suporte</span>
+                  </a>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE DEFINIR NOVA SENHA (QUANDO ACESSADO VIA LINK DE RECUPERAÇÃO) */}
+      {isResetPasswordView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006c49] border border-emerald-200/60 flex items-center justify-center shadow-xs">
+                <span className="material-symbols-outlined text-2xl">key</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Criar Nova Senha</h3>
+                <p className="text-xs text-slate-500">Defina sua nova credencial de acesso</p>
+              </div>
+            </div>
+
+            {resetSuccess ? (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm space-y-3">
+                <div className="flex items-center gap-2 font-bold text-emerald-800">
+                  <span className="material-symbols-outlined text-base">check_circle</span>
+                  <span>Senha redefinida com sucesso!</span>
+                </div>
+                <p className="text-xs text-emerald-800">{resetSuccess}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSaveNewPassword} className="space-y-4">
+                {resetError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base text-red-600">error</span>
+                    <span>{resetError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" htmlFor="new-password">
+                    Nova Senha (mínimo 6 caracteres)
+                  </label>
+                  <div className="relative rounded-xl shadow-xs">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      id="new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Digite sua nova senha"
+                      required
+                      autoFocus
+                      className="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#006c49] focus:border-transparent transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                    >
+                      <span className="material-symbols-outlined text-base">
+                        {showNewPassword ? 'visibility_off' : 'visibility'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" htmlFor="confirm-new-password">
+                    Confirmar Nova Senha
+                  </label>
+                  <div className="relative rounded-xl shadow-xs">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      id="confirm-new-password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="Repita a nova senha"
+                      required
+                      className="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#006c49] focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsResetPasswordView(false)}
+                    className="w-1/2 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all cursor-pointer"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="w-1/2 py-2.5 rounded-xl bg-[#006c49] hover:bg-[#005438] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  >
+                    {resetLoading ? 'Salvando...' : 'Salvar Nova Senha'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );
