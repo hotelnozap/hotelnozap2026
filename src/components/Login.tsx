@@ -32,14 +32,27 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resetSuccess, setResetSuccess] = useState('');
   const [resetError, setResetError] = useState('');
 
-  // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente
+  // Estados de Segurança: Regra de bloqueio por 3 tentativas incorretas
+  const [isAccountLocked, setIsAccountLocked] = useState(false);
+  const [lockedEmail, setLockedEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState('');
+
+  // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente e checa bloqueio
   useEffect(() => {
     try {
       const savedEmail = localStorage.getItem('hotelnozap_remember_email');
       const isRemembered = localStorage.getItem('hotelnozap_remember_me');
       if (savedEmail && isRemembered !== 'false') {
-        setEmail(savedEmail);
+        const clean = savedEmail.trim().toLowerCase();
+        setEmail(clean);
         setRememberMe(true);
+
+        const isLocked = localStorage.getItem(`hotelnozap_locked_${clean}`) === 'true';
+        if (isLocked) {
+          setIsAccountLocked(true);
+          setLockedEmail(clean);
+        }
       }
     } catch (e) {
       console.warn('Erro ao carregar dados salvos:', e);
@@ -83,7 +96,55 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Manipulador para envio do e-mail de recuperação de senha
+  // Manipulador ao alterar o campo de e-mail (atualiza detecção de bloqueio em tempo real)
+  const handleEmailChange = (newVal: string) => {
+    setEmail(newVal);
+    const clean = newVal.trim().toLowerCase();
+    if (clean) {
+      const isLocked = localStorage.getItem(`hotelnozap_locked_${clean}`) === 'true';
+      if (isLocked) {
+        setIsAccountLocked(true);
+        setLockedEmail(clean);
+      } else if (isAccountLocked && clean !== lockedEmail) {
+        setIsAccountLocked(false);
+      }
+    } else {
+      if (isAccountLocked) {
+        setIsAccountLocked(false);
+      }
+    }
+  };
+
+  // Manipulador para reenvio do e-mail de redefinição de senha quando a conta está bloqueada
+  const handleResendLockoutEmail = async () => {
+    const targetEmail = (lockedEmail || email).trim().toLowerCase();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setErrorMessage('Por favor, informe um e-mail válido para reenvio.');
+      return;
+    }
+
+    setResendLoading(true);
+    setResendSuccess('');
+    try {
+      const redirectUrl = window.location.origin + window.location.pathname;
+      const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
+        redirectTo: redirectUrl
+      });
+
+      if (error) {
+        setErrorMessage(`Não foi possível reenviar o link: ${error.message}`);
+      } else {
+        setResendSuccess(`E-mail com instruções reenviado com sucesso para ${targetEmail}!`);
+        setTimeout(() => setResendSuccess(''), 6000);
+      }
+    } catch (err: any) {
+      setErrorMessage('Erro ao reenviar o e-mail de redefinição.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // Manipulador para envio do e-mail de recuperação de senha pelo modal "Esqueceu a senha?"
   const handleSendRecoveryEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError('');
@@ -120,7 +181,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Manipulador para salvar a nova senha redefinida
+  // Manipulador para salvar a nova senha redefinida (desbloqueia a conta)
   const handleSaveNewPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError('');
@@ -142,10 +203,41 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       if (error) {
         setResetError(`Erro ao redefinir senha: ${error.message}`);
       } else {
-        setResetSuccess('Sua senha foi redefinida com sucesso! Você já pode fazer login.');
+        // Identifica e-mail do usuário para desbloquear no banco e limpar restrições locais
+        let unblockEmail = '';
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          unblockEmail = sessionData?.session?.user?.email?.trim().toLowerCase() || '';
+        } catch { /* ignore */ }
+
+        if (!unblockEmail) {
+          unblockEmail = lockedEmail.trim().toLowerCase() || email.trim().toLowerCase();
+        }
+
+        if (unblockEmail) {
+          // Desbloqueia na tabela de usuários do banco (status = 'ativo')
+          try {
+            await supabase
+              .from('usuarios')
+              .update({ status: 'ativo' })
+              .ilike('email', unblockEmail);
+          } catch (dbErr) {
+            console.warn('Erro ao restaurar status ativo do usuário:', dbErr);
+          }
+
+          // Limpa contador de tentativas e indicador de bloqueio
+          try {
+            localStorage.removeItem(`hotelnozap_failed_attempts_${unblockEmail}`);
+            localStorage.removeItem(`hotelnozap_locked_${unblockEmail}`);
+          } catch { /* ignore */ }
+        }
+
+        setIsAccountLocked(false);
+        setResetSuccess('Sua senha foi redefinida com sucesso e sua conta foi desbloqueada!');
         setTimeout(() => {
           setIsResetPasswordView(false);
-          setSuccessMessage('Senha atualizada com sucesso! Entre com sua nova senha.');
+          setSuccessMessage('Conta desbloqueada e senha atualizada com sucesso! Digite sua nova credencial para entrar.');
+          setPassword('');
         }, 1800);
       }
     } catch (err: any) {
@@ -155,7 +247,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Manipulador de submit do login com autenticação real
+  // Manipulador de submit do login com autenticação real e regra de 3 tentativas
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -167,17 +259,47 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       return;
     }
 
+    // 0. VERIFICAÇÃO DE SEGURANÇA PRÉVIA: Conta bloqueada por 3 tentativas
+    const isLocallyLocked = localStorage.getItem(`hotelnozap_locked_${cleanEmail}`) === 'true';
+    if (isLocallyLocked) {
+      setIsAccountLocked(true);
+      setLockedEmail(cleanEmail);
+      setErrorMessage(`Sua conta (${cleanEmail}) está bloqueada por excesso de tentativas. Redefina sua senha pelo e-mail enviado para reativar seu acesso.`);
+      return;
+    }
+
+    // Pré-verificação no banco se o usuário já possui status bloqueado
+    try {
+      const { data: preCheckUser } = await supabase
+        .from('usuarios')
+        .select('status')
+        .ilike('email', cleanEmail)
+        .maybeSingle();
+
+      if (preCheckUser?.status === 'bloqueado') {
+        try {
+          localStorage.setItem(`hotelnozap_locked_${cleanEmail}`, 'true');
+        } catch { /* ignore */ }
+        setIsAccountLocked(true);
+        setLockedEmail(cleanEmail);
+        setErrorMessage(`A conta associada a ${cleanEmail} está temporariamente bloqueada por segurança. Redefina sua senha para restaurar o acesso.`);
+        return;
+      }
+    } catch (checkErr) {
+      console.warn('Erro ao checar status de bloqueio inicial:', checkErr);
+    }
+
     setLoading(true);
 
     let ultimoErroAuth: string | null = null;
 
     try {
       // 0. SEGURANÇA — LIMPA QUALQUER SESSÃO ANTERIOR ANTES DE AUTENTICAR
-      //    Impede que tokens/sessões de outro usuário (ex: admin) permaneçam ativos.
+      //    Impede que tokens/sessões de outro usuário permaneçam ativos.
       try {
         await supabase.auth.signOut({ scope: 'local' });
       } catch {
-        // ignora erro de signOut — o importante é que a próxima etapa seja limpa
+        // ignora erro de signOut
       }
       try {
         localStorage.removeItem('hotelnozap_user_role');
@@ -205,7 +327,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             authUser = authData.user;
           } else {
             console.warn('MISMATCH de email Auth vs formulario:', { authEmail, cleanEmail });
-            ultimoErroAuth = 'E-mail ou senha incorretos. Verifique suas credenciais.';
+            ultimoErroAuth = 'E-mail ou senha incorretos.';
             try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* ignore */ }
           }
         } else if (authError) {
@@ -215,15 +337,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           if (msgLower.includes('email not confirmed') || msgLower.includes('email_not_confirmed')) {
             ultimoErroAuth = 'Este e-mail ainda não foi confirmado no sistema. Contate o suporte ou utilize a recuperação de senha.';
           } else if (msgLower.includes('invalid login credentials') || msgLower.includes('invalid password') || msgLower.includes('email not found')) {
-            ultimoErroAuth = 'E-mail ou senha incorretos. Verifique suas credenciais.';
+            ultimoErroAuth = 'E-mail ou senha incorretos.';
           } else if (msgLower.includes('too many attempts') || msgLower.includes('rate limit')) {
             ultimoErroAuth = 'Muitas tentativas de login. Aguarde alguns minutos ou recupere sua senha.';
           } else if (msgLower.includes('user_scheduled_deletion') || msgLower.includes('user not found')) {
             ultimoErroAuth = 'Usuário não encontrado ou conta em processo de exclusão.';
-          } else if (msgLower.includes('sms') || msgLower.includes('phone')) {
-            ultimoErroAuth = `Falha na autenticação: ${msg}`;
           } else {
-            ultimoErroAuth = `Falha no login: ${msg}`;
+            ultimoErroAuth = `Falha na autenticação: ${msg}`;
           }
         }
       } catch (authCatch: any) {
@@ -231,7 +351,69 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         ultimoErroAuth = `Erro interno ao autenticar: ${authCatch?.message || authCatch}`;
       }
 
-      // 2. Consulta o usuário na tabela `usuarios`
+      // 2. SE NÃO AUTENTICOU → REGRA DE SEGURANÇA DAS 3 TENTATIVAS
+      if (!authSuccess) {
+        let failedCount = 0;
+        try {
+          const stored = localStorage.getItem(`hotelnozap_failed_attempts_${cleanEmail}`);
+          failedCount = stored ? parseInt(stored, 10) : 0;
+        } catch { /* ignore */ }
+
+        failedCount += 1;
+        try {
+          localStorage.setItem(`hotelnozap_failed_attempts_${cleanEmail}`, String(failedCount));
+        } catch { /* ignore */ }
+
+        if (failedCount >= 3) {
+          // 3ª tentativa com erro: BLOQUEIA A CONTA E ENVIA E-MAIL AUTOMATICAMENTE
+          try {
+            localStorage.setItem(`hotelnozap_locked_${cleanEmail}`, 'true');
+          } catch { /* ignore */ }
+          setIsAccountLocked(true);
+          setLockedEmail(cleanEmail);
+
+          // Atualiza o status do usuário na tabela usuarios do Supabase para 'bloqueado'
+          try {
+            await supabase
+              .from('usuarios')
+              .update({ status: 'bloqueado' })
+              .ilike('email', cleanEmail);
+          } catch (lockDbErr) {
+            console.warn('Erro ao atualizar status para bloqueado no Supabase:', lockDbErr);
+          }
+
+          // Dispara e-mail de redefinição de senha para o e-mail cadastrado
+          try {
+            const redirectUrl = window.location.origin + window.location.pathname;
+            await supabase.auth.resetPasswordForEmail(cleanEmail, {
+              redirectTo: redirectUrl
+            });
+          } catch (autoMailErr) {
+            console.warn('Erro ao disparar e-mail de redefinição automático:', autoMailErr);
+          }
+
+          setErrorMessage(
+            `Conta bloqueada por segurança após 3 tentativas incorretas. Enviamos um e-mail com as instruções para redefinir sua senha para ${cleanEmail}. Redefina sua senha para desbloquear o acesso.`
+          );
+        } else {
+          const remaining = 3 - failedCount;
+          setErrorMessage(
+            `${ultimoErroAuth || 'E-mail ou senha incorretos.'} (${failedCount}ª tentativa de 3. Resta${remaining === 1 ? '' : 'm'} ${remaining} tentativa${remaining === 1 ? '' : 's'} antes do bloqueio da conta.)`
+          );
+        }
+
+        setLoading(false);
+        return;
+      }
+
+      // 3. SE AUTENTICOU COM SUCESSO: LIMPA TENTATIVAS FALHAS E TRAVAS
+      try {
+        localStorage.removeItem(`hotelnozap_failed_attempts_${cleanEmail}`);
+        localStorage.removeItem(`hotelnozap_locked_${cleanEmail}`);
+      } catch { /* ignore */ }
+      setIsAccountLocked(false);
+
+      // 4. Consulta o usuário na tabela `usuarios`
       let dbUser: any = null;
       try {
         const { data: uData } = await supabase
@@ -244,21 +426,21 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         console.warn('Erro ao consultar tabela usuarios:', dbErr);
       }
 
-      // 3. FALLBACK REMOVIDO POR SEGURANÇA
-      //    O acesso deve ser feito exclusivamente via Supabase Auth.
-      //    Não existe mais bypass com credenciais hardcoded.
       const usouFallbackMaster = false;
-
-      // 4. SE NÃO AUTENTICOU DE NENHUMA FORMA → ERRO (nunca loga)
-      if (!authSuccess) {
-        setErrorMessage(ultimoErroAuth || 'E-mail ou senha incorretos. Verifique suas credenciais.');
-        setLoading(false);
-        return;
-      }
 
       // 5. Valida status do usuário (inativo/bloqueado → bloqueia login)
       if (dbUser && (dbUser.status === 'inativo' || dbUser.status === 'bloqueado')) {
-        setErrorMessage('Este usuário está inativo ou bloqueado. Entre em contato com a administração.');
+        if (dbUser.status === 'bloqueado') {
+          setIsAccountLocked(true);
+          setLockedEmail(cleanEmail);
+          try {
+            localStorage.setItem(`hotelnozap_locked_${cleanEmail}`, 'true');
+          } catch { /* ignore */ }
+          setErrorMessage('Esta conta está bloqueada por excesso de tentativas incorretas. Redefina sua senha pelo e-mail enviado para reativar seu acesso.');
+        } else {
+          setErrorMessage('Este usuário está inativo no sistema. Entre em contato com a administração.');
+        }
+
         // não deixa sessão Auth ativa
         if (!usouFallbackMaster) {
           try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* ignore */ }
@@ -518,7 +700,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     id="desktop-email"
                     name="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="seu.email@hotel.com.br"
                     required
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
@@ -526,80 +708,142 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </div>
               </div>
 
-              {/* Campo Senha */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider" htmlFor="desktop-password">
-                    Senha <span className="text-red-500">*</span>
-                  </label>
-                </div>
-                <div className="relative rounded-xl shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <span className="material-symbols-outlined text-xl">lock</span>
+              {/* CARD DE BLOQUEIO POR SEGURANÇA (3 TENTATIVAS INCORRETAS) */}
+              {isAccountLocked ? (
+                <div className="p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 space-y-3.5 shadow-sm animate-in fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                      <span className="material-symbols-outlined text-2xl">shield_lock</span>
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-amber-950 leading-tight">Conta Bloqueada por Segurança</h4>
+                      <p className="text-xs text-amber-700 font-semibold mt-0.5">3 tentativas incorretas atingidas</p>
+                    </div>
                   </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="desktop-password"
-                    name="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Digite sua senha de acesso"
-                    required
-                    className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                    title={showPassword ? 'Ocultar Senha' : 'Mostrar Senha'}
-                  >
-                    <span className="material-symbols-outlined text-xl">
-                      {showPassword ? 'visibility_off' : 'visibility'}
+
+                  <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
+                    O acesso para o e-mail <strong className="underline break-all">{lockedEmail || email}</strong> foi bloqueado temporariamente para proteção dos seus dados.
+                  </p>
+
+                  <div className="p-3 rounded-xl bg-white/90 border border-amber-200 text-xs text-amber-900 flex items-start gap-2 shadow-2xs">
+                    <span className="material-symbols-outlined text-base text-amber-600 mt-0.5 shrink-0">mark_email_read</span>
+                    <span>
+                      Enviamos um e-mail com as instruções e o link de redefinição de senha. Ao redefinir sua senha pelo link, sua conta será <strong>desbloqueada automaticamente</strong>.
                     </span>
-                  </button>
+                  </div>
+
+                  {resendSuccess && (
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                      <span className="material-symbols-outlined text-base text-emerald-600">check_circle</span>
+                      <span>{resendSuccess}</span>
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResendLockoutEmail}
+                      disabled={resendLoading}
+                      className="w-full py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.99]"
+                    >
+                      <span className="material-symbols-outlined text-base">
+                        {resendLoading ? 'progress_activity' : 'forward_to_inbox'}
+                      </span>
+                      <span>{resendLoading ? 'Reenviando...' : 'Reenviar E-mail de Redefinição'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAccountLocked(false);
+                        setErrorMessage('');
+                        setEmail('');
+                        setPassword('');
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl border border-amber-300 bg-white hover:bg-amber-100/70 text-amber-950 text-xs font-bold transition-all cursor-pointer text-center"
+                    >
+                      Entrar com outro e-mail
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Campo Senha */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider" htmlFor="desktop-password">
+                        Senha <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    <div className="relative rounded-xl shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <span className="material-symbols-outlined text-xl">lock</span>
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        id="desktop-password"
+                        name="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Digite sua senha de acesso"
+                        required
+                        className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                        title={showPassword ? 'Ocultar Senha' : 'Mostrar Senha'}
+                      >
+                        <span className="material-symbols-outlined text-xl">
+                          {showPassword ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Lembrar-me e Ajuda */}
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => handleRememberMeChange(e.target.checked)}
-                    className="w-4 h-4 text-[#006c49] border-slate-300 rounded focus:ring-[#006c49] focus:ring-offset-0 cursor-pointer accent-[#006c49]"
-                  />
-                  <span className="text-sm font-medium text-slate-600">Lembrar meus dados</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setForgotEmail(email);
-                    setForgotError('');
-                    setForgotSuccess('');
-                    setIsForgotPasswordOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline transition-all duration-200 cursor-pointer focus:outline-none"
-                  title="Recuperar senha de acesso"
-                >
-                  <span className="material-symbols-outlined text-sm text-emerald-700">help</span>
-                  Esqueceu a senha?
-                </button>
-              </div>
+                  {/* Lembrar-me e Ajuda */}
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => handleRememberMeChange(e.target.checked)}
+                        className="w-4 h-4 text-[#006c49] border-slate-300 rounded focus:ring-[#006c49] focus:ring-offset-0 cursor-pointer accent-[#006c49]"
+                      />
+                      <span className="text-sm font-medium text-slate-600">Lembrar meus dados</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotEmail(email);
+                        setForgotError('');
+                        setForgotSuccess('');
+                        setIsForgotPasswordOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline transition-all duration-200 cursor-pointer focus:outline-none"
+                      title="Recuperar senha de acesso"
+                    >
+                      <span className="material-symbols-outlined text-sm text-emerald-700">help</span>
+                      Esqueceu a senha?
+                    </button>
+                  </div>
 
-              {/* Botão de Ação Principal (Login) */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#003400] to-[#052e16] hover:from-[#052e16] hover:to-[#000000] text-white text-sm font-bold shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer disabled:opacity-60"
-                >
-                  <span className="material-symbols-outlined text-xl">
-                    {loading ? 'progress_activity' : 'login'}
-                  </span>
-                  <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
-                </button>
-              </div>
+                  {/* Botão de Ação Principal (Login) */}
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#003400] to-[#052e16] hover:from-[#052e16] hover:to-[#000000] text-white text-sm font-bold shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer disabled:opacity-60"
+                    >
+                      <span className="material-symbols-outlined text-xl">
+                        {loading ? 'progress_activity' : 'login'}
+                      </span>
+                      <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
+                    </button>
+                  </div>
+                </>
+              )}
 
             </form>
 
