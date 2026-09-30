@@ -4,6 +4,7 @@ import { fetchAddressByCep } from '../utils/viacep';
 import { hoteisService, planosService, usuariosService, parceirosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { getAppLoginUrl } from '../utils/partnerUrl';
+import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotelUrlAvailabilityInSupabase } from '../utils/hotelUrl';
 
 interface LpAssinarProps {
   onNavigateToLP?: () => void;
@@ -44,6 +45,14 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
     }).catch(() => setLoadingPlanos(false));
   }, []);
 
+  // Lista de hotéis para garantia de unicidade de URL
+  const [existingHoteis, setExistingHoteis] = useState<any[]>([]);
+  useEffect(() => {
+    hoteisService.getHoteis().then(data => {
+      if (Array.isArray(data)) setExistingHoteis(data);
+    }).catch(() => {});
+  }, []);
+
   // Step 1: dados do hotel
   const [nomeFantasia, setNomeFantasia] = useState('');
   const [razaoSocial, setRazaoSocial] = useState('');
@@ -54,7 +63,52 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   const [instagram, setInstagram] = useState('');
   const [facebook, setFacebook] = useState('');
   const [tiktok, setTiktok] = useState('');
-  const [site, setSite] = useState('');
+  const [urlHotel, setUrlHotel] = useState('');
+  const [isUrlManuallyEdited, setIsUrlManuallyEdited] = useState(false);
+  const [isUrlAvailable, setIsUrlAvailable] = useState<boolean | null>(null);
+  const [isCheckingUrl, setIsCheckingUrl] = useState(false);
+
+  const handleNomeFantasiaChange = (val: string) => {
+    setNomeFantasia(val);
+    if (!isUrlManuallyEdited) {
+      if (val.trim()) {
+        const generated = generateUniqueHotelUrl(val, existingHoteis);
+        setUrlHotel(generated);
+        setIsUrlAvailable(true);
+      } else {
+        setUrlHotel('');
+        setIsUrlAvailable(null);
+      }
+    }
+  };
+
+  const handleUrlChange = async (val: string) => {
+    setIsUrlManuallyEdited(true);
+    setUrlHotel(val);
+    if (!val.trim()) {
+      setIsUrlAvailable(null);
+      return;
+    }
+    setIsCheckingUrl(true);
+    const localAvail = isHotelUrlAvailable(val, existingHoteis);
+    if (localAvail) {
+      const dbAvail = await checkHotelUrlAvailabilityInSupabase(val);
+      setIsUrlAvailable(dbAvail);
+    } else {
+      setIsUrlAvailable(false);
+    }
+    setIsCheckingUrl(false);
+  };
+
+  const handleRegenerateUrl = () => {
+    setIsUrlManuallyEdited(false);
+    if (nomeFantasia.trim()) {
+      const generated = generateUniqueHotelUrl(nomeFantasia, existingHoteis);
+      setUrlHotel(generated);
+      setIsUrlAvailable(true);
+    }
+  };
+
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const cnpjValidation = useMemo(() => getCnpjValidationStatus(cnpj), [cnpj]);
@@ -172,6 +226,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
       if (!nomeFantasia.trim()) return 'Informe o Nome Fantasia do hotel.';
       if (!cnpj.trim() || !isValidCnpj(cnpj)) return 'Informe um CNPJ valido.';
       if (!whatsapp.trim() || whatsapp.replace(/\D/g,'').length < 10) return 'Informe o WhatsApp do hotel.';
+      if (urlHotel && isUrlAvailable === false) return 'A URL informada já pertence a outro hotel. Altere-a ou clique em Auto para gerar uma URL única.';
     }
     if (step === 2) {
       if (!planoSelecionado) return 'Selecione um plano para continuar.';
@@ -222,6 +277,8 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
         ? Number(selectedPlanoObj.roomLimit)
         : 0;
 
+      const finalUrl = urlHotel.trim() || generateUniqueHotelUrl(nomeFantasia.trim(), existingHoteis);
+
       const hotelRes = await hoteisService.createHotel({
         name: nomeFantasia.trim(),
         razaoSocial: razaoSocial.trim() || nomeFantasia.trim(),
@@ -234,7 +291,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
         instagram: instagram.trim(),
         facebook: facebook.trim(),
         tiktok: tiktok.trim(),
-        link: site.trim(),
+        link: finalUrl,
         plan: planoSelecionado,
         cep: cep.trim(),
         street: [logradouro.trim(), numero.trim(), complemento.trim()].filter(Boolean).join(', '),
@@ -459,7 +516,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className={lCls}>Nome Fantasia *</label>
-                  <input type="text" value={nomeFantasia} onChange={e => setNomeFantasia(e.target.value)} placeholder="Ex: Pousada Recanto dos Corais" className={iCls} />
+                  <input type="text" value={nomeFantasia} onChange={e => handleNomeFantasiaChange(e.target.value)} placeholder="Ex: Pousada Recanto dos Corais" className={iCls} />
                 </div>
                 <div>
                   <label className={lCls}>Razao Social</label>
@@ -492,8 +549,46 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
                   <input type="tel" value={telefone} onChange={e => setTelefone(maskPhone(e.target.value))} placeholder="(81) 3322-1100" className={iCls} />
                 </div>
                 <div>
-                  <label className={lCls}>Site / URL</label>
-                  <input type="url" value={site} onChange={e => setSite(e.target.value)} placeholder="https://seupousada.com.br" className={iCls} />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={lCls + ' mb-0'}>URL *</label>
+                    <div className="flex items-center gap-2">
+                      {isCheckingUrl ? (
+                        <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                          Verificando...
+                        </span>
+                      ) : isUrlAvailable === true ? (
+                        <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-xs">verified</span>
+                          URL disponível
+                        </span>
+                      ) : isUrlAvailable === false ? (
+                        <span className="text-[11px] font-bold text-red-500 flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-xs">cancel</span>
+                          URL já em uso
+                        </span>
+                      ) : null}
+                      {isUrlManuallyEdited && (
+                        <button
+                          type="button"
+                          onClick={handleRegenerateUrl}
+                          className="text-[10px] font-bold text-emerald-700 hover:underline cursor-pointer"
+                        >
+                          Auto
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    value={urlHotel}
+                    onChange={e => handleUrlChange(e.target.value)}
+                    placeholder="https://hotelnozap.com.br/hoteis/nomedohotel"
+                    className={iCls + ' font-mono text-xs ' + (isUrlAvailable === false ? 'border-red-400 focus:border-red-500' : isUrlAvailable === true ? 'border-emerald-400' : '')}
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Ex: https://hotelnozap.com.br/hoteis/nomedohotel
+                  </p>
                 </div>
               </div>
 
@@ -680,8 +775,8 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
                   <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-2">Resumo do Cadastro</p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                    {[['Hotel',nomeFantasia],['Plano',planoSelecionado],['Localizacao',cidade&&uf?cidade+'/'+uf:''],['Responsavel',nomeResponsavel],['Capacidade', selectedPlanoObj?.roomLimit ? `${selectedPlanoObj.roomLimit} quartos (Plano)` : 'Conforme o plano'],['Parceiro', refCode]].map(([k,v])=>(
-                      <div key={k}><span className="text-gray-400">{k}: </span><span className="font-semibold text-gray-800">{v||'nao informado'}</span></div>
+                    {[['Hotel',nomeFantasia],['URL',urlHotel||formatHotelUrl(nomeFantasia)],['Plano',planoSelecionado],['Localizacao',cidade&&uf?cidade+'/'+uf:''],['Responsavel',nomeResponsavel],['Capacidade', selectedPlanoObj?.roomLimit ? `${selectedPlanoObj.roomLimit} quartos (Plano)` : 'Conforme o plano'],['Parceiro', refCode]].map(([k,v])=>(
+                      <div key={k} className="col-span-1 truncate"><span className="text-gray-400">{k}: </span><span className="font-semibold text-gray-800" title={String(v)}>{v||'nao informado'}</span></div>
                     ))}
                   </div>
                 </div>

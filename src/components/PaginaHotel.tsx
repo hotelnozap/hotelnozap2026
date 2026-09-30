@@ -375,8 +375,8 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
             targetHotel = combinedHoteis.find((h: any) => {
               const hSlug = slugify(h.name);
               const hSlugNoHyphen = h.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-              const hLinkSlug = h.link ? slugify(h.link.replace(/^\/(hotel|hoteis)\/?/, '')) : '';
-              const hLinkNoHyphen = h.link ? h.link.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+              const hLinkSlug = h.link ? slugify(h.link.replace(/^(https?:\/\/[^\/]+)?\/?(hotel|hoteis)\/?/i, '')) : '';
+              const hLinkNoHyphen = h.link ? h.link.replace(/^(https?:\/\/[^\/]+)?\/?(hotel|hoteis)\/?/i, '').toLowerCase().replace(/[^a-z0-9]/g, '') : '';
               return hSlug === cleanSlug || 
                      hSlugNoHyphen === normCleanSlug ||
                      (hLinkSlug && hLinkSlug === cleanSlug) ||

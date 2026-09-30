@@ -779,8 +779,13 @@ export const App: React.FC = () => {
   // Função para obter o link público do hotel logado na rota /hoteis/nomedohotel
   const getLoggedHotelUrl = () => {
     const current = currentHotelService.getCurrentHotel();
-    if (current?.link && current.link.startsWith('/hoteis/')) {
-      return current.link;
+    if (current?.link) {
+      if (current.link.startsWith('http://') || current.link.startsWith('https://')) {
+        return current.link;
+      }
+      if (current.link.startsWith('/hoteis/')) {
+        return current.link;
+      }
     }
     const nameToUse = (current?.name && current.name.toLowerCase() !== 'hotel master')
       ? current.name

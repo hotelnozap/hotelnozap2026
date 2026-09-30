@@ -187,6 +187,10 @@ export const templateMensagemService = {
         }
       }
 
+      if (hotelLink && (hotelLink.startsWith('http://') || hotelLink.startsWith('https://'))) {
+        return hotelLink;
+      }
+
       const cleanSlug = (hotelLink && hotelLink.startsWith('/hoteis/'))
         ? hotelLink.replace('/hoteis/', '')
         : (hotelName

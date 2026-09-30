@@ -25,6 +25,13 @@ import {
 } from '../services/supabaseService';
 import { creditosService, InfoCreditoHotel } from '../services/creditosService';
 import { supabase } from '../lib/supabase';
+import {
+  generateUniqueHotelUrl,
+  formatHotelUrl,
+  isHotelUrlAvailable,
+  checkHotelUrlAvailabilityInSupabase,
+  extractHotelSlug
+} from '../utils/hotelUrl';
 
 
 export interface FormHotelProps {
@@ -125,20 +132,63 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   };
 
   // Seção 1: Identidade & Propriedade
+  const [existingHoteis, setExistingHoteis] = useState<any[]>([]);
+  useEffect(() => {
+    hoteisService.getHoteis().then(data => {
+      if (Array.isArray(data)) setExistingHoteis(data);
+    }).catch(() => {});
+  }, []);
+
   const [razaoSocial, setRazaoSocial] = useState(hotelToEdit?.razaoSocial || hotelToEdit?.name || '');
   const [nomeFantasia, setNomeFantasia] = useState(hotelToEdit?.name || '');
   
   const initialLink = hotelToEdit?.link 
-    ? hotelToEdit.link.replace(/-/g, '') 
+    ? (hotelToEdit.link.startsWith('http') ? hotelToEdit.link : formatHotelUrl(hotelToEdit.link))
     : '';
   const [link, setLink] = useState(initialLink);
-  const [isLinkManuallyEdited, setIsLinkManuallyEdited] = useState(false);
+  const [isLinkManuallyEdited, setIsLinkManuallyEdited] = useState(Boolean(hotelToEdit?.link));
+  const [isUrlAvailable, setIsUrlAvailable] = useState<boolean | null>(hotelToEdit?.link ? true : null);
+  const [isCheckingUrl, setIsCheckingUrl] = useState(false);
 
   const handleNomeFantasiaChange = (val: string) => {
     setNomeFantasia(val);
     if (!isLinkManuallyEdited) {
-      const slug = slugify(val);
-      setLink(slug ? `/hoteis/${slug}` : '');
+      if (val.trim()) {
+        const uniqueUrl = generateUniqueHotelUrl(val, existingHoteis, hotelToEdit?.id);
+        setLink(uniqueUrl);
+        setIsUrlAvailable(true);
+      } else {
+        setLink('');
+        setIsUrlAvailable(null);
+      }
+    }
+  };
+
+  const handleLinkChange = async (val: string) => {
+    setIsLinkManuallyEdited(true);
+    setLink(val);
+    if (!val.trim()) {
+      setIsUrlAvailable(null);
+      return;
+    }
+    setIsCheckingUrl(true);
+    const localAvail = isHotelUrlAvailable(val, existingHoteis, hotelToEdit?.id);
+    if (localAvail) {
+      const dbAvail = await checkHotelUrlAvailabilityInSupabase(val, hotelToEdit?.id);
+      setIsUrlAvailable(dbAvail);
+    } else {
+      setIsUrlAvailable(false);
+    }
+    setIsCheckingUrl(false);
+  };
+
+  const handleRegenerateLink = () => {
+    setIsLinkManuallyEdited(false);
+    if (nomeFantasia.trim()) {
+      const uniqueUrl = generateUniqueHotelUrl(nomeFantasia, existingHoteis, hotelToEdit?.id);
+      setLink(uniqueUrl);
+      setIsUrlAvailable(true);
+      showToast('URL regenerada automaticamente com unicidade garantida!');
     }
   };
 
@@ -780,7 +830,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         notes: finalNotes,
         status: status === 'ativo' ? 'ativo' : 'bloqueado',
         imageUrl: logoPreview || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80',
-        link: link || (nomeFantasia ? `/hoteis/${slugify(nomeFantasia)}` : '/hoteis/nomedohotel'),
+        link: link || (nomeFantasia ? formatHotelUrl(nomeFantasia) : 'https://hotelnozap.com.br/hoteis/nomedohotel'),
         instagram: instagram.trim() || undefined,
         facebook: facebook.trim() || undefined,
         tiktok: tiktok.trim() || undefined,
@@ -918,7 +968,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
           cnpj: cnpj || '00.000.000/0001-00',
           status: status === 'ativo' ? 'ativo' : 'bloqueado',
           imageUrl: logoPreview || undefined,
-          link: link || (nomeFantasia ? `/hoteis/${slugify(nomeFantasia)}` : '/hoteis/nomedohotel'),
+          link: link || (nomeFantasia ? formatHotelUrl(nomeFantasia) : 'https://hotelnozap.com.br/hoteis/nomedohotel'),
           instagram: instagram.trim() || undefined,
           facebook: facebook.trim() || undefined,
           tiktok: tiktok.trim() || undefined,
@@ -1561,25 +1611,37 @@ export const FormHotel: React.FC<FormHotelProps> = ({
               />
             </div>
 
-            {/* Campo Link da Página do Hotel (Gerado Automaticamente - Depois do campo UF) */}
+            {/* Campo URL do Hotel (Gerado Automaticamente - Depois do campo UF) */}
             <div className="md:col-span-6 space-y-1.5 pt-2 border-t border-slate-100 mt-1">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-emerald-700 text-base">link</span>
-                  <span>Link da Página do Hotel (Gerado Automaticamente) *</span>
+                  <span>URL *</span>
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                    Rota Pública do Estabelecimento
-                  </span>
+                  {isCheckingUrl ? (
+                    <span className="text-[11px] text-slate-400 flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                      Verificando...
+                    </span>
+                  ) : isUrlAvailable === true ? (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">verified</span>
+                      URL disponível
+                    </span>
+                  ) : isUrlAvailable === false ? (
+                    <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">cancel</span>
+                      URL já em uso
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                      Rota Pública Oficial
+                    </span>
+                  )}
                   <button
                     type="button"
-                    onClick={() => {
-                      const slug = slugify(nomeFantasia);
-                      setLink(slug ? `/hoteis/${slug}` : '/hoteis/nomedohotel');
-                      setIsLinkManuallyEdited(false);
-                      showToast('Link regenerado automaticamente a partir do Nome Fantasia!');
-                    }}
+                    onClick={handleRegenerateLink}
                     className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
                   >
                     Regenerar pelo Nome
@@ -1591,31 +1653,24 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                 <input 
                   type="text" 
                   value={link}
-                  onChange={(e) => {
-                    let val = e.target.value;
-                    if (!val.startsWith('/hoteis/') && !val.startsWith('/hotel/')) {
-                      if (!val.startsWith('/')) val = `/${val}`;
-                    }
-                    setLink(val);
-                    setIsLinkManuallyEdited(true);
-                  }}
-                  placeholder="/hoteis/nomedohotel"
-                  className="w-full pl-3.5 pr-20 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-slate-50/50 font-mono text-emerald-900 font-semibold"
+                  onChange={(e) => handleLinkChange(e.target.value)}
+                  placeholder="https://hotelnozap.com.br/hoteis/nomedohotel"
+                  className={`w-full pl-3.5 pr-20 py-2.5 rounded-xl border ${isUrlAvailable === false ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-[#003400]'} text-xs md:text-sm focus:outline-none bg-slate-50/50 font-mono text-emerald-900 font-semibold`}
                 />
                 <div className="absolute right-2 flex items-center gap-1">
                   <button 
                     type="button" 
-                    onClick={() => copyToClipboard(`${window.location.origin}${link.startsWith('/') ? link : `/${link}`}`)}
+                    onClick={() => copyToClipboard(link || 'https://hotelnozap.com.br/hoteis/nomedohotel')}
                     className="p-1.5 text-slate-500 hover:text-[#003400] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    title="Copiar Link Completo"
+                    title="Copiar URL Completa"
                   >
                     <span className="material-symbols-outlined text-base">content_copy</span>
                   </button>
                   <button 
                     type="button" 
-                    onClick={() => window.open(link.startsWith('/') ? link : `/${link}`, '_blank')}
+                    onClick={() => window.open(link || 'https://hotelnozap.com.br/hoteis/nomedohotel', '_blank')}
                     className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    title="Testar Link em Nova Aba"
+                    title="Testar URL em Nova Aba"
                   >
                     <span className="material-symbols-outlined text-base">open_in_new</span>
                   </button>
@@ -1623,7 +1678,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
               </div>
               <p className="text-[11px] text-slate-500 flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs text-emerald-600">info</span>
-                <span>Exemplo de link para o hóspede acessar: <strong className="text-slate-800 font-mono">{window.location.origin}{link || '/hoteis/nomedohotel'}</strong></span>
+                <span>Exemplo de URL para o hóspede acessar: <strong className="text-slate-800 font-mono">{link || 'https://hotelnozap.com.br/hoteis/nomedohotel'}</strong></span>
               </p>
             </div>
           </div>
