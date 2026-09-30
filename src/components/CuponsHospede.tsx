@@ -4,11 +4,13 @@ import { cuponsService, CupomDesconto } from '../services/cuponsService';
 interface CuponsHospedeProps {
   onNavigateBack?: () => void;
   onNavigateToCatalogo?: () => void;
+  onNavigateToHotel?: (hotelSlugOrUrl: string, codigoCupom?: string) => void;
 }
 
 export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
   onNavigateBack,
-  onNavigateToCatalogo
+  onNavigateToCatalogo,
+  onNavigateToHotel
 }) => {
   const [cupons, setCupons] = useState<CupomDesconto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,6 +82,27 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
       .trim()
       .replace(/\s+/g, '-');
     return `/hoteis/${slug}${codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : ''}`;
+  };
+
+  const handleUsarCupom = (e: React.MouseEvent, cupom: CupomDesconto) => {
+    try {
+      localStorage.setItem('hotelnozap_cupom_ativo', cupom.codigo);
+    } catch {}
+
+    // Se o usuário clicar com Ctrl, Cmd, Shift ou botão do meio, abre nativamente em nova guia
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+      return;
+    }
+
+    if (onNavigateToHotel && cupom.hotel_nome) {
+      e.preventDefault();
+      onNavigateToHotel(cupom.hotel_nome, cupom.codigo);
+      return;
+    }
+
+    e.preventDefault();
+    const link = gerarLinkHotel(cupom.hotel_nome, cupom.codigo);
+    window.location.href = link;
   };
 
   return (
@@ -212,8 +235,7 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
                     <div className="min-w-0 flex-1">
                       <a
                         href={hotelLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={(e) => handleUsarCupom(e, cupom)}
                         className="group/hotel flex items-center gap-1.5 text-sm sm:text-base font-black text-slate-900 hover:text-[#006c49] transition-colors leading-tight"
                         title={`Visitar página de ${cupom.hotel_nome || 'Hotel Parceiro'}`}
                       >
@@ -300,8 +322,7 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
 
                   <a
                     href={hotelLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={(e) => handleUsarCupom(e, cupom)}
                     className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006c49] border border-emerald-200 text-[11px] font-bold flex items-center gap-1 transition-all shrink-0 cursor-pointer shadow-2xs hover:scale-102 active:scale-98"
                     title="Abrir página deste hotel já com este cupom ativado"
                   >

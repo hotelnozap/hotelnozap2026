@@ -539,12 +539,37 @@ export const App: React.FC = () => {
       const email = localStorage.getItem('hotelnozap_user_email') || '';
       if (!role || !email) return;
       const roleLower = role.toLowerCase();
+
+      // Checa se a URL atual já é uma página pública (hotel, catálogo, cardápio, quartos, landing page, etc.)
+      const currentParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+      const isPublicOrHotelRoute =
+        currentParts[0] === 'hoteis' ||
+        currentParts[0] === 'hotel' ||
+        currentParts[0] === 'catalogo-hoteis' ||
+        currentParts[0] === 'cardapio' ||
+        currentParts[0] === 'lp' ||
+        currentParts[0] === 'assinar' ||
+        currentParts[0] === 'privacidade' ||
+        currentParts[0] === 'termos' ||
+        currentParts[0] === 'empresa' ||
+        currentParts[0] === 'informacoes-empresa' ||
+        currentParts[0] === 'quem-somos' ||
+        currentParts[0] === 'quemsomos' ||
+        currentParts[0] === 'fale-conosco' ||
+        currentParts[0] === 'faleconosco' ||
+        currentParts[0] === 'contato';
+
       if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
+        // Se o hóspede estiver navegando em uma página de hotel ou rota pública, NÃO sobrescrever a rota!
+        if (isPublicOrHotelRoute) {
+          return;
+        }
         window.history.replaceState({}, '', '/minhaconta');
         setActiveTab('minhaconta');
         return;
       }
       if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
+        if (isPublicOrHotelRoute) return;
         window.history.replaceState({}, '', '/camareira');
         setActiveTab('camareira');
         return;
@@ -1038,7 +1063,20 @@ export const App: React.FC = () => {
 
   const isHospedeUser = (currentUserRole || '').toLowerCase().includes('hospede') || (currentUserRole || '').toLowerCase().includes('hóspede');
 
-  if (activeTab === 'minhaconta' || pathParts[0] === 'minhaconta' || isHospedeUser) {
+  // Proteção: não redirecionar para /minhaconta se estiver em rotas públicas ou de hotéis
+  const isPublicOrHotelPath = 
+    pathParts[0] === 'hoteis' || 
+    pathParts[0] === 'hotel' || 
+    pathParts[0] === 'catalogo-hoteis' || 
+    pathParts[0] === 'cardapio' ||
+    pathParts[0] === 'lp' ||
+    pathParts[0] === 'assinar' ||
+    activeTab === 'pagina-hotel' ||
+    activeTab === 'catalogo-hoteis' ||
+    activeTab === 'detalhes-quarto' ||
+    activeTab === 'cardapio-hotel';
+
+  if (!isPublicOrHotelPath && (activeTab === 'minhaconta' || pathParts[0] === 'minhaconta' || isHospedeUser)) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/minhaconta') {
       window.history.replaceState({}, '', '/minhaconta');
     }
@@ -1047,6 +1085,13 @@ export const App: React.FC = () => {
         userRole={currentUserRole || 'hospede'}
         userName={localStorage.getItem('hotelnozap_user_name') || 'Hóspede'}
         userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
+        onNavigateToHotel={(hotelSlugOrUrl: string, codigoCupom?: string) => {
+          const cleanSlug = hotelSlugOrUrl.replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0];
+          const query = codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : '';
+          const targetUrl = `/hoteis/${cleanSlug}${query}`;
+          window.history.pushState({}, '', targetUrl);
+          setActiveTab('pagina-hotel');
+        }}
         onNavigateToSystem={() => {
           if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';

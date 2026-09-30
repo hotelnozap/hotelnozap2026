@@ -11,6 +11,7 @@ export interface AreaHospedeProps {
   userRole?: string; // 'administrador' | 'hospede' | 'recepcao' | 'financeiro' | etc.
   userName?: string;
   userEmail?: string;
+  onNavigateToHotel?: (hotelSlugOrUrl: string, codigoCupom?: string) => void;
   onNavigateToSystem?: () => void;
   onNavigateToLogin?: () => void;
   onLogout?: () => void;
@@ -56,6 +57,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
   userRole = 'hospede',
   userName = 'Everaldo Souza da Silva',
   userEmail = 'everaldosouza@gmail.com',
+  onNavigateToHotel,
   onNavigateToSystem,
   onNavigateToLogin,
   onLogout,
@@ -1715,6 +1717,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             <CuponsHospede
               onNavigateBack={() => setActiveSubTab('dashboard')}
               onNavigateToCatalogo={onNavigateToSystem}
+              onNavigateToHotel={onNavigateToHotel}
             />
           )}
 

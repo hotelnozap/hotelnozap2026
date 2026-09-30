@@ -259,11 +259,11 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
   const [cupomAplicado, setCupomAplicado] = useState<ValidacaoCupomResult | null>(null);
   const [validandoCupom, setValidandoCupom] = useState<boolean>(false);
 
-  // Ler cupom da URL se houver ?cupom=CODIGO ou ?coupon=CODIGO
+  // Ler cupom da URL se houver ?cupom=CODIGO ou do localStorage salvo na Área do Hóspede
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      const codeUrl = params.get('cupom') || params.get('coupon');
+      const codeUrl = params.get('cupom') || params.get('coupon') || localStorage.getItem('hotelnozap_cupom_ativo');
       if (codeUrl) {
         setCupomCodigoInput(codeUrl.toUpperCase());
       }

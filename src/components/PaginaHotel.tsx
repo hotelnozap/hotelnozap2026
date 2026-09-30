@@ -798,7 +798,8 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                         const handleGoToRoom = () => {
                           const hSlug = slugify(currentHotel.name);
                           const qSlug = slugify(quarto.name);
-                          window.history.pushState({}, '', `/hotel/${hSlug}/${qSlug}`);
+                          const search = window.location.search || '';
+                          window.history.pushState({}, '', `/hotel/${hSlug}/${qSlug}${search}`);
                           if (onNavigateToRoom) {
                             onNavigateToRoom(quarto);
                           } else {
