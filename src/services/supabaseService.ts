@@ -6664,6 +6664,8 @@ export interface StatusQuartoData {
   cor_borda: string;
   permite_ocupacao: boolean;
   padrao_sistema: boolean;
+  notifica_camareira?: boolean;
+  exige_motivo?: boolean;
   status: 'ativo' | 'inativo';
   ordem: number;
   criado_em?: string;
@@ -6682,6 +6684,8 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     cor_borda: '#A7F3D0',
     permite_ocupacao: true,
     padrao_sistema: true,
+    notifica_camareira: false,
+    exige_motivo: false,
     status: 'ativo',
     ordem: 1
   },
@@ -6696,6 +6700,8 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     cor_borda: '#FECDD3',
     permite_ocupacao: false,
     padrao_sistema: true,
+    notifica_camareira: false,
+    exige_motivo: false,
     status: 'ativo',
     ordem: 2
   },
@@ -6710,6 +6716,8 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     cor_borda: '#FDE68A',
     permite_ocupacao: false,
     padrao_sistema: true,
+    notifica_camareira: true,
+    exige_motivo: false,
     status: 'ativo',
     ordem: 3
   },
@@ -6724,6 +6732,8 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     cor_borda: '#BFDBFE',
     permite_ocupacao: false,
     padrao_sistema: true,
+    notifica_camareira: false,
+    exige_motivo: true,
     status: 'ativo',
     ordem: 4
   },
@@ -6738,6 +6748,8 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     cor_borda: '#DDD6FE',
     permite_ocupacao: false,
     padrao_sistema: false,
+    notifica_camareira: false,
+    exige_motivo: false,
     status: 'ativo',
     ordem: 5
   },
@@ -6752,6 +6764,8 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     cor_borda: '#E5E7EB',
     permite_ocupacao: false,
     padrao_sistema: false,
+    notifica_camareira: false,
+    exige_motivo: true,
     status: 'ativo',
     ordem: 6
   }
@@ -6796,6 +6810,8 @@ export const statusQuartosService = {
           cor_borda: row.cor_borda || '#A7F3D0',
           permite_ocupacao: Boolean(row.permite_ocupacao),
           padrao_sistema: Boolean(row.padrao_sistema),
+          notifica_camareira: Boolean(row.notifica_camareira ?? (row.slug === 'limpeza')),
+          exige_motivo: Boolean(row.exige_motivo ?? (row.slug === 'manutencao' || row.slug === 'interditado')),
           status: row.status === 'inativo' ? 'inativo' : 'ativo',
           ordem: Number(row.ordem) || 1,
           criado_em: row.criado_em,
@@ -6834,6 +6850,8 @@ export const statusQuartosService = {
       cor_borda: data.cor_borda || '#A7F3D0',
       permite_ocupacao: Boolean(data.permite_ocupacao),
       padrao_sistema: false,
+      notifica_camareira: Boolean(data.notifica_camareira),
+      exige_motivo: Boolean(data.exige_motivo),
       status: data.status || 'ativo',
       ordem: Number(data.ordem) || (currentList.length + 1)
     };
@@ -6852,6 +6870,8 @@ export const statusQuartosService = {
           cor_borda: newRecord.cor_borda,
           permite_ocupacao: newRecord.permite_ocupacao,
           padrao_sistema: false,
+          notifica_camareira: newRecord.notifica_camareira,
+          exige_motivo: newRecord.exige_motivo,
           status: newRecord.status,
           ordem: newRecord.ordem
         })
@@ -6894,6 +6914,8 @@ export const statusQuartosService = {
     if (changes.cor_texto !== undefined) payload.cor_texto = changes.cor_texto.trim();
     if (changes.cor_borda !== undefined) payload.cor_borda = changes.cor_borda.trim();
     if (changes.permite_ocupacao !== undefined) payload.permite_ocupacao = changes.permite_ocupacao;
+    if (changes.notifica_camareira !== undefined) payload.notifica_camareira = changes.notifica_camareira;
+    if (changes.exige_motivo !== undefined) payload.exige_motivo = changes.exige_motivo;
     if (changes.status !== undefined) payload.status = changes.status;
     if (changes.ordem !== undefined) payload.ordem = Number(changes.ordem);
 
@@ -6919,6 +6941,9 @@ export const statusQuartosService = {
           cor_fundo: changes.cor_fundo !== undefined ? changes.cor_fundo.trim() : s.cor_fundo,
           cor_texto: changes.cor_texto !== undefined ? changes.cor_texto.trim() : s.cor_texto,
           cor_borda: changes.cor_borda !== undefined ? changes.cor_borda.trim() : s.cor_borda,
+          permite_ocupacao: changes.permite_ocupacao !== undefined ? Boolean(changes.permite_ocupacao) : s.permite_ocupacao,
+          notifica_camareira: changes.notifica_camareira !== undefined ? Boolean(changes.notifica_camareira) : s.notifica_camareira,
+          exige_motivo: changes.exige_motivo !== undefined ? Boolean(changes.exige_motivo) : s.exige_motivo,
           status: changes.status !== undefined ? changes.status : s.status,
           ordem: changes.ordem !== undefined ? Number(changes.ordem) : s.ordem
         };
@@ -6960,7 +6985,74 @@ export const statusQuartosService = {
   notifyStatusQuartosAlterado() {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('hotel_status_quartos_atualizado'));
+      try {
+        localStorage.setItem('hotel_status_quartos_trigger', Date.now().toString());
+      } catch {}
+      try {
+        const bc = new BroadcastChannel('hotel_notifications_channel');
+        bc.postMessage({ type: 'STATUS_QUARTOS_ATUALIZADO' });
+        setTimeout(() => { try { bc.close(); } catch {} }, 1000);
+      } catch {}
     }
+  },
+
+  subscribeStatusQuartos(callback: (list: StatusQuartoData[]) => void): () => void {
+    const handleEvent = async () => {
+      const list = await this.getStatusQuartos(false);
+      callback(list);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('hotel_status_quartos_atualizado', handleEvent);
+    }
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('hotel_notifications_channel');
+      bc.onmessage = (ev) => {
+        if (ev.data?.type === 'STATUS_QUARTOS_ATUALIZADO') {
+          handleEvent();
+        }
+      };
+    } catch {}
+
+    const handleStorage = (ev: StorageEvent) => {
+      if (ev.key === 'hotel_status_quartos_trigger' || ev.key === LOCAL_STORAGE_STATUS_QUARTOS) {
+        handleEvent();
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorage);
+    }
+
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel('realtime_status_quartos_saas')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'status_quartos' },
+          () => {
+            handleEvent();
+          }
+        )
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime status_quartos não disponível:', e);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('hotel_status_quartos_atualizado', handleEvent);
+        window.removeEventListener('storage', handleStorage);
+      }
+      if (bc) {
+        try { bc.close(); } catch {}
+      }
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch {}
+      }
+    };
   }
 };
 

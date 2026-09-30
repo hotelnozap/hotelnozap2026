@@ -62,6 +62,8 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
   const [formCorTexto, setFormCorTexto] = useState('#065F46');
   const [formCorBorda, setFormCorBorda] = useState('#A7F3D0');
   const [formPermiteOcupacao, setFormPermiteOcupacao] = useState(true);
+  const [formNotificaCamareira, setFormNotificaCamareira] = useState(false);
+  const [formExigeMotivo, setFormExigeMotivo] = useState(false);
   const [formStatus, setFormStatus] = useState<'ativo' | 'inativo'>('ativo');
   const [formOrdem, setFormOrdem] = useState(1);
   const [formError, setFormError] = useState<string | null>(null);
@@ -133,6 +135,8 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
     setFormCorTexto('#5B21B6');
     setFormCorBorda('#DDD6FE');
     setFormPermiteOcupacao(false);
+    setFormNotificaCamareira(false);
+    setFormExigeMotivo(false);
     setFormStatus('ativo');
     setFormOrdem(statusList.length + 1);
     setFormError(null);
@@ -148,7 +152,9 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
     setFormCorFundo(st.cor_fundo);
     setFormCorTexto(st.cor_texto);
     setFormCorBorda(st.cor_borda);
-    setFormPermiteOcupacao(st.permite_ocupacao);
+    setFormPermiteOcupacao(Boolean(st.permite_ocupacao));
+    setFormNotificaCamareira(Boolean(st.notifica_camareira));
+    setFormExigeMotivo(Boolean(st.exige_motivo));
     setFormStatus(st.status);
     setFormOrdem(st.ordem);
     setFormError(null);
@@ -202,6 +208,8 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
           cor_texto: formCorTexto,
           cor_borda: formCorBorda,
           permite_ocupacao: formPermiteOcupacao,
+          notifica_camareira: formNotificaCamareira,
+          exige_motivo: formExigeMotivo,
           status: formStatus,
           ordem: formOrdem
         });
@@ -223,6 +231,8 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
           cor_texto: formCorTexto,
           cor_borda: formCorBorda,
           permite_ocupacao: formPermiteOcupacao,
+          notifica_camareira: formNotificaCamareira,
+          exige_motivo: formExigeMotivo,
           padrao_sistema: false,
           status: formStatus,
           ordem: formOrdem
@@ -535,6 +545,24 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
+                  <span className="text-[11px] font-medium text-slate-400">Notifica Governança:</span>
+                  <span className={`font-bold flex items-center gap-1 ${st.notifica_camareira ? 'text-amber-700' : 'text-slate-400'}`}>
+                    <span className="material-symbols-outlined text-xs">
+                      {st.notifica_camareira ? 'cleaning_services' : 'remove'}
+                    </span>
+                    <span>{st.notifica_camareira ? 'Sim (Avisa Camareiras)' : 'Não'}</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="text-[11px] font-medium text-slate-400">Exige Justificativa:</span>
+                  <span className={`font-bold flex items-center gap-1 ${st.exige_motivo ? 'text-blue-700' : 'text-slate-400'}`}>
+                    <span className="material-symbols-outlined text-xs">
+                      {st.exige_motivo ? 'help_outline' : 'remove'}
+                    </span>
+                    <span>{st.exige_motivo ? 'Sim (Obrigatória)' : 'Opcional'}</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-slate-600">
                   <span className="text-[11px] font-medium text-slate-400">Ordem no Mapa:</span>
                   <span className="font-bold text-slate-800 font-mono">#{st.ordem}</span>
                 </div>
@@ -830,51 +858,87 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
                 />
               </div>
 
-              {/* Opções: Permite Ocupação, Ativo e Ordem */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                    Permite Entrada / Check-in?
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer mt-1">
+              {/* REGRAS OPERACIONAIS DO STATUS */}
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">
+                  ⚙️ Regras Operacionais do Status:
+                </span>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <label className="flex items-start gap-2.5 cursor-pointer bg-white p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 transition">
                     <input
                       type="checkbox"
                       checked={formPermiteOcupacao}
                       onChange={(e) => setFormPermiteOcupacao(e.target.checked)}
-                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer mt-0.5"
                     />
-                    <span className="font-semibold text-slate-800">
-                      {formPermiteOcupacao ? 'Sim (Disponível)' : 'Não (Bloqueado)'}
-                    </span>
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-800 block">Permite Check-in</span>
+                      <span className="text-[10px] text-slate-500 leading-tight block mt-0.5">
+                        {formPermiteOcupacao ? 'Hóspedes podem entrar' : 'Bloqueia novos check-ins'}
+                      </span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 cursor-pointer bg-white p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 transition">
+                    <input
+                      type="checkbox"
+                      checked={formNotificaCamareira}
+                      onChange={(e) => setFormNotificaCamareira(e.target.checked)}
+                      className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer mt-0.5"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-800 block">Avisar Governança</span>
+                      <span className="text-[10px] text-slate-500 leading-tight block mt-0.5">
+                        Notifica camareiras ao ativar
+                      </span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 cursor-pointer bg-white p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 transition">
+                    <input
+                      type="checkbox"
+                      checked={formExigeMotivo}
+                      onChange={(e) => setFormExigeMotivo(e.target.checked)}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer mt-0.5"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-800 block">Exigir Justificativa</span>
+                      <span className="text-[10px] text-slate-500 leading-tight block mt-0.5">
+                        Pede motivo ao operador
+                      </span>
+                    </div>
                   </label>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                    Situação no Sistema:
-                  </label>
-                  <select
-                    value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as 'ativo' | 'inativo')}
-                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800"
-                  >
-                    <option value="ativo">Ativo (Exibir nos Mapas)</option>
-                    <option value="inativo">Inativo (Ocultar)</option>
-                  </select>
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/60">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                      Situação no Sistema:
+                    </label>
+                    <select
+                      value={formStatus}
+                      onChange={(e) => setFormStatus(e.target.value as 'ativo' | 'inativo')}
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800"
+                    >
+                      <option value="ativo">Ativo (Exibir nos Mapas)</option>
+                      <option value="inativo">Inativo (Ocultar)</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                    Ordem de Exibição:
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={formOrdem}
-                    onChange={(e) => setFormOrdem(Number(e.target.value) || 1)}
-                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-center"
-                  />
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                      Ordem de Exibição no Mapa:
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={formOrdem}
+                      onChange={(e) => setFormOrdem(Number(e.target.value) || 1)}
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-center"
+                    />
+                  </div>
                 </div>
               </div>
 

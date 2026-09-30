@@ -33,6 +33,7 @@ export interface Room {
   items?: Record<string, any>;
   beds?: number;
   comodidades?: any[];
+  motivo_bloqueio?: string;
 }
 
 export interface RoomItem {
@@ -85,17 +86,22 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
     const slugLower = (statusSlug || 'livre').toLowerCase().trim();
     const found = availableStatus.find(s => s.slug === slugLower);
     if (found) return found;
+    const isLivre = slugLower === 'livre';
+    const isLimpeza = slugLower === 'limpeza';
+    const isManutencao = slugLower === 'manutencao' || slugLower === 'interditado';
     return {
       id: `temp_${slugLower}`,
       slug: slugLower,
       nome: slugLower.charAt(0).toUpperCase() + slugLower.slice(1),
       descricao: '',
-      icone: 'bed',
-      cor_fundo: '#F3F4F6',
-      cor_texto: '#374151',
-      cor_borda: '#E5E7EB',
-      permite_ocupacao: false,
-      padrao_sistema: false,
+      icone: isLivre ? 'check_circle' : isLimpeza ? 'cleaning_services' : isManutencao ? 'build' : 'bed',
+      cor_fundo: isLivre ? '#ECFDF5' : isLimpeza ? '#FFFBEB' : '#F3F4F6',
+      cor_texto: isLivre ? '#065F46' : isLimpeza ? '#92400E' : '#374151',
+      cor_borda: isLivre ? '#A7F3D0' : isLimpeza ? '#FDE68A' : '#E5E7EB',
+      permite_ocupacao: isLivre,
+      padrao_sistema: isLivre || isLimpeza || isManutencao || slugLower === 'ocupado',
+      notifica_camareira: isLimpeza,
+      exige_motivo: isManutencao,
       status: 'ativo' as const,
       ordem: 99
     };
@@ -128,6 +134,12 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
     };
     fetchRooms();
     loadStatus();
+
+    const unsubscribeStatusQuartos = statusQuartosService.subscribeStatusQuartos ? statusQuartosService.subscribeStatusQuartos((list) => {
+      if (list && list.length > 0) {
+        setAvailableStatus(list);
+      }
+    }) : () => {};
 
     window.addEventListener('hotel_changed', fetchRooms);
     window.addEventListener('hotel_status_quartos_atualizado', loadStatus);
@@ -277,6 +289,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       if (bc) {
         try { bc.close(); } catch {}
       }
+      unsubscribeStatusQuartos();
       unsubscribeReservas();
       unsubscribeQuartos();
     };
@@ -411,7 +424,18 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [checkinModalReserva, setCheckinModalReserva] = useState<Reserva | null>(null);
 
+  const handleOpenRoomModal = (room: Room) => {
+    loadStatus();
+    setSelectedRoom(room);
+  };
+
   const handleStartCheckinForRoom = async (room: Room) => {
+    const stInfo = getStatusInfo(room.status);
+    if (!stInfo.permite_ocupacao && room.status !== 'ocupado') {
+      showToast(`⚠️ Check-in bloqueado: O status "${stInfo.nome}" não permite ocupação de hóspedes. Altere para um status liberado.`);
+      return;
+    }
+
     try {
       const allRes = await reservasService.getReservas();
       const cleanNum = String(room.number || '').trim();
@@ -621,23 +645,38 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
     setIsCadastrarItemOpen(false);
   };
 
-  const handleUpdateStatus = async (roomId: string, newStatus: string, newGuestName?: string) => {
-    // Regra de Negócio: Somente usuários do tipo Camareira ou Hotel podem marcar como limpo ('livre')
+  const handleUpdateStatus = async (roomId: string, newStatus: string, newGuestName?: string, explicitMotivo?: string) => {
+    // Regra 1: Somente usuários do tipo Camareira ou Hotel podem marcar como limpo ('livre')
     if (newStatus === 'livre' && !canMarkAsClean) {
       showToast('⚠️ Permissão restrita: Somente usuários do tipo Camareira e Hotel podem marcar o quarto como limpo após a higienização.');
       return;
     }
 
-    const updatedGuestName = newStatus === 'ocupado' ? (newGuestName || 'Hóspede') : undefined;
     const targetRoom = rooms.find(r => r.id === roomId);
     const stInfo = getStatusInfo(newStatus);
+
+    // Regra 2: Exige justificativa/motivo do operador ao aplicar status se configurado no status
+    let finalMotivo = explicitMotivo !== undefined ? explicitMotivo : targetRoom?.motivo_bloqueio;
+    if (stInfo.exige_motivo && explicitMotivo === undefined) {
+      const resp = prompt(`Informe a justificativa / motivo para colocar o Quarto ${targetRoom?.number || ''} em "${stInfo.nome}":`, targetRoom?.motivo_bloqueio || '');
+      if (resp === null) {
+        // Operador cancelou a alteração de status
+        return;
+      }
+      finalMotivo = resp.trim();
+    } else if (newStatus === 'livre') {
+      finalMotivo = undefined; // Quarto limpo e liberado, encerra qualquer motivo anterior
+    }
+
+    const updatedGuestName = newStatus === 'ocupado' ? (newGuestName || 'Hóspede') : undefined;
 
     setRooms(rooms.map(r => {
       if (r.id === roomId) {
         return {
           ...r,
           status: newStatus,
-          guestName: updatedGuestName
+          guestName: updatedGuestName,
+          motivo_bloqueio: finalMotivo
         };
       }
       return r;
@@ -646,7 +685,8 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       setSelectedRoom({
         ...selectedRoom,
         status: newStatus,
-        guestName: updatedGuestName
+        guestName: updatedGuestName,
+        motivo_bloqueio: finalMotivo
       });
     }
 
@@ -654,10 +694,14 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       await quartosService.updateQuarto(roomId, {
         status: newStatus,
         hospede_atual: updatedGuestName,
-        number: targetRoom?.number
+        number: targetRoom?.number,
+        notes: finalMotivo || targetRoom?.notes
       });
-      if (newStatus === 'limpeza') {
-        showToast(`🧹 Quarto ${targetRoom?.number || ''} marcado para limpeza (notificado para as camareiras).`);
+      if (newStatus === 'limpeza' || stInfo.notifica_camareira) {
+        if (targetRoom?.number) {
+          quartosService.solicitarLimpezaQuarto(targetRoom.number);
+        }
+        showToast(`🧹 Quarto ${targetRoom?.number || ''} em "${stInfo.nome}" (equipe de governança notificada).`);
       } else if (newStatus === 'livre') {
         showToast(`✨ Quarto ${targetRoom?.number || ''} marcado como limpo e liberado.`);
       } else {
@@ -967,7 +1011,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
           return (
             <div 
               key={room.id}
-              onClick={() => setSelectedRoom(room)}
+              onClick={() => handleOpenRoomModal(room)}
               className="bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between shadow-xs hover:border-slate-300 transition-all cursor-pointer"
             >
               <div className="flex items-center gap-3.5">
@@ -1047,7 +1091,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
           return (
             <article 
               key={room.id}
-              onClick={() => setSelectedRoom(room)}
+              onClick={() => handleOpenRoomModal(room)}
               className="bg-white border border-[#c6c6cd]/50 rounded-xl p-4 flex flex-col justify-between min-h-[140px] shadow-xs hover:shadow-md transition-all cursor-pointer relative overflow-hidden group hover:border-[#006c49]/40"
             >
               <div 
@@ -1586,25 +1630,76 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                 );
               })()}
 
-              <div>
-                {selectedRoom.status !== 'ocupado' && (
-                  <div className="mb-4">
-                    <button
-                      type="button"
-                      onClick={() => handleStartCheckinForRoom(selectedRoom)}
-                      className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                      title="Realizar Check-in com FNRH, Chave e Pagamento"
-                    >
-                      <span className="material-symbols-outlined text-lg">login</span>
-                      <span>Realizar Check-in (Entrada de Hóspede)</span>
-                    </button>
+              {/* ALERTA DE MOTIVO / JUSTIFICATIVA REGISTRADA NO STATUS */}
+              {selectedRoom.motivo_bloqueio && (
+                <div className="bg-amber-50/90 border border-amber-200 p-3 rounded-xl text-xs text-amber-950 flex items-start gap-2.5 shadow-2xs">
+                  <span className="material-symbols-outlined text-amber-700 text-lg shrink-0 mt-0.5">report_problem</span>
+                  <div className="flex-1">
+                    <span className="font-bold block text-slate-900">Justificativa / Motivo do Status:</span>
+                    <span className="text-[11px] text-amber-900 leading-tight block mt-0.5">
+                      &quot;{selectedRoom.motivo_bloqueio}&quot;
+                    </span>
                   </div>
-                )}
+                </div>
+              )}
+
+              {/* SEÇÃO CHECK-IN SEGUNDO A REGRA DO STATUS (permite_ocupacao) */}
+              <div>
+                {(() => {
+                  const currentSt = getStatusInfo(selectedRoom.status);
+                  if (selectedRoom.status === 'ocupado') {
+                    return null;
+                  }
+                  if (currentSt.permite_ocupacao) {
+                    return (
+                      <div className="mb-4">
+                        <button
+                          type="button"
+                          onClick={() => handleStartCheckinForRoom(selectedRoom)}
+                          className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                          title="Realizar Check-in com FNRH, Chave e Pagamento"
+                        >
+                          <span className="material-symbols-outlined text-lg">login</span>
+                          <span>Realizar Check-in (Entrada de Hóspede)</span>
+                        </button>
+                      </div>
+                    );
+                  }
+                  // Regra de Status: Não permite ocupação / check-in
+                  return (
+                    <div className="mb-4 p-3 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs shadow-xs">
+                      <div className="flex items-start sm:items-center gap-2">
+                        <span className="material-symbols-outlined text-amber-700 text-xl shrink-0 mt-0.5 sm:mt-0">do_not_disturb_on</span>
+                        <div>
+                          <span className="font-bold block text-slate-900">Check-in Indisponível (Quarto {currentSt.nome})</span>
+                          <span className="text-[11px] text-amber-800 leading-tight block">
+                            A regra deste status bloqueia a entrada de hóspedes. Altere para um status liberado (ex: Livre).
+                          </span>
+                        </div>
+                      </div>
+                      {canMarkAsClean && selectedRoom.status === 'limpeza' && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(selectedRoom.id, 'livre')}
+                          className="shrink-0 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          <span>Liberar Quarto</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold text-[#0b1c30] uppercase tracking-wider">
-                    Alterar Status do Quarto
-                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <label className="block text-xs font-bold text-[#0b1c30] uppercase tracking-wider">
+                      Alterar Status do Quarto
+                    </label>
+                    <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                      {availableStatus.filter(s => s.status === 'ativo').length} cadastrados
+                    </span>
+                  </div>
                   {!canMarkAsClean && (
                     <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
                       <span className="material-symbols-outlined text-xs text-amber-600">lock</span>
@@ -1613,6 +1708,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   )}
                 </div>
 
+                {/* GRID COM TODOS OS STATUS CADASTRADOS PELO ADMIN */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {availableStatus.filter(s => s.status === 'ativo').map((st) => {
                     const isSelected = (selectedRoom.status || 'livre').toLowerCase() === st.slug;
@@ -1646,21 +1742,30 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                         style={isSelected ? {
                           backgroundColor: st.cor_fundo,
                           color: st.cor_texto,
-                          borderColor: st.cor_texto
-                        } : {}}
-                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                          borderColor: st.cor_borda || st.cor_texto
+                        } : {
+                          borderLeftColor: st.cor_texto,
+                          borderLeftWidth: '3.5px'
+                        }}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-between gap-1.5 border transition-all cursor-pointer ${
                           isSelected
-                            ? 'shadow-xs ring-2'
+                            ? 'shadow-xs ring-2 ring-emerald-600/30 font-extrabold'
                             : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                         } ${!canMarkAsClean && isLivre && selectedRoom.status !== 'livre' ? 'opacity-60 cursor-not-allowed' : ''}`}
-                        title={st.descricao || st.nome}
+                        title={st.descricao ? `${st.nome} - ${st.descricao}` : st.nome}
                       >
-                        <span className="material-symbols-outlined text-base" style={isSelected ? { color: st.cor_texto } : {}}>
-                          {st.icone}
-                        </span>
-                        <span className="truncate">{st.nome}</span>
-                        {!canMarkAsClean && isLivre && selectedRoom.status !== 'livre' && (
-                          <span className="material-symbols-outlined text-xs text-amber-600" title="Requer perfil Camareira ou Hotel">lock</span>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="material-symbols-outlined text-base shrink-0" style={{ color: isSelected ? st.cor_texto : undefined }}>
+                            {st.icone}
+                          </span>
+                          <span className="truncate">{st.nome}</span>
+                        </div>
+                        {isSelected ? (
+                          <span className="material-symbols-outlined text-xs shrink-0 font-bold" style={{ color: st.cor_texto }}>check</span>
+                        ) : !st.permite_ocupacao ? (
+                          <span className="material-symbols-outlined text-[13px] text-slate-400 shrink-0" title="Bloqueia Entrada/Check-in">block</span>
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Permite Check-in"></span>
                         )}
                       </button>
                     );
