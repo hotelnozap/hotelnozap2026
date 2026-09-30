@@ -2,6 +2,62 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plano } from './ListagemPlanos';
 import { planosService } from '../services/supabaseService';
 
+export interface CicloCobranca {
+  months: number;
+  label: string;
+  name: string;
+  periodText: string;
+  days: number;
+}
+
+export const CICLOS_COBRANCA: CicloCobranca[] = [
+  { months: 1, label: '1 = Mensal', name: 'Mensal', periodText: '/mês', days: 30 },
+  { months: 2, label: '2 = Bimestral', name: 'Bimestral', periodText: '/bimestre', days: 60 },
+  { months: 3, label: '3 = Trimestral', name: 'Trimestral', periodText: '/trimestre', days: 90 },
+  { months: 4, label: '4 = Quadrimestral', name: 'Quadrimestral', periodText: '/quadrimestre', days: 120 },
+  { months: 5, label: '5 = Quinquemestral', name: 'Quinquemestral', periodText: '/5 meses', days: 150 },
+  { months: 6, label: '6 = Semestral', name: 'Semestral', periodText: '/semestre', days: 180 },
+  { months: 7, label: '7 = Septemestral', name: 'Septemestral', periodText: '/7 meses', days: 210 },
+  { months: 8, label: '8 = Octomestral', name: 'Octomestral', periodText: '/8 meses', days: 240 },
+  { months: 9, label: '9 = Nonamestral', name: 'Nonamestral', periodText: '/9 meses', days: 270 },
+  { months: 10, label: '10 = Decamestral', name: 'Decamestral', periodText: '/10 meses', days: 300 },
+  { months: 11, label: '11 = Hendecamestral', name: 'Hendecamestral', periodText: '/11 meses', days: 330 },
+  { months: 12, label: '12 = Anual', name: 'Anual', periodText: '/ano', days: 365 },
+];
+
+export const parsePeriodicityToMonths = (periodicity?: string | null): number => {
+  if (!periodicity) return 1;
+  const p = String(periodicity).trim().toLowerCase();
+  if (p === '1' || p.includes('mensal') || p === '1 mês') return 1;
+  if (p === '2' || p.includes('bimestral') || p === '2 meses') return 2;
+  if (p === '3' || p.includes('trimestral') || p === '3 meses') return 3;
+  if (p === '4' || p.includes('quadrimestral') || p === '4 meses') return 4;
+  if (p === '5' || p.includes('quinquemestral') || p === '5 meses') return 5;
+  if (p === '6' || p.includes('semestral') || p === '6 meses') return 6;
+  if (p === '7' || p.includes('septemestral') || p === '7 meses') return 7;
+  if (p === '8' || p.includes('octomestral') || p === '8 meses') return 8;
+  if (p === '9' || p.includes('nonamestral') || p === '9 meses') return 9;
+  if (p === '10' || p.includes('decamestral') || p === '10 meses') return 10;
+  if (p === '11' || p.includes('hendecamestral') || p === '11 meses') return 11;
+  if (p === '12' || p.includes('anual') || p === '12 meses') return 12;
+  const matchNum = p.match(/\b([1-9]|1[0-2])\b/);
+  if (matchNum) return parseInt(matchNum[1], 10);
+  return 1;
+};
+
+export const cleanDiscountInput = (val: string): string => {
+  if (!val) return '';
+  return val.replace(/off/gi, '').trim();
+};
+
+export const parseDiscountPercent = (val: string): number => {
+  if (!val) return 0;
+  const clean = cleanDiscountInput(val).replace('%', '').replace(',', '.').trim();
+  const num = parseFloat(clean);
+  if (isNaN(num) || num <= 0) return 0;
+  return Math.min(num, 100);
+};
+
 interface CadastroPlanoProps {
   planToEdit?: Plano | null;
   onBack: () => void;
@@ -27,19 +83,23 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>(planToEdit?.status || 'Ativo');
   const [isFeatured, setIsFeatured] = useState<boolean>(planToEdit?.isFeatured || false);
 
-  // Precificação
-  const [billingCycle, setBillingCycle] = useState<'mensal' | 'trimestral' | 'semestral' | 'anual'>(() => {
-    const p = (planToEdit?.periodicity || '').toLowerCase();
-    if (p.includes('anual')) return 'anual';
-    if (p.includes('trimestral')) return 'trimestral';
-    if (p.includes('semestral')) return 'semestral';
-    return 'mensal';
+  // Precificação e Ciclo (1 a 12)
+  const [billingCycle, setBillingCycle] = useState<number>(() => {
+    return parsePeriodicityToMonths(planToEdit?.periodicity);
   });
   const [basePrice, setBasePrice] = useState<string>(
-    planToEdit?.basePrice ? planToEdit.basePrice.toFixed(2).replace('.', ',') : '389,00'
+    planToEdit?.basePrice ? planToEdit.basePrice.toFixed(2).replace('.', ',') : '197,00'
   );
-  const [cycleDiscount, setCycleDiscount] = useState<string>('15% OFF');
-  const [trialDays, setTrialDays] = useState<number>(7);
+  const [cycleDiscount, setCycleDiscount] = useState<string>(() => {
+    if (!planToEdit) return '';
+    const rawDisc = (planToEdit as any).cycleDiscount || '';
+    const p = parseDiscountPercent(rawDisc);
+    return p > 0 ? `${p}%` : '';
+  });
+  const [trialDays, setTrialDays] = useState<number>(() => {
+    if ((planToEdit as any)?.trialDays !== undefined) return Number((planToEdit as any).trialDays);
+    return 7;
+  });
 
   // Quartos
   const [baseRooms, setBaseRooms] = useState<number>(
@@ -70,7 +130,12 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       setDescription(planToEdit.description || '');
       setStatus(planToEdit.status || 'Ativo');
       setIsFeatured(planToEdit.isFeatured || false);
-      setBasePrice(planToEdit.basePrice ? planToEdit.basePrice.toFixed(2).replace('.', ',') : '389,00');
+      setBillingCycle(parsePeriodicityToMonths(planToEdit.periodicity));
+      setBasePrice(planToEdit.basePrice ? planToEdit.basePrice.toFixed(2).replace('.', ',') : '197,00');
+      const rawDisc = (planToEdit as any).cycleDiscount || '';
+      const p = parseDiscountPercent(rawDisc);
+      setCycleDiscount(p > 0 ? `${p}%` : '');
+      setTrialDays((planToEdit as any).trialDays !== undefined ? Number((planToEdit as any).trialDays) : 7);
       setBaseRooms(planToEdit.roomLimit !== undefined && planToEdit.roomLimit !== null ? planToEdit.roomLimit : 45);
       setBaseWhatsapp(planToEdit.whatsappConnections !== undefined && planToEdit.whatsappConnections !== null ? planToEdit.whatsappConnections : 2);
     }
@@ -81,6 +146,10 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const currentCiclo = useMemo(() => {
+    return CICLOS_COBRANCA.find(c => c.months === billingCycle) || CICLOS_COBRANCA[0];
+  }, [billingCycle]);
+
   // Cálculo da simulação de repasse líquido (2.89% de taxa de cartão estimada)
   const numericPrice = useMemo(() => {
     const cleaned = basePrice.replace(/\./g, '').replace(',', '.');
@@ -88,10 +157,23 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
     return isNaN(val) ? 0 : val;
   }, [basePrice]);
 
+  const discountPercent = useMemo(() => {
+    return parseDiscountPercent(cycleDiscount);
+  }, [cycleDiscount]);
+
+  const discountAmount = useMemo(() => {
+    if (discountPercent <= 0 || numericPrice <= 0) return 0;
+    return (numericPrice * discountPercent) / 100;
+  }, [numericPrice, discountPercent]);
+
+  const effectivePrice = useMemo(() => {
+    return Math.max(0, numericPrice - discountAmount);
+  }, [numericPrice, discountAmount]);
+
   const netSimulatedPrice = useMemo(() => {
-    const net = numericPrice * (1 - 0.0289);
+    const net = effectivePrice * (1 - 0.0289);
     return net.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }, [numericPrice]);
+  }, [effectivePrice]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,11 +188,22 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       const savedRaw = localStorage.getItem('hotelnozap_planos_assinatura_v1');
       let currentList: Plano[] = savedRaw ? JSON.parse(savedRaw) : [];
 
-      const periodicityFormatted: 'Mensal' | 'Trimestral' | 'Anual' =
-        billingCycle === 'anual' ? 'Anual' : billingCycle === 'trimestral' ? 'Trimestral' : 'Mensal';
+      const periodicityFormatted = currentCiclo.name;
+      const pricePeriodText = currentCiclo.periodText;
+      const discountFormatted = discountPercent > 0 ? `${discountPercent}%` : '';
 
-      const pricePeriodText =
-        periodicityFormatted === 'Anual' ? '/ano' : periodicityFormatted === 'Trimestral' ? '/trimestre' : '/mês';
+      const priceSubtitle =
+        numericPrice === 0 || name.toLowerCase().includes('free')
+          ? Number(trialDays) === 0
+            ? 'Plano gratuito limitado contínuo até upgrade'
+            : `Período gratuito de ${trialDays} dias de teste`
+          : discountPercent > 0
+          ? `${discountPercent}% de desconto no ciclo • ${periodicityFormatted}`
+          : billingCycle === 12
+          ? `Equiv. R$ ${(effectivePrice / 12).toFixed(2).replace('.', ',')}/mês • Em até 12x`
+          : isFeatured
+          ? 'Mais recomendado para alta taxa de ocupação'
+          : `Cobrança ${periodicityFormatted.toLowerCase()} recorrente via PIX ou Cartão`;
 
       const planData: Plano = {
         id: planToEdit?.id || `plano-${Date.now()}`,
@@ -122,16 +215,9 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         periodicity: periodicityFormatted,
         basePrice: typeof numericPrice === 'number' && !isNaN(numericPrice) ? numericPrice : 0,
         pricePeriodText,
-        priceSubtitle:
-          numericPrice === 0 || name.toLowerCase().includes('free')
-            ? Number(trialDays) === 0
-              ? 'Plano gratuito limitado contínuo até upgrade'
-              : `Período gratuito de ${trialDays} dias de teste`
-            : periodicityFormatted === 'Anual'
-            ? `Equiv. R$ ${(numericPrice / 12).toFixed(2).replace('.', ',')}/mês • Em até 12x`
-            : isFeatured
-            ? 'Mais recomendado para alta taxa de ocupação'
-            : 'Cobrança mensal recorrente via PIX ou Cartão',
+        priceSubtitle,
+        trialDays: Number(trialDays) || 0,
+        cycleDiscount: discountFormatted,
         roomLimit: baseRooms,
         roomLimitText: baseRooms === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${baseRooms} quartos`,
         roomExtraPriceText: allowExtraRooms ? `R$ ${extraRoomPrice}/adicional` : 'Sem quartos adicionais',
@@ -155,7 +241,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         await planosService.updatePlano(planToEdit.id, {
           ...planData,
           trialDays: Number(trialDays) || 0,
-          cycleDiscount,
+          cycleDiscount: discountFormatted,
           allowExtraRooms,
           extraRoomPrice,
           allowExtraWa,
@@ -166,7 +252,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         const created = await planosService.createPlano({
           ...planData,
           trialDays: Number(trialDays) || 0,
-          cycleDiscount,
+          cycleDiscount: discountFormatted,
           allowExtraRooms,
           extraRoomPrice,
           allowExtraWa,
@@ -393,13 +479,14 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                 <select
                   id="mob-plan-freq"
                   value={billingCycle}
-                  onChange={(e) => setBillingCycle(e.target.value as any)}
-                  className="w-full h-11 pl-3 pr-10 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none appearance-none cursor-pointer"
+                  onChange={(e) => setBillingCycle(parseInt(e.target.value, 10) || 1)}
+                  className="w-full h-11 pl-3 pr-10 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none appearance-none cursor-pointer font-medium"
                 >
-                  <option value="mensal">Mensal (Cobrança a cada 30 dias)</option>
-                  <option value="trimestral">Trimestral (Cobrança a cada 90 dias)</option>
-                  <option value="semestral">Semestral (Cobrança a cada 180 dias)</option>
-                  <option value="anual">Anual (Faturamento consolidado)</option>
+                  {CICLOS_COBRANCA.map((c) => (
+                    <option key={c.months} value={c.months}>
+                      {c.label} ({c.days} dias)
+                    </option>
+                  ))}
                 </select>
                 <span className="material-symbols-outlined absolute right-3 pointer-events-none text-slate-400 text-[20px]">expand_more</span>
               </div>
@@ -416,23 +503,75 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   required
                   value={basePrice}
                   onChange={(e) => setBasePrice(e.target.value)}
-                  placeholder="R$ 389,00"
+                  placeholder="R$ 197,00"
                   className="w-full h-11 px-3 rounded-lg bg-slate-50 text-slate-900 text-xs font-bold border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-slate-800" htmlFor="mob-plan-discount">
-                  Desconto (%)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800" htmlFor="mob-plan-discount">
+                    Desconto (%)
+                  </label>
+                  {discountPercent > 0 ? (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      -{discountPercent}%
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-medium">0%</span>
+                  )}
+                </div>
                 <input
                   id="mob-plan-discount"
                   type="text"
                   value={cycleDiscount}
-                  onChange={(e) => setCycleDiscount(e.target.value)}
-                  placeholder="Ex: 15%"
-                  className="w-full h-11 px-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all"
+                  onChange={(e) => setCycleDiscount(cleanDiscountInput(e.target.value))}
+                  onBlur={() => {
+                    if (discountPercent > 0) {
+                      setCycleDiscount(`${discountPercent}%`);
+                    } else {
+                      setCycleDiscount('');
+                    }
+                  }}
+                  placeholder="0% (Sem desconto)"
+                  className="w-full h-11 px-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all font-medium"
                 />
+              </div>
+            </div>
+
+            {/* Resumo Dinâmico do Ciclo e Repasse (Mobile) */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/90 flex flex-col gap-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium">Ciclo Selecionado:</span>
+                <span className="font-bold text-slate-900">{currentCiclo.label}</span>
+              </div>
+              {discountPercent > 0 ? (
+                <>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500">Valor base:</span>
+                    <span className="line-through text-slate-400">R$ {numericPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-emerald-700 font-medium">
+                    <span>Desconto no ciclo ({discountPercent}%):</span>
+                    <span>- R$ {discountAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-900 pt-1 border-t border-slate-200">
+                    <span>Valor final por ciclo:</span>
+                    <span className="text-emerald-700 font-extrabold">R$ {effectivePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} {currentCiclo.periodText}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between text-xs font-bold text-slate-900 pt-1 border-t border-slate-200">
+                  <span>Valor por ciclo:</span>
+                  <span>R$ {numericPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} {currentCiclo.periodText}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-200 bg-white/70 p-2 rounded-lg">
+                <div>
+                  <span className="text-slate-700 font-bold block text-[11px]">Repasse Líquido Estimado</span>
+                  <span className="text-[10px] text-slate-400">Após taxa estimada de 2.89%</span>
+                </div>
+                <span className="font-black text-[#006c49] text-sm">R$ {netSimulatedPrice}</span>
               </div>
             </div>
 
@@ -865,13 +1004,14 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   <select
                     id="desk-billing-cycle"
                     value={billingCycle}
-                    onChange={(e) => setBillingCycle(e.target.value as any)}
+                    onChange={(e) => setBillingCycle(parseInt(e.target.value, 10) || 1)}
                     className="w-full h-11 px-3 pr-8 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-semibold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none appearance-none cursor-pointer shadow-xs"
                   >
-                    <option value="mensal">Mensal</option>
-                    <option value="trimestral">Trimestral</option>
-                    <option value="semestral">Semestral</option>
-                    <option value="anual">Anual (Compromisso 12 meses)</option>
+                    {CICLOS_COBRANCA.map((c) => (
+                      <option key={c.months} value={c.months}>
+                        {c.label} ({c.days} dias)
+                      </option>
+                    ))}
                   </select>
                   <span className="material-symbols-outlined absolute right-3 text-slate-400 pointer-events-none text-base">expand_more</span>
                 </div>
@@ -895,19 +1035,42 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-800" htmlFor="desk-cycle-discount">
-                  Desconto no Ciclo (Opcional)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800" htmlFor="desk-cycle-discount">
+                    Desconto no Ciclo (Opcional)
+                  </label>
+                  {discountPercent > 0 ? (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      -{discountPercent}% aplicado
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-slate-400 font-medium">Sem desconto</span>
+                  )}
+                </div>
                 <div className="relative flex items-center">
                   <input
                     id="desk-cycle-discount"
                     type="text"
                     value={cycleDiscount}
-                    onChange={(e) => setCycleDiscount(e.target.value)}
-                    placeholder="Ex: 15% ou R$ 50,00"
-                    className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-medium focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
+                    onChange={(e) => setCycleDiscount(cleanDiscountInput(e.target.value))}
+                    onBlur={() => {
+                      if (discountPercent > 0) {
+                        setCycleDiscount(`${discountPercent}%`);
+                      } else {
+                        setCycleDiscount('');
+                      }
+                    }}
+                    placeholder="0% (Sem desconto)"
+                    className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-semibold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                   />
                 </div>
+                {discountPercent > 0 ? (
+                  <p className="text-[11px] text-emerald-700 font-medium">
+                    Economia de R$ {discountAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} no ciclo {currentCiclo.name.toLowerCase()}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400">Deixe em branco ou 0 para não aplicar desconto.</p>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -939,18 +1102,37 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
             </div>
 
             {/* Preview de Faturamento Dinâmico */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[#006c49] text-2xl">account_balance_wallet</span>
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006c49] flex items-center justify-center shrink-0 border border-emerald-100">
+                  <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
+                </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-900 block">Simulação de Repasse Líquido Estimado</span>
-                  <span className="text-[11px] text-slate-500">Valor líquido previsto por hotel após taxa de intermediação de cartão (estimativa 2.89%).</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900 block">Simulação de Repasse Líquido Estimado</span>
+                    {discountPercent > 0 ? (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                        Desconto automático de {discountPercent}% ativo
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-full">
+                        Preço integral (Sem desconto)
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-500">
+                    Ciclo: <strong>{currentCiclo.label}</strong> • Preço base: R$ {numericPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    {discountPercent > 0 && ` • Abatimento automático: -R$ ${discountAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • Cobrado no ciclo: R$ ${effectivePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                    {' '}(após taxa de intermediação estimada em 2.89%).
+                  </span>
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Projeção por ciclo</span>
-                <span className="text-lg font-black text-[#006c49]">
-                  R$ {netSimulatedPrice} <span className="text-xs text-slate-500 font-normal">/mês/hotel</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Líquido Estimado por {currentCiclo.name}
+                </span>
+                <span className="text-xl font-black text-[#006c49]">
+                  R$ {netSimulatedPrice} <span className="text-xs text-slate-500 font-normal">{currentCiclo.periodText}/hotel</span>
                 </span>
               </div>
             </div>

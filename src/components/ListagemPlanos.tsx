@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { planosService, hoteisService } from '../services/supabaseService';
 import { Hotel } from './CadastroHoteis';
+import { CICLOS_COBRANCA, cleanDiscountInput, parseDiscountPercent } from './CadastroPlano';
 
 export interface Plano {
   id: string;
@@ -13,6 +14,8 @@ export interface Plano {
   basePrice: number;
   pricePeriodText: string;
   priceSubtitle?: string;
+  trialDays?: number;
+  cycleDiscount?: string;
   roomLimit: number;
   roomLimitText: string;
   roomExtraPriceText: string;
@@ -171,7 +174,7 @@ const INITIAL_PLANOS: Plano[] = [
     order: '#05',
     emoji: '💎',
     name: '12 Créditos (Anual Fidelidade)',
-    tag: '-35% OFF',
+    tag: '-35%',
     description: '12 Créditos • 365 dias base + 60 dias de bônus (425 dias / > 14 meses)',
     periodicity: 'Anual',
     basePrice: 1690.00,
@@ -413,7 +416,10 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
       onNavigateToEdit(plan);
     } else {
       setPlanToEdit(plan);
-      setFormData({ ...plan });
+      setFormData({
+        ...plan,
+        cycleDiscount: plan.cycleDiscount ? cleanDiscountInput(plan.cycleDiscount) : ''
+      });
     }
   };
 
@@ -431,6 +437,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
         description: '',
         periodicity: 'Mensal',
         basePrice: 249.00,
+        cycleDiscount: '',
         pricePeriodText: '/mês',
         priceSubtitle: 'Cobrança recorrente automatizada',
         roomLimit: 25,
@@ -461,13 +468,24 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
       return;
     }
 
+    const discP = parseDiscountPercent(formData.cycleDiscount || '');
+    const cleanDiscount = discP > 0 ? `${discP}%` : '';
+    const cycleMatch = CICLOS_COBRANCA.find(c => c.name.toLowerCase() === (formData.periodicity || '').toLowerCase());
+    const computedPeriodText = cycleMatch ? cycleMatch.periodText : '/mês';
+
+    const normalizedData = {
+      ...formData,
+      cycleDiscount: cleanDiscount,
+      pricePeriodText: computedPeriodText
+    };
+
     if (planToEdit) {
-      await planosService.updatePlano(planToEdit.id, formData);
+      await planosService.updatePlano(planToEdit.id, normalizedData);
       const updated = planos.map(p => {
         if (p.id === planToEdit.id) {
           return {
             ...p,
-            ...formData,
+            ...normalizedData,
             roomLimitText: Number(formData.roomLimit) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${formData.roomLimit} quartos`,
             whatsappConnectionsText: Number(formData.whatsappConnections) === 0 ? 'Sem conexão WhatsApp inclusa' : `${formData.whatsappConnections} Conexão${Number(formData.whatsappConnections) > 1 ? 'ões' : ''} WhatsApp`
           } as Plano;
@@ -478,7 +496,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
       setPlanToEdit(null);
       showToast(`Plano "${formData.name}" atualizado com sucesso!`);
     } else {
-      const created = await planosService.createPlano(formData);
+      const created = await planosService.createPlano(normalizedData);
       const newPlan: Plano = {
         id: created?.id || `plano-${Date.now()}`,
         order: formData.order || `#0${planos.length + 1}`,
@@ -488,8 +506,9 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
         description: formData.description || 'Plano customizado',
         periodicity: (formData.periodicity as any) || 'Mensal',
         basePrice: Number(formData.basePrice) || 199.00,
-        pricePeriodText: formData.periodicity === 'Anual' ? '/ano' : formData.periodicity === 'Trimestral' ? '/trimestre' : '/mês',
+        pricePeriodText: computedPeriodText,
         priceSubtitle: formData.priceSubtitle || 'Cobrança recorrente',
+        cycleDiscount: cleanDiscount,
         roomLimit: formData.roomLimit !== undefined && formData.roomLimit !== null ? Number(formData.roomLimit) : 20,
         roomLimitText: Number(formData.roomLimit) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${formData.roomLimit ?? 20} quartos`,
         roomExtraPriceText: formData.roomExtraPriceText || 'R$ 3,50/adicional',
@@ -633,9 +652,11 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                     className="w-full text-xs p-1.5 border border-slate-200 rounded-lg bg-slate-50"
                   >
                     <option value="Todas">Todas</option>
-                    <option value="Mensal">Mensal</option>
-                    <option value="Trimestral">Trimestral</option>
-                    <option value="Anual">Anual</option>
+                    {CICLOS_COBRANCA.map((c) => (
+                      <option key={c.months} value={c.name}>
+                        {c.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -1059,9 +1080,11 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
               className="py-2 pl-3.5 pr-8 text-sm bg-white border border-slate-200 rounded-xl text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 cursor-pointer"
             >
               <option value="Todas">Todas Periodicidades</option>
-              <option value="Mensal">Mensal</option>
-              <option value="Trimestral">Trimestral</option>
-              <option value="Anual">Anual</option>
+              {CICLOS_COBRANCA.map((c) => (
+                <option key={c.months} value={c.name}>
+                  {c.label}
+                </option>
+              ))}
             </select>
 
             {/* Status Dropdown */}
@@ -1162,7 +1185,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                                     plan.tag === 'Mais Vendido' 
                                       ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
-                                      : plan.tag === '-20% OFF'
+                                      : plan.tag.includes('%') || plan.tag.toLowerCase().includes('desconto')
                                       ? 'bg-amber-100 text-amber-800 border-amber-200'
                                       : plan.tag === 'Ilimitado'
                                       ? 'bg-purple-100 text-purple-700 border-purple-200'
@@ -1350,7 +1373,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
 
                       {plan.tag && plan.tag !== 'Mais Vendido' && (
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
-                          plan.tag === '-20% OFF' 
+                          plan.tag.includes('%') || plan.tag.toLowerCase().includes('desconto')
                             ? 'bg-amber-100 text-amber-900 border-amber-200' 
                             : 'bg-slate-100 text-slate-700 border-slate-200'
                         }`}>
@@ -1656,7 +1679,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                     type="text"
                     value={formData.tag || ''}
                     onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-                    placeholder="Ex: Mais Vendido, -20% OFF"
+                    placeholder="Ex: Mais Vendido, -20%"
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                   />
                 </div>
@@ -1673,17 +1696,19 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Periodicidade</label>
                   <select
                     value={formData.periodicity || 'Mensal'}
                     onChange={(e) => setFormData({ ...formData, periodicity: e.target.value as any })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium"
                   >
-                    <option value="Mensal">Mensal</option>
-                    <option value="Trimestral">Trimestral</option>
-                    <option value="Anual">Anual</option>
+                    {CICLOS_COBRANCA.map((c) => (
+                      <option key={c.months} value={c.name}>
+                        {c.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1695,7 +1720,31 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                     required
                     value={formData.basePrice || 0}
                     onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-bold"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700">Desconto (%)</label>
+                    {parseDiscountPercent(formData.cycleDiscount || '') > 0 ? (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
+                        -{parseDiscountPercent(formData.cycleDiscount || '')}%
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400">Sem desc.</span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.cycleDiscount || ''}
+                    onChange={(e) => setFormData({ ...formData, cycleDiscount: cleanDiscountInput(e.target.value) })}
+                    onBlur={() => {
+                      const p = parseDiscountPercent(formData.cycleDiscount || '');
+                      setFormData({ ...formData, cycleDiscount: p > 0 ? `${p}%` : '' });
+                    }}
+                    placeholder="0% (Sem desconto)"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium"
                   />
                 </div>
 
@@ -1711,6 +1760,18 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                   </select>
                 </div>
               </div>
+
+              {parseDiscountPercent(formData.cycleDiscount || '') > 0 && (
+                <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-emerald-800">
+                    <span className="material-symbols-outlined text-base">savings</span>
+                    <span>Desconto automático de <strong>{parseDiscountPercent(formData.cycleDiscount || '')}%</strong> aplicado no ciclo.</span>
+                  </div>
+                  <div className="font-bold text-emerald-900">
+                    Efetivo: R$ {((formData.basePrice || 0) * (1 - parseDiscountPercent(formData.cycleDiscount || '') / 100)).toFixed(2).replace('.', ',')}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
