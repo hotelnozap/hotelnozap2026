@@ -16,6 +16,7 @@ import { maskCpfCnpj, maskCep, maskPhone } from '../utils/masks';
 import { fetchAddressByCep } from '../utils/viacep';
 import { webhookN8nService } from '../services/webhookN8nService';
 import { ZapHotelLogo } from './ZapHotelLogo';
+import { cuponsService, ValidacaoCupomResult } from '../services/cuponsService';
 
 export interface DetalhesQuartoProps {
   hotel?: PublicHotel | null;
@@ -253,6 +254,24 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
     return name || (num ? `Quarto ${num}` : 'Acomodação');
   };
 
+  // Cupom de Desconto
+  const [cupomCodigoInput, setCupomCodigoInput] = useState<string>('');
+  const [cupomAplicado, setCupomAplicado] = useState<ValidacaoCupomResult | null>(null);
+  const [validandoCupom, setValidandoCupom] = useState<boolean>(false);
+
+  // Ler cupom da URL se houver ?cupom=CODIGO ou ?coupon=CODIGO
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const codeUrl = params.get('cupom') || params.get('coupon');
+      if (codeUrl) {
+        setCupomCodigoInput(codeUrl.toUpperCase());
+      }
+    } catch {
+      // Ignora erro em ambientes sem window.location
+    }
+  }, []);
+
   // Cálculo Dinâmico de Diárias e Valor Total
   const totalNoites = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 1;
@@ -263,10 +282,49 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
     return diffDays > 0 ? diffDays : 1;
   }, [checkInDate, checkOutDate]);
 
-  const valorTotalCalculado = useMemo(() => {
+  const subtotalDiarias = useMemo(() => {
     const diaria = Number(currentQuarto?.dailyPrice) || 0;
     return diaria * totalNoites;
   }, [currentQuarto?.dailyPrice, totalNoites]);
+
+  const valorDescontoCupom = useMemo(() => {
+    if (!cupomAplicado?.valido || !cupomAplicado.cupom) return 0;
+    if (cupomAplicado.cupom.tipo_desconto === 'porcentagem') {
+      return (subtotalDiarias * cupomAplicado.cupom.valor_desconto) / 100;
+    }
+    return Math.min(subtotalDiarias, cupomAplicado.cupom.valor_desconto);
+  }, [subtotalDiarias, cupomAplicado]);
+
+  const valorTotalCalculado = useMemo(() => {
+    return Math.max(0, subtotalDiarias - valorDescontoCupom);
+  }, [subtotalDiarias, valorDescontoCupom]);
+
+  const handleAplicarCupom = async (codigoParaAplicar?: string) => {
+    const code = (codigoParaAplicar || cupomCodigoInput).trim().toUpperCase();
+    if (!code) {
+      setToastMessage('Informe o código do cupom de desconto.');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+    setValidandoCupom(true);
+    try {
+      const res = await cuponsService.validarCupom(code, currentQuarto?.hotel_id, subtotalDiarias);
+      setCupomAplicado(res);
+      setToastMessage(res.mensagem);
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (err) {
+      console.error('Erro ao validar cupom:', err);
+    } finally {
+      setValidandoCupom(false);
+    }
+  };
+
+  const handleRemoverCupom = () => {
+    setCupomAplicado(null);
+    setCupomCodigoInput('');
+    setToastMessage('Cupom removido da reserva.');
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Validação em tempo real: impede qualquer reserva com mais de 30 dias de antecedência ou superior a 30 diárias
   const isReservaMaisDe30Dias = useMemo(() => {
@@ -747,11 +805,19 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
         quarto_id: currentQuarto.id,
         hospede_id: guest.id && guest.id.length > 10 ? guest.id : undefined,
         status: 'Confirmada',
-        observacoes: `Reserva online via Hotel no Zap pelo Hóspede VIP ${guest.nome} (${guest.email})`
+        observacoes: `Reserva online via Hotel no Zap pelo Hóspede VIP ${guest.nome} (${guest.email})${
+          cupomAplicado?.cupom
+            ? ` • Cupom Aplicado: ${cupomAplicado.cupom.codigo} (-R$ ${valorDescontoCupom.toFixed(2)})`
+            : ''
+        }`
       });
 
       if (!reservaCreated) {
         throw new Error('Não foi possível gravar a reserva no banco de dados. Tente novamente.');
+      }
+
+      if (cupomAplicado?.cupom?.id) {
+        cuponsService.registrarUsoCupom(cupomAplicado.cupom.id);
       }
 
       // Dispara notificação inteligente em tempo real para a tela do hotel
@@ -1088,6 +1154,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       `🛏️ *Acomodação:* ${currentQuarto.name} (Quarto ${currentQuarto.number || currentQuarto.name})\n` +
       `📅 *Check-in:* ${dIn}\n` +
       `📅 *Check-out:* ${dOut} (${totalNoites} ${totalNoites === 1 ? 'diária' : 'diárias'})\n` +
+      (cupomAplicado?.cupom ? `🎟️ *Cupom Aplicado:* ${cupomAplicado.cupom.codigo} (-R$ ${valorDescontoCupom.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})\n` : '') +
       `💰 *Valor Total:* R$ ${valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
       `Gostaria de consultar as instruções para meu check-in!`
     );
@@ -1547,13 +1614,64 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 </div>
               )}
 
-              <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">
-                  {totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'} × R$ {currentQuarto.dailyPrice}
-                </span>
-                <span className="text-sm font-black text-[#006c49]">
-                  Total: R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
+              {/* Box de Cupom de Desconto Mobile */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                {!cupomAplicado?.valido ? (
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative flex-1">
+                      <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">confirmation_number</span>
+                      <input
+                        type="text"
+                        value={cupomCodigoInput}
+                        onChange={(e) => setCupomCodigoInput(e.target.value.toUpperCase().replace(/\s/g, ''))}
+                        placeholder="Cupom de desconto..."
+                        className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-mono uppercase font-bold focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#006c49]"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={validandoCupom}
+                      onClick={() => handleAplicarCupom()}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-[11px] font-bold transition disabled:opacity-50 cursor-pointer"
+                    >
+                      {validandoCupom ? '...' : 'Aplicar'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1 text-emerald-800 font-bold">
+                      <span className="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
+                      <span>Cupom <strong>{cupomAplicado.cupom?.codigo}</strong> ({cupomAplicado.cupom?.tipo_desconto === 'porcentagem' ? `${cupomAplicado.cupom?.valor_desconto}%` : `R$ ${cupomAplicado.cupom?.valor_desconto}`})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoverCupom}
+                      className="text-rose-600 hover:text-rose-800 font-bold text-[10px] underline cursor-pointer"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-500 font-medium">
+                    {totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'} × R$ {currentQuarto.dailyPrice}
+                  </span>
+                  {valorDescontoCupom > 0 ? (
+                    <div className="text-right">
+                      <span className="line-through text-slate-400 text-[11px] block">
+                        R$ {subtotalDiarias.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-sm font-black text-[#006c49]">
+                        Total: R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-black text-[#006c49]">
+                      Total: R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Botão de Reserva no Topo Mobile */}
@@ -1914,21 +2032,84 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                   </div>
                 )}
 
-                {/* Cálculo Dinâmico */}
-                <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium">
-                    {totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'} × R$ {currentQuarto.dailyPrice}
-                  </span>
-                  <span className="text-base font-black text-[#006c49]">
-                    R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
+                {/* Cupom de Desconto Desktop */}
+                <div className="pt-2 border-t border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm text-[#006c49]">confirmation_number</span>
+                      <span>Cupom de Desconto</span>
+                    </span>
+                    {cupomAplicado?.valido && (
+                      <span className="text-[10px] font-black text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-full">
+                        Ativo
+                      </span>
+                    )}
+                  </div>
 
-              {/* Resumo do Total no Mobile */}
-              <div className="lg:hidden flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
-                <span className="font-bold text-slate-700">Total ({totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'}):</span>
-                <span className="text-base font-black text-[#006c49]">R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  {!cupomAplicado?.valido ? (
+                    <div className="flex items-center gap-1.5">
+                      <div className="relative flex-1">
+                        <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">confirmation_number</span>
+                        <input
+                          type="text"
+                          value={cupomCodigoInput}
+                          onChange={(e) => setCupomCodigoInput(e.target.value.toUpperCase().replace(/\s/g, ''))}
+                          placeholder="Ex: PROMO10"
+                          className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-300 bg-white text-xs font-mono uppercase font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#006c49]"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        disabled={validandoCupom}
+                        onClick={() => handleAplicarCupom()}
+                        className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-xs"
+                      >
+                        {validandoCupom ? '...' : 'Aplicar'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-emerald-900 font-bold">
+                        <span className="material-symbols-outlined text-base text-emerald-600">check_circle</span>
+                        <span>
+                          Cupom <strong>{cupomAplicado.cupom?.codigo}</strong> ({cupomAplicado.cupom?.tipo_desconto === 'porcentagem' ? `${cupomAplicado.cupom?.valor_desconto}% OFF` : `R$ ${cupomAplicado.cupom?.valor_desconto} OFF`})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoverCupom}
+                        className="text-rose-600 hover:text-rose-800 font-bold text-xs underline cursor-pointer"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cálculo Dinâmico com Desconto */}
+                <div className="pt-2 border-t border-slate-200/80 space-y-1 text-xs">
+                  <div className="flex items-center justify-between text-slate-500 font-medium">
+                    <span>{totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'} × R$ {currentQuarto.dailyPrice}</span>
+                    <span>R$ {subtotalDiarias.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+
+                  {valorDescontoCupom > 0 && (
+                    <div className="flex items-center justify-between text-emerald-700 font-bold animate-in fade-in duration-150">
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">savings</span>
+                        <span>Desconto Cupom:</span>
+                      </span>
+                      <span>- R$ {valorDescontoCupom.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+
+                  <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-800 font-bold text-sm">Total da Estadia:</span>
+                    <span className="text-lg font-black text-[#006c49]">
+                      R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* BOTÃO PRINCIPAL ALTO IMPACTO (RESERVAR AGORA OU AVISO DE OCUPADO) */}
@@ -2286,9 +2467,20 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 <span className="text-slate-500 text-[11px]">
                   {formatarDataBR(checkInDate)} até {formatarDataBR(checkOutDate)} ({totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'})
                 </span>
+                {cupomAplicado?.valido && cupomAplicado.cupom && (
+                  <div className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-emerald-800">
+                    <span className="material-symbols-outlined text-xs">confirmation_number</span>
+                    <span>Cupom {cupomAplicado.cupom.codigo} aplicado (-R$ {valorDescontoCupom.toFixed(2)})</span>
+                  </div>
+                )}
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-slate-500 block">Total</span>
+                {valorDescontoCupom > 0 && (
+                  <span className="text-[10px] line-through text-slate-400 block">
+                    R$ {subtotalDiarias.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                )}
                 <span className="text-base font-black text-[#006c49]">
                   R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
@@ -2669,6 +2861,16 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                     {formatarDataBR(checkInDate)} a {formatarDataBR(checkOutDate)} ({totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'})
                   </span>
                 </div>
+
+                {cupomAplicado?.valido && cupomAplicado.cupom && (
+                  <div className="flex items-center justify-between text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">confirmation_number</span>
+                      <span>Cupom {cupomAplicado.cupom.codigo}:</span>
+                    </span>
+                    <span>- R$ {valorDescontoCupom.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                   <span className="text-slate-700 font-bold">Valor Total:</span>

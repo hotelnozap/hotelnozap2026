@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MeusDadosCadastrais } from './MeusDadosCadastrais';
 import { MinhasReservasHospede } from './MinhasReservasHospede';
 import { PedidosRecepcaoHospede } from './PedidosRecepcaoHospede';
+import { CuponsHospede } from './CuponsHospede';
 import { hospedesService, quartosService, usuariosService, currentHotelService, hotelConfigService, extractConfigFromObservacoes } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { DEFAULT_CONFIG, HotelConfigData, loadHotelConfigFromStorage, saveHotelConfigToStorage } from './ConfiguracoesHotel';
@@ -64,7 +65,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
   const hasAccess = normalizedRole === 'administrador' || normalizedRole === 'admin' || normalizedRole === 'hospede' || normalizedRole === 'hóspede';
 
   // Estados de navegação e UI
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'pedidos' | 'minhas-reservas' | 'horarios' | 'dados-cadastrais' | 'enderecos' | 'seguranca' | 'consumo'>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'pedidos' | 'minhas-reservas' | 'cupons' | 'horarios' | 'dados-cadastrais' | 'enderecos' | 'seguranca' | 'consumo'>('dashboard');
   const [hotelConfig, setHotelConfig] = useState<HotelConfigData>(DEFAULT_CONFIG);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -673,6 +674,23 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               <span>{temEstadiaOuReserva ? 'Minhas Reservas' : 'Histórico de Hospedagens'}</span>
             </button>
 
+            <button
+              onClick={() => setActiveSubTab('cupons')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                activeSubTab === 'cupons'
+                  ? 'bg-emerald-600/25 text-emerald-300 border-l-4 border-emerald-400 shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`material-symbols-outlined text-xl ${activeSubTab === 'cupons' ? 'text-emerald-400' : 'text-slate-400'}`}>confirmation_number</span>
+                <span>Cupons de Desconto</span>
+              </div>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Ofertas
+              </span>
+            </button>
+
             {temEstadiaOuReserva && (
               <button
                 onClick={() => setActiveSubTab('horarios')}
@@ -870,6 +888,19 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">calendar_month</span>
                     {temEstadiaOuReserva ? 'Minhas Reservas' : 'Histórico de Hospedagens'}
+                  </button>
+
+                  <button
+                    onClick={() => { setActiveSubTab('cupons'); setIsMobileDrawerOpen(false); }}
+                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-emerald-400 text-lg">confirmation_number</span>
+                      <span>Cupons de Desconto</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                      Ofertas
+                    </span>
                   </button>
 
                   {temEstadiaOuReserva && (
@@ -1674,6 +1705,16 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               userName={perfil?.nome || userName}
               userEmail={perfil?.email || userEmail}
               onNavigateBack={() => setActiveSubTab('dashboard')}
+            />
+          )}
+
+          {/* ================================================================= */}
+          {/* ABA: CUPONS DE DESCONTO                                           */}
+          {/* ================================================================= */}
+          {activeSubTab === 'cupons' && (
+            <CuponsHospede
+              onNavigateBack={() => setActiveSubTab('dashboard')}
+              onNavigateToCatalogo={onNavigateToSystem}
             />
           )}
 
