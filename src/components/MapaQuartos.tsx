@@ -1511,7 +1511,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       {/* MODAL: DETALHES DO QUARTO / ALTERAR STATUS */}
       {selectedRoom && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-200/80 shadow-2xl overflow-hidden flex flex-col my-auto">
+          <div className="w-full max-w-md sm:max-w-xl bg-white rounded-2xl border border-slate-200/80 shadow-2xl overflow-hidden flex flex-col my-auto">
             {/* Header Escuro Padrão #003400 */}
             <div className="px-5 py-4 flex items-center justify-between bg-[#003400] text-white shadow-md">
               <div>
@@ -1754,67 +1754,78 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                 </div>
 
                 {/* GRID COM TODOS OS STATUS CADASTRADOS PELO ADMIN */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {availableStatus.filter(s => s.status === 'ativo').map((st) => {
-                    const isSelected = (selectedRoom.status || 'livre').toLowerCase() === st.slug;
-                    const isLivre = st.slug === 'livre';
-                    const isOcupado = st.slug === 'ocupado';
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+                  {(() => {
+                    const activeList = availableStatus.filter(s => s.status === 'ativo');
+                    return activeList.map((st, idx) => {
+                      const isSelected = (selectedRoom.status || 'livre').toLowerCase() === st.slug;
+                      const isLivre = st.slug === 'livre';
+                      const isOcupado = st.slug === 'ocupado';
+                      const isLastItem = idx === activeList.length - 1;
+                      const isOcupadoLimpeza = st.slug === 'ocupado_em_limpeza';
+                      // No modo mobile, o último botão ou "Ocupado em Limpeza" ocupa a tela toda (col-span-2)
+                      const isFullWidthMobile = isOcupadoLimpeza || (isLastItem && activeList.length % 2 !== 0);
 
-                    return (
-                      <button
-                        key={st.slug}
-                        type="button"
-                        onClick={() => {
-                          if (isLivre) {
-                            if (!canMarkAsClean && selectedRoom.status !== 'livre') {
-                              showToast('⚠️ Permissão restrita: Somente usuários do tipo Camareira ou Hotel podem marcar o quarto como limpo após a higienização.');
-                              return;
-                            }
-                            handleUpdateStatus(selectedRoom.id, 'livre');
-                          } else if (isOcupado) {
-                            if (selectedRoom.status !== 'ocupado') {
-                              handleStartCheckinForRoom(selectedRoom);
-                            } else {
-                              const name = prompt('Atualizar Nome do Hóspede:', selectedRoom.guestName || '');
-                              if (name !== null) {
-                                handleUpdateStatus(selectedRoom.id, 'ocupado', name);
+                      return (
+                        <button
+                          key={st.slug}
+                          type="button"
+                          onClick={() => {
+                            if (isLivre) {
+                              if (!canMarkAsClean && selectedRoom.status !== 'livre') {
+                                showToast('⚠️ Permissão restrita: Somente usuários do tipo Camareira ou Hotel podem marcar o quarto como limpo após a higienização.');
+                                return;
                               }
+                              handleUpdateStatus(selectedRoom.id, 'livre');
+                            } else if (isOcupado) {
+                              if (selectedRoom.status !== 'ocupado') {
+                                handleStartCheckinForRoom(selectedRoom);
+                              } else {
+                                const name = prompt('Atualizar Nome do Hóspede:', selectedRoom.guestName || '');
+                                if (name !== null) {
+                                  handleUpdateStatus(selectedRoom.id, 'ocupado', name);
+                                }
+                              }
+                            } else {
+                              handleUpdateStatus(selectedRoom.id, st.slug);
                             }
-                          } else {
-                            handleUpdateStatus(selectedRoom.id, st.slug);
-                          }
-                        }}
-                        style={isSelected ? {
-                          backgroundColor: st.cor_fundo,
-                          color: st.cor_texto,
-                          borderColor: st.cor_borda || st.cor_texto
-                        } : {
-                          borderLeftColor: st.cor_texto,
-                          borderLeftWidth: '3.5px'
-                        }}
-                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-between gap-1.5 border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'shadow-xs ring-2 ring-emerald-600/30 font-extrabold'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                        } ${!canMarkAsClean && isLivre && selectedRoom.status !== 'livre' ? 'opacity-60 cursor-not-allowed' : ''}`}
-                        title={st.descricao ? `${st.nome} - ${st.descricao}` : st.nome}
-                      >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="material-symbols-outlined text-base shrink-0" style={{ color: isSelected ? st.cor_texto : undefined }}>
-                            {st.icone}
-                          </span>
-                          <span className="truncate">{st.nome}</span>
-                        </div>
-                        {isSelected ? (
-                          <span className="material-symbols-outlined text-xs shrink-0 font-bold" style={{ color: st.cor_texto }}>check</span>
-                        ) : !st.permite_ocupacao ? (
-                          <span className="material-symbols-outlined text-[13px] text-slate-400 shrink-0" title="Bloqueia Entrada/Check-in">block</span>
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Permite Check-in"></span>
-                        )}
-                      </button>
-                    );
-                  })}
+                          }}
+                          style={isSelected ? {
+                            backgroundColor: st.cor_fundo,
+                            color: st.cor_texto,
+                            borderColor: st.cor_borda || st.cor_texto
+                          } : {
+                            borderLeftColor: st.cor_texto,
+                            borderLeftWidth: '3.5px'
+                          }}
+                          className={`min-h-[46px] sm:min-h-[48px] py-2 px-2.5 sm:px-3 rounded-xl font-bold flex items-center justify-between gap-1.5 border transition-all cursor-pointer ${
+                            isFullWidthMobile ? 'col-span-2 sm:col-span-1' : 'col-span-1'
+                          } ${
+                            isSelected
+                              ? 'shadow-xs ring-2 ring-emerald-600/30 font-extrabold'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                          } ${!canMarkAsClean && isLivre && selectedRoom.status !== 'livre' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          title={st.descricao ? `${st.nome} - ${st.descricao}` : st.nome}
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1 text-left">
+                            <span className="material-symbols-outlined text-base shrink-0" style={{ color: isSelected ? st.cor_texto : undefined }}>
+                              {st.icone}
+                            </span>
+                            <span className="text-[11px] sm:text-xs leading-tight font-bold break-words">
+                              {st.nome}
+                            </span>
+                          </div>
+                          {isSelected ? (
+                            <span className="material-symbols-outlined text-xs shrink-0 font-bold ml-1" style={{ color: st.cor_texto }}>check</span>
+                          ) : !st.permite_ocupacao ? (
+                            <span className="material-symbols-outlined text-[13px] text-slate-400 shrink-0 ml-1" title="Bloqueia Entrada/Check-in">block</span>
+                          ) : (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 ml-1" title="Permite Check-in"></span>
+                          )}
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 
