@@ -155,7 +155,8 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
         visivel_hospedes: visivelHospedes,
         descricao: descricao.trim(),
         hotel_id: cupomToEdit?.hotel_id || activeHotel?.id || 'hotel-local',
-        hotel_nome: cupomToEdit?.hotel_nome || activeHotel?.name || 'Hotel Parceiro'
+        hotel_nome: cupomToEdit?.hotel_nome || activeHotel?.name || 'Hotel Parceiro',
+        hotel_cidade: cupomToEdit?.hotel_cidade || activeHotel?.cityUf || activeHotel?.city || ''
       };
 
       if (cupomToEdit?.id) {

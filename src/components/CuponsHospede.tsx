@@ -51,6 +51,7 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
       const matchBusca =
         c.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (c.hotel_nome && c.hotel_nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (c.hotel_cidade && c.hotel_cidade.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (c.descricao && c.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchHotel = filtroHotel === 'Todos' || c.hotel_nome === filtroHotel;
       const matchTipo = filtroTipo === 'Todos' || c.tipo_desconto === filtroTipo;
@@ -222,6 +223,12 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
                         </span>
                         <span className="material-symbols-outlined text-[13px] text-slate-400 group-hover/hotel:text-[#006c49] shrink-0">open_in_new</span>
                       </a>
+
+                      {/* Nome da Cidade do Hotel */}
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 mt-0.5">
+                        <span className="material-symbols-outlined text-xs text-rose-500 shrink-0">location_on</span>
+                        <span className="truncate">{cupom.hotel_cidade || 'Porto de Galinhas / PE'}</span>
+                      </div>
 
                       <h3 className="text-xs sm:text-sm font-extrabold text-emerald-800 mt-1 leading-tight">
                         {cupom.tipo_desconto === 'porcentagem'

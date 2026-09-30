@@ -1,8 +1,9 @@
 -- Migration: Criação da tabela de cupons de desconto para os hotéis e hóspedes
 CREATE TABLE IF NOT EXISTS public.cupons_desconto (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  hotel_id UUID REFERENCES public.hoteis(id) ON DELETE CASCADE,
+  hotel_id TEXT,
   hotel_nome TEXT,
+  hotel_cidade TEXT,
   codigo VARCHAR(50) NOT NULL,
   tipo_desconto VARCHAR(20) NOT NULL DEFAULT 'porcentagem', -- 'porcentagem' ou 'fixo'
   valor_desconto NUMERIC(10, 2) NOT NULL DEFAULT 10.00,
@@ -46,3 +47,6 @@ CREATE POLICY "Manipulação de cupons"
   ON public.cupons_desconto FOR ALL
   USING (true)
   WITH CHECK (true);
+
+-- 4. Garantir coluna hotel_cidade caso a tabela já tenha sido criada anteriormente
+ALTER TABLE IF EXISTS public.cupons_desconto ADD COLUMN IF NOT EXISTS hotel_cidade TEXT;

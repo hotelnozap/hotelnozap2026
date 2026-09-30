@@ -5,6 +5,7 @@ export interface CupomDesconto {
   id: string;
   hotel_id?: string;
   hotel_nome?: string;
+  hotel_cidade?: string;
   codigo: string;
   tipo_desconto: 'porcentagem' | 'fixo'; // 'porcentagem' (%) ou 'fixo' (R$)
   valor_desconto: number;
@@ -35,6 +36,7 @@ const CUPONS_PADRAO: CupomDesconto[] = [
     id: 'cupom-verao-2026',
     hotel_id: 'hotel-demo-01',
     hotel_nome: 'Hotel Solar das Águas',
+    hotel_cidade: 'Porto de Galinhas / PE',
     codigo: 'VERAO10',
     tipo_desconto: 'porcentagem',
     valor_desconto: 10,
@@ -52,6 +54,7 @@ const CUPONS_PADRAO: CupomDesconto[] = [
     id: 'cupom-bem-vindo',
     hotel_id: 'hotel-demo-01',
     hotel_nome: 'Hotel Solar das Águas',
+    hotel_cidade: 'Porto de Galinhas / PE',
     codigo: 'BEMVINDO50',
     tipo_desconto: 'fixo',
     valor_desconto: 50,
@@ -69,6 +72,7 @@ const CUPONS_PADRAO: CupomDesconto[] = [
     id: 'cupom-vip-resort',
     hotel_id: 'hotel-demo-02',
     hotel_nome: 'Resort & Spa Estrela do Mar',
+    hotel_cidade: 'Maragogi / AL',
     codigo: 'VIPESTRELA',
     tipo_desconto: 'porcentagem',
     valor_desconto: 15,
@@ -86,6 +90,7 @@ const CUPONS_PADRAO: CupomDesconto[] = [
     id: 'cupom-fim-semana',
     hotel_id: 'hotel-demo-03',
     hotel_nome: 'Pousada Recanto da Serra',
+    hotel_cidade: 'Campos do Jordão / SP',
     codigo: 'FIMDESEMANA',
     tipo_desconto: 'fixo',
     valor_desconto: 40,
@@ -109,7 +114,18 @@ const loadFromStorage = (): CupomDesconto[] => {
       return CUPONS_PADRAO;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : CUPONS_PADRAO;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((c: CupomDesconto) => ({
+        ...c,
+        hotel_cidade: c.hotel_cidade || (
+          c.hotel_nome?.includes('Solar') ? 'Porto de Galinhas / PE' :
+          c.hotel_nome?.includes('Estrela') ? 'Maragogi / AL' :
+          c.hotel_nome?.includes('Serra') ? 'Campos do Jordão / SP' :
+          'Porto de Galinhas / PE'
+        )
+      }));
+    }
+    return CUPONS_PADRAO;
   } catch (err) {
     console.warn('Erro ao carregar cupons do localStorage:', err);
     return CUPONS_PADRAO;
@@ -144,6 +160,12 @@ export const cuponsService = {
           id: d.id,
           hotel_id: d.hotel_id,
           hotel_nome: d.hotel_nome,
+          hotel_cidade: d.hotel_cidade || (
+            d.hotel_nome?.includes('Solar') ? 'Porto de Galinhas / PE' :
+            d.hotel_nome?.includes('Estrela') ? 'Maragogi / AL' :
+            d.hotel_nome?.includes('Serra') ? 'Campos do Jordão / SP' :
+            'Porto de Galinhas / PE'
+          ),
           codigo: d.codigo,
           tipo_desconto: d.tipo_desconto,
           valor_desconto: Number(d.valor_desconto) || 0,
@@ -187,6 +209,12 @@ export const cuponsService = {
           id: d.id,
           hotel_id: d.hotel_id,
           hotel_nome: d.hotel_nome,
+          hotel_cidade: d.hotel_cidade || (
+            d.hotel_nome?.includes('Solar') ? 'Porto de Galinhas / PE' :
+            d.hotel_nome?.includes('Estrela') ? 'Maragogi / AL' :
+            d.hotel_nome?.includes('Serra') ? 'Campos do Jordão / SP' :
+            'Porto de Galinhas / PE'
+          ),
           codigo: d.codigo,
           tipo_desconto: d.tipo_desconto,
           valor_desconto: Number(d.valor_desconto) || 0,
@@ -234,6 +262,7 @@ export const cuponsService = {
           id: data.id,
           hotel_id: data.hotel_id,
           hotel_nome: data.hotel_nome,
+          hotel_cidade: data.hotel_cidade || '',
           codigo: data.codigo,
           tipo_desconto: data.tipo_desconto,
           valor_desconto: Number(data.valor_desconto) || 0,
@@ -336,6 +365,7 @@ export const cuponsService = {
       id: `cupom-${Date.now()}`,
       hotel_id: novoCupom.hotel_id || current?.id || 'hotel-local',
       hotel_nome: novoCupom.hotel_nome || current?.name || 'Hotel Parceiro',
+      hotel_cidade: novoCupom.hotel_cidade || current?.cityUf || current?.city || 'Porto de Galinhas / PE',
       codigo: (novoCupom.codigo || 'DESC10').trim().toUpperCase(),
       tipo_desconto: novoCupom.tipo_desconto || 'porcentagem',
       valor_desconto: Number(novoCupom.valor_desconto) || 10,
