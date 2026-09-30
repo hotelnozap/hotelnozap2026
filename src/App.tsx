@@ -67,6 +67,7 @@ import LpAssinar from './components/LpAssinar';
 import PainelCamareira from './components/PainelCamareira';
 import CardapioHotel from './components/CardapioHotel';
 import { GestaoPedidosCardapio } from './components/GestaoPedidosCardapio';
+import { PaginaInstitucional } from './components/PaginaInstitucional';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 
@@ -108,6 +109,11 @@ export const App: React.FC = () => {
         return 'assinar';
       }
       const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+      if (parts[0] === 'privacidade') return 'privacidade';
+      if (parts[0] === 'termos') return 'termos';
+      if (parts[0] === 'empresa' || parts[0] === 'informacoes-empresa') return 'informacoes-empresa';
+      if (parts[0] === 'quem-somos' || parts[0] === 'quemsomos') return 'quem-somos';
+      if (parts[0] === 'fale-conosco' || parts[0] === 'faleconosco' || parts[0] === 'contato') return 'fale-conosco';
       if (parts[0] === 'camareira') return 'camareira';
       if (parts[0] === 'lp' && parts[1] === 'lpnovohotel') return 'lp-novo-hotel';
       if (parts[0] === 'lp') return 'landingpage';
@@ -193,7 +199,17 @@ export const App: React.FC = () => {
         return;
       }
       const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
-      if (parts[0] === 'camareira') {
+      if (parts[0] === 'privacidade') {
+        setActiveTab('privacidade');
+      } else if (parts[0] === 'termos') {
+        setActiveTab('termos');
+      } else if (parts[0] === 'empresa' || parts[0] === 'informacoes-empresa') {
+        setActiveTab('informacoes-empresa');
+      } else if (parts[0] === 'quem-somos' || parts[0] === 'quemsomos') {
+        setActiveTab('quem-somos');
+      } else if (parts[0] === 'fale-conosco' || parts[0] === 'faleconosco' || parts[0] === 'contato') {
+        setActiveTab('fale-conosco');
+      } else if (parts[0] === 'camareira') {
         setActiveTab('camareira');
       } else if (parts[0] === 'lp' && parts[1] === 'lpnovohotel') {
         setActiveTab('lp-novo-hotel');
@@ -263,6 +279,60 @@ export const App: React.FC = () => {
     window.addEventListener('popstate', handleLocationChange);
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
+
+  // ── Atualização Dinâmica do Título da Aba do Navegador ──
+  useEffect(() => {
+    switch (activeTab) {
+      case 'catalogo-hoteis':
+        document.title = 'Sistema de Gestão Hoteleira';
+        break;
+      case 'login':
+        document.title = 'Painel Administrativo';
+        break;
+      case 'minhaconta':
+      case 'perfil':
+      case 'historico-pedidos-hospede':
+      case 'minhas-reservas-hospede':
+      case 'area-hospede':
+        document.title = 'Minha Conta';
+        break;
+      case 'camareira':
+        document.title = 'Minha Conta';
+        break;
+      case 'quem-somos':
+        document.title = 'Quem Somos';
+        break;
+      case 'fale-conosco':
+        document.title = 'Fale Conosco';
+        break;
+      case 'privacidade':
+        document.title = 'Política de Privacidade';
+        break;
+      case 'termos':
+        document.title = 'Termos de Uso';
+        break;
+      case 'informacoes-empresa':
+        document.title = 'Informações da Empresa';
+        break;
+      case 'landingpage':
+        document.title = 'Hotel no Zap - Sistema de Gestão Hoteleira';
+        break;
+      case 'lp-novo-hotel':
+        document.title = 'Cadastre seu Hotel';
+        break;
+      case 'assinar':
+        document.title = 'Planos e Assinatura';
+        break;
+      case 'pagina-hotel':
+      case 'detalhes-quarto':
+        // PaginaHotel e DetalhesQuarto definem seus próprios títulos com o nome do hotel
+        break;
+      default:
+        // Qualquer aba da área administrativa (dashboard, hoteis, parceiros, etc.)
+        document.title = 'Painel Administrativo';
+        break;
+    }
+  }, [activeTab]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProdutosSubmenuOpen, setIsProdutosSubmenuOpen] = useState(false);
   const [isConfigSubmenuOpen, setIsConfigSubmenuOpen] = useState(false);
@@ -775,6 +845,27 @@ export const App: React.FC = () => {
         }}
       />
     );
+  }
+
+  // ── Rotas Institucionais do Hotel no Zap: /privacidade, /termos, /empresa, /quem-somos, /fale-conosco ──
+  if (activeTab === 'privacidade' || pathParts[0] === 'privacidade') {
+    return <PaginaInstitucional tipo="privacidade" />;
+  }
+
+  if (activeTab === 'termos' || pathParts[0] === 'termos') {
+    return <PaginaInstitucional tipo="termos" />;
+  }
+
+  if (activeTab === 'informacoes-empresa' || pathParts[0] === 'empresa' || pathParts[0] === 'informacoes-empresa') {
+    return <PaginaInstitucional tipo="empresa" />;
+  }
+
+  if (activeTab === 'quem-somos' || pathParts[0] === 'quem-somos' || pathParts[0] === 'quemsomos') {
+    return <PaginaInstitucional tipo="quem-somos" />;
+  }
+
+  if (activeTab === 'fale-conosco' || pathParts[0] === 'fale-conosco' || pathParts[0] === 'faleconosco' || pathParts[0] === 'contato') {
+    return <PaginaInstitucional tipo="fale-conosco" />;
   }
 
   // ── Rota: /lp/lpnovohotel — Formulário de Cadastro de Hotel (Standalone) ──

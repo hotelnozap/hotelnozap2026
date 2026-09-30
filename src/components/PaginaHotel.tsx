@@ -4,6 +4,7 @@ import { hoteisService, quartosService, tiposQuartosService, currentHotelService
 import { supabase } from '../lib/supabase';
 import { webhookN8nService } from '../services/webhookN8nService';
 import { getAppLoginUrl } from '../utils/partnerUrl';
+import { ZapHotelLogo } from './ZapHotelLogo';
 
 export const slugify = (str: string): string => {
   return str
@@ -134,6 +135,12 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
   const [leadEmail, setLeadEmail] = useState<string>('');
   const [leadSubmitting, setLeadSubmitting] = useState<boolean>(false);
   const [leadSuccess, setLeadSuccess] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (currentHotel?.name) {
+      document.title = `${currentHotel.name} - Reservas`;
+    }
+  }, [currentHotel?.name]);
 
   const menorDiaria = React.useMemo(() => {
     if (quartosList && quartosList.length > 0) {
@@ -646,46 +653,42 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       <header className="fixed top-0 left-0 right-0 w-full z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
         <div className="h-16 w-full max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between">
           
-          {/* Logo & Voltar */}
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => {
-                if (onNavigateBack) onNavigateBack();
-                else window.location.href = '/hoteis';
-              }}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all cursor-pointer flex items-center gap-1 font-bold text-xs mr-1"
-            >
-              <span className="material-symbols-outlined text-lg">arrow_back</span>
-              <span className="hidden sm:inline">Voltar à Lista de Hotéis</span>
-            </button>
-
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.href = '/hoteis'}>
-              <div className="w-9 h-9 rounded-xl bg-[#006c49] flex items-center justify-center text-white shadow-xs">
-                <span className="material-symbols-outlined text-[20px]">hotel</span>
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">Hotel no Zap</span>
-                <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider">Hospitalidade Digital</span>
-              </div>
+          {/* Logo Hotel no Zap */}
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.href = '/hoteis'}>
+            <ZapHotelLogo size={36} />
+            <div className="flex flex-col leading-none">
+              <span className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">Hotel no Zap</span>
+              <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider">Hospitalidade Digital</span>
             </div>
           </div>
 
-          {/* Nav */}
-          <nav className="flex items-center gap-1 font-semibold text-xs text-slate-600">
-            <button onClick={() => { if (onNavigateBack) onNavigateBack(); else window.location.href = '/hoteis'; }} className="hidden sm:inline-block px-3 py-2 rounded-xl hover:bg-slate-100 transition-all">Lista de Hotéis</button>
-            <button onClick={() => window.location.href = '/hoteis'} className="hidden sm:inline-block px-3 py-2 rounded-xl hover:bg-slate-100 transition-all">Troque de Cidade</button>
-            <button 
-              onClick={() => {
-                if (quartosList.length > 0) {
-                  openWhatsAppRoomReservation(quartosList[0]);
-                } else {
-                  openWhatsAppDirectContact();
-                }
-              }} 
-              className="px-3 py-2 rounded-xl text-[#006c49] font-bold hover:bg-emerald-50 transition-all flex items-center gap-1 cursor-pointer"
+          {/* Nav: Quem Somos, Fale Conosco e Botão Entrar */}
+          <nav className="flex items-center gap-1 sm:gap-2 font-semibold text-xs text-slate-700 shrink-0">
+            <a 
+              href="/quem-somos" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
             >
-              <span className="material-symbols-outlined text-base">chat</span>
-              <span>Recepção Zap</span>
+              Quem Somos
+            </a>
+            <a 
+              href="/fale-conosco" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
+            >
+              Fale Conosco
+            </a>
+            <button
+              onClick={() => {
+                if (onNavigateToLogin) onNavigateToLogin();
+                else window.location.href = getAppLoginUrl();
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#006C49] hover:bg-[#005438] text-white text-xs font-bold transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 border border-[#006C49]"
+            >
+              <span className="material-symbols-outlined text-base text-white font-bold">account_circle</span>
+              <span className="text-white font-bold">Entrar</span>
             </button>
           </nav>
 
@@ -1132,30 +1135,6 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               </span>
             </div>
 
-            {/* BANNER DE PROSPECÇÃO SAAS PARA O PROPRIETÁRIO DO HOTEL */}
-            <div className="mt-8 p-6 bg-gradient-to-r from-emerald-950 via-[#003400] to-emerald-900 rounded-2xl text-white text-left flex flex-col sm:flex-row items-center justify-between gap-5 shadow-md border border-emerald-800/60">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 bg-white/10 px-2 py-0.5 rounded">Área do Hoteleiro</span>
-                </div>
-                <h4 className="text-base font-bold text-white">É o proprietário ou gerente deste hotel?</h4>
-                <p className="text-xs text-emerald-200/80 max-w-md">
-                  Cadastre suas suítes, fotos e valores no <strong>Hotel no Zap</strong> para receber reservas automáticas 24h por dia via WhatsApp.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onNavigateToLogin) onNavigateToLogin();
-                  else window.location.href = getAppLoginUrl();
-                }}
-                style={{ backgroundColor: '#B9CC01' }}
-                className="px-5 py-3 rounded-xl text-[#003400] font-black text-xs shadow-md hover:brightness-95 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
-              >
-                Cadastrar Meus Quartos
-              </button>
-            </div>
-
           </div>
         )}
 
@@ -1175,7 +1154,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               (currentHotel.whatsappPhone && currentHotel.whatsappPhone.trim() && !currentHotel.whatsappPhone.includes('5581998765432'))
             )
           ) && (
-            <div className="pb-8 border-b border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="hidden md:flex pb-8 border-b border-slate-800 md:flex-row items-start md:items-center justify-between gap-6">
               <div className="space-y-1">
                 <span className="text-[11px] uppercase font-extrabold tracking-widest text-emerald-400 block">
                   Canais Oficiais do Estabelecimento
@@ -1259,33 +1238,109 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
             </div>
           )}
 
-          {/* Copyright & Links Gerais */}
+          {/* Copyright, Redes Sociais & Links Legais */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#006c49] flex items-center justify-center text-white font-bold">
-                <span className="material-symbols-outlined text-base">hotel</span>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex items-center gap-3">
+                <ZapHotelLogo size={32} />
+                <div>
+                  <span className="font-bold text-white block">Hotel no Zap © 2026</span>
+                  <span className="text-slate-500">Rede Inteligente de Pousadas e Hotéis</span>
+                </div>
               </div>
-              <div>
-                <span className="font-bold text-white block">Hotel no Zap © 2026</span>
-                <span className="text-slate-500">Rede Inteligente de Pousadas e Hotéis</span>
+
+              {/* Ícones das Redes Sociais do Hotel no Zap */}
+              <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4">
+                {/* Instagram */}
+                <a
+                  href="https://www.instagram.com/hotelnozap/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-600 hover:to-purple-600 text-slate-400 hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer group"
+                  title="Instagram Oficial Hotel no Zap"
+                >
+                  <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </a>
+
+                {/* Facebook */}
+                <a
+                  href="https://www.facebook.com/hotelnozap/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#1877F2] text-slate-400 hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer group"
+                  title="Facebook Oficial Hotel no Zap"
+                >
+                  <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </a>
+
+                {/* TikTok */}
+                <a
+                  href="https://www.tiktok.com/@hotelnozap"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer group"
+                  title="TikTok Oficial Hotel no Zap"
+                >
+                  <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01v8.86c0 1.57-.29 3.14-.92 4.58-.69 1.58-1.77 2.97-3.13 3.96-1.39 1.01-3.06 1.64-4.81 1.74-1.78.11-3.58-.27-5.18-1.05-1.63-.79-3.02-2.01-4-3.53-.98-1.52-1.5-3.32-1.48-5.13.02-1.8.58-3.58 1.58-5.08 1.01-1.5 2.43-2.68 4.09-3.37 1.66-.69 3.51-.83 5.27-.41v4.18c-1.02-.31-2.14-.31-3.14.01-.98.31-1.82.95-2.39 1.81-.57.86-.83 1.9-.74 2.94.09 1.04.56 2.02 1.31 2.75.76.73 1.77 1.15 2.82 1.18 1.06.03 2.1-.33 2.89-1.02.8-.69 1.32-1.67 1.45-2.73.07-.58.07-1.16.07-1.74V.02z"/>
+                  </svg>
+                </a>
               </div>
             </div>
 
-            <div className="flex items-center gap-6 text-slate-400 font-medium">
-              <button onClick={() => { if (onNavigateBack) onNavigateBack(); else window.location.href = '/hoteis'; }} className="hover:text-white transition-colors cursor-pointer">Voltar à Lista de Hotéis</button>
-              <button 
-                onClick={() => {
-                  if (quartosList.length > 0) {
-                    openWhatsAppRoomReservation(quartosList[0] || { name: 'Recepção' } as any);
-                  } else {
-                    openWhatsAppDirectContact();
-                  }
-                }} 
+            {/* Mobile: Quem Somos e Fale Conosco Centralizados entre Redes Sociais e Políticas */}
+            <div className="flex md:hidden items-center justify-center gap-3 text-slate-300 font-semibold text-xs border-y border-slate-800/80 py-2.5 w-full my-1">
+              <a
+                href="/quem-somos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors"
+              >
+                Quem Somos
+              </a>
+              <span className="text-slate-600 select-none">•</span>
+              <a
+                href="/fale-conosco"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors"
+              >
+                Fale Conosco
+              </a>
+            </div>
+
+            {/* Links Institucionais: Privacidade, Termos e Informações da Empresa */}
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-slate-400 font-medium">
+              <a
+                href="/privacidade"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-white transition-colors cursor-pointer"
               >
-                Suporte WhatsApp
-              </button>
-              <button onClick={() => { if (onNavigateToLogin) onNavigateToLogin(); else window.location.href = getAppLoginUrl(); }} className="hover:text-white transition-colors cursor-pointer">Área do Hoteleiro</button>
+                Privacidade
+              </a>
+              <span className="text-slate-600 select-none">•</span>
+              <a
+                href="/termos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Termos
+              </a>
+              <span className="text-slate-600 select-none">•</span>
+              <a
+                href="/empresa"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Informações da empresa
+              </a>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { currentHotelService, HotelAtivo, usuariosService } from '../services/supabaseService';
+import { ZapHotelLogo } from './ZapHotelLogo';
 
 interface LoginProps {
   onLoginSuccess?: (userData: { name: string; email: string; role?: string }) => void;
@@ -666,9 +667,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {/* Header Mobile: Logo Centralizada no topo conforme solicitado */}
             <div className="flex flex-col items-center justify-center text-center mb-6 lg:hidden">
               <div className="flex items-center justify-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#006c49] flex items-center justify-center text-white shadow-md">
-                  <span className="material-symbols-outlined text-[24px]">hotel</span>
-                </div>
+                <ZapHotelLogo size={42} />
                 <div className="flex flex-col text-left leading-none">
                   <span className="font-extrabold text-xl text-slate-900 tracking-tight">Hotel no Zap</span>
                   <span className="text-[10px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>

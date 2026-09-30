@@ -1,0 +1,44 @@
+import React from 'react';
+
+export interface ZapHotelLogoProps {
+  className?: string;
+  size?: number | string;
+  /** Cor de fundo do balão (padrão: #006C49) */
+  bubbleColor?: string;
+  /** Cor do ícone da cama (padrão: #ffffff) */
+  iconColor?: string;
+}
+
+/**
+ * Ícone Oficial Hotel no Zap:
+ * Balão de conversa no estilo característico do WhatsApp com o ícone de cama hoteleira perfeitamente centralizado.
+ */
+export const ZapHotelLogo: React.FC<ZapHotelLogoProps> = ({
+  className = '',
+  size = 36,
+  bubbleColor = '#006C49',
+  iconColor = '#ffffff'
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 32 32"
+      width={size}
+      height={size}
+      className={`shrink-0 drop-shadow-xs transition-transform duration-200 select-none ${className}`}
+      aria-label="Logo Hotel no Zap"
+    >
+      {/* Balão de conversa estilo WhatsApp com ponta inferior esquerda */}
+      <path
+        fill={bubbleColor}
+        d="M16 2C8.28 2 2 8.28 2 16c0 2.58.7 5.01 1.93 7.11L2 30l7.15-1.87A13.9 13.9 0 0016 30c7.72 0 14-6.28 14-14S23.72 2 16 2z"
+      />
+      {/* Cama de hotel vetorizada (Material Symbols 'hotel') alinhada opticamente */}
+      <g transform="translate(7.8, 6.0) scale(0.72)" fill={iconColor}>
+        <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z" />
+      </g>
+    </svg>
+  );
+};
+
+export default ZapHotelLogo;

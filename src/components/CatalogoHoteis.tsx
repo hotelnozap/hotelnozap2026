@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { hoteisService, reservasService, quartosService, ComodidadeCategoria } from '../services/supabaseService';
 import { webhookN8nService } from '../services/webhookN8nService';
 import { getAppLoginUrl } from '../utils/partnerUrl';
+import { ZapHotelLogo } from './ZapHotelLogo';
 
 export interface PublicHotel {
   id: string;
@@ -139,14 +140,14 @@ const AirbnbHotelCard: React.FC<AirbnbHotelCardProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
 
         {/* BADGE "Top 10" ou "Preferido dos hóspedes" */}
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1">
+        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 flex items-center gap-1">
           {hotel.isTop10 ? (
-            <span className="px-2.5 py-1 rounded-full bg-amber-500 text-white font-extrabold text-[10px] sm:text-[11px] shadow-sm flex items-center gap-1">
-              <span className="material-symbols-outlined text-[13px]" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
+            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-amber-500 text-white font-extrabold text-[9px] sm:text-[11px] shadow-sm flex items-center gap-1">
+              <span className="material-symbols-outlined text-[11px] sm:text-[13px]" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
               Top 10
             </span>
           ) : (
-            <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-slate-900 font-bold text-[10px] sm:text-[11px] shadow-xs">
+            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-white/95 backdrop-blur-md text-slate-900 font-bold text-[9px] sm:text-[11px] shadow-xs">
               Preferido dos hóspedes
             </span>
           )}
@@ -155,11 +156,11 @@ const AirbnbHotelCard: React.FC<AirbnbHotelCardProps> = ({
         {/* BOTÃO FAVORITO (CORAÇÃO) */}
         <button
           onClick={(e) => toggleFavorite(hotel.id, e)}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-white hover:scale-110 active:scale-95 transition-transform cursor-pointer drop-shadow-md"
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 p-1 sm:p-1.5 rounded-full text-white hover:scale-110 active:scale-95 transition-transform cursor-pointer drop-shadow-md"
           aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
         >
           <span
-            className={`material-symbols-outlined text-2xl transition-colors ${
+            className={`material-symbols-outlined text-xl sm:text-2xl transition-colors ${
               isFav ? 'text-red-500 fill-current' : 'text-white/90 stroke-black'
             }`}
             style={isFav ? { fontVariationSettings: "'FILL' 1" } : {}}
@@ -170,38 +171,58 @@ const AirbnbHotelCard: React.FC<AirbnbHotelCardProps> = ({
       </div>
 
       {/* DETALHES DO HOTEL ABAIXO DA FOTO */}
-      <div className="mt-2.5 space-y-1">
+      <div className="mt-2 space-y-0.5 sm:space-y-1">
         <div className="flex items-center justify-between gap-1">
-          <h3 className="font-extrabold text-sm sm:text-base text-slate-900 truncate leading-snug">
+          <h3 className="font-extrabold text-xs sm:text-base text-slate-900 truncate leading-snug">
             {hotel.name}
           </h3>
-          <div className="flex items-center gap-1 shrink-0 text-xs font-bold text-slate-900">
-            <span className="material-symbols-outlined text-amber-500 text-[15px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+          <div className="flex items-center gap-0.5 shrink-0 text-[11px] sm:text-xs font-bold text-slate-900">
+            <span className="material-symbols-outlined text-amber-500 text-[13px] sm:text-[15px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
             <span>{hotel.rating.toFixed(2)}</span>
           </div>
         </div>
 
-        <p className="text-xs text-slate-500 font-medium truncate">
+        <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
           {hotel.neighborhood ? `${hotel.neighborhood}, ${hotel.city}` : hotel.city} · {hotel.uf}
         </p>
 
-        <p className="text-xs text-slate-600 font-medium truncate">
+        <p className="text-[10px] sm:text-xs text-slate-600 font-medium truncate">
           {hotel.category || 'Hotel & Pousada'}
         </p>
 
-        <div className="pt-1 flex items-baseline gap-1">
+        <div className="pt-1.5 sm:pt-2">
           {hotel.hasRooms && hotel.pricePerNight > 0 ? (
-            <>
-              <span className="text-sm sm:text-base font-extrabold text-slate-900">
-                R$ {hotel.pricePerNight}
-              </span>
-              <span className="text-xs text-slate-500 font-normal">noite</span>
-            </>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+              <div className="flex items-baseline gap-1">
+                <span className="text-xs sm:text-base font-extrabold text-slate-900">
+                  R$ {hotel.pricePerNight}
+                </span>
+                <span className="text-[10px] sm:text-xs text-slate-500 font-normal">noite</span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onClickCustom) onClickCustom();
+                  else onHotelClick(hotel);
+                }}
+                className="w-full sm:w-auto py-1 px-2.5 sm:py-1.5 sm:px-3.5 rounded-xl bg-[#006C49] hover:bg-[#005438] text-white text-[11px] sm:text-xs font-bold transition-all shadow-xs flex items-center justify-center cursor-pointer active:scale-98"
+              >
+                Ver Hotel
+              </button>
+            </div>
           ) : (
-            <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm text-emerald-600">chat</span>
-              Consulte no WhatsApp
-            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onClickCustom) onClickCustom();
+                else onHotelClick(hotel);
+              }}
+              className="w-full py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-[#006C49] hover:bg-[#005438] text-white text-[11px] sm:text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer active:scale-98"
+            >
+              Ver Hotel
+            </button>
           )}
         </div>
       </div>
@@ -306,7 +327,7 @@ const CityCarousel: React.FC<CityCarouselProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className={`flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar ${
+        className={`flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar ${
           isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -318,7 +339,7 @@ const CityCarousel: React.FC<CityCarouselProps> = ({
             onHotelClick={onHotelClick}
             isFav={favorites.has(hotel.id)}
             toggleFavorite={toggleFavorite}
-            className="snap-start shrink-0 w-[260px] sm:w-[290px] md:w-[310px]"
+            className="snap-start shrink-0 w-[calc(50vw-22px)] sm:w-[290px] md:w-[310px]"
             onClickCustom={() => {
               if (hasMovedRef.current) return;
               onHotelClick(hotel);
@@ -377,9 +398,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
     });
   };
 
-  // Modais de "Quem Somos", "Fale Conosco" e Detalhes
-  const [isQuemSomosModalOpen, setIsQuemSomosModalOpen] = useState<boolean>(false);
-  const [isFaleConoscoModalOpen, setIsFaleConoscoModalOpen] = useState<boolean>(false);
+  // Modais e Detalhes
   const [selectedHotelDetails, setSelectedHotelDetails] = useState<PublicHotel | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
 
@@ -800,9 +819,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
 
           {/* 1. LOGO HOTEL NO ZAP */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[#006c49] flex items-center justify-center text-white shadow-xs">
-              <span className="material-symbols-outlined text-[24px]">hotel</span>
-            </div>
+            <ZapHotelLogo size={40} />
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-lg text-slate-900 tracking-tight">Hotel no Zap</span>
               <span className="text-[10px] text-[#006c49] font-bold uppercase tracking-wider">Hospitalidade Digital</span>
@@ -850,19 +867,23 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
 
           {/* 3. MENU DIREITO (QUEM SOMOS, LOGIN / CONTA) */}
           <nav className="flex items-center gap-1 sm:gap-2 font-semibold text-xs text-slate-700 shrink-0">
-            <button
-              onClick={() => setIsQuemSomosModalOpen(true)}
+            <a
+              href="/quem-somos"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
             >
               Quem Somos
-            </button>
+            </a>
 
-            <button
-              onClick={() => setIsFaleConoscoModalOpen(true)}
+            <a
+              href="/fale-conosco"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
             >
               Fale Conosco
-            </button>
+            </a>
 
             {currentUser.isLoggedIn ? (
               <div className="relative">
@@ -913,10 +934,10 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                   if (onNavigateToLogin) onNavigateToLogin();
                   else window.location.href = getAppLoginUrl();
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-slate-300 hover:border-slate-400 text-slate-800 text-xs font-bold transition-all shadow-xs cursor-pointer bg-white"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#006C49] hover:bg-[#005438] text-white text-xs font-bold transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 border border-[#006C49]"
               >
-                <span className="material-symbols-outlined text-base">account_circle</span>
-                <span>Entrar</span>
+                <span className="material-symbols-outlined text-base text-white font-bold">account_circle</span>
+                <span className="text-white font-bold">Entrar</span>
               </button>
             )}
           </nav>
@@ -955,9 +976,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           {/* 1. LOGO, NOME E SLOGAN CENTRALIZADOS */}
           <div className="flex flex-col items-center justify-center text-center w-full">
             <div className="flex items-center justify-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#006c49] flex items-center justify-center text-white shadow-xs shrink-0">
-                <span className="material-symbols-outlined text-[20px]">hotel</span>
-              </div>
+              <ZapHotelLogo size={34} />
               <span className="font-extrabold text-base text-slate-900 tracking-tight">Hotel no Zap</span>
             </div>
             <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
@@ -1137,8 +1156,8 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
               </div>
             ) : (
               <>
-                {/* GRADE DE 5 CARDS POR LINHA COM RESPONSIVIDADE (1 no mobile, 2 no sm, 3 no md, 4 no lg, 5 no xl/2xl) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-5">
+                {/* GRADE DE 5 CARDS POR LINHA COM RESPONSIVIDADE (2 no mobile, 2 no sm, 3 no md, 4 no lg, 5 no xl/2xl) */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3.5 sm:gap-5">
                   {visibleSearchResults.map((hotel) => (
                     <AirbnbHotelCard
                       key={hotel.id}
@@ -1430,124 +1449,114 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL QUEM SOMOS                                                          */}
-      {/* ========================================================================= */}
-      {isQuemSomosModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-gradient-to-br from-[#003400] via-[#004d00] to-slate-900 text-white p-6 relative">
-              <button
-                onClick={() => setIsQuemSomosModalOpen(false)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-              <h3 className="text-2xl font-black tracking-tight">Quem Somos</h3>
-              <p className="text-xs sm:text-sm text-emerald-100/90 mt-1">
-                A ponte direta entre você e a melhor experiência de hospedagem no Brasil.
-              </p>
-            </div>
-            <div className="p-6 overflow-y-auto space-y-4 text-slate-700 text-xs sm:text-sm">
-              <p className="leading-relaxed">
-                O <strong>Hotel no Zap</strong> conecta viajantes e hóspedes diretamente às recepções de hotéis e pousadas através do WhatsApp — sem intermediários, sem comissões abusivas e com atendimento ágil em tempo real.
-              </p>
-            </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
-              <button
-                onClick={() => setIsQuemSomosModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#006c49] text-white font-bold text-xs cursor-pointer"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ========================================================================= */}
-      {/* MODAL FALE CONOSCO                                                        */}
-      {/* ========================================================================= */}
-      {isFaleConoscoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-gradient-to-br from-[#003400] via-[#004d00] to-slate-900 text-white p-6 relative">
-              <button
-                onClick={() => setIsFaleConoscoModalOpen(false)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-              <h3 className="text-2xl font-black tracking-tight">Fale Conosco</h3>
-              <p className="text-xs sm:text-sm text-emerald-100/90 mt-1">
-                Tire dúvidas ou solicite suporte com nossa equipe.
-              </p>
-            </div>
-            <div className="p-6 overflow-y-auto space-y-4 text-slate-700 text-xs sm:text-sm">
-              <a
-                href="https://wa.me/5581998765432?text=Ol%C3%A1%2C%20gostaria%20de%20ajuda%20com%20o%20Hotel%20no%20Zap"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/50 transition-all flex items-center justify-between group cursor-pointer block"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl">chat</span>
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-slate-900 text-xs sm:text-sm">WhatsApp Oficial</h5>
-                    <p className="text-[11px] text-slate-500">Atendimento e suporte a reservas</p>
-                  </div>
-                </div>
-                <span className="material-symbols-outlined text-emerald-700 group-hover:translate-x-1 transition-transform">arrow_forward</span>
-              </a>
-
-              <a
-                href="mailto:contato@hotelnozap.com.br"
-                className="p-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-all flex items-center justify-between group cursor-pointer block"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl">mail</span>
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-slate-900 text-xs sm:text-sm">E-mail Corporativo</h5>
-                    <p className="text-[11px] text-slate-500">contato@hotelnozap.com.br</p>
-                  </div>
-                </div>
-                <span className="material-symbols-outlined text-slate-400 group-hover:translate-x-1 transition-transform">arrow_forward</span>
-              </a>
-            </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
-              <button
-                onClick={() => setIsFaleConoscoModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* FOOTER                                                                    */}
       {/* ========================================================================= */}
       <footer className="w-full bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#006c49] flex items-center justify-center text-white font-bold">
-              <span className="material-symbols-outlined text-base">hotel</span>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center gap-3">
+              <ZapHotelLogo size={32} />
+              <div>
+                <span className="font-bold text-white block">Hotel no Zap © 2026</span>
+                <span className="text-slate-500">Rede Inteligente de Pousadas e Hotéis</span>
+              </div>
             </div>
-            <div>
-              <span className="font-bold text-white block">Hotel no Zap © 2026</span>
-              <span className="text-slate-500">Rede Inteligente de Pousadas e Hotéis</span>
+
+            {/* Ícones das Redes Sociais do Hotel no Zap */}
+            <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4">
+              {/* Instagram */}
+              <a
+                href="https://www.instagram.com/hotelnozap/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-600 hover:to-purple-600 text-slate-400 hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer group"
+                title="Instagram Oficial Hotel no Zap"
+              >
+                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+              </a>
+
+              {/* Facebook */}
+              <a
+                href="https://www.facebook.com/hotelnozap/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#1877F2] text-slate-400 hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer group"
+                title="Facebook Oficial Hotel no Zap"
+              >
+                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </a>
+
+              {/* TikTok */}
+              <a
+                href="https://www.tiktok.com/@hotelnozap"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all shadow-xs cursor-pointer group"
+                title="TikTok Oficial Hotel no Zap"
+              >
+                <svg className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                  <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-1.01v8.86c0 1.57-.29 3.14-.92 4.58-.69 1.58-1.77 2.97-3.13 3.96-1.39 1.01-3.06 1.64-4.81 1.74-1.78.11-3.58-.27-5.18-1.05-1.63-.79-3.02-2.01-4-3.53-.98-1.52-1.5-3.32-1.48-5.13.02-1.8.58-3.58 1.58-5.08 1.01-1.5 2.43-2.68 4.09-3.37 1.66-.69 3.51-.83 5.27-.41v4.18c-1.02-.31-2.14-.31-3.14.01-.98.31-1.82.95-2.39 1.81-.57.86-.83 1.9-.74 2.94.09 1.04.56 2.02 1.31 2.75.76.73 1.77 1.15 2.82 1.18 1.06.03 2.1-.33 2.89-1.02.8-.69 1.32-1.67 1.45-2.73.07-.58.07-1.16.07-1.74V.02z"/>
+                </svg>
+              </a>
             </div>
           </div>
-          <div className="flex items-center gap-6 text-slate-400 font-medium">
-            <button onClick={() => setIsSearchPopoverOpen(true)} className="hover:text-white transition-colors cursor-pointer">Destinos</button>
-            <button onClick={() => window.open('https://wa.me/5581998765432', '_blank')} className="hover:text-white transition-colors cursor-pointer">Suporte WhatsApp</button>
-            <button onClick={() => { if (onNavigateToLogin) onNavigateToLogin(); else window.location.href = getAppLoginUrl(); }} className="hover:text-white transition-colors cursor-pointer">Área do Hoteleiro</button>
+
+          {/* Mobile: Quem Somos e Fale Conosco Centralizados entre Redes Sociais e Políticas */}
+          <div className="flex md:hidden items-center justify-center gap-3 text-slate-300 font-semibold text-xs border-y border-slate-800/80 py-2.5 w-full my-1">
+            <a
+              href="/quem-somos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Quem Somos
+            </a>
+            <span className="text-slate-600 select-none">•</span>
+            <a
+              href="/fale-conosco"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Fale Conosco
+            </a>
+          </div>
+
+          {/* Links Institucionais: Privacidade, Termos e Informações da Empresa */}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-slate-400 font-medium">
+            <a
+              href="/privacidade"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              Privacidade
+            </a>
+            <span className="text-slate-600 select-none">•</span>
+            <a
+              href="/termos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              Termos
+            </a>
+            <span className="text-slate-600 select-none">•</span>
+            <a
+              href="/empresa"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              Informações da empresa
+            </a>
           </div>
         </div>
       </footer>
