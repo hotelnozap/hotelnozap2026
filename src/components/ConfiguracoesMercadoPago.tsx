@@ -14,10 +14,10 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
   const [environment, setEnvironment] = useState<'production' | 'sandbox'>('production');
 
   // Estado das Credenciais
-  const [publicKey, setPublicKey] = useState('APP_USR-78291048-2910-4819-b291-891028401928');
-  const [accessToken, setAccessToken] = useState('APP_USR-9812401928409182-091219-4829104819284019-918240');
-  const [clientId, setClientId] = useState('4829104819284019');
-  const [clientSecret, setClientSecret] = useState('SecretKey_MP_2026_Master_Hotel');
+  const [publicKey, setPublicKey] = useState('');
+  const [accessToken, setAccessToken] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
   const [showAccessToken, setShowAccessToken] = useState(false);
   const [showClientSecret, setShowClientSecret] = useState(false);
 
