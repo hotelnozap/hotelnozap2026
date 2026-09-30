@@ -538,6 +538,17 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
           <p className="text-xs text-slate-500 font-normal">Gerencie os pacotes e regras de SaaS.</p>
         </section>
 
+        {/* Banner Mercado Pago Master vs Hotel Mobile */}
+        <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs space-y-1">
+          <div className="flex items-center gap-1.5 font-bold text-sky-900">
+            <span className="material-symbols-outlined text-sm text-sky-600">verified_user</span>
+            <span>Cobrança Master SaaS (Plano Grátis Isento)</span>
+          </div>
+          <p className="text-[11px] text-slate-600 leading-snug">
+            Planos pagos são recebidos na conta Master do SaaS. O Plano Grátis é isento. Cada hotel configura sua conta para receber hóspedes.
+          </p>
+        </div>
+
         {/* 2 LINHAS DE BOTÕES DE AÇÃO MOBILE */}
         <section className="space-y-2">
           {/* Linha 1 */}
@@ -1000,6 +1011,31 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
             </div>
           </article>
         </section>
+
+        {/* BANNER DE REGRAS MERCADO PAGO MASTER VS HOTÉIS */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 border border-sky-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <span className="material-symbols-outlined text-2xl">verified_user</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-extrabold text-slate-900">
+                  Cobrança de Planos SaaS via Mercado Pago Master
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  Plano Grátis Isento
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1 max-w-3xl leading-relaxed">
+                As assinaturas dos planos comerciais pagos e recargas de créditos são arrecadadas <strong>exclusivamente na conta Mercado Pago do Administrador Master</strong>. O <strong>Plano Grátis (Google Maps / Degustação) é 100% isento de cobrança</strong>. Cada hotel possui suas próprias credenciais em seu painel para receber diárias diretamente dos hóspedes com zero comissão.
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 text-xs font-bold text-sky-800 bg-white border border-sky-200 px-3 py-1.5 rounded-xl shadow-2xs">
+            Gateway Master SaaS
+          </span>
+        </div>
 
         {/* 4. FILTER TOOLBAR & VIEW TOGGLE DESKTOP */}
         <section aria-label="Ferramentas e Filtros" className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col lg:flex-row items-center justify-between gap-4">

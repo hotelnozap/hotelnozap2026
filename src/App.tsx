@@ -2803,8 +2803,10 @@ export const App: React.FC = () => {
             />
           )}
           {activeTab === 'config-mercado-pago' && isHotelUser && (
-            <ConfiguracoesHotel 
-              initialTab="mercadopago"
+            <ConfiguracoesMercadoPago 
+              isAdmin={false}
+              hotelId={activeHotel?.id}
+              hotelNome={activeHotel?.name}
               onBackToDashboard={() => setActiveTab('dashboard')}
             />
           )}

@@ -1,15 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { systemLogsService } from '../services/systemLogsService';
+import { mercadopagoService, MercadoPagoCredentials } from '../services/mercadopagoService';
+import { currentHotelService, hoteisService } from '../services/supabaseService';
+import { Hotel } from './CadastroHoteis';
 
 export interface ConfiguracoesMercadoPagoProps {
   isAdmin?: boolean;
+  hotelId?: string;
+  hotelNome?: string;
   onBackToDashboard?: () => void;
 }
 
 export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> = ({ 
   isAdmin = false,
+  hotelId: propHotelId,
+  hotelNome: propHotelNome,
   onBackToDashboard 
 }) => {
+  // Lista de Hotéis (se for Admin e quiser inspecionar/configurar um hotel específico)
+  const [hoteisList, setHoteisList] = useState<Hotel[]>([]);
+  const [selectedScope, setSelectedScope] = useState<'master' | string>(isAdmin ? 'master' : (propHotelId || 'current'));
+
+  // Determinar hotel ativo quando no escopo de hotel
+  const currentHotel = currentHotelService.getCurrentHotel();
+  const effectiveHotelId = selectedScope === 'master' ? '' : (selectedScope === 'current' ? (currentHotel?.id || '') : selectedScope);
+  const effectiveHotelName = selectedScope === 'master' 
+    ? 'Administração Master SaaS' 
+    : (hoteisList.find(h => h.id === effectiveHotelId)?.name || propHotelNome || currentHotel?.name || 'Hotel');
+
   // Estado do Ambiente
   const [environment, setEnvironment] = useState<'production' | 'sandbox'>('production');
 
@@ -28,39 +46,56 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
   const [maxInstallments, setMaxInstallments] = useState('12');
 
   // Webhook
-  const webhookUrl = 'https://api.hotelnozap.com.br/webhooks/mercadopago';
+  const webhookUrl = selectedScope === 'master'
+    ? 'https://api.hotelnozap.com.br/webhooks/mercadopago/saas-planos'
+    : `https://api.hotelnozap.com.br/webhooks/mercadopago/hotel/${effectiveHotelId || 'default'}`;
   const [isTestingWebhook, setIsTestingWebhook] = useState(false);
 
   // Feedback Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Carrega lista de hotéis se for Admin
   useEffect(() => {
-    try {
-      const savedMaster = localStorage.getItem('hotelnozap_config_mercadopago_master');
-      if (savedMaster) {
-        const parsed = JSON.parse(savedMaster);
-        if (parsed.environment) setEnvironment(parsed.environment);
-        if (parsed.publicKey) setPublicKey(parsed.publicKey);
-        if (parsed.accessToken) setAccessToken(parsed.accessToken);
-        if (parsed.clientId) setClientId(parsed.clientId);
-        if (parsed.clientSecret) setClientSecret(parsed.clientSecret);
-        if (parsed.enablePix !== undefined) setEnablePix(parsed.enablePix);
-        if (parsed.enableCreditCard !== undefined) setEnableCreditCard(parsed.enableCreditCard);
-        if (parsed.enableBoleto !== undefined) setEnableBoleto(parsed.enableBoleto);
-        if (parsed.maxInstallments) setMaxInstallments(parsed.maxInstallments);
-        return;
-      }
-      
-      const savedParams = localStorage.getItem('hotelnozap_parametros_sistema');
-      if (savedParams) {
-        const parsedP = JSON.parse(savedParams);
-        if (parsedP.gatewayEnvironment) setEnvironment(parsedP.gatewayEnvironment);
-        if (parsedP.gatewayToken) setAccessToken(parsedP.gatewayToken);
-      }
-    } catch (e) {
-      console.warn('Erro ao carregar configurações salvas do Mercado Pago:', e);
+    if (isAdmin) {
+      hoteisService.getHoteis().then(data => {
+        if (data && data.length > 0) setHoteisList(data);
+      }).catch(err => console.warn('Erro ao carregar hotéis para seletor:', err));
     }
-  }, []);
+  }, [isAdmin]);
+
+  // Carrega as credenciais correspondentes ao escopo selecionado
+  const loadCredentialsForScope = (scope: 'master' | string) => {
+    if (scope === 'master') {
+      const creds = mercadopagoService.getMasterCredentials();
+      setEnvironment(creds.environment);
+      setPublicKey(creds.publicKey);
+      setAccessToken(creds.accessToken);
+      setClientId(creds.clientId || '');
+      setClientSecret(creds.clientSecret || '');
+      setEnablePix(creds.enablePix);
+      setEnableCreditCard(creds.enableCreditCard);
+      setEnableBoleto(creds.enableBoleto);
+      setMaxInstallments(creds.maxInstallments || '12');
+    } else {
+      const hId = scope === 'current' ? (currentHotel?.id || '') : scope;
+      if (hId) {
+        const creds = mercadopagoService.getHotelCredentials(hId);
+        setEnvironment(creds.environment);
+        setPublicKey(creds.publicKey);
+        setAccessToken(creds.accessToken);
+        setClientId(creds.clientId || '');
+        setClientSecret(creds.clientSecret || '');
+        setEnablePix(creds.enablePix);
+        setEnableCreditCard(creds.enableCreditCard);
+        setEnableBoleto(creds.enableBoleto);
+        setMaxInstallments(creds.maxInstallments || '12');
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadCredentialsForScope(selectedScope);
+  }, [selectedScope]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -82,9 +117,12 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
         await systemLogsService.addLog({
           level: 'info',
           module: 'financeiro',
-          action: 'Teste de Webhook Mercado Pago Executado',
+          action: `Teste de Webhook Mercado Pago (${selectedScope === 'master' ? 'Master Planos SaaS' : effectiveHotelName})`,
           details: 'Simulação de notificação IPN validada com resposta HTTP 200 OK.',
           metadata: {
+            scope: selectedScope === 'master' ? 'admin_master' : 'hotel_proprio',
+            hotelId: effectiveHotelId || undefined,
+            hotelNome: selectedScope === 'master' ? undefined : effectiveHotelName,
             webhookUrl,
             status: 200,
             response: 'OK'
@@ -97,7 +135,7 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
+    const payload: MercadoPagoCredentials = {
       environment,
       publicKey,
       accessToken,
@@ -110,48 +148,22 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
       updatedAt: new Date().toISOString()
     };
 
-    localStorage.setItem('hotelnozap_config_mercadopago_master', JSON.stringify(payload));
-    localStorage.setItem('hotelnozap_config_hotel_global', JSON.stringify({
-      mpEnvironment: environment,
-      mpPublicKey: publicKey,
-      mpAccessToken: accessToken,
-      mpClientId: clientId,
-      mpClientSecret: clientSecret,
-      mpEnablePix: enablePix,
-      mpEnableCreditCard: enableCreditCard,
-      mpEnableBoleto: enableBoleto,
-      mpMaxInstallments: maxInstallments,
-    }));
-
-    try {
-      const savedParams = localStorage.getItem('hotelnozap_parametros_sistema');
-      if (savedParams) {
-        const parsedP = JSON.parse(savedParams);
-        parsedP.gatewayEnvironment = environment;
-        parsedP.gatewayToken = accessToken;
-        parsedP.gatewayProvider = 'mercadopago';
-        localStorage.setItem('hotelnozap_parametros_sistema', JSON.stringify(parsedP));
+    if (selectedScope === 'master') {
+      const ok = await mercadopagoService.saveMasterCredentials(payload);
+      if (ok) {
+        showToast('Credenciais Master do Mercado Pago salvas com sucesso!');
+      } else {
+        showToast('Erro ao salvar credenciais Master.');
       }
-    } catch { /* ignore */ }
-
-    try {
-      await systemLogsService.addLog({
-        level: 'success',
-        module: 'financeiro',
-        action: isAdmin ? 'Credenciais Master do Mercado Pago Atualizadas' : 'Configurações do Mercado Pago Atualizadas',
-        details: `Ambiente: ${environment === 'production' ? 'Produção' : 'Sandbox'}, Pix: ${enablePix ? 'Sim' : 'Não'}, Cartão: ${enableCreditCard ? 'Sim' : 'Não'}, Boleto: ${enableBoleto ? 'Sim' : 'Não'}`,
-        metadata: {
-          environment,
-          enablePix,
-          enableCreditCard,
-          enableBoleto,
-          maxInstallments,
-          publicKeyPreview: publicKey ? `${publicKey.substring(0, 10)}...` : ''
-        }
-      });
-    } catch { /* ignore */ }
-
-    showToast('Configurações do Mercado Pago salvas com sucesso!');
+    } else {
+      const targetId = effectiveHotelId || currentHotel?.id || 'default';
+      const ok = await mercadopagoService.saveHotelCredentials(targetId, payload, effectiveHotelName);
+      if (ok) {
+        showToast(`Configurações de Mercado Pago salvas para ${effectiveHotelName}!`);
+      } else {
+        showToast('Erro ao salvar credenciais do hotel.');
+      }
+    }
   };
 
   return (
@@ -179,40 +191,124 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
         </div>
       )}
 
-      {/* CABEÇALHO & NAVEGAÇÃO */}
+      {/* CABEÇALHO & SELEÇÃO DE ESCOPO */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
+              selectedScope === 'master' ? 'bg-sky-100 text-sky-700' : 'bg-emerald-100 text-emerald-800'
+            }`}>
               <span className="material-symbols-outlined text-2xl">payments</span>
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
-                  Mercado Pago
+                  {selectedScope === 'master' ? 'Mercado Pago Master SaaS' : `Mercado Pago: ${effectiveHotelName}`}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                  {isAdmin ? 'Gateway Master SaaS' : 'Integração Oficial'}
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                  selectedScope === 'master' 
+                    ? 'bg-sky-100 text-sky-800 border-sky-200' 
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                }`}>
+                  {selectedScope === 'master' ? 'Recebimento de Planos SaaS' : 'Recebimento Direto do Hotel'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                {isAdmin 
-                  ? 'Configure as chaves e credenciais do Mercado Pago para recebimento de assinaturas, planos dos hotéis e recarga de créditos.'
-                  : 'Configure as chaves da API, recebimento via Pix Instantâneo e Cartão de Crédito do Mercado Pago.'}
+                {selectedScope === 'master' 
+                  ? 'Credenciais exclusivas da administração para processamento de pagamentos dos Planos Comerciais e Créditos SaaS.'
+                  : 'Credenciais próprias do estabelecimento para receber pagamentos de reservas e consumos com 0% de comissão.'}
               </p>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSave}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-[#003400] hover:bg-[#002500] shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
-        >
-          <span className="material-symbols-outlined text-lg">check_circle</span>
-          <span>Salvar Configurações</span>
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Seletor de Escopo para Administrador */}
+          {isAdmin && (
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+              <span className="text-xs font-bold text-slate-600 whitespace-nowrap">Escopo:</span>
+              <select
+                value={selectedScope}
+                onChange={(e) => setSelectedScope(e.target.value)}
+                className="text-xs font-bold text-slate-800 bg-transparent outline-none cursor-pointer"
+              >
+                <option value="master">🛡️ Conta Master SaaS (Planos &amp; Créditos)</option>
+                {hoteisList.map(h => (
+                  <option key={h.id} value={h.id}>
+                    🏨 Hotel: {h.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSave}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-[#003400] hover:bg-[#002500] shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+          >
+            <span className="material-symbols-outlined text-lg">check_circle</span>
+            <span>Salvar Configurações</span>
+          </button>
+        </div>
       </div>
+
+      {/* BANNER DE REGRAS DE NEGÓCIO: ESCOPO MASTER VS ESCOPO HOTEL */}
+      {selectedScope === 'master' ? (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 border border-sky-200 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <span className="material-symbols-outlined text-2xl">admin_panel_settings</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
+                  Gateway Exclusivo para Arrecadação de Planos SaaS &amp; Créditos
+                </h2>
+                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  Plano Grátis Isento
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-3xl">
+                As credenciais cadastradas aqui são de <strong>titularidade exclusiva da administração do Hotel no Zap</strong> e são utilizadas unicamente para cobrança de assinaturas de planos comerciais pagos e recargas de créditos. <strong>O Plano Grátis (Google Maps / Degustação) é 100% isento de cobrança</strong>. Cada hotel da rede possui suas próprias chaves no seu painel para receber diretamente as diárias dos seus hóspedes.
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-sky-800 border border-sky-200 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Conta Master Ativa
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border border-emerald-200 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#003400] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <span className="material-symbols-outlined text-2xl">storefront</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
+                  Conta Própria de Recebimento do Estabelecimento ({effectiveHotelName})
+                </h2>
+                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-200 text-emerald-900 border border-emerald-300">
+                  0% de Comissão
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 mt-1 leading-relaxed max-w-3xl">
+                Configure as credenciais da conta Mercado Pago deste hotel. O valor pago pelos seus hóspedes via PIX e Cartão nas reservas diretas <strong>cai 100% na conta bancária do hotel</strong>. O Hotel no Zap não intermedia nem retém o valor dos seus hóspedes.
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-emerald-800 border border-emerald-200 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Recebimento Direto Hotel
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* KPIS BENTO CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -221,9 +317,11 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 truncate block">Status da Integração</span>
             <div className="text-lg sm:text-xl font-black text-slate-900 mt-1 flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Conectado</span>
+              <span>{accessToken ? 'Conectado' : 'Aguardando Chaves'}</span>
             </div>
-            <span className="text-xs font-medium text-emerald-700 mt-0.5 block truncate">API V2 Resposta em 42ms</span>
+            <span className="text-xs font-medium text-emerald-700 mt-0.5 block truncate">
+              {accessToken ? 'Pronto para transações' : 'Insira as credenciais abaixo'}
+            </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-200/60 flex items-center justify-center text-emerald-900 shrink-0">
             <span className="material-symbols-outlined text-xl">verified</span>
@@ -236,7 +334,9 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
             <div className="text-lg sm:text-xl font-black text-slate-900 mt-1 capitalize">
               {environment === 'production' ? 'Produção (Real)' : 'Sandbox (Testes)'}
             </div>
-            <span className="text-xs font-medium text-blue-700 mt-0.5 block truncate">Chave APP_USR Válida</span>
+            <span className="text-xs font-medium text-blue-700 mt-0.5 block truncate">
+              {environment === 'production' ? 'Transações com dinheiro real' : 'Simulação de pagamentos'}
+            </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-200/60 flex items-center justify-center text-blue-900 shrink-0">
             <span className="material-symbols-outlined text-xl">lan</span>
@@ -245,23 +345,31 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
 
         <div className="p-4 sm:p-5 rounded-2xl bg-purple-50/80 border border-purple-200/80 shadow-xs flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-800 truncate block">Notificação Webhook</span>
-            <div className="text-lg sm:text-xl font-black text-slate-900 mt-1">100% OK</div>
-            <span className="text-xs font-medium text-purple-700 mt-0.5 block truncate">Baixa automática de reservas</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-800 truncate block">Finalidade das Chaves</span>
+            <div className="text-lg sm:text-xl font-black text-slate-900 mt-1 truncate">
+              {selectedScope === 'master' ? 'Planos SaaS' : 'Reservas Hotel'}
+            </div>
+            <span className="text-xs font-medium text-purple-700 mt-0.5 block truncate">
+              {selectedScope === 'master' ? 'Assinaturas & Créditos' : 'Diárias & Consumo'}
+            </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-200/60 flex items-center justify-center text-purple-900 shrink-0">
-            <span className="material-symbols-outlined text-xl">sync</span>
+            <span className="material-symbols-outlined text-xl">account_balance</span>
           </div>
         </div>
 
         <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-200/80 shadow-xs flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-800 truncate block">Taxa Pix Aplicada</span>
-            <div className="text-lg sm:text-xl font-black text-slate-900 mt-1">0,99%</div>
-            <span className="text-xs font-medium text-amber-700 mt-0.5 block truncate">Recebimento instantâneo em conta</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-800 truncate block">Comissão da Plataforma</span>
+            <div className="text-lg sm:text-xl font-black text-slate-900 mt-1">
+              {selectedScope === 'master' ? '100% SaaS' : '0% de Taxa'}
+            </div>
+            <span className="text-xs font-medium text-amber-700 mt-0.5 block truncate">
+              {selectedScope === 'master' ? 'Receita própria da plataforma' : 'Hotel no Zap não retém valor'}
+            </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-200/60 flex items-center justify-center text-amber-900 shrink-0">
-            <span className="material-symbols-outlined text-xl">qr_code_2</span>
+            <span className="material-symbols-outlined text-xl">percent</span>
           </div>
         </div>
       </div>
@@ -298,7 +406,9 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
                   <span>Modo Produção (Real)</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">Recomendado</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Transações reais processadas na conta do Mercado Pago do hotel.</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Transações reais processadas e liquidadas na conta bancária configurada.
+                </p>
               </div>
             </label>
 
@@ -329,43 +439,45 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
             </div>
             <div>
               <h2 className="text-base md:text-lg font-bold text-slate-900">2. Credenciais de Integração API</h2>
-              <p className="text-xs text-slate-500">Insira a Public Key e o Access Token obtidos no painel de desenvolvedores do Mercado Pago.</p>
+              <p className="text-xs text-slate-500">
+                Obtenha a Public Key e o Access Token no painel do desenvolvedor do Mercado Pago.
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Public Key (Chave Pública) *
+                Public Key (Chave Pública)
               </label>
               <div className="relative">
                 <input 
                   type="text" 
-                  required
                   value={publicKey}
                   onChange={(e) => setPublicKey(e.target.value)}
                   placeholder="APP_USR-xxxx-xxxx" 
                   className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm font-mono focus:outline-none focus:border-[#003400] bg-slate-50/30"
                 />
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(publicKey, 'Public Key')}
-                  className="absolute right-2 top-2 p-1 text-slate-400 hover:text-[#003400] cursor-pointer"
-                  title="Copiar Public Key"
-                >
-                  <span className="material-symbols-outlined text-base">content_copy</span>
-                </button>
+                {publicKey && (
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(publicKey, 'Public Key')}
+                    className="absolute right-2 top-2 p-1 text-slate-400 hover:text-[#003400] cursor-pointer"
+                    title="Copiar Public Key"
+                  >
+                    <span className="material-symbols-outlined text-base">content_copy</span>
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="space-y-1">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Access Token (Token de Acesso Privado) *
+                Access Token (Token de Acesso Privado)
               </label>
               <div className="relative">
                 <input 
                   type={showAccessToken ? 'text' : 'password'}
-                  required
                   value={accessToken}
                   onChange={(e) => setAccessToken(e.target.value)}
                   placeholder="APP_USR-xxxx-xxxx" 
@@ -382,14 +494,16 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
                       {showAccessToken ? 'visibility_off' : 'visibility'}
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(accessToken, 'Access Token')}
-                    className="p-1 text-slate-400 hover:text-[#003400] cursor-pointer"
-                    title="Copiar Access Token"
-                  >
-                    <span className="material-symbols-outlined text-base">content_copy</span>
-                  </button>
+                  {accessToken && (
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(accessToken, 'Access Token')}
+                      className="p-1 text-slate-400 hover:text-[#003400] cursor-pointer"
+                      title="Copiar Access Token"
+                    >
+                      <span className="material-symbols-outlined text-base">content_copy</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -440,8 +554,12 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
               <span className="material-symbols-outlined text-xl">credit_card</span>
             </div>
             <div>
-              <h2 className="text-base md:text-lg font-bold text-slate-900">3. Formas de Pagamento no Checkout</h2>
-              <p className="text-xs text-slate-500">Selecione as opções ativas de recebimento para as reservas diretas do WhatsApp e do site.</p>
+              <h2 className="text-base md:text-lg font-bold text-slate-900">3. Formas de Pagamento Habilitadas</h2>
+              <p className="text-xs text-slate-500">
+                {selectedScope === 'master'
+                  ? 'Selecione os métodos que os hotéis podem utilizar para pagar a assinatura do plano ou pacotes de créditos.'
+                  : 'Selecione as opções de recebimento que serão exibidas para seus hóspedes no WhatsApp e no site.'}
+              </p>
             </div>
           </div>
 
@@ -454,7 +572,7 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
                   <span className="material-symbols-outlined text-emerald-600 text-base">qr_code_2</span>
                   <span>Pix Instantâneo</span>
                 </div>
-                <p className="text-xs text-slate-500">Gera QR Code e código Copia e Cola com baixa em tempo real.</p>
+                <p className="text-xs text-slate-500">Gera QR Code e Copia e Cola com liquidação imediata.</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input 
@@ -535,7 +653,11 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
             </div>
             <div>
               <h2 className="text-base md:text-lg font-bold text-slate-900">4. URL do Webhook de Notificação IPN</h2>
-              <p className="text-xs text-slate-500">URL para onde o Mercado Pago envia o aviso instantâneo de pagamento da reserva.</p>
+              <p className="text-xs text-slate-500">
+                {selectedScope === 'master'
+                  ? 'URL para onde o Mercado Pago avisa sobre pagamentos de planos SaaS e liberação automática de créditos.'
+                  : 'URL para onde o Mercado Pago envia a confirmação instantânea de pagamento da reserva do hóspede.'}
+              </p>
             </div>
           </div>
 
@@ -580,7 +702,7 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
             className="px-6 py-3 rounded-xl bg-[#003400] hover:bg-[#002500] text-white font-bold text-sm shadow-md transition-all cursor-pointer active:scale-95 flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">check_circle</span>
-            <span>Salvar Configurações</span>
+            <span>Salvar Configurações ({selectedScope === 'master' ? 'Master SaaS' : effectiveHotelName})</span>
           </button>
         </div>
 

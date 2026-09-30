@@ -1926,7 +1926,12 @@ export const FormHotel: React.FC<FormHotelProps> = ({
 
                     <div className="text-2xl font-black text-slate-900 mb-1">
                       {plano.basePrice === 0 ? (
-                        'Grátis'
+                        <div className="flex items-center gap-2">
+                          <span>Grátis</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                            Isento de Gateway
+                          </span>
+                        </div>
                       ) : (
                         <>
                           R$ {Number(plano.basePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
