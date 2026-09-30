@@ -50,6 +50,68 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
   const [modalPhotoIndex, setModalPhotoIndex] = useState<number>(0);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState<boolean>(false);
 
+  // Swipe e navegação touch do slide mobile
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [touchMoved, setTouchMoved] = useState<boolean>(false);
+
+  const handlePrevSlide = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (galleryImages.length > 1) {
+      setCurrentSlideIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
+    }
+  };
+
+  const handleNextSlide = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (galleryImages.length > 1) {
+      setCurrentSlideIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0));
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    setTouchMoved(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    const diffX = Math.abs(e.touches[0].clientX - touchStartX);
+    const diffY = Math.abs(e.touches[0].clientY - touchStartY);
+    if (diffX > 8 || diffY > 8) {
+      setTouchMoved(true);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchStartX - touchEndX;
+    const minSwipeDistance = 35;
+
+    if (Math.abs(diffX) >= minSwipeDistance) {
+      if (diffX > 0) {
+        handleNextSlide();
+      } else {
+        handlePrevSlide();
+      }
+    }
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
+  const handleImageTap = () => {
+    if (!touchMoved) {
+      setModalPhotoIndex(currentSlideIndex);
+      setIsModalFotosOpen(true);
+    }
+  };
+
   useEffect(() => {
     if (currentHotel?.name) {
       document.title = `Detalhes do quarto do ${currentHotel.name}`;
@@ -1299,43 +1361,63 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 </div>
               )}
 
-              {/* Layout Mobile (< md): Imagem com navegação quando houver fotos */}
-              <div className="md:hidden relative h-72 sm:h-80 w-full overflow-hidden bg-slate-900">
+              {/* Layout Mobile (< md): Imagem com navegação touch swipe, botões acessíveis e indicadores */}
+              <div 
+                className="md:hidden relative h-72 sm:h-80 w-full overflow-hidden bg-slate-900 select-none touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
                 <img 
+                  key={currentSlideIndex}
                   src={galleryImages[currentSlideIndex] || galleryImages[0]} 
                   alt={currentQuarto.name}
-                  onClick={() => {
-                    setModalPhotoIndex(currentSlideIndex);
-                    setIsModalFotosOpen(true);
-                  }}
-                  className="w-full h-full object-cover cursor-pointer"
+                  onClick={handleImageTap}
+                  className="w-full h-full object-cover cursor-pointer transition-opacity duration-200"
+                  draggable={false}
                 />
                 {galleryImages.length > 1 && (
                   <>
                     <button 
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentSlideIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
-                      }}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-950/60 text-white flex items-center justify-center backdrop-blur-xs cursor-pointer active:scale-95 z-10"
+                      onClick={handlePrevSlide}
+                      onTouchEnd={handlePrevSlide}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center backdrop-blur-xs cursor-pointer active:scale-90 z-20 touch-manipulation shadow-lg border border-white/20"
                       aria-label="Foto anterior"
                     >
-                      <span className="material-symbols-outlined text-xl">chevron_left</span>
+                      <span className="material-symbols-outlined text-2xl">chevron_left</span>
                     </button>
                     <button 
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentSlideIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0));
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-950/60 text-white flex items-center justify-center backdrop-blur-xs cursor-pointer active:scale-95 z-10"
+                      onClick={handleNextSlide}
+                      onTouchEnd={handleNextSlide}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center backdrop-blur-xs cursor-pointer active:scale-90 z-20 touch-manipulation shadow-lg border border-white/20"
                       aria-label="Próxima foto"
                     >
-                      <span className="material-symbols-outlined text-xl">chevron_right</span>
+                      <span className="material-symbols-outlined text-2xl">chevron_right</span>
                     </button>
-                    <div className="absolute bottom-3 left-3 bg-slate-950/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs">
+                    <div className="absolute bottom-3 left-3 bg-black/80 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs z-10 border border-white/10">
                       {currentSlideIndex + 1} / {galleryImages.length}
+                    </div>
+
+                    {/* Indicadores / Dots de navegação rápida */}
+                    <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+                      {galleryImages.slice(0, 7).map((_, dotIdx) => (
+                        <button
+                          key={dotIdx}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentSlideIndex(dotIdx);
+                          }}
+                          className={`h-1.5 rounded-full transition-all ${
+                            currentSlideIndex === dotIdx 
+                              ? 'w-5 bg-white' 
+                              : 'w-1.5 bg-white/50 hover:bg-white/75'
+                          }`}
+                          aria-label={`Ir para foto ${dotIdx + 1}`}
+                        />
+                      ))}
                     </div>
                   </>
                 )}
@@ -1473,6 +1555,44 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                   Total: R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
+
+              {/* Botão de Reserva no Topo Mobile */}
+              {isQuartoOcupado ? (
+                <button
+                  type="button"
+                  onClick={openWhatsAppReservation}
+                  className="w-full py-3 px-4 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md active:scale-98 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">chat</span>
+                  <span>Acomodação Ocupada (Consultar no Zap)</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCliqueReservar}
+                  disabled={submittingReserva || isReservaMaisDe30Dias}
+                  className={`w-full py-3 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all ${
+                    isReservaMaisDe30Dias
+                      ? 'bg-slate-400 text-white cursor-not-allowed opacity-80'
+                      : 'bg-[#003400] hover:bg-[#002800] text-white active:scale-98 cursor-pointer'
+                  }`}
+                >
+                  {submittingReserva ? (
+                    <span className="material-symbols-outlined animate-spin text-sm text-emerald-400">progress_activity</span>
+                  ) : isReservaMaisDe30Dias ? (
+                    <span className="material-symbols-outlined text-rose-200 text-sm">block</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[#10B981] text-base">event_available</span>
+                  )}
+                  <span>
+                    {submittingReserva 
+                      ? 'RESERVANDO...' 
+                      : isReservaMaisDe30Dias 
+                      ? 'MÁXIMO 30 DIAS' 
+                      : 'RESERVAR AGORA'}
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* DESTAQUES DA ACOMODAÇÃO */}
@@ -1742,8 +1862,8 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 </div>
               </div>
 
-              {/* SELEÇÃO DE DATAS: CHECK-IN E CHECK-OUT */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+              {/* SELEÇÃO DE DATAS: CHECK-IN E CHECK-OUT (Apenas Desktop - no mobile já existe no topo) */}
+              <div className="hidden lg:block bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
                     <span className="material-symbols-outlined text-[#006c49] text-base">calendar_month</span>
@@ -1803,6 +1923,12 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                     R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
+              </div>
+
+              {/* Resumo do Total no Mobile */}
+              <div className="lg:hidden flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
+                <span className="font-bold text-slate-700">Total ({totalNoites} {totalNoites === 1 ? 'diária' : 'diárias'}):</span>
+                <span className="text-base font-black text-[#006c49]">R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
 
               {/* BOTÃO PRINCIPAL ALTO IMPACTO (RESERVAR AGORA OU AVISO DE OCUPADO) */}
@@ -1878,71 +2004,8 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
 
       </main>
 
-      {/* MOBILE STICKY BOTTOM BAR (WIDGET DE RESERVA FIXO NO RODAPÉ DO CELULAR) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl p-3 px-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 flex-wrap">
-              <span className="text-slate-700">{formatarDataBR(checkInDate)}</span>
-              <span className="text-slate-400">➜</span>
-              <span className="text-slate-700">{formatarDataBR(checkOutDate)}</span>
-              <span className={`px-1.5 py-0.5 rounded font-black text-[9px] ${isReservaMaisDe30Dias ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-emerald-100 text-[#006c49]'}`}>
-                {totalNoites}d {isReservaMaisDe30Dias ? '(Inválido)' : ''}
-              </span>
-              {isQuartoEmLimpeza && (
-                <span className="bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded font-bold text-[9px] flex items-center gap-0.5">
-                  <span className="material-symbols-outlined text-[10px]">cleaning_services</span>
-                  Limpeza
-                </span>
-              )}
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-black text-slate-900">
-                R$ {valorTotalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="text-[10px] text-slate-500 font-medium">total</span>
-            </div>
-          </div>
-
-          {isQuartoOcupado ? (
-            <button
-              onClick={openWhatsAppReservation}
-              className="py-3 px-5 rounded-xl bg-[#10B981] text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer shrink-0"
-            >
-              <span className="material-symbols-outlined text-base">chat</span>
-              <span>Ocupado (Ver no Zap)</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleCliqueReservar}
-              disabled={submittingReserva || isReservaMaisDe30Dias}
-              className={`py-3 px-5 rounded-xl font-extrabold text-xs flex items-center gap-1.5 shadow-md shrink-0 transition-all ${
-                isReservaMaisDe30Dias 
-                  ? 'bg-slate-400 text-white cursor-not-allowed opacity-80' 
-                  : 'bg-[#003400] text-white active:scale-95 cursor-pointer'
-              }`}
-            >
-              {submittingReserva ? (
-                <span className="material-symbols-outlined animate-spin text-sm text-emerald-400">progress_activity</span>
-              ) : isReservaMaisDe30Dias ? (
-                <span className="material-symbols-outlined text-rose-200 text-sm">block</span>
-              ) : (
-                <span className="material-symbols-outlined text-[#10B981] text-base">event_available</span>
-              )}
-              <span>
-                {submittingReserva 
-                  ? 'RESERVANDO...' 
-                  : isReservaMaisDe30Dias 
-                  ? 'MÁX 30 DIAS' 
-                  : 'RESERVAR AGORA'}
-              </span>
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* FOOTER PÚBLICO */}
-      <footer className="w-full bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-16 pb-20 lg:pb-10">
+      <footer className="w-full bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-16 pb-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex items-center gap-3">
