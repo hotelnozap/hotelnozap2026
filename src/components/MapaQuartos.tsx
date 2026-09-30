@@ -945,51 +945,59 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
       {/* KPI STATUS CARDS (DINÂMICOS CONFORME CADASTRADO PELO ADMIN) */}
       <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full">
-        {availableStatus.filter(s => s.status === 'ativo').map((st) => {
-          const count = rooms.filter(r => (r.status || 'livre').toLowerCase() === st.slug).length;
-          const isSelected = filterStatus === st.slug;
+        {(() => {
+          const activeStatusList = availableStatus.filter(s => s.status === 'ativo');
+          return activeStatusList.map((st, idx) => {
+            const count = rooms.filter(r => (r.status || 'livre').toLowerCase() === st.slug).length;
+            const isSelected = filterStatus === st.slug;
+            const isLast = idx === activeStatusList.length - 1;
+            const isOcupadoLimpeza = st.slug === 'ocupado_em_limpeza';
+            const isFullWidthMobile = isOcupadoLimpeza || (isLast && activeStatusList.length % 2 !== 0);
 
-          return (
-            <div 
-              key={st.slug}
-              onClick={() => setFilterStatus(isSelected ? 'todos' : st.slug)}
-              style={{
-                backgroundColor: st.cor_fundo,
-                borderColor: isSelected ? st.cor_texto : st.cor_borda
-              }}
-              className={
-                "border rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] " +
-                (isSelected ? 'ring-2 shadow-sm' : 'hover:opacity-90')
-              }
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span 
-                  style={{ color: st.cor_texto }}
-                  className="text-xs font-bold uppercase tracking-wider truncate"
-                >
-                  {st.nome}
-                </span>
-                <span 
-                  style={{ color: st.cor_texto }}
-                  className="material-symbols-outlined text-lg sm:text-xl shrink-0"
-                >
-                  {st.icone}
-                </span>
+            return (
+              <div 
+                key={st.slug}
+                onClick={() => setFilterStatus(isSelected ? 'todos' : st.slug)}
+                style={{
+                  backgroundColor: st.cor_fundo,
+                  borderColor: isSelected ? st.cor_texto : st.cor_borda
+                }}
+                className={
+                  `border rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] ${
+                    isFullWidthMobile ? 'col-span-2 sm:col-span-1' : 'col-span-1'
+                  } ` +
+                  (isSelected ? 'ring-2 shadow-sm' : 'hover:opacity-90')
+                }
+              >
+                <div className="flex items-center justify-between gap-1.5">
+                  <span 
+                    style={{ color: st.cor_texto }}
+                    className="text-xs font-bold uppercase tracking-wider leading-tight break-words"
+                  >
+                    {st.nome}
+                  </span>
+                  <span 
+                    style={{ color: st.cor_texto }}
+                    className="material-symbols-outlined text-lg sm:text-xl shrink-0"
+                  >
+                    {st.icone}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span 
+                    style={{ color: st.cor_texto }}
+                    className="text-xl sm:text-2xl font-black"
+                  >
+                    {count}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {count === 1 ? '1 quarto' : `${count} quartos`}
+                  </span>
+                </div>
               </div>
-              <div className="mt-2 flex items-baseline justify-between">
-                <span 
-                  style={{ color: st.cor_texto }}
-                  className="text-xl sm:text-2xl font-black"
-                >
-                  {count}
-                </span>
-                <span className="text-[10px] text-slate-500 font-medium">
-                  {count === 1 ? '1 quarto' : `${count} quartos`}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          });
+        })()}
       </section>
 
       {/* MOBILE LIST VIEW (Visible on mobile/tablet md:hidden) */}
