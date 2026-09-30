@@ -49,7 +49,6 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   const [razaoSocial, setRazaoSocial] = useState('');
   const [cnpj, setCnpj] = useState('');
   const [categoria, setCategoria] = useState('Pousada Boutique / Charme');
-  const [capacidade, setCapacidade] = useState('');
   const [telefone, setTelefone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [instagram, setInstagram] = useState('');
@@ -71,6 +70,9 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
 
   // Step 2: plano
   const [planoSelecionado, setPlanoSelecionado] = useState('');
+  const selectedPlanoObj = useMemo(() => {
+    return planos.find(p => p.name === planoSelecionado) || null;
+  }, [planos, planoSelecionado]);
 
   // Step 3: endereco
   const [cep, setCep] = useState('');
@@ -127,7 +129,6 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
     if (step === 1) {
       if (!nomeFantasia.trim()) return 'Informe o Nome Fantasia do hotel.';
       if (!cnpj.trim() || !isValidCnpj(cnpj)) return 'Informe um CNPJ valido.';
-      if (!capacidade || Number(capacidade) < 1) return 'Informe a quantidade de quartos/unidades.';
       if (!whatsapp.trim() || whatsapp.replace(/\D/g,'').length < 10) return 'Informe o WhatsApp do hotel.';
     }
     if (step === 2) {
@@ -175,12 +176,16 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
     let hotelCriadoId: string | null = null;
     try {
       const cityUf = cidade && uf ? cidade + ' / ' + uf : cidade || '';
+      const calculatedCapacity = (selectedPlanoObj?.roomLimit !== undefined && selectedPlanoObj?.roomLimit !== null)
+        ? Number(selectedPlanoObj.roomLimit)
+        : 0;
+
       const hotelRes = await hoteisService.createHotel({
         name: nomeFantasia.trim(),
         razaoSocial: razaoSocial.trim() || nomeFantasia.trim(),
         cnpj: cnpj.trim(),
         category: categoria,
-        capacity: Number(capacidade) || 0,
+        capacity: calculatedCapacity,
         whatsappInstances: 0,
         managerPhone: whatsapp.trim(),
         whatsapp: whatsapp.replace(/\D/g,''),
@@ -428,10 +433,6 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                   </select>
                 </div>
                 <div>
-                  <label className={lCls}>Nr de Quartos / Unidades *</label>
-                  <input type="number" min="1" value={capacidade} onChange={e => setCapacidade(e.target.value)} placeholder="Ex: 25" className={iCls} />
-                </div>
-                <div>
                   <label className={lCls}>WhatsApp do Hotel *</label>
                   <input type="tel" value={whatsapp} onChange={e => setWhatsapp(maskPhone(e.target.value))} placeholder="(81) 98765-4321" className={iCls} />
                 </div>
@@ -628,7 +629,7 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
                   <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-2">Resumo do Cadastro</p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                    {[['Hotel',nomeFantasia],['Plano',planoSelecionado],['Localizacao',cidade&&uf?cidade+'/'+uf:''],['Responsavel',nomeResponsavel],['Quartos',capacidade],['Parceiro','HOTELNOZAP']].map(([k,v])=>(
+                    {[['Hotel',nomeFantasia],['Plano',planoSelecionado],['Localizacao',cidade&&uf?cidade+'/'+uf:''],['Responsavel',nomeResponsavel],['Capacidade', selectedPlanoObj?.roomLimit ? `${selectedPlanoObj.roomLimit} quartos (Plano)` : 'Conforme o plano'],['Parceiro','HOTELNOZAP']].map(([k,v])=>(
                       <div key={k}><span className="text-gray-400">{k}: </span><span className="font-semibold text-gray-800">{v||'nao informado'}</span></div>
                     ))}
                   </div>
