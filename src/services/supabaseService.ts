@@ -6125,7 +6125,7 @@ export interface CategoriaHotelData {
 export const INITIAL_CATEGORIAS_HOTEL: CategoriaHotelData[] = [
   {
     id: 'cat-hotel-1',
-    name: 'Resort All-Inclusive / Lazer',
+    name: 'Resort',
     description: 'Complexos turísticos com ampla estrutura de lazer, gastronomia inclusa e entretenimento.',
     icon: 'beach_access',
     status: 'ativo',
@@ -6133,7 +6133,7 @@ export const INITIAL_CATEGORIAS_HOTEL: CategoriaHotelData[] = [
   },
   {
     id: 'cat-hotel-2',
-    name: 'Hotel Urbano / Executivo',
+    name: 'Hotel Urbano',
     description: 'Hotéis localizados em centros comerciais, ideais para viagens corporativas e negócios.',
     icon: 'apartment',
     status: 'ativo',
@@ -6141,7 +6141,7 @@ export const INITIAL_CATEGORIAS_HOTEL: CategoriaHotelData[] = [
   },
   {
     id: 'cat-hotel-3',
-    name: 'Pousada Boutique / Charme',
+    name: 'Pousada',
     description: 'Hospedagens aconchegantes com atendimento exclusivo, decoração refinada e ambiente intimista.',
     icon: 'villa',
     status: 'ativo',
@@ -6178,6 +6178,14 @@ export const INITIAL_CATEGORIAS_HOTEL: CategoriaHotelData[] = [
     icon: 'bed',
     status: 'ativo',
     order: 7
+  },
+  {
+    id: 'cat-hotel-8',
+    name: 'Hotel Boutique / Charme',
+    description: 'Hotéis exclusivos de pequeno ou médio porte com design personalizado e atendimento diferenciado.',
+    icon: 'diamond',
+    status: 'ativo',
+    order: 8
   }
 ];
 
@@ -6189,7 +6197,7 @@ export const categoriasHoteisService = {
       const raw = localStorage.getItem(LOCAL_STORAGE_CATEGORIAS_HOTEL);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length >= 8) return parsed;
       }
     } catch { /* ignore */ }
     return INITIAL_CATEGORIAS_HOTEL;

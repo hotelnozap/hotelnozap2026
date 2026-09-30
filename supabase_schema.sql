@@ -520,16 +520,27 @@ BEGIN
     CREATE POLICY "Exclusão de categorias_hoteis" ON public.categorias_hoteis FOR DELETE USING (true);
 END $$;
 
+-- Concessão de Permissões PostgreSQL
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.categorias_hoteis TO postgres, service_role;
+GRANT SELECT ON TABLE public.categorias_hoteis TO anon, authenticated;
+GRANT ALL ON TABLE public.categorias_hoteis TO authenticated;
+
 INSERT INTO public.categorias_hoteis (nome, descricao, icone, status, ordem)
 VALUES
-    ('Resort All-Inclusive / Lazer', 'Complexos turísticos com ampla estrutura de lazer, gastronomia inclusa e entretenimento.', 'beach_access', 'ativo', 1),
-    ('Hotel Urbano / Executivo', 'Hotéis localizados em centros comerciais, ideais para viagens corporativas e negócios.', 'apartment', 'ativo', 2),
-    ('Pousada Boutique / Charme', 'Hospedagens aconchegantes com atendimento exclusivo, decoração refinada e ambiente intimista.', 'villa', 'ativo', 3),
+    ('Resort', 'Complexos turísticos com ampla estrutura de lazer, gastronomia inclusa e entretenimento.', 'beach_access', 'ativo', 1),
+    ('Hotel Urbano', 'Hotéis localizados em centros comerciais, ideais para viagens corporativas e negócios.', 'apartment', 'ativo', 2),
+    ('Pousada', 'Hospedagens aconchegantes com atendimento exclusivo, decoração refinada e ambiente intimista.', 'villa', 'ativo', 3),
     ('Chalés & Eco Village', 'Acomodações integradas à natureza, estilo rústico ou sustentável em áreas de serra e praia.', 'cabin', 'ativo', 4),
     ('Flat / Apart-hotel', 'Unidades residenciais com serviços de hotelaria e cozinha própria para estadias flexíveis.', 'holiday_village', 'ativo', 5),
     ('Hotel Fazenda & Ecoturismo', 'Estruturas rurais com passeios a cavalo, contato com animais e turismo de aventura.', 'forest', 'ativo', 6),
-    ('Hostel / Albergue Turístico', 'Hospedagens comunitárias e compartilhadas, com ambiente jovem e econômico.', 'bed', 'ativo', 7)
-ON CONFLICT (nome) DO NOTHING;
+    ('Hostel / Albergue Turístico', 'Hospedagens comunitárias e compartilhadas, com ambiente jovem e econômico.', 'bed', 'ativo', 7),
+    ('Hotel Boutique / Charme', 'Hotéis exclusivos de pequeno ou médio porte com design personalizado e atendimento diferenciado.', 'diamond', 'ativo', 8)
+ON CONFLICT (nome) DO UPDATE SET
+    descricao = EXCLUDED.descricao,
+    icone = EXCLUDED.icone,
+    status = EXCLUDED.status,
+    ordem = EXCLUDED.ordem;
 
 -- 28. TABELA DE CONFIGURAÇÕES DO HOTEL (HORÁRIOS, REGRAS E SERVIÇOS)
 CREATE TABLE IF NOT EXISTS public.hotel_configuracoes (

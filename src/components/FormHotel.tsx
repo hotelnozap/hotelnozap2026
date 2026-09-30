@@ -193,8 +193,10 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   };
 
   const [cnpj, setCnpj] = useState(hotelToEdit?.cnpj || '');
-  const [category, setCategory] = useState(hotelToEdit?.category || 'Pousada Boutique / Charme');
-  const [categoriasList, setCategoriasList] = useState<CategoriaHotelData[]>([]);
+  const [category, setCategory] = useState(hotelToEdit?.category || 'Pousada');
+  const [categoriasList, setCategoriasList] = useState<CategoriaHotelData[]>(() =>
+    categoriasHoteisService.getLocalCategorias().filter(c => c.status === 'ativo')
+  );
   const [stars, setStars] = useState('4');
 
   // Carregamento dinâmico das categorias de hotéis do banco/serviço
@@ -1465,11 +1467,14 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                     ))
                   ) : (
                     <>
-                      <option value="Resort All-Inclusive / Lazer">Resort All-Inclusive / Lazer</option>
-                      <option value="Hotel Urbano / Executivo">Hotel Urbano / Executivo</option>
-                      <option value="Pousada Boutique / Charme">Pousada Boutique / Charme</option>
+                      <option value="Resort">Resort</option>
+                      <option value="Hotel Urbano">Hotel Urbano</option>
+                      <option value="Pousada">Pousada</option>
                       <option value="Chalés & Eco Village">Chalés & Eco Village</option>
                       <option value="Flat / Apart-hotel">Flat / Apart-hotel</option>
+                      <option value="Hotel Fazenda & Ecoturismo">Hotel Fazenda & Ecoturismo</option>
+                      <option value="Hostel / Albergue Turístico">Hostel / Albergue Turístico</option>
+                      <option value="Hotel Boutique / Charme">Hotel Boutique / Charme</option>
                     </>
                   )}
                   {category && !categoriasList.some(c => c.name === category) && (

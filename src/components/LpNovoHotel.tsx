@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { maskCnpj, maskPhone, maskCep, maskCpf, isValidCpf, isValidCnpj, getCpfValidationStatus, getCnpjValidationStatus } from '../utils/masks';
 import { fetchAddressByCep } from '../utils/viacep';
-import { hoteisService, planosService, usuariosService } from '../services/supabaseService';
+import { hoteisService, planosService, usuariosService, categoriasHoteisService, CategoriaHotelData } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotelUrlAvailabilityInSupabase } from '../utils/hotelUrl';
@@ -21,7 +21,6 @@ const STEPS = [
 ];
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-const CATEGORIAS = ['Pousada Boutique / Charme','Hotel Economico / Budget','Hotel de Negocios','Resort Spa','Hotel Fazenda','Hotel de Praia','Hostel / Albergue','Apart Hotel / Flat','Eco Pousada','Hotel de Montanha'];
 
 const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToLogin }) => {
   const [step, setStep] = useState(1);
@@ -53,11 +52,28 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
     }).catch(() => {});
   }, []);
 
+  // Categorias de Hotéis dinâmicas (banco + fallback local instantâneo)
+  const [categoriasList, setCategoriasList] = useState<CategoriaHotelData[]>(() =>
+    categoriasHoteisService.getLocalCategorias().filter(c => c.status === 'ativo')
+  );
+  useEffect(() => {
+    let isMounted = true;
+    categoriasHoteisService.getCategorias().then(data => {
+      if (isMounted && Array.isArray(data) && data.length > 0) {
+        setCategoriasList(data.filter(c => c.status === 'ativo'));
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
   // Step 1: dados do hotel
   const [nomeFantasia, setNomeFantasia] = useState('');
   const [razaoSocial, setRazaoSocial] = useState('');
   const [cnpj, setCnpj] = useState('');
-  const [categoria, setCategoria] = useState('Pousada Boutique / Charme');
+  const [categoria, setCategoria] = useState(() => {
+    const list = categoriasHoteisService.getLocalCategorias().filter(c => c.status === 'ativo');
+    return list[0]?.name || 'Pousada';
+  });
   const [telefone, setTelefone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [instagram, setInstagram] = useState('');
@@ -486,7 +502,12 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 <div>
                   <label className={lCls}>Categoria *</label>
                   <select value={categoria} onChange={e => setCategoria(e.target.value)} className={iCls + ' cursor-pointer'}>
-                    {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
+                    {categoriasList.map(c => (
+                      <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                    ))}
+                    {categoria && !categoriasList.some(c => c.name === categoria) && (
+                      <option value={categoria}>{categoria}</option>
+                    )}
                   </select>
                 </div>
                 <div>
