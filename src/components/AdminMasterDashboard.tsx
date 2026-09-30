@@ -34,6 +34,7 @@ export interface AdminMasterDashboardProps {
   onNavigateToConfig?: () => void;
   onNavigateToWhatsApp?: () => void;
   onNavigateToCaixa?: () => void;
+  onNavigateToLogs?: () => void;
   onLogout: () => void;
   adminEmail?: string;
   adminName?: string;
@@ -52,6 +53,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   onNavigateToConfig,
   onNavigateToWhatsApp,
   onNavigateToCaixa,
+  onNavigateToLogs,
   onLogout,
   adminEmail = '',
   adminName = 'Administrador'
@@ -583,6 +585,17 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
               <span className="material-symbols-outlined">settings_suggest</span>
               <span>Parâmetros do Sistema</span>
             </button>
+
+            {onNavigateToLogs && (
+              <button 
+                type="button"
+                onClick={onNavigateToLogs}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <span className="material-symbols-outlined">manage_search</span>
+                <span>Logs do Sistema</span>
+              </button>
+            )}
           </nav>
         </div>
 
@@ -708,6 +721,16 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                   <span className="material-symbols-outlined text-lg">sync_alt</span>
                   <span>WhatsApp Gateway</span>
                 </button>
+
+                {onNavigateToLogs && (
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); onNavigateToLogs(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/5 text-left cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-lg">manage_search</span>
+                    <span>Logs do Sistema</span>
+                  </button>
+                )}
               </nav>
             </div>
 

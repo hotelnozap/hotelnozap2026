@@ -69,6 +69,7 @@ import CardapioHotel from './components/CardapioHotel';
 import { GestaoPedidosCardapio } from './components/GestaoPedidosCardapio';
 import { PaginaInstitucional } from './components/PaginaInstitucional';
 import { ListagemStatusQuartos } from './components/ListagemStatusQuartos';
+import { LogsSistema } from './components/LogsSistema';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 
@@ -750,7 +751,7 @@ export const App: React.FC = () => {
       const adminOnlyTabs = [
         'admin-dashboard', 'parceiros', 'cadastro-parceiro', 'planos', 
         'cadastro-plano', 'admin-conexoes', 'admin-financeiro', 
-        'admin-config'
+        'admin-config', 'status-quartos', 'logs-sistema'
       ];
       if (adminOnlyTabs.includes(activeTab)) {
         setActiveTab('dashboard');
@@ -802,6 +803,7 @@ export const App: React.FC = () => {
     { id: 'admin-conexoes', label: 'Conexões WhatsApp', icon: 'sync_alt' },
     { id: 'admin-financeiro', label: 'Receita & Repasses', icon: 'payments' },
     { id: 'admin-config', label: 'Parâmetros do Sistema', icon: 'settings_suggest' },
+    { id: 'logs-sistema', label: 'Logs do Sistema', icon: 'manage_search' },
     { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
     { id: 'relatorios', label: 'Relatórios', icon: 'assessment' },
     { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
@@ -1552,6 +1554,19 @@ export const App: React.FC = () => {
                     <span className={`material-symbols-outlined ${activeTab === 'admin-config' ? 'text-emerald-400' : ''}`}>settings_suggest</span>
                     <span>Parâmetros do Sistema</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('logs-sistema'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                      activeTab === 'logs-sistema'
+                        ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined ${activeTab === 'logs-sistema' ? 'text-emerald-400' : ''}`}>manage_search</span>
+                    <span>Logs do Sistema</span>
+                  </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-1 px-2">
@@ -1937,6 +1952,19 @@ export const App: React.FC = () => {
               >
                 <span className={`material-symbols-outlined ${activeTab === 'admin-config' ? 'text-emerald-400' : ''}`}>settings_suggest</span>
                 <span>Parâmetros do Sistema</span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setActiveTab('logs-sistema')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                  activeTab === 'logs-sistema'
+                    ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className={`material-symbols-outlined ${activeTab === 'logs-sistema' ? 'text-emerald-400' : ''}`}>manage_search</span>
+                <span>Logs do Sistema</span>
               </button>
             </nav>
           </div>
@@ -2326,6 +2354,9 @@ export const App: React.FC = () => {
               }}
               onNavigateToConfig={() => {
                 setActiveTab('admin-config');
+              }}
+              onNavigateToLogs={() => {
+                setActiveTab('logs-sistema');
               }}
               onLogout={() => handleLogout()}
             />
@@ -2762,6 +2793,11 @@ export const App: React.FC = () => {
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
             />
           )}
+          {activeTab === 'logs-sistema' && !isHotelUser && (
+            <LogsSistema
+              onBackToDashboard={() => setActiveTab('admin-dashboard')}
+            />
+          )}
 
           {activeTab === 'relatorios' && (
             <RelatoriosHotel 
@@ -2837,7 +2873,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
+          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'logs-sistema' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
             <div className="p-8 text-center text-[#45464d]">
               <h2 className="text-xl font-bold text-[#0b1c30] mb-2">Tela em construção</h2>
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>
