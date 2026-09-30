@@ -68,6 +68,7 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
   const [formOrdem, setFormOrdem] = useState(1);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Confirmação de exclusão
   const [statusToDelete, setStatusToDelete] = useState<StatusQuartoData | null>(null);
@@ -86,6 +87,25 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
       setStatusList([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSyncBackend = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await statusQuartosService.syncLocalStatusToBackend();
+      if (res.syncedCount > 0) {
+        showToast(`✓ ${res.syncedCount} status sincronizado(s) com sucesso na tabela do Supabase!`);
+      } else if (res.errors.length > 0) {
+        showToast(`⚠️ Falha ao salvar no Supabase: ${res.errors[0]}. Execute o comando GRANT no SQL Editor.`);
+      } else {
+        showToast('✓ Todos os status já estão sincronizados com a tabela do banco de dados!');
+      }
+      loadData();
+    } catch (e: any) {
+      showToast(`Erro na sincronização: ${e?.message || 'Falha de conexão'}`);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -215,7 +235,11 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
         });
 
         if (res.success) {
-          showToast(`Status "${formNome}" atualizado com sucesso!`);
+          if (res.backendSynced === false) {
+            showToast(`⚠️ Status "${formNome}" salvo localmente, mas não no Supabase (${res.error || 'sem permissão'}).`);
+          } else {
+            showToast(`✓ Status "${formNome}" atualizado no Supabase com sucesso!`);
+          }
           setIsModalOpen(false);
           loadData();
         } else {
@@ -239,7 +263,11 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
         });
 
         if (res.success) {
-          showToast(`Novo status "${formNome}" cadastrado e disponível nos mapas dos hotéis!`);
+          if (res.backendSynced === false) {
+            showToast(`⚠️ Status "${formNome}" cadastrado localmente, mas não gravou no Supabase (${res.error || 'sem permissão'}). Use o botão "Sincronizar com Banco".`);
+          } else {
+            showToast(`✓ Novo status "${formNome}" cadastrado no banco Supabase e disponível nos mapas!`);
+          }
           setIsModalOpen(false);
           loadData();
         } else {
@@ -340,7 +368,18 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleSyncBackend}
+            disabled={isSyncing}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-98 text-xs sm:text-sm font-bold text-slate-700 border border-slate-300 shadow-2xs transition cursor-pointer disabled:opacity-50"
+            title="Sincronizar status cadastrados com a tabela public.status_quartos do Supabase"
+          >
+            <span className={`material-symbols-outlined text-base text-emerald-800 ${isSyncing ? 'animate-spin' : ''}`}>sync</span>
+            <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar com Banco'}</span>
+          </button>
+
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -499,7 +538,7 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
                     <span>{st.nome}</span>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-1 justify-end">
                     {st.padrao_sistema && (
                       <span
                         title="Status padrão essencial do sistema SaaS"
@@ -517,6 +556,23 @@ export const ListagemStatusQuartos: React.FC<ListagemStatusQuartosProps> = ({
                     >
                       {st.status === 'ativo' ? 'Ativo' : 'Inativo'}
                     </span>
+                    {st.synced_db === false ? (
+                      <span
+                        title="Este status está salvo localmente no seu navegador, mas ainda não foi persistido no banco Supabase. Clique em 'Sincronizar com Banco' após rodar o SQL."
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-[11px]">cloud_off</span>
+                        <span>Pendente DB</span>
+                      </span>
+                    ) : (
+                      <span
+                        title="Sincronizado na tabela public.status_quartos do Supabase"
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-[11px]">cloud_done</span>
+                        <span>No Banco</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 

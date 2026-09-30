@@ -121,7 +121,8 @@ VALUES
     ('limpeza', 'Em Limpeza', 'Quarto aguardando ou em processo de higienização pela equipe de governança.', 'cleaning_services', '#FFFBEB', '#92400E', '#FDE68A', false, true, true, false, 'ativo', 3),
     ('manutencao', 'Em Manutenção', 'Quarto temporariamente fora de serviço para reparos ou vistoria técnica.', 'build', '#EFF6FF', '#1E40AF', '#BFDBFE', false, true, false, true, 'ativo', 4),
     ('reservado', 'Reservado', 'Quarto bloqueado para reserva confirmada com check-in previsto.', 'bookmark', '#F5F3FF', '#5B21B6', '#DDD6FE', false, false, false, false, 'ativo', 5),
-    ('interditado', 'Interditado', 'Quarto bloqueado administrativamente por período indeterminado.', 'block', '#F3F4F6', '#374151', '#E5E7EB', false, false, false, true, 'ativo', 6)
+    ('interditado', 'Interditado', 'Quarto bloqueado administrativamente por período indeterminado.', 'block', '#F3F4F6', '#374151', '#E5E7EB', false, false, false, true, 'ativo', 6),
+    ('ocupado_em_limpeza', 'Ocupado em Limpeza', 'Quarto ocupado que necessita de serviço ou limpeza pela governança.', 'cleaning_services', '#FFFBEB', '#92400E', '#FDE68A', false, false, true, false, 'ativo', 7)
 ON CONFLICT (slug) DO UPDATE SET
     nome = EXCLUDED.nome,
     descricao = EXCLUDED.descricao,
@@ -135,3 +136,9 @@ ON CONFLICT (slug) DO UPDATE SET
     exige_motivo = EXCLUDED.exige_motivo,
     status = EXCLUDED.status,
     ordem = EXCLUDED.ordem;
+
+-- 10. Concessão de privilégios para os roles da API REST do Supabase (anon, authenticated, service_role)
+-- Crucial para evitar o erro "42501: permission denied for table status_quartos"
+GRANT ALL ON TABLE public.status_quartos TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+

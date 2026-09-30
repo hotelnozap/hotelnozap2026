@@ -6666,6 +6666,7 @@ export interface StatusQuartoData {
   padrao_sistema: boolean;
   notifica_camareira?: boolean;
   exige_motivo?: boolean;
+  synced_db?: boolean;
   status: 'ativo' | 'inativo';
   ordem: number;
   criado_em?: string;
@@ -6686,6 +6687,7 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     padrao_sistema: true,
     notifica_camareira: false,
     exige_motivo: false,
+    synced_db: true,
     status: 'ativo',
     ordem: 1
   },
@@ -6702,6 +6704,7 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     padrao_sistema: true,
     notifica_camareira: false,
     exige_motivo: false,
+    synced_db: true,
     status: 'ativo',
     ordem: 2
   },
@@ -6718,6 +6721,7 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     padrao_sistema: true,
     notifica_camareira: true,
     exige_motivo: false,
+    synced_db: true,
     status: 'ativo',
     ordem: 3
   },
@@ -6734,6 +6738,7 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     padrao_sistema: true,
     notifica_camareira: false,
     exige_motivo: true,
+    synced_db: true,
     status: 'ativo',
     ordem: 4
   },
@@ -6750,6 +6755,7 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     padrao_sistema: false,
     notifica_camareira: false,
     exige_motivo: false,
+    synced_db: true,
     status: 'ativo',
     ordem: 5
   },
@@ -6766,6 +6772,7 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     padrao_sistema: false,
     notifica_camareira: false,
     exige_motivo: true,
+    synced_db: true,
     status: 'ativo',
     ordem: 6
   }
@@ -6792,6 +6799,7 @@ export const statusQuartosService = {
   },
 
   async getStatusQuartos(apenasAtivos: boolean = false): Promise<StatusQuartoData[]> {
+    const local = this.getLocalStatus();
     try {
       const { data, error } = await supabase
         .from('status_quartos')
@@ -6799,6 +6807,7 @@ export const statusQuartosService = {
         .order('ordem', { ascending: true });
 
       if (!error && Array.isArray(data) && data.length > 0) {
+        const dbSlugs = new Set(data.map((r: any) => (r.slug || '').toLowerCase()));
         const mapped: StatusQuartoData[] = data.map((row: any) => ({
           id: row.id,
           slug: row.slug,
@@ -6812,24 +6821,128 @@ export const statusQuartosService = {
           padrao_sistema: Boolean(row.padrao_sistema),
           notifica_camareira: Boolean(row.notifica_camareira ?? (row.slug === 'limpeza')),
           exige_motivo: Boolean(row.exige_motivo ?? (row.slug === 'manutencao' || row.slug === 'interditado')),
+          synced_db: true,
           status: row.status === 'inativo' ? 'inativo' : 'ativo',
           ordem: Number(row.ordem) || 1,
           criado_em: row.criado_em,
           atualizado_em: row.atualizado_em
         }));
 
-        this.setLocalStatus(mapped);
-        return apenasAtivos ? mapped.filter(s => s.status === 'ativo') : mapped;
+        // Preserva quaisquer status locais criados pelo usuário que ainda não existam no banco
+        const unSyncedLocal = local.filter(l => !dbSlugs.has(l.slug.toLowerCase())).map(l => ({ ...l, synced_db: false }));
+        const combined = [...mapped, ...unSyncedLocal].sort((a, b) => a.ordem - b.ordem);
+
+        this.setLocalStatus(combined);
+
+        // Se houver status no local storage que ainda não foram para o Supabase, tenta sincronizar automaticamente
+        if (unSyncedLocal.length > 0) {
+          setTimeout(() => {
+            this.syncLocalStatusToBackend().catch(() => {});
+          }, 500);
+        }
+
+        return apenasAtivos ? combined.filter(s => s.status === 'ativo') : combined;
+      } else if (error) {
+        console.warn('Aviso: Falha ao consultar tabela status_quartos no Supabase:', error.message || error);
       }
     } catch (e) {
       console.warn('Erro ao consultar status_quartos no Supabase, usando cache local:', e);
     }
 
-    const local = this.getLocalStatus();
     return apenasAtivos ? local.filter(s => s.status === 'ativo') : local;
   },
 
-  async createStatusQuarto(data: Omit<StatusQuartoData, 'id'>): Promise<{ success: boolean; data?: StatusQuartoData; error?: string }> {
+  async syncLocalStatusToBackend(): Promise<{ success: boolean; syncedCount: number; errors: string[] }> {
+    const localList = this.getLocalStatus();
+    const errors: string[] = [];
+    let syncedCount = 0;
+
+    try {
+      const { data: dbData, error: dbErr } = await supabase
+        .from('status_quartos')
+        .select('id, slug');
+
+      if (dbErr) {
+        console.error('Erro ao verificar status_quartos para sincronização:', dbErr);
+        return { success: false, syncedCount: 0, errors: [dbErr.message || `Erro ${dbErr.code}`] };
+      }
+
+      const existingSlugs = new Set((dbData || []).map((r: any) => (r.slug || '').toLowerCase()));
+      const dbIdsBySlug: Record<string, string> = {};
+      (dbData || []).forEach((r: any) => {
+        if (r.slug) dbIdsBySlug[r.slug.toLowerCase()] = r.id;
+      });
+
+      const updatedList: StatusQuartoData[] = [];
+
+      for (const item of localList) {
+        const itemCopy = { ...item };
+        const slugLower = itemCopy.slug.toLowerCase();
+
+        if (!existingSlugs.has(slugLower)) {
+          const payload: any = {
+            slug: itemCopy.slug,
+            nome: itemCopy.nome,
+            descricao: itemCopy.descricao || '',
+            icone: itemCopy.icone || 'bed',
+            cor_fundo: itemCopy.cor_fundo || '#ECFDF5',
+            cor_texto: itemCopy.cor_texto || '#065F46',
+            cor_borda: itemCopy.cor_borda || '#A7F3D0',
+            permite_ocupacao: Boolean(itemCopy.permite_ocupacao),
+            padrao_sistema: Boolean(itemCopy.padrao_sistema),
+            status: itemCopy.status || 'ativo',
+            ordem: Number(itemCopy.ordem) || 1
+          };
+          if (itemCopy.notifica_camareira !== undefined) payload.notifica_camareira = Boolean(itemCopy.notifica_camareira);
+          if (itemCopy.exige_motivo !== undefined) payload.exige_motivo = Boolean(itemCopy.exige_motivo);
+
+          let { data: insData, error: insErr } = await supabase
+            .from('status_quartos')
+            .insert(payload)
+            .select('*')
+            .single();
+
+          if (insErr && (insErr.message?.includes('notifica_camareira') || insErr.message?.includes('exige_motivo') || insErr.code === '42703')) {
+            delete payload.notifica_camareira;
+            delete payload.exige_motivo;
+            const retry = await supabase.from('status_quartos').insert(payload).select('*').single();
+            insData = retry.data;
+            insErr = retry.error;
+          }
+
+          if (insErr && insErr.code === '23505') {
+            syncedCount++;
+            itemCopy.synced_db = true;
+          } else if (insErr) {
+            console.error(`Erro ao sincronizar status "${itemCopy.nome}" no Supabase:`, insErr);
+            errors.push(`Status "${itemCopy.nome}": ${insErr.message}`);
+            itemCopy.synced_db = false;
+          } else {
+            syncedCount++;
+            itemCopy.synced_db = true;
+            if (insData?.id) {
+              itemCopy.id = insData.id;
+            }
+          }
+        } else {
+          itemCopy.synced_db = true;
+          if (dbIdsBySlug[slugLower]) {
+            itemCopy.id = dbIdsBySlug[slugLower];
+          }
+        }
+        updatedList.push(itemCopy);
+      }
+
+      this.setLocalStatus(updatedList);
+      this.notifyStatusQuartosAlterado();
+      return { success: errors.length === 0, syncedCount, errors };
+    } catch (e: any) {
+      console.error('Exceção ao sincronizar status com Supabase:', e);
+      return { success: false, syncedCount, errors: [e?.message || 'Falha de conexão com banco de dados'] };
+    }
+  },
+
+  async createStatusQuarto(data: Omit<StatusQuartoData, 'id'>): Promise<{ success: boolean; data?: StatusQuartoData; error?: string; backendSynced?: boolean }> {
     const slug = data.slug.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '_');
     const currentList = this.getLocalStatus();
 
@@ -6852,48 +6965,71 @@ export const statusQuartosService = {
       padrao_sistema: false,
       notifica_camareira: Boolean(data.notifica_camareira),
       exige_motivo: Boolean(data.exige_motivo),
+      synced_db: false,
       status: data.status || 'ativo',
       ordem: Number(data.ordem) || (currentList.length + 1)
     };
 
+    let backendSynced = false;
+    let backendErrorMsg: string | undefined = undefined;
+
     // 1. Tenta salvar no Supabase
     try {
-      const { data: inserted, error } = await supabase
+      const payload: any = {
+        slug: newRecord.slug,
+        nome: newRecord.nome,
+        descricao: newRecord.descricao,
+        icone: newRecord.icone,
+        cor_fundo: newRecord.cor_fundo,
+        cor_texto: newRecord.cor_texto,
+        cor_borda: newRecord.cor_borda,
+        permite_ocupacao: newRecord.permite_ocupacao,
+        padrao_sistema: false,
+        status: newRecord.status,
+        ordem: newRecord.ordem
+      };
+      if (newRecord.notifica_camareira !== undefined) payload.notifica_camareira = newRecord.notifica_camareira;
+      if (newRecord.exige_motivo !== undefined) payload.exige_motivo = newRecord.exige_motivo;
+
+      let { data: inserted, error: insertError } = await supabase
         .from('status_quartos')
-        .insert({
-          slug: newRecord.slug,
-          nome: newRecord.nome,
-          descricao: newRecord.descricao,
-          icone: newRecord.icone,
-          cor_fundo: newRecord.cor_fundo,
-          cor_texto: newRecord.cor_texto,
-          cor_borda: newRecord.cor_borda,
-          permite_ocupacao: newRecord.permite_ocupacao,
-          padrao_sistema: false,
-          notifica_camareira: newRecord.notifica_camareira,
-          exige_motivo: newRecord.exige_motivo,
-          status: newRecord.status,
-          ordem: newRecord.ordem
-        })
+        .insert(payload)
         .select('*')
         .single();
 
-      if (!error && inserted) {
-        newRecord.id = inserted.id;
+      // Se falhar por coluna não encontrada (tabela sem colunas opcionais), tenta sem elas
+      if (insertError && (insertError.message?.includes('notifica_camareira') || insertError.message?.includes('exige_motivo') || insertError.code === '42703')) {
+        delete payload.notifica_camareira;
+        delete payload.exige_motivo;
+        const retry = await supabase.from('status_quartos').insert(payload).select('*').single();
+        inserted = retry.data;
+        insertError = retry.error;
       }
-    } catch (e) {
-      console.warn('Aviso ao persistir status_quartos no banco:', e);
+
+      if (!insertError && inserted) {
+        newRecord.id = inserted.id;
+        newRecord.criado_em = inserted.criado_em;
+        newRecord.atualizado_em = inserted.atualizado_em;
+        newRecord.synced_db = true;
+        backendSynced = true;
+      } else if (insertError) {
+        backendErrorMsg = insertError.message || `Código ${insertError.code}`;
+        console.error('Falha ao persistir status_quartos no Supabase:', insertError);
+      }
+    } catch (e: any) {
+      backendErrorMsg = e?.message || 'Falha de conexão com o banco';
+      console.error('Aviso ao persistir status_quartos no banco:', e);
     }
 
-    // 2. Persiste no LocalStorage
+    // 2. Persiste no LocalStorage (mantém fallback local para nunca perder o cadastro)
     const updated = [...currentList, newRecord].sort((a, b) => a.ordem - b.ordem);
     this.setLocalStatus(updated);
 
     this.notifyStatusQuartosAlterado();
-    return { success: true, data: newRecord };
+    return { success: true, data: newRecord, backendSynced, error: backendErrorMsg };
   },
 
-  async updateStatusQuarto(id: string, changes: Partial<StatusQuartoData>): Promise<{ success: boolean; data?: StatusQuartoData; error?: string }> {
+  async updateStatusQuarto(id: string, changes: Partial<StatusQuartoData>): Promise<{ success: boolean; data?: StatusQuartoData; error?: string; backendSynced?: boolean }> {
     const currentList = this.getLocalStatus();
     const existing = currentList.find(s => s.id === id || s.slug === id);
 
@@ -6919,13 +7055,31 @@ export const statusQuartosService = {
     if (changes.status !== undefined) payload.status = changes.status;
     if (changes.ordem !== undefined) payload.ordem = Number(changes.ordem);
 
+    let backendSynced = false;
+    let backendErrorMsg: string | undefined = undefined;
+
     // 1. Tenta atualizar no Supabase
     try {
-      await supabase
+      let { error: updateError } = await supabase
         .from('status_quartos')
         .update(payload)
         .or(`id.eq.${id},slug.eq.${id}`);
-    } catch (e) {
+
+      if (updateError && (updateError.message?.includes('notifica_camareira') || updateError.message?.includes('exige_motivo') || updateError.code === '42703')) {
+        delete payload.notifica_camareira;
+        delete payload.exige_motivo;
+        const retry = await supabase.from('status_quartos').update(payload).or(`id.eq.${id},slug.eq.${id}`);
+        updateError = retry.error;
+      }
+
+      if (!updateError) {
+        backendSynced = true;
+      } else {
+        backendErrorMsg = updateError.message;
+        console.error('Aviso ao atualizar status_quartos no Supabase:', updateError);
+      }
+    } catch (e: any) {
+      backendErrorMsg = e?.message;
       console.warn('Aviso ao atualizar status_quartos no Supabase:', e);
     }
 
@@ -6944,6 +7098,7 @@ export const statusQuartosService = {
           permite_ocupacao: changes.permite_ocupacao !== undefined ? Boolean(changes.permite_ocupacao) : s.permite_ocupacao,
           notifica_camareira: changes.notifica_camareira !== undefined ? Boolean(changes.notifica_camareira) : s.notifica_camareira,
           exige_motivo: changes.exige_motivo !== undefined ? Boolean(changes.exige_motivo) : s.exige_motivo,
+          synced_db: backendSynced ? true : s.synced_db,
           status: changes.status !== undefined ? changes.status : s.status,
           ordem: changes.ordem !== undefined ? Number(changes.ordem) : s.ordem
         };
@@ -6953,7 +7108,7 @@ export const statusQuartosService = {
 
     this.setLocalStatus(updatedList);
     this.notifyStatusQuartosAlterado();
-    return { success: true };
+    return { success: true, backendSynced, error: backendErrorMsg };
   },
 
   async deleteStatusQuarto(id: string): Promise<{ success: boolean; error?: string }> {
