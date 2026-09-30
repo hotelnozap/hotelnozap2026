@@ -116,13 +116,13 @@ END $$;
 -- 9. Seed inicial com os status essenciais do Hotel no Zap e suas regras
 INSERT INTO public.status_quartos (slug, nome, descricao, icone, cor_fundo, cor_texto, cor_borda, permite_ocupacao, padrao_sistema, notifica_camareira, exige_motivo, status, ordem)
 VALUES
-    ('livre', 'Livre / Disponível', 'Quarto pronto, limpo e liberado para hospedagem ou nova reserva.', 'check_circle', '#ECFDF5', '#065F46', '#A7F3D0', true, true, false, false, 'ativo', 1),
-    ('ocupado', 'Ocupado', 'Quarto com hóspede ativo e estadia em andamento.', 'lock', '#FEF2F2', '#991B1B', '#FECDD3', false, true, false, false, 'ativo', 2),
-    ('limpeza', 'Em Limpeza', 'Quarto aguardando ou em processo de higienização pela equipe de governança.', 'cleaning_services', '#FFFBEB', '#92400E', '#FDE68A', false, true, true, false, 'ativo', 3),
-    ('manutencao', 'Em Manutenção', 'Quarto temporariamente fora de serviço para reparos ou vistoria técnica.', 'build', '#EFF6FF', '#1E40AF', '#BFDBFE', false, true, false, true, 'ativo', 4),
+    ('livre', 'Livre / Disponível', 'Quarto limpo, inspecionado e pronto para hospedagem ou venda.', 'check_circle', '#ECFDF5', '#065F46', '#A7F3D0', true, true, false, false, 'ativo', 1),
+    ('ocupado', 'Ocupado', 'Quarto com hóspede ativo e estadia em andamento, não pode ficar disponível para locação.', 'lock', '#FEF2F2', '#991B1B', '#FECDD3', false, true, false, false, 'ativo', 2),
+    ('limpeza', 'Em Limpeza', 'Quarto aguardando ou em processo de higienização após checkout. Disponível para locação.', 'cleaning_services', '#FFFBEB', '#92400E', '#FDE68A', true, true, true, false, 'ativo', 3),
+    ('manutencao', 'Em Manutenção', 'Quarto temporariamente fora de serviço para reparos ou vistoria técnica.', 'build', '#EFF6FF', '#1E40AF', '#BFDBFE', true, true, false, true, 'ativo', 4),
     ('reservado', 'Reservado', 'Quarto bloqueado para reserva confirmada com check-in previsto.', 'bookmark', '#F5F3FF', '#5B21B6', '#DDD6FE', false, false, false, false, 'ativo', 5),
     ('interditado', 'Interditado', 'Quarto bloqueado administrativamente por período indeterminado.', 'block', '#F3F4F6', '#374151', '#E5E7EB', false, false, false, true, 'ativo', 6),
-    ('ocupado_em_limpeza', 'Ocupado em Limpeza', 'Quarto ocupado que necessita de serviço ou limpeza pela governança.', 'cleaning_services', '#FFFBEB', '#92400E', '#FDE68A', false, false, true, false, 'ativo', 7)
+    ('ocupado_em_limpeza', 'Ocupado em Limpeza', 'Quarto com hospede que ainda não fez o checkout, mas, solicitou limpeza.', 'cleaning_services', '#FFFBEB', '#92400E', '#FDE68A', false, false, true, false, 'ativo', 7)
 ON CONFLICT (slug) DO UPDATE SET
     nome = EXCLUDED.nome,
     descricao = EXCLUDED.descricao,

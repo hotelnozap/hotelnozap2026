@@ -6712,12 +6712,12 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     id: 'status_limpeza_default',
     slug: 'limpeza',
     nome: 'Em Limpeza',
-    descricao: 'Quarto aguardando ou em processo de higienização pela equipe de governança.',
+    descricao: 'Quarto aguardando ou em processo de higienização após checkout. Disponível para locação.',
     icone: 'cleaning_services',
     cor_fundo: '#FFFBEB',
     cor_texto: '#92400E',
     cor_borda: '#FDE68A',
-    permite_ocupacao: false,
+    permite_ocupacao: true,
     padrao_sistema: true,
     notifica_camareira: true,
     exige_motivo: false,
@@ -6734,7 +6734,7 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     cor_fundo: '#EFF6FF',
     cor_texto: '#1E40AF',
     cor_borda: '#BFDBFE',
-    permite_ocupacao: false,
+    permite_ocupacao: true,
     padrao_sistema: true,
     notifica_camareira: false,
     exige_motivo: true,
@@ -6775,6 +6775,23 @@ export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
     synced_db: true,
     status: 'ativo',
     ordem: 6
+  },
+  {
+    id: 'status_ocupado_em_limpeza_default',
+    slug: 'ocupado_em_limpeza',
+    nome: 'Ocupado em Limpeza',
+    descricao: 'Quarto com hospede que ainda não fez o checkout, mas, solicitou limpeza.',
+    icone: 'cleaning_services',
+    cor_fundo: '#FFFBEB',
+    cor_texto: '#92400E',
+    cor_borda: '#FDE68A',
+    permite_ocupacao: false,
+    padrao_sistema: false,
+    notifica_camareira: true,
+    exige_motivo: false,
+    synced_db: true,
+    status: 'ativo',
+    ordem: 7
   }
 ];
 
@@ -6786,7 +6803,24 @@ export const statusQuartosService = {
       const raw = localStorage.getItem(LOCAL_STORAGE_STATUS_QUARTOS);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          let modified = false;
+          const normalized = parsed.map((item: StatusQuartoData) => {
+            if (item.slug === 'limpeza' && item.permite_ocupacao !== true) {
+              modified = true;
+              return { ...item, permite_ocupacao: true };
+            }
+            if (item.slug === 'ocupado_em_limpeza' && item.permite_ocupacao !== false) {
+              modified = true;
+              return { ...item, permite_ocupacao: false };
+            }
+            return item;
+          });
+          if (modified) {
+            try { localStorage.setItem(LOCAL_STORAGE_STATUS_QUARTOS, JSON.stringify(normalized)); } catch {}
+          }
+          return normalized;
+        }
       }
     } catch { /* ignore */ }
     return INITIAL_STATUS_QUARTOS;
@@ -6808,25 +6842,29 @@ export const statusQuartosService = {
 
       if (!error && Array.isArray(data) && data.length > 0) {
         const dbSlugs = new Set(data.map((r: any) => (r.slug || '').toLowerCase()));
-        const mapped: StatusQuartoData[] = data.map((row: any) => ({
-          id: row.id,
-          slug: row.slug,
-          nome: row.nome,
-          descricao: row.descricao || '',
-          icone: row.icone || 'bed',
-          cor_fundo: row.cor_fundo || '#ECFDF5',
-          cor_texto: row.cor_texto || '#065F46',
-          cor_borda: row.cor_borda || '#A7F3D0',
-          permite_ocupacao: Boolean(row.permite_ocupacao),
-          padrao_sistema: Boolean(row.padrao_sistema),
-          notifica_camareira: Boolean(row.notifica_camareira ?? (row.slug === 'limpeza')),
-          exige_motivo: Boolean(row.exige_motivo ?? (row.slug === 'manutencao' || row.slug === 'interditado')),
-          synced_db: true,
-          status: row.status === 'inativo' ? 'inativo' : 'ativo',
-          ordem: Number(row.ordem) || 1,
-          criado_em: row.criado_em,
-          atualizado_em: row.atualizado_em
-        }));
+        const mapped: StatusQuartoData[] = data.map((row: any) => {
+          const sLower = (row.slug || '').toLowerCase();
+          const allowsCheckin = sLower === 'limpeza' ? true : sLower === 'ocupado_em_limpeza' ? false : Boolean(row.permite_ocupacao);
+          return {
+            id: row.id,
+            slug: row.slug,
+            nome: row.nome,
+            descricao: row.descricao || '',
+            icone: row.icone || 'bed',
+            cor_fundo: row.cor_fundo || '#ECFDF5',
+            cor_texto: row.cor_texto || '#065F46',
+            cor_borda: row.cor_borda || '#A7F3D0',
+            permite_ocupacao: allowsCheckin,
+            padrao_sistema: Boolean(row.padrao_sistema),
+            notifica_camareira: Boolean(row.notifica_camareira ?? (sLower === 'limpeza' || sLower === 'ocupado_em_limpeza')),
+            exige_motivo: Boolean(row.exige_motivo ?? (sLower === 'manutencao' || sLower === 'interditado')),
+            synced_db: true,
+            status: row.status === 'inativo' ? 'inativo' : 'ativo',
+            ordem: Number(row.ordem) || 1,
+            criado_em: row.criado_em,
+            atualizado_em: row.atualizado_em
+          };
+        });
 
         // Preserva quaisquer status locais criados pelo usuário que ainda não existam no banco
         const unSyncedLocal = local.filter(l => !dbSlugs.has(l.slug.toLowerCase())).map(l => ({ ...l, synced_db: false }));

@@ -85,20 +85,28 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   const getStatusInfo = useCallback((statusSlug?: string) => {
     const slugLower = (statusSlug || 'livre').toLowerCase().trim();
     const found = availableStatus.find(s => s.slug === slugLower);
-    if (found) return found;
-    const isLivre = slugLower === 'livre';
-    const isLimpeza = slugLower === 'limpeza';
+    if (found) {
+      if (slugLower === 'limpeza' && !found.permite_ocupacao) {
+        return { ...found, permite_ocupacao: true };
+      }
+      if (slugLower === 'ocupado_em_limpeza' && found.permite_ocupacao) {
+        return { ...found, permite_ocupacao: false };
+      }
+      return found;
+    }
+    const isLivre = slugLower === 'livre' || slugLower === 'limpeza';
+    const isLimpeza = slugLower === 'limpeza' || slugLower === 'ocupado_em_limpeza';
     const isManutencao = slugLower === 'manutencao' || slugLower === 'interditado';
     return {
       id: `temp_${slugLower}`,
       slug: slugLower,
-      nome: slugLower.charAt(0).toUpperCase() + slugLower.slice(1),
+      nome: slugLower === 'ocupado_em_limpeza' ? 'Ocupado em Limpeza' : slugLower.charAt(0).toUpperCase() + slugLower.slice(1),
       descricao: '',
       icone: isLivre ? 'check_circle' : isLimpeza ? 'cleaning_services' : isManutencao ? 'build' : 'bed',
       cor_fundo: isLivre ? '#ECFDF5' : isLimpeza ? '#FFFBEB' : '#F3F4F6',
       cor_texto: isLivre ? '#065F46' : isLimpeza ? '#92400E' : '#374151',
       cor_borda: isLivre ? '#A7F3D0' : isLimpeza ? '#FDE68A' : '#E5E7EB',
-      permite_ocupacao: isLivre,
+      permite_ocupacao: slugLower === 'ocupado_em_limpeza' ? false : isLivre,
       padrao_sistema: isLivre || isLimpeza || isManutencao || slugLower === 'ocupado',
       notifica_camareira: isLimpeza,
       exige_motivo: isManutencao,
@@ -1652,7 +1660,31 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   }
                   if (currentSt.permite_ocupacao) {
                     return (
-                      <div className="mb-4">
+                      <div className="mb-4 space-y-2">
+                        {selectedRoom.status === 'limpeza' && (
+                          <div className="p-2.5 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-amber-700 text-lg shrink-0">cleaning_services</span>
+                              <div>
+                                <span className="font-bold block text-slate-900">Quarto em Limpeza (Pós Checkout)</span>
+                                <span className="text-[11px] text-amber-800 leading-tight block">
+                                  Liberado para locação e check-in. A equipe de governança está higienizando a acomodação.
+                                </span>
+                              </div>
+                            </div>
+                            {canMarkAsClean && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateStatus(selectedRoom.id, 'livre')}
+                                className="shrink-0 px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+                                title="Marcar quarto como 100% limpo e inspecionado"
+                              >
+                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                <span>Liberar (Marcar Limpo)</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleStartCheckinForRoom(selectedRoom)}
@@ -1673,10 +1705,23 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                         <div>
                           <span className="font-bold block text-slate-900">Check-in Indisponível (Quarto {currentSt.nome})</span>
                           <span className="text-[11px] text-amber-800 leading-tight block">
-                            A regra deste status bloqueia a entrada de hóspedes. Altere para um status liberado (ex: Livre).
+                            {selectedRoom.status === 'ocupado_em_limpeza'
+                              ? 'Quarto com hóspede que ainda não fez o checkout, mas solicitou limpeza. A regra deste status bloqueia a entrada de novos hóspedes.'
+                              : 'A regra deste status bloqueia a entrada de hóspedes. Altere para um status liberado (ex: Livre) antes de realizar o check-in.'}
                           </span>
                         </div>
                       </div>
+                      {canMarkAsClean && selectedRoom.status === 'ocupado_em_limpeza' && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStatus(selectedRoom.id, 'ocupado')}
+                          className="shrink-0 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+                          title="Limpeza concluída, hóspede continua ocupando o quarto"
+                        >
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          <span>Concluir Limpeza (Ocupado)</span>
+                        </button>
+                      )}
                       {canMarkAsClean && selectedRoom.status === 'limpeza' && (
                         <button
                           type="button"
