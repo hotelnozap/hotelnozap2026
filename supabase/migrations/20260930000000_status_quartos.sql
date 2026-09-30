@@ -1,10 +1,14 @@
 -- ================================================================
 -- Migration: Status dos Quartos (Gestão Administrativa SaaS)
 -- Data: 2026-09-30
--- Modo: Idempotente (pode executar várias vezes com segurança)
+-- Modo: 100% Idempotente e Seguro (pode executar várias vezes)
 -- ================================================================
 
--- 1. Criação da tabela status_quartos
+-- 1. Habilitar extensões necessárias para UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- 2. Criação da tabela status_quartos
 CREATE TABLE IF NOT EXISTS public.status_quartos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug TEXT NOT NULL UNIQUE,
@@ -22,44 +26,50 @@ CREATE TABLE IF NOT EXISTS public.status_quartos (
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 2. Índices para performance
+-- 3. Índices para performance
 CREATE INDEX IF NOT EXISTS idx_status_quartos_status ON public.status_quartos(status);
 CREATE INDEX IF NOT EXISTS idx_status_quartos_ordem ON public.status_quartos(ordem);
 CREATE INDEX IF NOT EXISTS idx_status_quartos_slug ON public.status_quartos(slug);
 
--- 3. Habilita RLS (Row Level Security)
+-- 4. Habilita RLS (Row Level Security)
 ALTER TABLE public.status_quartos ENABLE ROW LEVEL SECURITY;
 
--- 4. Políticas de Acesso
+-- 5. Políticas de Acesso (com verificação segura de existência de tabela)
 DO $$
 BEGIN
-    DROP POLICY IF EXISTS "Leitura pública de status_quartos" ON public.status_quartos;
-    CREATE POLICY "Leitura pública de status_quartos"
-        ON public.status_quartos
-        FOR SELECT
-        USING (true);
+    IF EXISTS (
+        SELECT 1 FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename = 'status_quartos'
+    ) THEN
+        DROP POLICY IF EXISTS "Leitura pública de status_quartos" ON public.status_quartos;
+        CREATE POLICY "Leitura pública de status_quartos"
+            ON public.status_quartos
+            FOR SELECT
+            USING (true);
 
-    DROP POLICY IF EXISTS "Inserção de status_quartos" ON public.status_quartos;
-    CREATE POLICY "Inserção de status_quartos"
-        ON public.status_quartos
-        FOR INSERT
-        WITH CHECK (true);
+        DROP POLICY IF EXISTS "Inserção de status_quartos" ON public.status_quartos;
+        CREATE POLICY "Inserção de status_quartos"
+            ON public.status_quartos
+            FOR INSERT
+            WITH CHECK (true);
 
-    DROP POLICY IF EXISTS "Atualização de status_quartos" ON public.status_quartos;
-    CREATE POLICY "Atualização de status_quartos"
-        ON public.status_quartos
-        FOR UPDATE
-        USING (true)
-        WITH CHECK (true);
+        DROP POLICY IF EXISTS "Atualização de status_quartos" ON public.status_quartos;
+        CREATE POLICY "Atualização de status_quartos"
+            ON public.status_quartos
+            FOR UPDATE
+            USING (true)
+            WITH CHECK (true);
 
-    DROP POLICY IF EXISTS "Exclusão de status_quartos" ON public.status_quartos;
-    CREATE POLICY "Exclusão de status_quartos"
-        ON public.status_quartos
-        FOR DELETE
-        USING (true);
+        DROP POLICY IF EXISTS "Exclusão de status_quartos" ON public.status_quartos;
+        CREATE POLICY "Exclusão de status_quartos"
+            ON public.status_quartos
+            FOR DELETE
+            USING (true);
+    END IF;
 END $$;
 
--- 5. Trigger para atualizar 'atualizado_em' automaticamente
+-- 6. Trigger para atualizar 'atualizado_em' automaticamente
 CREATE OR REPLACE FUNCTION public.set_atualizado_em_status_quartos()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -68,12 +78,36 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_status_quartos_atualizado ON public.status_quartos;
-CREATE TRIGGER trg_status_quartos_atualizado
-BEFORE UPDATE ON public.status_quartos
-FOR EACH ROW EXECUTE FUNCTION public.set_atualizado_em_status_quartos();
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_tables 
+        WHERE schemaname = 'public' 
+        AND tablename = 'status_quartos'
+    ) THEN
+        DROP TRIGGER IF EXISTS trg_status_quartos_atualizado ON public.status_quartos;
+        CREATE TRIGGER trg_status_quartos_atualizado
+        BEFORE UPDATE ON public.status_quartos
+        FOR EACH ROW EXECUTE FUNCTION public.set_atualizado_em_status_quartos();
+    END IF;
+END $$;
 
--- 6. Seed inicial com os status essenciais do Hotel no Zap
+-- 7. Habilitar Realtime para sincronização instantânea com o Mapa dos Hotéis
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND schemaname = 'public' 
+    AND tablename = 'status_quartos'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.status_quartos;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
+
+-- 8. Seed inicial com os status essenciais do Hotel no Zap
 INSERT INTO public.status_quartos (slug, nome, descricao, icone, cor_fundo, cor_texto, cor_borda, permite_ocupacao, padrao_sistema, status, ordem)
 VALUES
     ('livre', 'Livre / Disponível', 'Quarto pronto, limpo e liberado para hospedagem ou nova reserva.', 'check_circle', '#ECFDF5', '#065F46', '#A7F3D0', true, true, 'ativo', 1),
