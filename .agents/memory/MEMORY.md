@@ -8,3 +8,6 @@
 
 ## Feedback
 - [feedback] Nunca fazer deploy automático; aguardar solicitação explícita do usuário → feedback-history.md
+
+## User Preferences
+- [preference] Sempre gerar e exibir o código pronto para copiar e colar diretamente nas respostas → user-preferences.md

@@ -85,13 +85,13 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
     return { total, ativos, totalUsos, visiveis };
   }, [cupons]);
 
-  const isExpirado = (dataExp: string) => {
+  const isExpirado = (dataExp?: string | null) => {
     if (!dataExp) return false;
     const today = new Date().toISOString().split('T')[0];
     return today > dataExp;
   };
 
-  const formatarDataBR = (dataStr: string) => {
+  const formatarDataBR = (dataStr?: string | null) => {
     if (!dataStr) return '-';
     try {
       const [ano, mes, dia] = dataStr.split('-');
@@ -378,15 +378,22 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                           {/* Validade */}
                           <td className="py-3.5 px-4">
                             <div className="space-y-0.5">
-                              <span className="text-slate-700 font-medium block">
-                                Até {formatarDataBR(cupom.data_expiracao)}
-                              </span>
+                              {!cupom.data_expiracao ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  <span className="material-symbols-outlined text-xs text-emerald-600">all_inclusive</span>
+                                  <span>Não expira</span>
+                                </span>
+                              ) : (
+                                <span className="text-slate-700 font-medium block">
+                                  Até {formatarDataBR(cupom.data_expiracao)}
+                                </span>
+                              )}
                               {expirado ? (
                                 <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 inline-block">
                                   Expirado
                                 </span>
                               ) : (
-                                <span className="text-[10px] text-slate-400">
+                                <span className="text-[10px] text-slate-400 block">
                                   Desde {formatarDataBR(cupom.data_inicio)}
                                 </span>
                               )}
@@ -548,8 +555,17 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase block">Expiração</span>
                         <span className={`font-semibold ${expirado ? 'text-rose-600' : 'text-slate-700'}`}>
-                          {formatarDataBR(cupom.data_expiracao)}
-                          {expirado && ' (Expirado)'}
+                          {!cupom.data_expiracao ? (
+                            <span className="text-emerald-700 font-bold flex items-center gap-0.5">
+                              <span className="material-symbols-outlined text-xs">all_inclusive</span>
+                              <span>Não expira</span>
+                            </span>
+                          ) : (
+                            <>
+                              {formatarDataBR(cupom.data_expiracao)}
+                              {expirado && ' (Expirado)'}
+                            </>
+                          )}
                         </span>
                       </div>
 

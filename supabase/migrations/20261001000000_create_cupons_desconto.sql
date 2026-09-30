@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.cupons_desconto (
   valor_desconto NUMERIC(10, 2) NOT NULL DEFAULT 10.00,
   valor_minimo_reserva NUMERIC(10, 2) DEFAULT 0.00,
   data_inicio DATE NOT NULL DEFAULT CURRENT_DATE,
-  data_expiracao DATE NOT NULL DEFAULT (CURRENT_DATE + INTERVAL '30 days'),
+  data_expiracao DATE DEFAULT NULL, -- NULL = Cupom não expira (validade permanente)
   limite_usos INTEGER, -- null = ilimitado
   usos_atuais INTEGER NOT NULL DEFAULT 0,
   status VARCHAR(20) NOT NULL DEFAULT 'Ativo', -- 'Ativo' ou 'Inativo'

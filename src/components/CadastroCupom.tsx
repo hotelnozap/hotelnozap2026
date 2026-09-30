@@ -29,10 +29,35 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
   const [dataInicio, setDataInicio] = useState<string>(
     cupomToEdit?.data_inicio || new Date().toISOString().split('T')[0]
   );
-  const [dataExpiracao, setDataExpiracao] = useState<string>(
-    cupomToEdit?.data_expiracao ||
-      new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().split('T')[0]
+  const [naoExpira, setNaoExpira] = useState<boolean>(
+    cupomToEdit ? !cupomToEdit.data_expiracao : false
   );
+  const [diasValidade, setDiasValidade] = useState<string>(() => {
+    if (cupomToEdit?.data_expiracao && cupomToEdit?.data_inicio) {
+      try {
+        const diff = Math.round(
+          (new Date(cupomToEdit.data_expiracao + 'T12:00:00').getTime() -
+            new Date(cupomToEdit.data_inicio + 'T12:00:00').getTime()) /
+            (1000 * 3600 * 24)
+        );
+        return diff > 0 ? String(diff) : '30';
+      } catch {
+        return '30';
+      }
+    }
+    return '30';
+  });
+
+  // Data de expiração calculada dinamicamente a partir dos dias
+  const dataExpiracaoCalculada = useMemo(() => {
+    if (naoExpira) return null;
+    const dias = parseInt(diasValidade, 10);
+    if (isNaN(dias) || dias <= 0) return null;
+    const baseDate = new Date((dataInicio || new Date().toISOString().split('T')[0]) + 'T12:00:00');
+    baseDate.setDate(baseDate.getDate() + dias);
+    return baseDate.toISOString().split('T')[0];
+  }, [naoExpira, diasValidade, dataInicio]);
+
   const [temLimiteUsos, setTemLimiteUsos] = useState<boolean>(
     Boolean(cupomToEdit?.limite_usos && cupomToEdit.limite_usos > 0)
   );
@@ -104,9 +129,16 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
       return;
     }
 
-    if (dataExpiracao < dataInicio) {
-      setErroMsg('A data de expiração não pode ser anterior à data de início.');
-      return;
+    if (!naoExpira) {
+      const dias = parseInt(diasValidade, 10);
+      if (isNaN(dias) || dias <= 0) {
+        setErroMsg('Por favor, informe uma quantidade válida de dias para a validade do cupom.');
+        return;
+      }
+      if (!dataExpiracaoCalculada) {
+        setErroMsg('Erro ao calcular a data de expiração. Verifique os dias informados.');
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -117,7 +149,7 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
         valor_desconto: numDesconto,
         valor_minimo_reserva: numValorMinimo,
         data_inicio: dataInicio,
-        data_expiracao: dataExpiracao,
+        data_expiracao: naoExpira ? null : dataExpiracaoCalculada,
         limite_usos: numLimiteUsos,
         status,
         visivel_hospedes: visivelHospedes,
@@ -361,36 +393,128 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
                   <h2 className="text-sm font-bold text-slate-900">3. Validade & Limites de Utilização</h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700" htmlFor="cupom-inicio">
-                      Válido a Partir de <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="cupom-inicio"
-                      type="date"
-                      required
-                      value={dataInicio}
-                      onChange={(e) => setDataInicio(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:bg-white focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition cursor-pointer"
-                    />
+                {/* Switch: Cupom Não Expira */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                      naoExpira ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      <span className="material-symbols-outlined text-xl">all_inclusive</span>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">Cupom Não Expira</span>
+                      <span className="text-[11px] text-slate-500">
+                        Validade permanente por tempo indeterminado (sem data de término).
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700" htmlFor="cupom-expiracao">
-                      Data de Expiração <span className="text-red-500">*</span>
-                    </label>
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input
-                      id="cupom-expiracao"
-                      type="date"
-                      required
-                      min={dataInicio}
-                      value={dataExpiracao}
-                      onChange={(e) => setDataExpiracao(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-medium focus:bg-white focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition cursor-pointer"
+                      type="checkbox"
+                      checked={naoExpira}
+                      onChange={(e) => setNaoExpira(e.target.checked)}
+                      className="sr-only peer"
                     />
-                  </div>
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003400]"></div>
+                  </label>
                 </div>
+
+                {/* Se Não Expira: Mensagem explicativa */}
+                {naoExpira ? (
+                  <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-start gap-3 text-xs text-emerald-950 animate-in fade-in duration-150">
+                    <span className="material-symbols-outlined text-emerald-700 text-xl shrink-0 mt-0.5">verified</span>
+                    <div className="leading-relaxed">
+                      <strong className="block text-emerald-900 font-bold mb-0.5">Validade Contínua e Sem Término</strong>
+                      <span>Este cupom permanecerá ativo continuamente para reservas no checkout até que você decida pausá-lo ou inativá-lo manualmente na listagem.</span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Se Expira: Contagem por DIAS (sem calendário de expiração) */
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-4 animate-in fade-in duration-150">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Válido a partir de */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700" htmlFor="cupom-inicio">
+                          Válido a Partir de <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="cupom-inicio"
+                          type="date"
+                          required
+                          value={dataInicio}
+                          onChange={(e) => setDataInicio(e.target.value)}
+                          className="w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Duração em dias */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700" htmlFor="cupom-dias">
+                          Validade em Dias <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative flex items-center">
+                          <input
+                            id="cupom-dias"
+                            type="number"
+                            min={1}
+                            max={3650}
+                            required={!naoExpira}
+                            value={diasValidade}
+                            onChange={(e) => setDiasValidade(e.target.value)}
+                            placeholder="Ex: 30"
+                            className="w-full h-11 pl-3.5 pr-14 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-bold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition"
+                          />
+                          <span className="absolute right-3 text-xs font-bold text-slate-400 pointer-events-none">
+                            dias
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botões de Atalhos Rápidos de Dias */}
+                    <div className="pt-2 border-t border-slate-200/70">
+                      <span className="text-[10.5px] uppercase font-bold text-slate-400 block mb-2">
+                        Escolha Rápida de Dias:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: '7 dias', value: '7' },
+                          { label: '15 dias', value: '15' },
+                          { label: '30 dias', value: '30' },
+                          { label: '45 dias', value: '45' },
+                          { label: '60 dias', value: '60' },
+                          { label: '90 dias', value: '90' },
+                          { label: '180 dias', value: '180' },
+                          { label: '365 dias (1 ano)', value: '365' }
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setDiasValidade(opt.value)}
+                            className={`px-3 py-1.5 text-xs rounded-xl font-bold transition cursor-pointer ${
+                              diasValidade === opt.value
+                                ? 'bg-[#003400] text-white shadow-xs'
+                                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Resumo da Data Calculada */}
+                    {dataExpiracaoCalculada && (
+                      <div className="p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs text-emerald-950 font-medium">
+                        <span className="material-symbols-outlined text-emerald-700 text-lg shrink-0">calendar_month</span>
+                        <span>
+                          Válido por <strong>{diasValidade} dias</strong>: expira automaticamente em{' '}
+                          <strong>{new Date(dataExpiracaoCalculada + 'T12:00:00').toLocaleDateString('pt-BR')}</strong> (às 23:59h).
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Limite de utilizações */}
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
@@ -512,7 +636,16 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
                     </p>
 
                     <div className="pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                      <span>Válido até: {dataExpiracao ? new Date(dataExpiracao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</span>
+                      {naoExpira ? (
+                        <span className="text-emerald-800 font-bold flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs text-emerald-600">all_inclusive</span>
+                          <span>Validade: Não expira</span>
+                        </span>
+                      ) : (
+                        <span>
+                          Válido até: {dataExpiracaoCalculada ? new Date(dataExpiracaoCalculada + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}
+                        </span>
+                      )}
                       {numValorMinimo > 0 && (
                         <span>Mín. R$ {numValorMinimo.toFixed(2).replace('.', ',')}</span>
                       )}

@@ -6,4 +6,4 @@ updated: 2026-07-18
 
 # User Preferences
 
-No durable user preferences have been recorded yet.
+- **Código no Chat:** Sempre gerar e exibir o código completo pronto para copiar e colar aqui nas respostas da conversa quando criar ou alterar arquivos/funcionalidades.

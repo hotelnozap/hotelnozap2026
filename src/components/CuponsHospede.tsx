@@ -58,7 +58,7 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
     });
   }, [cupons, searchTerm, filtroHotel, filtroTipo]);
 
-  const formatarDataBR = (dataStr: string) => {
+  const formatarDataBR = (dataStr?: string | null) => {
     if (!dataStr) return '-';
     try {
       const [ano, mes, dia] = dataStr.split('-');
@@ -232,7 +232,14 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">Válido Até</span>
                       <span className="font-semibold text-slate-700">
-                        {formatarDataBR(cupom.data_expiracao)}
+                        {!cupom.data_expiracao ? (
+                          <span className="text-emerald-700 font-bold flex items-center gap-0.5">
+                            <span className="material-symbols-outlined text-xs">all_inclusive</span>
+                            <span>Não expira</span>
+                          </span>
+                        ) : (
+                          formatarDataBR(cupom.data_expiracao)
+                        )}
                       </span>
                     </div>
                   </div>

@@ -10,7 +10,7 @@ export interface CupomDesconto {
   valor_desconto: number;
   valor_minimo_reserva?: number;
   data_inicio: string; // YYYY-MM-DD
-  data_expiracao: string; // YYYY-MM-DD
+  data_expiracao?: string | null; // YYYY-MM-DD ou null para cupons permanentes (sem expiração)
   limite_usos?: number | null; // null ou indefinido = ilimitado
   usos_atuais: number;
   status: 'Ativo' | 'Inativo';
@@ -341,7 +341,7 @@ export const cuponsService = {
       valor_desconto: Number(novoCupom.valor_desconto) || 10,
       valor_minimo_reserva: novoCupom.valor_minimo_reserva ? Number(novoCupom.valor_minimo_reserva) : 0,
       data_inicio: novoCupom.data_inicio || new Date().toISOString().split('T')[0],
-      data_expiracao: novoCupom.data_expiracao || new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().split('T')[0],
+      data_expiracao: novoCupom.data_expiracao ? novoCupom.data_expiracao : null,
       limite_usos: novoCupom.limite_usos ? Number(novoCupom.limite_usos) : null,
       usos_atuais: 0,
       status: novoCupom.status || 'Ativo',
