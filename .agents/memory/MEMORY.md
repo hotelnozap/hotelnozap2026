@@ -10,4 +10,4 @@
 - [feedback] Nunca fazer deploy automático; aguardar solicitação explícita do usuário → feedback-history.md
 
 ## User Preferences
-- [preference] Sempre gerar e exibir o código pronto para copiar e colar diretamente nas respostas → user-preferences.md
+- [preference] Disponibilizar no chat apenas scripts SQL prontos para colar no Supabase; código de aplicação já é aplicado diretamente nos arquivos → user-preferences.md

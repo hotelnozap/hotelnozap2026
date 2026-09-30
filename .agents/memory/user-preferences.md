@@ -6,4 +6,4 @@ updated: 2026-07-18
 
 # User Preferences
 
-- **Código no Chat:** Sempre gerar e exibir o código completo pronto para copiar e colar aqui nas respostas da conversa quando criar ou alterar arquivos/funcionalidades.
+- **Código no Chat (Apenas SQL):** Disponibilizar no chat apenas scripts SQL prontos para copiar e colar diretamente no SQL Editor do Supabase. Códigos de aplicação (TypeScript, React, componentes, estilos, etc.) NÃO precisam ser exibidos no chat, pois o assistente já os aplica e salva diretamente nos arquivos do projeto.
