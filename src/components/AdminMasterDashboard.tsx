@@ -32,6 +32,7 @@ export interface AdminMasterDashboardProps {
   onNavigateToCreditos?: () => void;
   onNavigateToUsuarios: () => void;
   onNavigateToConfig?: () => void;
+  onNavigateToMercadoPago?: () => void;
   onNavigateToWhatsApp?: () => void;
   onNavigateToCaixa?: () => void;
   onNavigateToLogs?: () => void;
@@ -51,6 +52,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   onNavigateToCreditos,
   onNavigateToUsuarios,
   onNavigateToConfig,
+  onNavigateToMercadoPago,
   onNavigateToWhatsApp,
   onNavigateToCaixa,
   onNavigateToLogs,
@@ -68,6 +70,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   const [selectedPeriod, setSelectedPeriod] = useState<'6meses' | 'anoAtual'>('6meses');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isConfigSubmenuOpen, setIsConfigSubmenuOpen] = useState(false);
   const [selectedHotelDelete, setSelectedHotelDelete] = useState<Hotel | null>(null);
 
   // Data formatada em português para o cabeçalho
@@ -577,14 +580,44 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
               <span>Usuários Administrativos</span>
             </button>
 
-            <button 
-              type="button"
-              onClick={onNavigateToConfig}
-              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
-            >
-              <span className="material-symbols-outlined">settings_suggest</span>
-              <span>Parâmetros do Sistema</span>
-            </button>
+            {/* Menu Configurações com Submenus Parâmetros e Mercado Pago */}
+            <div className="space-y-1">
+              <button 
+                type="button"
+                onClick={() => setIsConfigSubmenuOpen(!isConfigSubmenuOpen)}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined">settings</span>
+                  <span>Configurações</span>
+                </div>
+                <span className="material-symbols-outlined text-lg transition-transform duration-200">
+                  {isConfigSubmenuOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              </button>
+
+              {isConfigSubmenuOpen && (
+                <div className="ml-4 pl-3 border-l border-white/10 space-y-1 py-1">
+                  <button 
+                    type="button"
+                    onClick={onNavigateToConfig}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/80 hover:bg-white/10 hover:text-white transition-all text-left cursor-pointer font-medium"
+                  >
+                    <span className="material-symbols-outlined text-base">settings_suggest</span>
+                    <span>Parâmetros do Sistema</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={onNavigateToMercadoPago}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/80 hover:bg-white/10 hover:text-white transition-all text-left cursor-pointer font-medium"
+                  >
+                    <span className="material-symbols-outlined text-base">payments</span>
+                    <span>Mercado Pago</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {onNavigateToLogs && (
               <button 
@@ -721,6 +754,26 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                   <span className="material-symbols-outlined text-lg">sync_alt</span>
                   <span>WhatsApp Gateway</span>
                 </button>
+
+                {onNavigateToConfig && (
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); onNavigateToConfig(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/5 text-left cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-lg">settings_suggest</span>
+                    <span>Parâmetros do Sistema</span>
+                  </button>
+                )}
+
+                {onNavigateToMercadoPago && (
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); onNavigateToMercadoPago(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/5 text-left cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-lg">payments</span>
+                    <span>Mercado Pago</span>
+                  </button>
+                )}
 
                 {onNavigateToLogs && (
                   <button 
@@ -1537,6 +1590,25 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                       <p className="font-semibold text-slate-800">Rotina de Backup Diário</p>
                       <p className="text-[10px] text-slate-400">Snapshots automáticos ativos com redundância</p>
                     </div>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-2 pt-2 border-t border-slate-100">
+                    <div className="flex items-start gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0 animate-pulse"></span>
+                      <div>
+                        <p className="font-semibold text-slate-800">Gateway Mercado Pago</p>
+                        <p className="text-[10px] text-slate-400">Pix Instantâneo &amp; Cartão de Crédito</p>
+                      </div>
+                    </div>
+                    {onNavigateToMercadoPago && (
+                      <button
+                        type="button"
+                        onClick={onNavigateToMercadoPago}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                      >
+                        Ajustar →
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

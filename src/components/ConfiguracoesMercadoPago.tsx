@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { systemLogsService } from '../services/systemLogsService';
 
 export interface ConfiguracoesMercadoPagoProps {
+  isAdmin?: boolean;
   onBackToDashboard?: () => void;
 }
 
-export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> = ({ onBackToDashboard }) => {
+export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> = ({ 
+  isAdmin = false,
+  onBackToDashboard 
+}) => {
   // Estado do Ambiente
   const [environment, setEnvironment] = useState<'production' | 'sandbox'>('production');
 
@@ -29,6 +34,34 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
   // Feedback Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    try {
+      const savedMaster = localStorage.getItem('hotelnozap_config_mercadopago_master');
+      if (savedMaster) {
+        const parsed = JSON.parse(savedMaster);
+        if (parsed.environment) setEnvironment(parsed.environment);
+        if (parsed.publicKey) setPublicKey(parsed.publicKey);
+        if (parsed.accessToken) setAccessToken(parsed.accessToken);
+        if (parsed.clientId) setClientId(parsed.clientId);
+        if (parsed.clientSecret) setClientSecret(parsed.clientSecret);
+        if (parsed.enablePix !== undefined) setEnablePix(parsed.enablePix);
+        if (parsed.enableCreditCard !== undefined) setEnableCreditCard(parsed.enableCreditCard);
+        if (parsed.enableBoleto !== undefined) setEnableBoleto(parsed.enableBoleto);
+        if (parsed.maxInstallments) setMaxInstallments(parsed.maxInstallments);
+        return;
+      }
+      
+      const savedParams = localStorage.getItem('hotelnozap_parametros_sistema');
+      if (savedParams) {
+        const parsedP = JSON.parse(savedParams);
+        if (parsedP.gatewayEnvironment) setEnvironment(parsedP.gatewayEnvironment);
+        if (parsedP.gatewayToken) setAccessToken(parsedP.gatewayToken);
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar configurações salvas do Mercado Pago:', e);
+    }
+  }, []);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -41,16 +74,83 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
     showToast(`${label} copiado para a área de transferência!`);
   };
 
-  const handleTestWebhook = () => {
+  const handleTestWebhook = async () => {
     setIsTestingWebhook(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsTestingWebhook(false);
+      try {
+        await systemLogsService.addLog({
+          level: 'info',
+          module: 'financeiro',
+          action: 'Teste de Webhook Mercado Pago Executado',
+          details: 'Simulação de notificação IPN validada com resposta HTTP 200 OK.',
+          metadata: {
+            webhookUrl,
+            status: 200,
+            response: 'OK'
+          }
+        });
+      } catch { /* ignore */ }
       showToast('Conexão Webhook com Mercado Pago testada com sucesso! Status 200 OK');
-    }, 1500);
+    }, 1200);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      environment,
+      publicKey,
+      accessToken,
+      clientId,
+      clientSecret,
+      enablePix,
+      enableCreditCard,
+      enableBoleto,
+      maxInstallments,
+      updatedAt: new Date().toISOString()
+    };
+
+    localStorage.setItem('hotelnozap_config_mercadopago_master', JSON.stringify(payload));
+    localStorage.setItem('hotelnozap_config_hotel_global', JSON.stringify({
+      mpEnvironment: environment,
+      mpPublicKey: publicKey,
+      mpAccessToken: accessToken,
+      mpClientId: clientId,
+      mpClientSecret: clientSecret,
+      mpEnablePix: enablePix,
+      mpEnableCreditCard: enableCreditCard,
+      mpEnableBoleto: enableBoleto,
+      mpMaxInstallments: maxInstallments,
+    }));
+
+    try {
+      const savedParams = localStorage.getItem('hotelnozap_parametros_sistema');
+      if (savedParams) {
+        const parsedP = JSON.parse(savedParams);
+        parsedP.gatewayEnvironment = environment;
+        parsedP.gatewayToken = accessToken;
+        parsedP.gatewayProvider = 'mercadopago';
+        localStorage.setItem('hotelnozap_parametros_sistema', JSON.stringify(parsedP));
+      }
+    } catch { /* ignore */ }
+
+    try {
+      await systemLogsService.addLog({
+        level: 'success',
+        module: 'financeiro',
+        action: isAdmin ? 'Credenciais Master do Mercado Pago Atualizadas' : 'Configurações do Mercado Pago Atualizadas',
+        details: `Ambiente: ${environment === 'production' ? 'Produção' : 'Sandbox'}, Pix: ${enablePix ? 'Sim' : 'Não'}, Cartão: ${enableCreditCard ? 'Sim' : 'Não'}, Boleto: ${enableBoleto ? 'Sim' : 'Não'}`,
+        metadata: {
+          environment,
+          enablePix,
+          enableCreditCard,
+          enableBoleto,
+          maxInstallments,
+          publicKeyPreview: publicKey ? `${publicKey.substring(0, 10)}...` : ''
+        }
+      });
+    } catch { /* ignore */ }
+
     showToast('Configurações do Mercado Pago salvas com sucesso!');
   };
 
@@ -62,6 +162,20 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
         <div className="fixed top-5 right-5 z-50 bg-[#d1fae5] border border-emerald-300 text-black font-bold px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-in fade-in zoom-in duration-200">
           <span className="material-symbols-outlined text-[#003400]">check_circle</span>
           <span className="text-xs sm:text-sm">{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Botão Voltar se fornecido */}
+      {onBackToDashboard && (
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={onBackToDashboard}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-slate-950 bg-white hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer shadow-2xs"
+          >
+            <span className="material-symbols-outlined text-base">arrow_back</span>
+            <span>{isAdmin ? 'Voltar para o Painel Administrativo' : 'Voltar para o Painel'}</span>
+          </button>
         </div>
       )}
 
@@ -78,11 +192,13 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
                   Mercado Pago
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                  Integração Oficial
+                  {isAdmin ? 'Gateway Master SaaS' : 'Integração Oficial'}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Configure as chaves da API, recebimento via Pix Instantâneo e Cartão de Crédito do Mercado Pago.
+                {isAdmin 
+                  ? 'Configure as chaves e credenciais do Mercado Pago para recebimento de assinaturas, planos dos hotéis e recarga de créditos.'
+                  : 'Configure as chaves da API, recebimento via Pix Instantâneo e Cartão de Crédito do Mercado Pago.'}
               </p>
             </div>
           </div>

@@ -338,6 +338,7 @@ export const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProdutosSubmenuOpen, setIsProdutosSubmenuOpen] = useState(false);
   const [isConfigSubmenuOpen, setIsConfigSubmenuOpen] = useState(false);
+  const [isAdminConfigSubmenuOpen, setIsAdminConfigSubmenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [partnerToEdit, setPartnerToEdit] = useState<Partner | null>(null);
   const [preselectedPartner, setPreselectedPartner] = useState<Partner | null>(null);
@@ -1542,18 +1543,58 @@ export const App: React.FC = () => {
                     <span>Usuários Administrativos</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => { setActiveTab('admin-config'); setIsMobileMenuOpen(false); }}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
-                      activeTab === 'admin-config'
-                        ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
-                        : 'text-white/80 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <span className={`material-symbols-outlined ${activeTab === 'admin-config' ? 'text-emerald-400' : ''}`}>settings_suggest</span>
-                    <span>Parâmetros do Sistema</span>
-                  </button>
+                  {/* Menu Configurações com Submenu Mercado Pago e Parâmetros */}
+                  <div className="flex flex-col gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsAdminConfigSubmenuOpen(!isAdminConfigSubmenuOpen)}
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                        activeTab === 'admin-config' || activeTab === 'config-mercado-pago'
+                          ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                          : 'text-white/80 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`material-symbols-outlined ${(activeTab === 'admin-config' || activeTab === 'config-mercado-pago') ? 'text-emerald-400' : ''}`}>
+                          settings
+                        </span>
+                        <span>Configurações</span>
+                      </div>
+                      <span className="material-symbols-outlined text-lg transition-transform duration-200">
+                        {isAdminConfigSubmenuOpen ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+
+                    {isAdminConfigSubmenuOpen && (
+                      <div className="ml-4 pl-3 border-l border-white/10 flex flex-col gap-1 py-1">
+                        <button
+                          type="button"
+                          onClick={() => { setActiveTab('admin-config'); setIsMobileMenuOpen(false); }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                            activeTab === 'admin-config'
+                              ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-base">settings_suggest</span>
+                          <span>Parâmetros do Sistema</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { setActiveTab('config-mercado-pago'); setIsMobileMenuOpen(false); }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                            activeTab === 'config-mercado-pago'
+                              ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-base">payments</span>
+                          <span>Mercado Pago</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   <button
                     type="button"
@@ -1941,18 +1982,58 @@ export const App: React.FC = () => {
                 <span>Usuários Administrativos</span>
               </button>
 
-              <button 
-                type="button"
-                onClick={() => setActiveTab('admin-config')}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
-                  activeTab === 'admin-config'
-                    ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
-                    : 'text-white/80 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <span className={`material-symbols-outlined ${activeTab === 'admin-config' ? 'text-emerald-400' : ''}`}>settings_suggest</span>
-                <span>Parâmetros do Sistema</span>
-              </button>
+              {/* Menu Configurações com Submenu Mercado Pago e Parâmetros */}
+              <div className="flex flex-col gap-0.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsAdminConfigSubmenuOpen(!isAdminConfigSubmenuOpen)}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                    activeTab === 'admin-config' || activeTab === 'config-mercado-pago'
+                      ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                      : 'text-white/80 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`material-symbols-outlined ${(activeTab === 'admin-config' || activeTab === 'config-mercado-pago') ? 'text-emerald-400' : ''}`}>
+                      settings
+                    </span>
+                    <span>Configurações</span>
+                  </div>
+                  <span className="material-symbols-outlined text-lg transition-transform duration-200">
+                    {isAdminConfigSubmenuOpen ? 'expand_less' : 'expand_more'}
+                  </span>
+                </button>
+
+                {isAdminConfigSubmenuOpen && (
+                  <div className="ml-4 pl-3 border-l border-white/10 flex flex-col gap-1 py-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('admin-config')}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                        activeTab === 'admin-config'
+                          ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-base">settings_suggest</span>
+                      <span>Parâmetros do Sistema</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('config-mercado-pago')}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                        activeTab === 'config-mercado-pago'
+                          ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-base">payments</span>
+                      <span>Mercado Pago</span>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <button 
                 type="button"
@@ -2355,6 +2436,9 @@ export const App: React.FC = () => {
               onNavigateToConfig={() => {
                 setActiveTab('admin-config');
               }}
+              onNavigateToMercadoPago={() => {
+                setActiveTab('config-mercado-pago');
+              }}
               onNavigateToLogs={() => {
                 setActiveTab('logs-sistema');
               }}
@@ -2712,10 +2796,16 @@ export const App: React.FC = () => {
               onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
             />
           )}
-          {activeTab === 'config-mercado-pago' && (
+          {activeTab === 'config-mercado-pago' && !isHotelUser && (
+            <ConfiguracoesMercadoPago 
+              isAdmin={true}
+              onBackToDashboard={() => setActiveTab('admin-dashboard')}
+            />
+          )}
+          {activeTab === 'config-mercado-pago' && isHotelUser && (
             <ConfiguracoesHotel 
               initialTab="mercadopago"
-              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onBackToDashboard={() => setActiveTab('dashboard')}
             />
           )}
           {activeTab === 'planos' && !isHotelUser && (
