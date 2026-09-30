@@ -26,7 +26,9 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [hasAttemptedNext, setHasAttemptedNext] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
 
   // Planos
   const [planos, setPlanos] = useState<any[]>([]);
@@ -193,43 +195,107 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   useEffect(() => {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setErrorMsg('');
+    setHasAttemptedNext(false);
   }, [step]);
 
-  const validateStep = (): string | null => {
-    if (step === 1) {
-      if (!nomeFantasia.trim()) return 'Informe o Nome Fantasia do hotel.';
-      if (!cnpj.trim() || !isValidCnpj(cnpj)) return 'Informe um CNPJ valido.';
-      if (!whatsapp.trim() || whatsapp.replace(/\D/g,'').length < 10) return 'Informe o WhatsApp do hotel.';
-      if (urlHotel && isUrlAvailable === false) return 'A URL informada já pertence a outro hotel. Altere-a ou clique em Auto para gerar uma URL única.';
+  const validateStep = (targetStep: number = step): string | null => {
+    if (targetStep === 1) {
+      if (!nomeFantasia.trim() || nomeFantasia.trim().length < 2) {
+        return 'Informe o Nome Fantasia do hotel (mínimo 2 caracteres).';
+      }
+      if (!cnpj.trim() || !isValidCnpj(cnpj)) {
+        return 'Informe um CNPJ válido e completo para o hotel.';
+      }
+      if (!categoria.trim()) {
+        return 'Selecione a categoria do hotel.';
+      }
+      if (!whatsapp.trim() || whatsapp.replace(/\D/g, '').length < 10) {
+        return 'Informe o WhatsApp do hotel com DDD (mínimo 10 dígitos).';
+      }
+      if (!urlHotel.trim()) {
+        return 'A URL personalizada do hotel é obrigatória.';
+      }
+      if (!urlHotel.startsWith('https://hotelnozap.com.br/hoteis/') || urlHotel.trim().length <= 'https://hotelnozap.com.br/hoteis/'.length) {
+        return 'A URL do hotel deve seguir o padrão: https://hotelnozap.com.br/hoteis/nomedohotel';
+      }
+      if (isCheckingUrl) {
+        return 'Aguarde a verificação de disponibilidade da URL do hotel.';
+      }
+      if (isUrlAvailable === false) {
+        return 'A URL informada já pertence a outro hotel. Altere-a ou clique em Auto para gerar uma URL única.';
+      }
     }
-    if (step === 2) {
-      if (!planoSelecionado) return 'Selecione um plano para continuar.';
+    if (targetStep === 2) {
+      if (!planoSelecionado) {
+        return 'Selecione um plano de assinatura para continuar para a próxima etapa.';
+      }
     }
-    if (step === 3) {
-      if (!cep.trim() || cep.replace(/\D/g,'').length < 8) return 'Informe o CEP.';
-      if (!logradouro.trim()) return 'Informe o logradouro.';
-      if (!numero.trim()) return 'Informe o numero.';
-      if (!bairro.trim()) return 'Informe o bairro.';
-      if (!cidade.trim()) return 'Informe a cidade.';
+    if (targetStep === 3) {
+      if (!cep.trim() || cep.replace(/\D/g, '').length < 8) {
+        return 'Informe um CEP válido com 8 dígitos.';
+      }
+      if (!logradouro.trim()) {
+        return 'Informe o logradouro (Rua, Avenida, etc.).';
+      }
+      if (!numero.trim()) {
+        return 'Informe o número do endereço (ou S/N).';
+      }
+      if (!bairro.trim()) {
+        return 'Informe o bairro do endereço.';
+      }
+      if (!cidade.trim()) {
+        return 'Informe a cidade.';
+      }
+      if (!uf.trim()) {
+        return 'Selecione o estado (UF).';
+      }
     }
-    if (step === 4) {
-      if (!nomeResponsavel.trim()) return 'Informe o nome do responsavel.';
-      if (!emailResponsavel.trim() || !emailResponsavel.includes('@')) return 'Informe um e-mail valido.';
-      if (!whatsappResponsavel.trim() || whatsappResponsavel.replace(/\D/g,'').length < 10) return 'Informe o WhatsApp do responsavel.';
-      if (cpfResponsavel.trim() && !isValidCpf(cpfResponsavel)) return 'CPF invalido.';
+    if (targetStep === 4) {
+      if (!nomeResponsavel.trim() || nomeResponsavel.trim().length < 3) {
+        return 'Informe o nome completo do responsável.';
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailResponsavel.trim() || !emailRegex.test(emailResponsavel.trim())) {
+        return 'Informe um e-mail válido para o responsável.';
+      }
+      if (!whatsappResponsavel.trim() || whatsappResponsavel.replace(/\D/g, '').length < 10) {
+        return 'Informe o WhatsApp do responsável com DDD (mínimo 10 dígitos).';
+      }
+      if (cpfResponsavel.trim() && !isValidCpf(cpfResponsavel)) {
+        return 'O CPF informado para o responsável é inválido.';
+      }
     }
-    if (step === 5) {
-      if (!loginEmail.trim() || !loginEmail.includes('@')) return 'Informe um e-mail de acesso valido.';
-      if (!senha || senha.length < 6) return 'A senha deve ter no minimo 6 caracteres.';
-      if (senha !== confirmSenha) return 'As senhas nao coincidem.';
-      if (!aceitaTermos) return 'Aceite os Termos de Uso para continuar.';
+    if (targetStep === 5) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!loginEmail.trim() || !emailRegex.test(loginEmail.trim())) {
+        return 'Informe um e-mail de acesso válido para login.';
+      }
+      if (!senha || senha.length < 6) {
+        return 'A senha de acesso deve ter no mínimo 6 caracteres.';
+      }
+      if (!confirmSenha) {
+        return 'Confirme a senha de acesso.';
+      }
+      if (senha !== confirmSenha) {
+        return 'As senhas não coincidem.';
+      }
+      if (!aceitaTermos) {
+        return 'Você deve aceitar os Termos de Uso e a Política de Privacidade para continuar.';
+      }
     }
     return null;
   };
 
   const handleNext = () => {
     const err = validateStep();
-    if (err) { setErrorMsg(err); return; }
+    if (err) {
+      setErrorMsg(err);
+      setHasAttemptedNext(true);
+      formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    setHasAttemptedNext(false);
+    setErrorMsg('');
     setStep(s => s + 1);
   };
 
@@ -358,6 +424,41 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   const iCls = 'w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 bg-white transition-colors placeholder-gray-400';
   const lCls = 'block text-xs font-semibold text-gray-700 mb-1';
 
+  // Validações visuais reativas para campos obrigatórios
+  const isNomeFantasiaInvalid = hasAttemptedNext && (!nomeFantasia.trim() || nomeFantasia.trim().length < 2);
+  const isCnpjInvalid = hasAttemptedNext && (!cnpj.trim() || !isValidCnpj(cnpj));
+  const isCategoriaInvalid = hasAttemptedNext && !categoria.trim();
+  const isWhatsappInvalid = hasAttemptedNext && (!whatsapp.trim() || whatsapp.replace(/\D/g, '').length < 10);
+  const isUrlInvalid = hasAttemptedNext && (
+    !urlHotel.trim() ||
+    !urlHotel.startsWith('https://hotelnozap.com.br/hoteis/') ||
+    urlHotel.trim().length <= 'https://hotelnozap.com.br/hoteis/'.length ||
+    isUrlAvailable === false
+  );
+
+  const isPlanoInvalid = hasAttemptedNext && !planoSelecionado;
+
+  const isCepInvalid = hasAttemptedNext && (!cep.trim() || cep.replace(/\D/g, '').length < 8);
+  const isLogradouroInvalid = hasAttemptedNext && !logradouro.trim();
+  const isNumeroInvalid = hasAttemptedNext && !numero.trim();
+  const isBairroInvalid = hasAttemptedNext && !bairro.trim();
+  const isCidadeInvalid = hasAttemptedNext && !cidade.trim();
+  const isUfInvalid = hasAttemptedNext && !uf.trim();
+
+  const isNomeRespInvalid = hasAttemptedNext && (!nomeResponsavel.trim() || nomeResponsavel.trim().length < 3);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmailRespInvalid = hasAttemptedNext && (!emailResponsavel.trim() || !emailRegex.test(emailResponsavel.trim()));
+  const isWhatsappRespInvalid = hasAttemptedNext && (!whatsappResponsavel.trim() || whatsappResponsavel.replace(/\D/g, '').length < 10);
+  const isCpfRespInvalid = hasAttemptedNext && cpfResponsavel.trim() !== '' && !isValidCpf(cpfResponsavel);
+
+  const isLoginEmailInvalid = hasAttemptedNext && (!loginEmail.trim() || !emailRegex.test(loginEmail.trim()));
+  const isSenhaInvalid = hasAttemptedNext && (!senha || senha.length < 6);
+  const isConfirmSenhaInvalid = hasAttemptedNext && (!confirmSenha || senha !== confirmSenha);
+  const isTermosInvalid = hasAttemptedNext && !aceitaTermos;
+
+  const getInputCls = (isInvalid: boolean) =>
+    iCls + (isInvalid ? ' border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-red-400/30' : '');
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans" ref={topRef}>
       {/* TOP BAR */}
@@ -426,7 +527,7 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
 
       {/* FORM CARD */}
       <div className="max-w-4xl mx-auto px-4 pb-20">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div ref={formCardRef} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 
           {/* Card header */}
           {step < 6 && (
@@ -481,7 +582,8 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className={lCls}>Nome Fantasia *</label>
-                  <input type="text" value={nomeFantasia} onChange={e => handleNomeFantasiaChange(e.target.value)} placeholder="Ex: Pousada Recanto dos Corais" className={iCls} />
+                  <input type="text" value={nomeFantasia} onChange={e => handleNomeFantasiaChange(e.target.value)} placeholder="Ex: Pousada Recanto dos Corais" className={getInputCls(isNomeFantasiaInvalid)} />
+                  {isNomeFantasiaInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Nome Fantasia é obrigatório (mínimo 2 caracteres)</p>}
                 </div>
                 <div>
                   <label className={lCls}>Razao Social</label>
@@ -497,11 +599,12 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                       </span>
                     )}
                   </label>
-                  <input type="text" value={cnpj} onChange={e => setCnpj(maskCnpj(e.target.value))} placeholder="00.000.000/0001-00" maxLength={18} className={iCls + ' font-mono ' + (cnpjValidation.isComplete ? cnpjValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
+                  <input type="text" value={cnpj} onChange={e => setCnpj(maskCnpj(e.target.value))} placeholder="00.000.000/0001-00" maxLength={18} className={getInputCls(isCnpjInvalid) + ' font-mono ' + (cnpjValidation.isComplete ? cnpjValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
+                  {isCnpjInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um CNPJ válido e completo</p>}
                 </div>
                 <div>
                   <label className={lCls}>Categoria *</label>
-                  <select value={categoria} onChange={e => setCategoria(e.target.value)} className={iCls + ' cursor-pointer'}>
+                  <select value={categoria} onChange={e => setCategoria(e.target.value)} className={getInputCls(isCategoriaInvalid) + ' cursor-pointer'}>
                     {categoriasList.map(c => (
                       <option key={c.id || c.name} value={c.name}>{c.name}</option>
                     ))}
@@ -509,10 +612,12 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                       <option value={categoria}>{categoria}</option>
                     )}
                   </select>
+                  {isCategoriaInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Selecione a categoria do hotel</p>}
                 </div>
                 <div>
                   <label className={lCls}>WhatsApp do Hotel *</label>
-                  <input type="tel" value={whatsapp} onChange={e => setWhatsapp(maskPhone(e.target.value))} placeholder="(81) 98765-4321" className={iCls} />
+                  <input type="tel" value={whatsapp} onChange={e => setWhatsapp(maskPhone(e.target.value))} placeholder="(81) 98765-4321" className={getInputCls(isWhatsappInvalid)} />
+                  {isWhatsappInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>WhatsApp com DDD é obrigatório (mínimo 10 dígitos)</p>}
                 </div>
                 <div>
                   <label className={lCls}>Telefone Fixo</label>
@@ -554,11 +659,18 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                     value={urlHotel}
                     onChange={e => handleUrlChange(e.target.value)}
                     placeholder="https://hotelnozap.com.br/hoteis/nomedohotel"
-                    className={iCls + ' font-mono text-xs ' + (isUrlAvailable === false ? 'border-red-400 focus:border-red-500' : isUrlAvailable === true ? 'border-emerald-400' : '')}
+                    className={getInputCls(isUrlInvalid) + ' font-mono text-xs ' + (isUrlAvailable === false ? 'border-red-400 focus:border-red-500' : isUrlAvailable === true ? 'border-emerald-400' : '')}
                   />
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    Ex: https://hotelnozap.com.br/hoteis/nomedohotel
-                  </p>
+                  {isUrlInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      {isUrlAvailable === false ? 'Esta URL já pertence a outro hotel. Altere-a ou clique em Auto.' : 'URL do hotel é obrigatória (https://hotelnozap.com.br/hoteis/nomedohotel)'}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      Ex: https://hotelnozap.com.br/hoteis/nomedohotel
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -587,6 +699,12 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
           {step === 2 && (
             <div className="px-6 pt-5 pb-8 space-y-4">
               <p className="text-gray-500 text-sm">Escolha o plano ideal para o tamanho e necessidade do seu hotel.</p>
+              {isPlanoInvalid && (
+                <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+                  <span className="material-symbols-outlined text-sm shrink-0">error</span>
+                  <span>Por favor, selecione um dos planos abaixo para continuar.</span>
+                </div>
+              )}
               {loadingPlanos ? (
                 <div className="flex items-center gap-2 text-gray-400 text-sm py-6 justify-center">
                   <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
@@ -627,18 +745,21 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 <div>
                   <label className={lCls}>CEP *</label>
                   <div className="relative">
-                    <input type="text" value={cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" maxLength={9} className={iCls + ' font-mono'} />
+                    <input type="text" value={cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" maxLength={9} className={getInputCls(isCepInvalid) + ' font-mono'} />
                     {isLoadingCep && <span className="absolute right-3 top-2.5 material-symbols-outlined animate-spin text-emerald-500 text-base">progress_activity</span>}
                   </div>
-                  {cepError && <p className="text-[11px] text-amber-600 mt-1">{cepError}</p>}
+                  {isCepInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>CEP de 8 dígitos é obrigatório</p>}
+                  {cepError && !isCepInvalid && <p className="text-[11px] text-amber-600 mt-1">{cepError}</p>}
                 </div>
                 <div className="md:col-span-2">
                   <label className={lCls}>Logradouro (Rua / Av.) *</label>
-                  <input type="text" value={logradouro} onChange={e => setLogradouro(e.target.value)} placeholder="Ex: Rua das Flores" className={iCls} />
+                  <input type="text" value={logradouro} onChange={e => setLogradouro(e.target.value)} placeholder="Ex: Rua das Flores" className={getInputCls(isLogradouroInvalid)} />
+                  {isLogradouroInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Logradouro é obrigatório</p>}
                 </div>
                 <div>
                   <label className={lCls}>Numero *</label>
-                  <input type="text" value={numero} onChange={e => setNumero(e.target.value)} placeholder="123" className={iCls} />
+                  <input type="text" value={numero} onChange={e => setNumero(e.target.value)} placeholder="123" className={getInputCls(isNumeroInvalid)} />
+                  {isNumeroInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Número é obrigatório (ou S/N)</p>}
                 </div>
                 <div>
                   <label className={lCls}>Complemento</label>
@@ -646,17 +767,21 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 </div>
                 <div>
                   <label className={lCls}>Bairro *</label>
-                  <input type="text" value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Centro" className={iCls} />
+                  <input type="text" value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Centro" className={getInputCls(isBairroInvalid)} />
+                  {isBairroInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Bairro é obrigatório</p>}
                 </div>
                 <div className="md:col-span-2">
                   <label className={lCls}>Cidade *</label>
-                  <input type="text" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Ex: Maceio" className={iCls} />
+                  <input type="text" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Ex: Maceio" className={getInputCls(isCidadeInvalid)} />
+                  {isCidadeInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Cidade é obrigatória</p>}
                 </div>
                 <div>
                   <label className={lCls}>Estado *</label>
-                  <select value={uf} onChange={e => setUf(e.target.value)} className={iCls + ' cursor-pointer'}>
-                    {UFS.map(u => <option key={u}>{u}</option>)}
+                  <select value={uf} onChange={e => setUf(e.target.value)} className={getInputCls(isUfInvalid) + ' cursor-pointer'}>
+                    <option value="">Selecione...</option>
+                    {UFS.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
+                  {isUfInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Selecione o estado</p>}
                 </div>
               </div>
             </div>
@@ -669,14 +794,16 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className={lCls}>Nome Completo *</label>
-                  <input type="text" value={nomeResponsavel} onChange={e => setNomeResponsavel(e.target.value)} placeholder="Ex: Marcos Andrade" className={iCls} />
+                  <input type="text" value={nomeResponsavel} onChange={e => setNomeResponsavel(e.target.value)} placeholder="Ex: Marcos Andrade" className={getInputCls(isNomeRespInvalid)} />
+                  {isNomeRespInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Nome completo é obrigatório (mínimo 3 caracteres)</p>}
                 </div>
                 <div>
                   <label className={'flex items-center justify-between ' + lCls}>
                     <span>CPF (opcional)</span>
                     {cpfValidation.isComplete && <span className={'text-[11px] font-bold flex items-center gap-0.5 ' + (cpfValidation.isValid ? 'text-emerald-600' : 'text-red-500')}><span className="material-symbols-outlined text-xs">{cpfValidation.isValid ? 'verified' : 'cancel'}</span>{cpfValidation.isValid ? 'Valido' : 'Invalido'}</span>}
                   </label>
-                  <input type="text" value={cpfResponsavel} onChange={e => setCpfResponsavel(maskCpf(e.target.value))} placeholder="000.000.000-00" maxLength={14} className={iCls + ' font-mono ' + (cpfValidation.isComplete ? cpfValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
+                  <input type="text" value={cpfResponsavel} onChange={e => setCpfResponsavel(maskCpf(e.target.value))} placeholder="000.000.000-00" maxLength={14} className={getInputCls(isCpfRespInvalid) + ' font-mono ' + (cpfValidation.isComplete ? cpfValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
+                  {isCpfRespInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>CPF inválido</p>}
                 </div>
                 <div>
                   <label className={lCls}>Cargo / Funcao</label>
@@ -686,11 +813,13 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 </div>
                 <div>
                   <label className={lCls}>E-mail *</label>
-                  <input type="email" value={emailResponsavel} onChange={e => setEmailResponsavel(e.target.value)} placeholder="contato@seupousada.com.br" className={iCls} />
+                  <input type="email" value={emailResponsavel} onChange={e => setEmailResponsavel(e.target.value)} placeholder="contato@seupousada.com.br" className={getInputCls(isEmailRespInvalid)} />
+                  {isEmailRespInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um e-mail válido para o responsável</p>}
                 </div>
                 <div>
                   <label className={lCls}>WhatsApp Pessoal *</label>
-                  <input type="tel" value={whatsappResponsavel} onChange={e => setWhatsappResponsavel(maskPhone(e.target.value))} placeholder="(81) 99999-8888" className={iCls} />
+                  <input type="tel" value={whatsappResponsavel} onChange={e => setWhatsappResponsavel(maskPhone(e.target.value))} placeholder="(81) 99999-8888" className={getInputCls(isWhatsappRespInvalid)} />
+                  {isWhatsappRespInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>WhatsApp pessoal com DDD é obrigatório</p>}
                 </div>
               </div>
               <div className="flex gap-2.5 p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-xs">
@@ -707,15 +836,20 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className={lCls}>E-mail de Acesso *</label>
-                  <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seu@email.com" className={iCls} />
-                  <p className="text-[11px] text-gray-400 mt-1">Sera usado para fazer login no sistema.</p>
+                  <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seu@email.com" className={getInputCls(isLoginEmailInvalid)} />
+                  {isLoginEmailInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um e-mail de acesso válido</p>
+                  ) : (
+                    <p className="text-[11px] text-gray-400 mt-1">Sera usado para fazer login no sistema.</p>
+                  )}
                 </div>
                 <div>
                   <label className={lCls}>Senha de Acesso *</label>
                   <div className="relative">
-                    <input type={showSenha ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} placeholder="Minimo 6 caracteres" className={iCls + ' pr-11'} />
+                    <input type={showSenha ? 'text' : 'password'} value={senha} onChange={e => setSenha(e.target.value)} placeholder="Minimo 6 caracteres" className={getInputCls(isSenhaInvalid) + ' pr-11'} />
                     <button type="button" onClick={() => setShowSenha(s => !s)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-700 cursor-pointer"><span className="material-symbols-outlined text-base">{showSenha ? 'visibility_off' : 'visibility'}</span></button>
                   </div>
+                  {isSenhaInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>A senha deve ter no mínimo 6 caracteres</p>}
                   {senha.length > 0 && (
                     <div className="flex gap-1 mt-1.5">
                       {[...Array(4)].map((_,i) => {
@@ -727,8 +861,13 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 </div>
                 <div>
                   <label className={lCls}>Confirmar Senha *</label>
-                  <input type={showSenha ? 'text' : 'password'} value={confirmSenha} onChange={e => setConfirmSenha(e.target.value)} placeholder="Repita a senha" className={iCls + (confirmSenha && senha !== confirmSenha ? ' border-red-400' : confirmSenha && senha === confirmSenha ? ' border-emerald-400' : '')} />
-                  {confirmSenha && senha !== confirmSenha && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><span className="material-symbols-outlined text-xs">cancel</span>Senhas nao coincidem</p>}
+                  <input type={showSenha ? 'text' : 'password'} value={confirmSenha} onChange={e => setConfirmSenha(e.target.value)} placeholder="Repita a senha" className={getInputCls(isConfirmSenhaInvalid)} />
+                  {isConfirmSenhaInvalid && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">cancel</span>
+                      {!confirmSenha ? 'Confirme sua senha de acesso' : 'Senhas não coincidem'}
+                    </p>
+                  )}
                 </div>
 
                 {/* Parceiro READONLY */}
@@ -752,14 +891,22 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 </div>
 
                 {/* Termos */}
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <div onClick={() => setAceitaTermos(t => !t)} className={'mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ' + (aceitaTermos ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300 bg-white group-hover:border-emerald-400')}>
-                    {aceitaTermos && <span className="material-symbols-outlined text-white text-sm">check</span>}
-                  </div>
-                  <span className="text-xs text-gray-600 leading-relaxed">
-                    Li e aceito os <a href="#" className="text-emerald-600 font-semibold underline">Termos de Uso</a> e a <a href="#" className="text-emerald-600 font-semibold underline">Politica de Privacidade</a> do Hotel no Zap.
-                  </span>
-                </label>
+                <div>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div onClick={() => setAceitaTermos(t => !t)} className={'mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ' + (aceitaTermos ? 'bg-emerald-500 border-emerald-500' : isTermosInvalid ? 'border-red-500 bg-red-50 ring-2 ring-red-400/40' : 'border-gray-300 bg-white group-hover:border-emerald-400')}>
+                      {aceitaTermos && <span className="material-symbols-outlined text-white text-sm">check</span>}
+                    </div>
+                    <span className="text-xs text-gray-600 leading-relaxed">
+                      Li e aceito os <a href="#" className="text-emerald-600 font-semibold underline">Termos de Uso</a> e a <a href="#" className="text-emerald-600 font-semibold underline">Politica de Privacidade</a> do Hotel no Zap.
+                    </span>
+                  </label>
+                  {isTermosInvalid && (
+                    <p className="text-[11px] text-red-500 mt-1.5 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      Você deve aceitar os Termos de Uso e Política de Privacidade para concluir.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -806,25 +953,42 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
 
           {/* Footer nav */}
           {step < 6 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
-              {step > 1 ? (
-                <button type="button" onClick={() => setStep(s => s-1)} className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:bg-gray-100 cursor-pointer">
-                  <span className="material-symbols-outlined text-base">arrow_back</span>Voltar
-                </button>
-              ) : (
-                <button type="button" onClick={onNavigateToLP} className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 cursor-pointer">
-                  <span className="material-symbols-outlined text-base">arrow_back</span>Ir para o site
-                </button>
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col gap-3">
+              {errorMsg && (
+                <div className="w-full px-3.5 py-2.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700 text-xs font-semibold animate-in fade-in duration-200">
+                  <span className="material-symbols-outlined text-base text-red-600 shrink-0">error</span>
+                  <span className="flex-1">{errorMsg}</span>
+                </div>
               )}
-              {step < 5 ? (
-                <button type="button" onClick={handleNext} className="inline-flex items-center gap-2 px-7 py-2.5 bg-[#003400] hover:bg-[#004800] text-white font-bold text-sm rounded-xl cursor-pointer shadow-sm">
-                  Proxima Etapa<span className="material-symbols-outlined text-base">arrow_forward</span>
-                </button>
-              ) : (
-                <button type="button" onClick={() => { const err = validateStep(); if (err) { setErrorMsg(err); return; } handleSubmit(); }} disabled={isSubmitting} className="inline-flex items-center gap-2 px-7 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm rounded-xl cursor-pointer shadow-sm">
-                  {isSubmitting ? <><span className="material-symbols-outlined animate-spin text-base">progress_activity</span>Enviando...</> : <><span className="material-symbols-outlined text-base">rocket_launch</span>Finalizar Cadastro</>}
-                </button>
-              )}
+              <div className="flex items-center justify-between gap-3">
+                {step > 1 ? (
+                  <button type="button" onClick={() => setStep(s => s-1)} className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:bg-gray-100 cursor-pointer">
+                    <span className="material-symbols-outlined text-base">arrow_back</span>Voltar
+                  </button>
+                ) : (
+                  <button type="button" onClick={onNavigateToLP} className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700 cursor-pointer">
+                    <span className="material-symbols-outlined text-base">arrow_back</span>Ir para o site
+                  </button>
+                )}
+                {step < 5 ? (
+                  <button type="button" onClick={handleNext} className="inline-flex items-center gap-2 px-7 py-2.5 bg-[#003400] hover:bg-[#004800] text-white font-bold text-sm rounded-xl cursor-pointer shadow-sm">
+                    Proxima Etapa<span className="material-symbols-outlined text-base">arrow_forward</span>
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => {
+                    const err = validateStep();
+                    if (err) {
+                      setErrorMsg(err);
+                      setHasAttemptedNext(true);
+                      formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      return;
+                    }
+                    handleSubmit();
+                  }} disabled={isSubmitting} className="inline-flex items-center gap-2 px-7 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-sm rounded-xl cursor-pointer shadow-sm">
+                    {isSubmitting ? <><span className="material-symbols-outlined animate-spin text-base">progress_activity</span>Enviando...</> : <><span className="material-symbols-outlined text-base">rocket_launch</span>Finalizar Cadastro</>}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
