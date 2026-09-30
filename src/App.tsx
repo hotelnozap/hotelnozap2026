@@ -68,6 +68,7 @@ import PainelCamareira from './components/PainelCamareira';
 import CardapioHotel from './components/CardapioHotel';
 import { GestaoPedidosCardapio } from './components/GestaoPedidosCardapio';
 import { PaginaInstitucional } from './components/PaginaInstitucional';
+import { ListagemStatusQuartos } from './components/ListagemStatusQuartos';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 
@@ -794,6 +795,7 @@ export const App: React.FC = () => {
     { id: 'admin-dashboard', label: 'Área Administrativa', icon: 'admin_panel_settings' },
     { id: 'cadastro-hoteis', label: 'Hotéis & Pousadas', icon: 'domain' },
     { id: 'categorias-hoteis', label: 'Categorias de Hotéis', icon: 'category' },
+    { id: 'status-quartos', label: 'Status dos Quartos', icon: 'room_preferences' },
     { id: 'parceiros', label: 'Parceiros', icon: 'handshake' },
     { id: 'planos', label: 'Planos & Preços', icon: 'sell' },
     { id: 'usuarios', label: 'Usuários do Sistema', icon: 'manage_accounts' },
@@ -808,6 +810,7 @@ export const App: React.FC = () => {
     { id: 'reservas', label: 'Reservas', icon: 'book_online' },
     { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
     { id: 'mapa', label: 'Mapa dos Quartos', icon: 'calendar_view_month' },
+    { id: 'camareira', label: 'Governança & Camareiras', icon: 'cleaning_services' },
     { id: 'hospedes', label: 'Hóspedes', icon: 'group' },
     { id: 'usuarios', label: 'Usuários da Equipe', icon: 'manage_accounts' },
     { id: 'produto', label: 'Cadastro de Produtos', icon: 'inventory_2' },
@@ -1109,7 +1112,7 @@ export const App: React.FC = () => {
   // ── Rota Dedicada: /camareira ou aba 'camareira' — Painel de Governança ──
   const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
   const isCamareiraUser = roleLower.includes('camareira') || roleLower.includes('governanca');
-  const isAdminUser = roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master') || roleLower.includes('administrador');
+  const isAdminUser = roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master') || roleLower.includes('administrador') || roleLower.includes('hotel') || roleLower.includes('gerente');
   const isCamareiraAuthorized = isCamareiraUser || isAdminUser;
 
   const isCamareiraRoute = activeTab === 'camareira' || pathParts[0] === 'camareira';
@@ -1170,7 +1173,7 @@ export const App: React.FC = () => {
         activeHotel={activeHotel}
         onNavigateBack={isAdminUser ? () => {
           window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
-          setActiveTab('admin-dashboard');
+          setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard');
         } : undefined}
         onLogout={() => handleLogout()}
       />
@@ -1428,6 +1431,19 @@ export const App: React.FC = () => {
                   >
                     <span className={`material-symbols-outlined ${activeTab === 'categorias-hoteis' || activeTab === 'cadastro-categoria-hotel' ? 'text-emerald-400' : ''}`}>category</span>
                     <span>Categorias de Hotéis</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('status-quartos'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                      activeTab === 'status-quartos'
+                        ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined ${activeTab === 'status-quartos' ? 'text-emerald-400' : ''}`}>room_preferences</span>
+                    <span>Status dos Quartos</span>
                   </button>
 
                   <button
@@ -1801,6 +1817,19 @@ export const App: React.FC = () => {
               >
                 <span className={`material-symbols-outlined ${activeTab === 'categorias-hoteis' || activeTab === 'cadastro-categoria-hotel' ? 'text-emerald-400' : ''}`}>category</span>
                 <span>Categorias de Hotéis</span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setActiveTab('status-quartos')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                  activeTab === 'status-quartos'
+                    ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className={`material-symbols-outlined ${activeTab === 'status-quartos' ? 'text-emerald-400' : ''}`}>room_preferences</span>
+                <span>Status dos Quartos</span>
               </button>
 
               <button 
@@ -2620,6 +2649,13 @@ export const App: React.FC = () => {
               }}
             />
           )}
+          {activeTab === 'status-quartos' && (
+            <ListagemStatusQuartos
+              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              currentUserRole={currentUserRole || localStorage.getItem('hotelnozap_user_role') || ''}
+              isHotelUser={isHotelUser}
+            />
+          )}
           {activeTab === 'cadastro-novo-hotel' && (
             <FormHotel 
               key={hotelToEdit ? hotelToEdit.id : 'novo-hotel'}
@@ -2801,7 +2837,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
+          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'mapa' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
             <div className="p-8 text-center text-[#45464d]">
               <h2 className="text-xl font-bold text-[#0b1c30] mb-2">Tela em construção</h2>
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>

@@ -1,5 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { quartosService, reservasService, destaquesQuartoService, DestaqueQuarto, cleanIconClass, currentHotelService } from '../services/supabaseService';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  quartosService, 
+  reservasService, 
+  destaquesQuartoService, 
+  DestaqueQuarto, 
+  cleanIconClass, 
+  currentHotelService,
+  statusQuartosService,
+  StatusQuartoData,
+  INITIAL_STATUS_QUARTOS
+} from '../services/supabaseService';
 import { ModalCheckinEntrada } from './ModalCheckinEntrada';
 import { Reserva } from './ListagemReservas';
 
@@ -8,7 +18,7 @@ export interface Room {
   number: string;
   name?: string;
   category: string;
-  status: 'livre' | 'ocupado' | 'limpeza' | 'manutencao';
+  status: string; // Dinâmico com base nos status cadastrados pelo admin
   floor: string;
   guestName?: string;
   capacity?: number;
@@ -60,6 +70,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [items, setItems] = useState<RoomItem[]>([]);
+  const [availableStatus, setAvailableStatus] = useState<StatusQuartoData[]>(INITIAL_STATUS_QUARTOS);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -68,6 +79,36 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   };
 
   const userRole = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || localStorage.getItem('hotelnozap_user_cargo') || '').toLowerCase();
+
+  // Helper para obter detalhes visuais completos do status do quarto (cores, ícone e nome cadastrado pelo admin)
+  const getStatusInfo = useCallback((statusSlug?: string) => {
+    const slugLower = (statusSlug || 'livre').toLowerCase().trim();
+    const found = availableStatus.find(s => s.slug === slugLower);
+    if (found) return found;
+    return {
+      id: `temp_${slugLower}`,
+      slug: slugLower,
+      nome: slugLower.charAt(0).toUpperCase() + slugLower.slice(1),
+      descricao: '',
+      icone: 'bed',
+      cor_fundo: '#F3F4F6',
+      cor_texto: '#374151',
+      cor_borda: '#E5E7EB',
+      permite_ocupacao: false,
+      padrao_sistema: false,
+      status: 'ativo' as const,
+      ordem: 99
+    };
+  }, [availableStatus]);
+
+  // Carrega status cadastrados pelo admin
+  const loadStatus = useCallback(() => {
+    statusQuartosService.getStatusQuartos(false).then(list => {
+      if (list && list.length > 0) {
+        setAvailableStatus(list);
+      }
+    });
+  }, []);
 
   // Regra de Permissões:
   // - Quem pode marcar para LIMPEZA: Hóspede, Hotel, Recepcionista, Camareira.
@@ -86,8 +127,10 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       });
     };
     fetchRooms();
+    loadStatus();
 
     window.addEventListener('hotel_changed', fetchRooms);
+    window.addEventListener('hotel_status_quartos_atualizado', loadStatus);
     window.addEventListener('hotel_novo_quarto', fetchRooms);
     window.addEventListener('hotel_quarto_modificado', fetchRooms);
     window.addEventListener('hotel_nova_reserva', fetchRooms);
@@ -229,6 +272,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       window.removeEventListener('hotel_nova_solicitacao', handleNovaSolicitacao);
       window.removeEventListener('hotel_nova_reserva', fetchRooms);
       window.removeEventListener('hotel_reserva_modificada', fetchRooms);
+      window.removeEventListener('hotel_status_quartos_atualizado', loadStatus);
       window.removeEventListener('storage', handleStorage);
       if (bc) {
         try { bc.close(); } catch {}
@@ -577,7 +621,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
     setIsCadastrarItemOpen(false);
   };
 
-  const handleUpdateStatus = async (roomId: string, newStatus: 'livre' | 'ocupado' | 'limpeza' | 'manutencao', newGuestName?: string) => {
+  const handleUpdateStatus = async (roomId: string, newStatus: string, newGuestName?: string) => {
     // Regra de Negócio: Somente usuários do tipo Camareira ou Hotel podem marcar como limpo ('livre')
     if (newStatus === 'livre' && !canMarkAsClean) {
       showToast('⚠️ Permissão restrita: Somente usuários do tipo Camareira e Hotel podem marcar o quarto como limpo após a higienização.');
@@ -586,6 +630,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
     const updatedGuestName = newStatus === 'ocupado' ? (newGuestName || 'Hóspede') : undefined;
     const targetRoom = rooms.find(r => r.id === roomId);
+    const stInfo = getStatusInfo(newStatus);
 
     setRooms(rooms.map(r => {
       if (r.id === roomId) {
@@ -615,10 +660,44 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
         showToast(`🧹 Quarto ${targetRoom?.number || ''} marcado para limpeza (notificado para as camareiras).`);
       } else if (newStatus === 'livre') {
         showToast(`✨ Quarto ${targetRoom?.number || ''} marcado como limpo e liberado.`);
+      } else {
+        showToast(`Quarto ${targetRoom?.number || ''} alterado para status "${stInfo.nome}".`);
       }
     } catch (err) {
       console.warn('Erro ao atualizar status do quarto:', err);
     }
+  };
+
+  // Obter informações detalhadas de governança/higienização para a gestão do hotel
+  const getHousekeepingDetails = (room: Room) => {
+    const hk = (room as any).items?.housekeeping;
+    let histRecord: any = null;
+    try {
+      const hId = currentHotelService.getCurrentHotel().id;
+      const raw = localStorage.getItem(`hotelnozap_historico_limpeza_${hId}`);
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          histRecord = list.find((h: any) => h.quartoId === room.id || h.numero === room.number);
+        }
+      }
+    } catch {}
+
+    const ultima = hk?.ultima_higienizacao || (histRecord ? {
+      limpo_por: histRecord.limpoPor,
+      horario_inicio: histRecord.horarioInicio,
+      horario_conclusao: histRecord.horarioConclusao,
+      data_conclusao: histRecord.dataConclusao,
+      tempo_gasto_minutos: histRecord.tempoGastoMinutos,
+      servicos_realizados: histRecord.servicosRealizados,
+      observacoes: histRecord.observacoes
+    } : null);
+
+    return {
+      camareiraAtual: hk?.camareira_nome || null,
+      inicioLimpeza: hk?.inicio_limpeza || null,
+      ultimaHigienizacao: ultima
+    };
   };
 
   return (
@@ -812,81 +891,53 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
         </button>
       </div>
 
-      {/* KPI STATUS CARDS (2x2 Grid) */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3.5 w-full">
-        
-        {/* KPI LIVRE */}
-        <div 
-          onClick={() => setFilterStatus(filterStatus === 'livre' ? 'todos' : 'livre')}
-          className={
-            "bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between shadow-xs relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] " +
-            (filterStatus === 'livre' ? 'ring-2 ring-emerald-600 border-emerald-500' : 'hover:border-emerald-400')
-          }
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Livre</span>
-            <span className="material-symbols-outlined text-emerald-600 text-xl sm:text-2xl">check_circle</span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-2xl sm:text-3xl font-extrabold text-emerald-900">{livreCount}</span>
-            <p className="text-xs text-emerald-700 font-medium mt-0.5">Prontos para uso</p>
-          </div>
-        </div>
+      {/* KPI STATUS CARDS (DINÂMICOS CONFORME CADASTRADO PELO ADMIN) */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full">
+        {availableStatus.filter(s => s.status === 'ativo').map((st) => {
+          const count = rooms.filter(r => (r.status || 'livre').toLowerCase() === st.slug).length;
+          const isSelected = filterStatus === st.slug;
 
-        {/* KPI OCUPADO */}
-        <div 
-          onClick={() => setFilterStatus(filterStatus === 'ocupado' ? 'todos' : 'ocupado')}
-          className={
-            "bg-[#FEF2F2] border border-[#FECDD3] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between shadow-xs relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] " +
-            (filterStatus === 'ocupado' ? 'ring-2 ring-red-600 border-red-500' : 'hover:border-red-400')
-          }
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-red-800">Ocupado</span>
-            <span className="material-symbols-outlined text-red-600 text-xl sm:text-2xl">lock</span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-2xl sm:text-3xl font-extrabold text-red-900">{ocupadoCount}</span>
-            <p className="text-xs text-red-700 font-medium mt-0.5">Hóspedes ativos</p>
-          </div>
-        </div>
-
-        {/* KPI EM LIMPEZA */}
-        <div 
-          onClick={() => setFilterStatus(filterStatus === 'limpeza' ? 'todos' : 'limpeza')}
-          className={
-            "bg-[#FFFBEB] border border-[#FDE68A] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between shadow-xs relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] " +
-            (filterStatus === 'limpeza' ? 'ring-2 ring-amber-600 border-amber-500' : 'hover:border-amber-400')
-          }
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-800">Em Limpeza</span>
-            <span className="material-symbols-outlined text-amber-600 text-xl sm:text-2xl">cleaning_services</span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-2xl sm:text-3xl font-extrabold text-amber-900">{limpezaCount}</span>
-            <p className="text-xs text-amber-700 font-medium mt-0.5">Em andamento</p>
-          </div>
-        </div>
-
-        {/* KPI MANUTENÇÃO */}
-        <div 
-          onClick={() => setFilterStatus(filterStatus === 'manutencao' ? 'todos' : 'manutencao')}
-          className={
-            "bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between shadow-xs relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] " +
-            (filterStatus === 'manutencao' ? 'ring-2 ring-blue-600 border-blue-500' : 'hover:border-blue-400')
-          }
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-800">Manutenção</span>
-            <span className="material-symbols-outlined text-blue-600 text-xl sm:text-2xl">build</span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-2xl sm:text-3xl font-extrabold text-blue-900">{manutencaoCount}</span>
-            <p className="text-xs text-blue-700 font-medium mt-0.5">Em reparo</p>
-          </div>
-        </div>
-
+          return (
+            <div 
+              key={st.slug}
+              onClick={() => setFilterStatus(isSelected ? 'todos' : st.slug)}
+              style={{
+                backgroundColor: st.cor_fundo,
+                borderColor: isSelected ? st.cor_texto : st.cor_borda
+              }}
+              className={
+                "border rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] " +
+                (isSelected ? 'ring-2 shadow-sm' : 'hover:opacity-90')
+              }
+            >
+              <div className="flex items-center justify-between gap-1">
+                <span 
+                  style={{ color: st.cor_texto }}
+                  className="text-xs font-bold uppercase tracking-wider truncate"
+                >
+                  {st.nome}
+                </span>
+                <span 
+                  style={{ color: st.cor_texto }}
+                  className="material-symbols-outlined text-lg sm:text-xl shrink-0"
+                >
+                  {st.icone}
+                </span>
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span 
+                  style={{ color: st.cor_texto }}
+                  className="text-xl sm:text-2xl font-black"
+                >
+                  {count}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {count === 1 ? '1 quarto' : `${count} quartos`}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       {/* MOBILE LIST VIEW (Visible on mobile/tablet md:hidden) */}
@@ -897,26 +948,20 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
         </div>
 
         {filteredRooms.map((room) => {
-          let badgeBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-          let statusPill = 'bg-emerald-100 text-emerald-800';
-          let statusText = 'Livre';
+          const stInfo = getStatusInfo(room.status);
+          let statusText = stInfo.nome;
           let details = `${room.capacity ? room.capacity + ' Pessoas' : 'Standard'} • ${room.floor}`;
 
           if (room.status === 'ocupado') {
-            badgeBg = 'bg-red-50 text-red-700 border-red-200';
-            statusPill = 'bg-red-100 text-red-800';
-            statusText = 'Ocupado';
             details = room.guestName ? `Hóspede: ${room.guestName}` : 'Hóspede Ativo';
           } else if (room.status === 'limpeza') {
-            badgeBg = 'bg-amber-50 text-amber-700 border-amber-200';
-            statusPill = 'bg-amber-100 text-amber-800';
-            statusText = 'Limpeza';
-            details = 'Higienização em andamento';
-          } else if (room.status === 'manutencao') {
-            badgeBg = 'bg-blue-50 text-blue-700 border-blue-200';
-            statusPill = 'bg-blue-100 text-blue-800';
-            statusText = 'Manutenção';
-            details = 'Reparo em andamento';
+            const hk = (room as any).items?.housekeeping;
+            if (hk?.camareira_nome) {
+              statusText = `Limpeza: ${hk.camareira_nome}`;
+              details = `Em limpeza por ${hk.camareira_nome}`;
+            } else {
+              details = 'Aguardando camareira';
+            }
           }
 
           return (
@@ -926,7 +971,14 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
               className="bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between shadow-xs hover:border-slate-300 transition-all cursor-pointer"
             >
               <div className="flex items-center gap-3.5">
-                <div className={`w-11 h-11 rounded-lg border flex items-center justify-center font-bold text-base ${badgeBg}`}>
+                <div 
+                  style={{
+                    backgroundColor: stInfo.cor_fundo,
+                    color: stInfo.cor_texto,
+                    borderColor: stInfo.cor_borda
+                  }}
+                  className="w-11 h-11 rounded-lg border flex items-center justify-center font-bold text-base shadow-2xs"
+                >
                   {room.number}
                 </div>
                 <div>
@@ -935,8 +987,16 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-1 rounded-full font-semibold text-xs shrink-0 ${statusPill}`}>
-                  {statusText}
+                <span 
+                  style={{
+                    backgroundColor: stInfo.cor_fundo,
+                    color: stInfo.cor_texto,
+                    borderColor: stInfo.cor_borda
+                  }}
+                  className="px-2.5 py-1 rounded-full font-bold text-xs shrink-0 border flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-sm">{stInfo.icone}</span>
+                  <span>{statusText}</span>
                 </span>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
@@ -971,26 +1031,17 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       {/* DESKTOP GRID VIEW (Visible on md:grid >= 768px) */}
       <main className="hidden md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {filteredRooms.map((room) => {
-          let topBarColor = 'bg-[#4edea3]';
-          let statusBadgeBg = 'bg-[#6cf8bb]/20 text-[#00714d]';
-          let statusLabel = 'Livre';
-          let iconName = 'bed';
+          const stInfo = getStatusInfo(room.status);
+          let statusLabel = stInfo.nome;
+          let iconName = stInfo.icone;
 
-          if (room.status === 'ocupado') {
-            topBarColor = 'bg-[#ba1a1a]';
-            statusBadgeBg = 'bg-[#ffdad6] text-[#93000a]';
-            statusLabel = 'Ocupado';
-            iconName = 'king_bed';
-          } else if (room.status === 'limpeza') {
-            topBarColor = 'bg-[#ffb95f]';
-            statusBadgeBg = 'bg-[#ffddb8]/50 text-[#b87500]';
-            statusLabel = 'Limpeza';
-            iconName = 'cleaning_services';
-          } else if (room.status === 'manutencao') {
-            topBarColor = 'bg-[#76777d]';
-            statusBadgeBg = 'bg-[#d3e4fe] text-[#45464d]';
-            statusLabel = 'Manutenção';
-            iconName = 'build';
+          if (room.status === 'limpeza') {
+            const hk = (room as any).items?.housekeeping;
+            if (hk?.camareira_nome) {
+              statusLabel = `Limpeza: ${hk.camareira_nome}`;
+            } else {
+              statusLabel = 'Aguardando Limpeza';
+            }
           }
 
           return (
@@ -999,15 +1050,26 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
               onClick={() => setSelectedRoom(room)}
               className="bg-white border border-[#c6c6cd]/50 rounded-xl p-4 flex flex-col justify-between min-h-[140px] shadow-xs hover:shadow-md transition-all cursor-pointer relative overflow-hidden group hover:border-[#006c49]/40"
             >
-              <div className={`absolute top-0 left-0 w-full h-1 ${topBarColor}`}></div>
+              <div 
+                style={{ backgroundColor: stInfo.cor_texto }}
+                className="absolute top-0 left-0 w-full h-1"
+              />
 
               <div className="flex justify-between items-start pt-1">
                 <div>
                   <h2 className="text-2xl font-extrabold text-[#0b1c30] tracking-tight">{room.number}</h2>
                   <p className="text-xs font-semibold text-[#45464d] tracking-wider uppercase mt-0.5">{room.category}</p>
                 </div>
-                <div className={`px-2 py-0.5 rounded text-xs font-semibold ${statusBadgeBg}`}>
-                  {statusLabel}
+                <div 
+                  style={{
+                    backgroundColor: stInfo.cor_fundo,
+                    color: stInfo.cor_texto,
+                    borderColor: stInfo.cor_borda
+                  }}
+                  className="px-2 py-0.5 rounded text-xs font-bold border flex items-center gap-1 shadow-2xs"
+                >
+                  <span className="material-symbols-outlined text-xs">{iconName}</span>
+                  <span>{statusLabel}</span>
                 </div>
               </div>
 
@@ -1016,6 +1078,11 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   <div className="flex items-center gap-1 truncate max-w-[120px]">
                     <span className="material-symbols-outlined text-[#ba1a1a] text-base">person</span>
                     <span className="text-xs font-semibold text-[#ba1a1a] truncate">{room.guestName}</span>
+                  </div>
+                ) : room.status === 'limpeza' && (room as any).items?.housekeeping?.camareira_nome ? (
+                  <div className="flex items-center gap-1 truncate max-w-[140px] text-amber-800" title={`Em limpeza por ${(room as any).items.housekeeping.camareira_nome}`}>
+                    <span className="material-symbols-outlined text-amber-700 text-base">person</span>
+                    <span className="text-xs font-semibold truncate">{(room as any).items.housekeeping.camareira_nome}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1044,7 +1111,10 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   </div>
                 )}
 
-                <span className={`material-symbols-outlined text-xl shrink-0 ${room.status === 'manutencao' ? 'text-[#76777d]' : room.status === 'limpeza' ? 'text-[#b87500]' : ''}`}>
+                <span 
+                  style={{ color: stInfo.cor_texto }}
+                  className="material-symbols-outlined text-xl shrink-0"
+                >
                   {iconName}
                 </span>
               </div>
@@ -1428,6 +1498,94 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                 )}
               </div>
 
+              {/* SEÇÃO GOVERNANÇA & HIGIENIZAÇÃO (GESTÃO DO HOTEL) */}
+              {(() => {
+                const hkInfo = getHousekeepingDetails(selectedRoom);
+                return (
+                  <div className="bg-[#f0fdf4] p-4 rounded-xl border border-emerald-200 text-xs space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-emerald-700 text-base">cleaning_services</span>
+                        Governança &amp; Higienização
+                      </span>
+                      {selectedRoom.status === 'limpeza' ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                          {hkInfo.camareiraAtual ? 'Em Andamento' : 'Aguardando Camareira'}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          Liberado / Limpo
+                        </span>
+                      )}
+                    </div>
+
+                    {selectedRoom.status === 'limpeza' ? (
+                      <div className="space-y-1.5 text-slate-700 bg-white/80 p-2.5 rounded-lg border border-emerald-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">Camareira Responsável:</span>
+                          <span className="font-bold text-slate-900">
+                            {hkInfo.camareiraAtual || 'Disponível para qualquer camareira'}
+                          </span>
+                        </div>
+                        {hkInfo.inicioLimpeza && (
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-500">Iniciado às:</span>
+                            <span className="font-semibold text-slate-800">
+                              {new Date(hkInfo.inicioLimpeza).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} (há {Math.max(1, Math.round((Date.now() - new Date(hkInfo.inicioLimpeza).getTime()) / 60000))} min)
+                            </span>
+                          </div>
+                        )}
+                        {!hkInfo.camareiraAtual && (
+                          <p className="text-[11px] text-amber-800 font-medium">
+                            🔔 Quarto notificado para todas as camareiras da equipe do hotel.
+                          </p>
+                        )}
+                      </div>
+                    ) : hkInfo.ultimaHigienizacao ? (
+                      <div className="space-y-2 bg-white/80 p-3 rounded-lg border border-emerald-100">
+                        <div className="flex items-center justify-between text-slate-800">
+                          <span className="text-slate-500 font-medium">Quem limpou:</span>
+                          <span className="font-bold text-emerald-900 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-xs text-emerald-600">person</span>
+                            {hkInfo.ultimaHigienizacao.limpo_por || 'Camareira'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-800">
+                          <span className="text-slate-500 font-medium">Tempo de limpeza:</span>
+                          <span className="font-bold text-slate-900">
+                            ⏱️ {hkInfo.ultimaHigienizacao.tempo_gasto_minutos || 25} minutos
+                            {hkInfo.ultimaHigienizacao.horario_inicio && ` (${hkInfo.ultimaHigienizacao.horario_inicio} às ${hkInfo.ultimaHigienizacao.horario_conclusao})`}
+                          </span>
+                        </div>
+                        {hkInfo.ultimaHigienizacao.servicos_realizados && hkInfo.ultimaHigienizacao.servicos_realizados.length > 0 && (
+                          <div className="pt-1.5 border-t border-slate-100">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                              O que foi feito de limpeza:
+                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {hkInfo.ultimaHigienizacao.servicos_realizados.map((serv: string, sIdx: number) => (
+                                <span key={sIdx} className="text-[10px] bg-emerald-100/90 text-emerald-900 font-semibold px-2 py-0.5 rounded-md border border-emerald-200">
+                                  ✓ {serv}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {hkInfo.ultimaHigienizacao.observacoes && (
+                          <div className="text-[11px] text-slate-600 italic bg-amber-50/70 p-2 rounded border border-amber-200/60 mt-1">
+                            &quot;<strong>Observação da Camareira:</strong> {hkInfo.ultimaHigienizacao.observacoes}&quot;
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-slate-500 italic bg-white/70 p-2 rounded border border-emerald-100">
+                        Quarto higienizado e pronto para hospedagem. Histórico detalhado será atualizado nas próximas liberações.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div>
                 {selectedRoom.status !== 'ocupado' && (
                   <div className="mb-4">
@@ -1455,79 +1613,58 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={() => {
-                      if (!canMarkAsClean && selectedRoom.status !== 'livre') {
-                        showToast('⚠️ Permissão restrita: Somente usuários do tipo Camareira ou Hotel podem marcar o quarto como limpo após a higienização.');
-                        return;
-                      }
-                      handleUpdateStatus(selectedRoom.id, 'livre');
-                    }}
-                    title={!canMarkAsClean && selectedRoom.status !== 'livre' ? 'Apenas Camareira ou Hotel podem marcar o quarto como limpo' : 'Marcar quarto como Livre'}
-                    className={
-                      "py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 border transition-all cursor-pointer " +
-                      (!canMarkAsClean && selectedRoom.status !== 'livre'
-                        ? 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-slate-100'
-                        : selectedRoom.status === 'livre' 
-                          ? 'bg-[#6cf8bb]/30 border-[#006c49] text-[#00714d] font-bold shadow-xs' 
-                          : 'bg-white border-[#c6c6cd] text-[#0b1c30] hover:bg-[#eff4ff]')
-                    }
-                  >
-                    <span className="material-symbols-outlined text-base">bed</span>
-                    <span>Livre</span>
-                    {!canMarkAsClean && selectedRoom.status !== 'livre' && (
-                      <span className="material-symbols-outlined text-xs text-amber-600" title="Requer perfil Camareira ou Hotel">lock</span>
-                    )}
-                  </button>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {availableStatus.filter(s => s.status === 'ativo').map((st) => {
+                    const isSelected = (selectedRoom.status || 'livre').toLowerCase() === st.slug;
+                    const isLivre = st.slug === 'livre';
+                    const isOcupado = st.slug === 'ocupado';
 
-                  <button 
-                    onClick={() => {
-                      if (selectedRoom.status !== 'ocupado') {
-                        handleStartCheckinForRoom(selectedRoom);
-                      } else {
-                        const name = prompt('Atualizar Nome do Hóspede:', selectedRoom.guestName || '');
-                        if (name !== null) {
-                          handleUpdateStatus(selectedRoom.id, 'ocupado', name);
-                        }
-                      }
-                    }}
-                    className={
-                      "py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 border transition-all cursor-pointer " +
-                      (selectedRoom.status === 'ocupado' 
-                        ? 'bg-[#ffdad6] border-[#ba1a1a] text-[#93000a] font-bold shadow-xs' 
-                        : 'bg-white border-[#c6c6cd] text-[#0b1c30] hover:bg-[#eff4ff]')
-                    }
-                  >
-                    <span className="material-symbols-outlined text-base">king_bed</span>
-                    <span>Ocupado</span>
-                  </button>
-
-                  <button 
-                    onClick={() => handleUpdateStatus(selectedRoom.id, 'limpeza')}
-                    className={
-                      "py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 border transition-all cursor-pointer " +
-                      (selectedRoom.status === 'limpeza' 
-                        ? 'bg-[#ffddb8] border-[#b87500] text-[#b87500] font-bold shadow-xs' 
-                        : 'bg-white border-[#c6c6cd] text-[#0b1c30] hover:bg-[#eff4ff]')
-                    }
-                  >
-                    <span className="material-symbols-outlined text-base">cleaning_services</span>
-                    <span>Em Limpeza</span>
-                  </button>
-
-                  <button 
-                    onClick={() => handleUpdateStatus(selectedRoom.id, 'manutencao')}
-                    className={
-                      "py-2.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 border transition-all cursor-pointer " +
-                      (selectedRoom.status === 'manutencao' 
-                        ? 'bg-[#d3e4fe] border-[#76777d] text-[#45464d] font-bold shadow-xs' 
-                        : 'bg-white border-[#c6c6cd] text-[#0b1c30] hover:bg-[#eff4ff]')
-                    }
-                  >
-                    <span className="material-symbols-outlined text-base">build</span>
-                    <span>Manutenção</span>
-                  </button>
+                    return (
+                      <button
+                        key={st.slug}
+                        type="button"
+                        onClick={() => {
+                          if (isLivre) {
+                            if (!canMarkAsClean && selectedRoom.status !== 'livre') {
+                              showToast('⚠️ Permissão restrita: Somente usuários do tipo Camareira ou Hotel podem marcar o quarto como limpo após a higienização.');
+                              return;
+                            }
+                            handleUpdateStatus(selectedRoom.id, 'livre');
+                          } else if (isOcupado) {
+                            if (selectedRoom.status !== 'ocupado') {
+                              handleStartCheckinForRoom(selectedRoom);
+                            } else {
+                              const name = prompt('Atualizar Nome do Hóspede:', selectedRoom.guestName || '');
+                              if (name !== null) {
+                                handleUpdateStatus(selectedRoom.id, 'ocupado', name);
+                              }
+                            }
+                          } else {
+                            handleUpdateStatus(selectedRoom.id, st.slug);
+                          }
+                        }}
+                        style={isSelected ? {
+                          backgroundColor: st.cor_fundo,
+                          color: st.cor_texto,
+                          borderColor: st.cor_texto
+                        } : {}}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'shadow-xs ring-2'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        } ${!canMarkAsClean && isLivre && selectedRoom.status !== 'livre' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        title={st.descricao || st.nome}
+                      >
+                        <span className="material-symbols-outlined text-base" style={isSelected ? { color: st.cor_texto } : {}}>
+                          {st.icone}
+                        </span>
+                        <span className="truncate">{st.nome}</span>
+                        {!canMarkAsClean && isLivre && selectedRoom.status !== 'livre' && (
+                          <span className="material-symbols-outlined text-xs text-amber-600" title="Requer perfil Camareira ou Hotel">lock</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

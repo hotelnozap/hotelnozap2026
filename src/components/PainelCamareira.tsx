@@ -20,6 +20,11 @@ export interface RoomHousekeeping {
   tipoArrumacao?: string;
   agendadoHorario?: string;
   limpoPor?: string;
+  camareiraId?: string | null;
+  camareiraNome?: string | null;
+  inicioLimpeza?: string | null;
+  servicosFeitos?: string[];
+  observacoesLimpeza?: string;
   terminoHorario?: string;
   ocorrenciaNumero?: string;
   ocorrenciaDescricao?: string;
@@ -42,6 +47,8 @@ export interface RegistroQuartoLimpo {
   categoria: string;
   andar: string;
   limpoPor: string;
+  camareiraId?: string;
+  horarioInicio?: string;
   horarioConclusao: string;
   dataConclusao: string; // YYYY-MM-DD
   dataHoraFormatada: string;
@@ -49,7 +56,20 @@ export interface RegistroQuartoLimpo {
   tipoArrumacao: string;
   hotelId: string;
   checklistConcluido?: boolean;
+  servicosRealizados?: string[];
+  observacoes?: string;
 }
+
+export const SERVICOS_LIMPEZA_PADRAO = [
+  'Troca completa de enxoval (lençóis e fronhas)',
+  'Higienização e desinfecção completa do banheiro',
+  'Aspiração e limpeza minuciosa do piso',
+  'Reposição de toalhas e kit de amenities',
+  'Conferência, limpeza e reposição de frigobar',
+  'Desinfecção de maçanetas, interruptores e controles',
+  'Limpeza de bancadas, móveis e espelhos',
+  'Retirada de lixos e substituição de sacos plásticos'
+];
 
 export const getTodayYmd = () => {
   const d = new Date();
@@ -328,6 +348,15 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
   const [modalInfoRoom, setModalInfoRoom] = useState<RoomHousekeeping | null>(null);
   const [modalEscalaOpen, setModalEscalaOpen] = useState<boolean>(false);
 
+  // Modal de Conclusão Detalhada de Higienização (Checklist + Tempo Gasto + Observações)
+  const [modalConcluirRoom, setModalConcluirRoom] = useState<RoomHousekeeping | null>(null);
+  const [concluirMinutosGasto, setConcluirMinutosGasto] = useState<number>(25);
+  const [concluirServicos, setConcluirServicos] = useState<string[]>(SERVICOS_LIMPEZA_PADRAO);
+  const [concluirObservacoes, setConcluirObservacoes] = useState<string>('');
+
+  // Filtro por Camareira para a Gestão do Hotel
+  const [selectedCamareiraFilter, setSelectedCamareiraFilter] = useState<string>('todas');
+
   // Form de Manutenção
   const [manutQuartoId, setManutQuartoId] = useState<string>('');
   const [manutTipo, setManutTipo] = useState<string>('Ar Condicionado');
@@ -419,9 +448,11 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
       const parts = nomeFinal.trim().split(/\s+/);
       const iniciais = (parts[0]?.[0] || 'C') + (parts.length > 1 ? parts[parts.length - 1][0] : (parts[0]?.[1] || 'M')).toUpperCase();
 
+      const userIdFinal = dbUser?.id || localStorage.getItem('hotelnozap_user_id') || userEmail || '';
+
       setLoggedUser(prev => {
         if (
-          prev.id === (dbUser?.id || '') &&
+          prev.id === userIdFinal &&
           prev.nome === nomeFinal &&
           prev.cargo === cargoFinal &&
           prev.perfil === perfilFinal &&
@@ -432,7 +463,7 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
           return prev;
         }
         return {
-          id: dbUser?.id || '',
+          id: userIdFinal,
           nome: nomeFinal,
           email: userEmail,
           cargo: cargoFinal,
@@ -443,6 +474,7 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
         };
       });
 
+      localStorage.setItem('hotelnozap_user_id', userIdFinal);
       localStorage.setItem('hotelnozap_user_name', nomeFinal);
       localStorage.setItem('hotelnozap_user_cargo', cargoFinal);
       localStorage.setItem('hotelnozap_user_role', perfilFinal);
@@ -509,16 +541,28 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
             String(r.numero_quarto) === String(q.numero || q.number)
           );
 
+          const hkData = (q.items && typeof q.items === 'object') ? q.items.housekeeping : {};
+          const roomCamId = hkData?.camareira_id || s.camareiraId || undefined;
+          const roomCamNome = hkData?.camareira_nome || s.camareiraNome || undefined;
+          const roomInicioLimpeza = hkData?.inicio_limpeza || s.inicioLimpeza || undefined;
+
           // Inferir status de governança
           let inferredHkStatus: RoomHousekeeping['hkStatus'] = 'pronto';
           if (q.status === 'limpeza') {
-            inferredHkStatus = s.hkStatus === 'em_limpeza' ? 'em_limpeza' : s.hkStatus === 'inspecao' ? 'inspecao' : 'checkout';
+            inferredHkStatus = (roomCamId || s.hkStatus === 'em_limpeza') ? 'em_limpeza' : s.hkStatus === 'inspecao' ? 'inspecao' : 'checkout';
           } else if (q.status === 'ocupado') {
             inferredHkStatus = 'ocupado_estadia';
           } else if (q.status === 'manutencao') {
             inferredHkStatus = 'manutencao';
           } else if (q.status === 'livre') {
             inferredHkStatus = 'pronto';
+          }
+
+          let elapsedMin = 0;
+          if (roomInicioLimpeza && inferredHkStatus === 'em_limpeza') {
+            elapsedMin = Math.max(1, Math.round((Date.now() - new Date(roomInicioLimpeza).getTime()) / 60000));
+          } else if (inferredHkStatus === 'em_limpeza') {
+            elapsedMin = s.tempoDecorrido || 15;
           }
 
           // Andar formatado amigável
@@ -539,8 +583,11 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
             status: q.status || 'livre',
             hkStatus: inferredHkStatus,
             guestName: guestName,
+            camareiraId: roomCamId,
+            camareiraNome: roomCamNome,
+            inicioLimpeza: roomInicioLimpeza,
             tempoEstimado: s.tempoEstimado || 30,
-            tempoDecorrido: s.tempoDecorrido || (inferredHkStatus === 'em_limpeza' ? 15 : 0),
+            tempoDecorrido: elapsedMin,
             progressoHigienizacao: s.progressoHigienizacao !== undefined ? s.progressoHigienizacao : (inferredHkStatus === 'em_limpeza' ? 50 : inferredHkStatus === 'pronto' ? 100 : 0),
             enxoval: s.enxoval || (q.tipo?.toLowerCase().includes('casal') ? 'Troca Completa Casal + 2 Toalhas' : 'Troca Completa Solteiro + Toalhas'),
             frigobarConsumos: s.frigobarConsumos !== undefined ? s.frigobarConsumos : 0,
@@ -679,13 +726,17 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
         const targetId = detail.quartoId;
         const newStatus = detail.status || 'limpeza';
 
+        const camId = detail.camareira_id;
+        const camNome = detail.camareira_nome;
+        const inicioLimp = detail.inicio_limpeza;
+
         // Atualização otimista e imediata no estado visual dos quartos da camareira
         setRooms(prevRooms => prevRooms.map(r => {
           const rNum = String(r.number || '').replace(/\D/g, '');
           if ((cleanNum && rNum === cleanNum) || (targetId && r.id === targetId)) {
             let nextHk: RoomHousekeeping['hkStatus'] = r.hkStatus;
             if (newStatus === 'limpeza') {
-              nextHk = 'checkout';
+              nextHk = camId ? 'em_limpeza' : 'checkout';
             } else if (newStatus === 'livre') {
               nextHk = 'pronto';
             } else if (newStatus === 'ocupado') {
@@ -697,6 +748,9 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
               ...r,
               status: newStatus as any,
               hkStatus: nextHk,
+              camareiraId: newStatus === 'limpeza' ? (camId !== undefined ? camId : r.camareiraId) : undefined,
+              camareiraNome: newStatus === 'limpeza' ? (camNome !== undefined ? camNome : r.camareiraNome) : undefined,
+              inicioLimpeza: newStatus === 'limpeza' ? (inicioLimp !== undefined ? inicioLimp : r.inicioLimpeza) : undefined,
               guestName: detail.hospede_atual !== undefined ? (detail.hospede_atual || '') : r.guestName
             };
           }
@@ -705,8 +759,12 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
 
         // Notificações sonoras e visuais para a camareira
         if (newStatus === 'limpeza') {
-          playChimeAlert();
-          showToast(`🧹 Quarto ${detail.numero || cleanNum} colocado em LIMPEZA pela Recepção!`);
+          if (!camId) {
+            playChimeAlert();
+            showToast(`🧹 Quarto ${detail.numero || cleanNum} disponível para limpeza!`);
+          } else if (camId && camId !== loggedUser.id && camId !== loggedUser.email) {
+            showToast(`ℹ️ Quarto ${detail.numero || cleanNum} assumido por ${camNome || 'outra camareira'}.`);
+          }
         } else if (newStatus === 'ocupado') {
           showToast(`🔑 Quarto ${detail.numero || cleanNum} ocupado (Check-in realizado).`);
         } else if (newStatus === 'livre') {
@@ -760,23 +818,34 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
           tempoDecorrido: r.tempoDecorrido,
           progressoHigienizacao: r.progressoHigienizacao,
           checklist: r.checklist,
+          camareiraId: r.camareiraId,
+          camareiraNome: r.camareiraNome,
+          inicioLimpeza: r.inicioLimpeza,
           ocorrenciaNumero: r.ocorrenciaNumero,
           ocorrenciaDescricao: r.ocorrenciaDescricao,
           concluidoHorario: r.concluidoHorario
         };
       });
+      localStorage.setItem(`hotelnozap_camareira_dados_${hotelInfo.id}`, JSON.stringify(cacheMap));
       localStorage.setItem('hotelnozap_camareira_dados', JSON.stringify(cacheMap));
     } catch {}
   };
 
-  // 1. Iniciar Limpeza
+  // 1. Iniciar Limpeza (Camareira assume o quarto com exclusividade)
   const handleIniciarLimpeza = async (room: RoomHousekeeping) => {
+    const startIso = new Date().toISOString();
+    const myId = loggedUser.id || loggedUser.email;
+    const myNome = loggedUser.nome;
+
     const updated = rooms.map(r => {
       if (r.id === room.id) {
         return {
           ...r,
           status: 'limpeza' as const,
           hkStatus: 'em_limpeza' as const,
+          camareiraId: myId,
+          camareiraNome: myNome,
+          inicioLimpeza: startIso,
           tempoDecorrido: 1,
           progressoHigienizacao: 25,
           checklist: r.checklist.map((c, i) => i === 0 ? { ...c, checked: true } : c)
@@ -786,31 +855,100 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
     });
     setRooms(updated);
     persistHousekeeping(updated);
-    showToast(`Limpeza iniciada no Quarto ${room.number}`);
+    showToast(`Quarto ${room.number} sob sua responsabilidade!`);
 
     try {
       await quartosService.updateQuarto(room.id, {
         numero: room.number,
         number: room.number,
-        status: 'limpeza'
+        status: 'limpeza',
+        housekeeping: {
+          camareira_id: myId,
+          camareira_nome: myNome,
+          inicio_limpeza: startIso,
+          hkStatus: 'em_limpeza'
+        }
       }, hotelInfo.id);
+
       quartosService.notifyQuartoAlterado({
         quartoId: room.id,
         numero: room.number,
         status: 'limpeza',
         hotel_id: hotelInfo.id,
-        origem: 'camareira'
+        origem: 'camareira',
+        camareira_id: myId,
+        camareira_nome: myNome,
+        inicio_limpeza: startIso,
+        hkStatus: 'em_limpeza'
       });
     } catch (err) {
       console.warn('Erro ao atualizar quarto:', err);
     }
   };
 
-  // 2. Concluir e Liberar Quarto
-  const handleConcluirELiberar = async (room: RoomHousekeeping) => {
+  // 2. Abrir Modal de Conclusão Detalhada
+  const handleOpenModalConcluir = (room: RoomHousekeeping) => {
+    let initialMinutes = 25;
+    if (room.inicioLimpeza) {
+      const elapsed = Math.round((Date.now() - new Date(room.inicioLimpeza).getTime()) / 60000);
+      initialMinutes = Math.max(1, elapsed);
+    } else if (room.tempoDecorrido && room.tempoDecorrido > 0) {
+      initialMinutes = room.tempoDecorrido;
+    }
+    setConcluirMinutosGasto(initialMinutes);
+    setConcluirServicos([...SERVICOS_LIMPEZA_PADRAO]);
+    setConcluirObservacoes(room.observacoesLimpeza || '');
+    setModalConcluirRoom(room);
+  };
+
+  // Atalho compatível
+  const handleConcluirELiberar = (room: RoomHousekeeping) => {
+    handleOpenModalConcluir(room);
+  };
+
+  // 3. Confirmar Conclusão e Liberar Quarto (com registro para a gestão do hotel)
+  const handleConfirmarConclusao = async () => {
+    if (!modalConcluirRoom) return;
+    const room = modalConcluirRoom;
     const now = new Date();
     const nowTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const todayYmd = getTodayYmd();
+    const myId = loggedUser.id || loggedUser.email;
+    const myNome = loggedUser.nome;
+
+    const startTime = room.inicioLimpeza 
+      ? new Date(room.inicioLimpeza).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      : new Date(Date.now() - (concluirMinutosGasto || 25) * 60000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    const duration = Math.max(1, Number(concluirMinutosGasto) || 20);
+
+    const novoRegistro: RegistroQuartoLimpo = {
+      id: `limpo_${room.id}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      quartoId: room.id,
+      numero: room.number,
+      categoria: room.category,
+      andar: room.floor,
+      limpoPor: myNome,
+      camareiraId: myId,
+      horarioInicio: startTime,
+      horarioConclusao: nowTime,
+      dataConclusao: todayYmd,
+      dataHoraFormatada: `${formatDatePtBr(todayYmd)} às ${nowTime}`,
+      tempoGastoMinutos: duration,
+      tipoArrumacao: room.tipoArrumacao || 'Higienização Completa',
+      hotelId: hotelInfo.id,
+      checklistConcluido: true,
+      servicosRealizados: concluirServicos,
+      observacoes: concluirObservacoes.trim() || undefined
+    };
+
+    setCleanedHistory(prev => {
+      const next = [novoRegistro, ...prev];
+      try {
+        localStorage.setItem(`hotelnozap_historico_limpeza_${hotelInfo.id}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
 
     const updated = rooms.map(r => {
       if (r.id === room.id) {
@@ -819,7 +957,11 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
           status: 'livre' as const,
           hkStatus: 'pronto' as const,
           progressoHigienizacao: 100,
-          concluidoHorario: `${nowTime} por ${loggedUser.nome}`,
+          camareiraId: undefined,
+          camareiraNome: undefined,
+          inicioLimpeza: undefined,
+          limpoPor: myNome,
+          concluidoHorario: `${nowTime} por ${myNome}`,
           checklist: r.checklist.map(c => ({ ...c, checked: true }))
         };
       }
@@ -828,52 +970,49 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
     setRooms(updated);
     persistHousekeeping(updated);
 
-    // Registra imediatamente na tela de Quartos Limpos (com data de hoje)
-    const novoRegistro: RegistroQuartoLimpo = {
-      id: `limpo_${room.id}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      quartoId: room.id,
-      numero: room.number,
-      categoria: room.category,
-      andar: room.floor,
-      limpoPor: loggedUser.nome,
-      horarioConclusao: nowTime,
-      dataConclusao: todayYmd,
-      dataHoraFormatada: `${formatDatePtBr(todayYmd)} às ${nowTime}`,
-      tempoGastoMinutos: room.tempoDecorrido && room.tempoDecorrido > 0 ? room.tempoDecorrido : (room.tempoEstimado || 25),
-      tipoArrumacao: room.tipoArrumacao || 'Higienização Completa',
-      hotelId: hotelInfo.id,
-      checklistConcluido: true
-    };
-
-    setCleanedHistory(prev => {
-      // Registra cada higienização realizada, permitindo que o mesmo quarto seja limpo múltiplas vezes no mesmo dia
-      const next = [novoRegistro, ...prev];
-      try {
-        localStorage.setItem(`hotelnozap_historico_limpeza_${hotelInfo.id}`, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
     try {
       await quartosService.updateQuarto(room.id, {
         numero: room.number,
         number: room.number,
         status: 'livre',
-        hospede_atual: null
+        hospede_atual: null,
+        housekeeping: {
+          camareira_id: null,
+          camareira_nome: null,
+          inicio_limpeza: null,
+          hkStatus: 'pronto',
+          ultima_higienizacao: {
+            limpo_por: myNome,
+            camareira_id: myId,
+            horario_inicio: startTime,
+            horario_conclusao: nowTime,
+            data_conclusao: todayYmd,
+            tempo_gasto_minutos: duration,
+            servicos_realizados: concluirServicos,
+            observacoes: concluirObservacoes.trim() || undefined
+          }
+        }
       }, hotelInfo.id);
+
       playChimeSuccess();
-      showToast(`✨ Quarto ${room.number} 100% higienizado e movido para Quartos Limpos!`);
-      
-      // Notifica recepção e outros colaboradores em tempo real
+      showToast(`✨ Quarto ${room.number} 100% higienizado por ${myNome} em ${duration} min!`);
+
       quartosService.notifyQuartoAlterado({
         quartoId: room.id,
         numero: room.number,
         status: 'livre',
         hotel_id: hotelInfo.id,
-        origem: 'camareira'
+        origem: 'camareira',
+        camareira_id: null,
+        camareira_nome: myNome,
+        tempo_gasto_minutos: duration,
+        servicos_realizados: concluirServicos,
+        observacoes: concluirObservacoes.trim() || undefined
       });
     } catch (err) {
       console.error('Erro ao liberar quarto:', err);
+    } finally {
+      setModalConcluirRoom(null);
     }
   };
 
@@ -971,12 +1110,47 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
     return `${distinct.slice(0, 2).join(', ')} +${distinct.length - 2}`;
   }, [rooms]);
 
+  const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || loggedUser.perfil || loggedUser.cargo || '').toLowerCase();
+  const isManager = Boolean(roleLower.match(/admin|hotel|gerent|super|master|govern/));
+
+  // Lista única de nomes de camareiras para filtro da gestão
+  const camareirasDisponiveis = useMemo(() => {
+    const nomes = new Set<string>();
+    cleanedHistory.forEach(h => {
+      if (h.limpoPor && h.limpoPor.trim()) nomes.add(h.limpoPor.trim());
+    });
+    rooms.forEach(r => {
+      if (r.camareiraNome && r.camareiraNome.trim()) nomes.add(r.camareiraNome.trim());
+    });
+    if (loggedUser.nome) nomes.add(loggedUser.nome.trim());
+    return Array.from(nomes).sort();
+  }, [cleanedHistory, rooms, loggedUser.nome]);
+
   // Filtragem dos Quartos Pendentes (Quartos com limpeza concluída NUNCA aparecem como cards na tela principal)
   const filteredRooms = useMemo(() => {
     return rooms.filter(r => {
       // Regra fundamental: quartos com limpeza concluída não aparecem no grid da tela principal
       if (r.status === 'livre' || r.hkStatus === 'pronto') {
         return false;
+      }
+
+      // Regra Multi-Camareiras:
+      // Se um quarto foi pego por uma camareira (hkStatus === 'em_limpeza' e r.camareiraId / r.camareiraNome definido):
+      // - Para a camareira que aceitou: FICA DISPONÍVEL SOMENTE PARA ELA concluir a limpeza.
+      // - Para as outras camareiras: SOME COMPLETAMENTE da lista de quartos pendentes!
+      // (Se for Gestor/Admin, ele pode visualizar todos os quartos para monitorar a governança).
+      const myId = loggedUser.id || loggedUser.email;
+      const myName = loggedUser.nome?.trim().toLowerCase();
+      const roomCamId = r.camareiraId;
+      const roomCamName = r.camareiraNome?.trim().toLowerCase();
+      const isAssumedByMe = Boolean(
+        (roomCamId && (roomCamId === myId || roomCamId === loggedUser.email)) ||
+        (roomCamName && myName && roomCamName === myName)
+      );
+      const isAssumedByOther = Boolean(r.hkStatus === 'em_limpeza' && (roomCamId || roomCamName) && !isAssumedByMe);
+
+      if (!isManager && isAssumedByOther) {
+        return false; // Some para as outras camareiras!
       }
 
       // Filtro de busca
@@ -1001,15 +1175,22 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
       }
       return true;
     });
-  }, [rooms, searchQuery, activeFilter]);
+  }, [rooms, searchQuery, activeFilter, loggedUser, isManager]);
 
-  // Filtragem dos Quartos Limpos por Data e Busca
+  // Filtragem dos Quartos Limpos por Data, Camareira e Busca
   const cleanedRoomsFiltered = useMemo(() => {
     const todayYmd = getTodayYmd();
     const yesterdayYmd = getYesterdayYmd();
 
     return cleanedHistory.filter(item => {
-      // 1. Filtro de data
+      // 1. Filtro por Camareira (Gestão do Hotel)
+      if (selectedCamareiraFilter !== 'todas') {
+        if (item.limpoPor?.trim().toLowerCase() !== selectedCamareiraFilter.trim().toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 2. Filtro de data
       if (cleanDateFilterMode === 'hoje') {
         if (item.dataConclusao !== todayYmd) return false;
       } else if (cleanDateFilterMode === 'ontem') {
@@ -1027,23 +1208,51 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
         if (selectedCustomDate && item.dataConclusao !== selectedCustomDate) return false;
       }
 
-      // 2. Filtro de texto / busca
+      // 3. Filtro de texto / busca
       if (cleanSearchQuery.trim()) {
         const q = cleanSearchQuery.toLowerCase();
         const numMatch = item.numero.toLowerCase().includes(q);
         const catMatch = item.categoria.toLowerCase().includes(q);
         const respMatch = item.limpoPor.toLowerCase().includes(q);
         const floorMatch = item.andar.toLowerCase().includes(q);
-        if (!numMatch && !catMatch && !respMatch && !floorMatch) return false;
+        const obsMatch = item.observacoes?.toLowerCase().includes(q) || false;
+        const servMatch = item.servicosRealizados?.some(s => s.toLowerCase().includes(q)) || false;
+        if (!numMatch && !catMatch && !respMatch && !floorMatch && !obsMatch && !servMatch) return false;
       }
 
       return true;
     });
-  }, [cleanedHistory, cleanDateFilterMode, selectedCustomDate, cleanSearchQuery]);
+  }, [cleanedHistory, cleanDateFilterMode, selectedCustomDate, cleanSearchQuery, selectedCamareiraFilter]);
 
   // Quantidade de quartos distintos no período filtrado
   const distinctRoomsCount = useMemo(() => {
     return new Set(cleanedRoomsFiltered.map(item => item.numero || item.quartoId)).size;
+  }, [cleanedRoomsFiltered]);
+
+  // Tempo médio de limpeza no período filtrado
+  const tempoMedioLimpeza = useMemo(() => {
+    if (cleanedRoomsFiltered.length === 0) return 0;
+    const totalMin = cleanedRoomsFiltered.reduce((acc, curr) => acc + (curr.tempoGastoMinutos || 20), 0);
+    return Math.round(totalMin / cleanedRoomsFiltered.length);
+  }, [cleanedRoomsFiltered]);
+
+  // Camareira destaque no período filtrado
+  const camareiraDestaque = useMemo(() => {
+    if (cleanedRoomsFiltered.length === 0) return null;
+    const counts: Record<string, number> = {};
+    cleanedRoomsFiltered.forEach(h => {
+      const name = h.limpoPor || 'Camareira';
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    let maxName = '';
+    let maxCount = 0;
+    Object.entries(counts).forEach(([name, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        maxName = name;
+      }
+    });
+    return { nome: maxName, count: maxCount };
   }, [cleanedRoomsFiltered]);
 
   return (
@@ -1528,10 +1737,14 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                       )}
 
                       {room.hkStatus === 'em_limpeza' && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[9px] sm:text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300 shrink-0">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[9px] sm:text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300 shrink-0" title={room.camareiraNome ? `Em limpeza por ${room.camareiraNome}` : 'Em limpeza'}>
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                          <span className="hidden sm:inline">Em Limpeza ({room.tempoDecorrido}m)</span>
-                          <span className="sm:hidden">Limpando</span>
+                          <span className="hidden sm:inline">
+                            {room.camareiraNome && isManager ? `Limpeza: ${room.camareiraNome} (${room.tempoDecorrido}m)` : `Em Limpeza (${room.tempoDecorrido}m)`}
+                          </span>
+                          <span className="sm:hidden">
+                            {room.camareiraNome && isManager ? room.camareiraNome.split(' ')[0] : 'Limpando'} ({room.tempoDecorrido}m)
+                          </span>
                         </span>
                       )}
 
@@ -1740,8 +1953,8 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                         className="flex-1 py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold bg-amber-500 hover:bg-amber-600 active:scale-98 text-white shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer truncate"
                       >
                         <span className="material-symbols-outlined text-sm sm:text-lg">play_arrow</span>
-                        <span className="sm:hidden">Iniciar</span>
-                        <span className="hidden sm:inline">Iniciar Limpeza</span>
+                        <span className="sm:hidden">Pegar Quarto</span>
+                        <span className="hidden sm:inline">Pegar Quarto (Iniciar)</span>
                       </button>
                     )}
 
@@ -1750,13 +1963,13 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleConcluirELiberar(room);
+                          handleOpenModalConcluir(room);
                         }}
                         className="flex-1 py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer truncate"
                       >
                         <span className="material-symbols-outlined text-sm sm:text-lg">check</span>
                         <span className="sm:hidden">Concluir</span>
-                        <span className="hidden sm:inline">Concluir e Liberar</span>
+                        <span className="hidden sm:inline">Concluir Limpeza</span>
                       </button>
                     )}
 
@@ -1770,8 +1983,8 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                         className="flex-1 py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold bg-[#062414] hover:bg-[#0b381c] active:scale-98 text-white shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer truncate"
                       >
                         <span className="material-symbols-outlined text-sm sm:text-lg">add</span>
-                        <span className="sm:hidden">Iniciar</span>
-                        <span className="hidden sm:inline">Iniciar Limpeza Diária</span>
+                        <span className="sm:hidden">Pegar Quarto</span>
+                        <span className="hidden sm:inline">Pegar Quarto (Limpeza Diária)</span>
                       </button>
                     )}
 
@@ -1960,6 +2173,34 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                     )}
                   </div>
                 </div>
+                {/* Seletor de Camareira Responsável (Gestão e Governança) */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Filtrar por Camareira
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedCamareiraFilter}
+                      onChange={(e) => setSelectedCamareiraFilter(e.target.value)}
+                      className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 cursor-pointer"
+                    >
+                      <option value="todas">Todas as Camareiras ({camareirasDisponiveis.length})</option>
+                      {camareirasDisponiveis.map(nome => (
+                        <option key={nome} value={nome}>{nome}</option>
+                      ))}
+                    </select>
+                    {selectedCamareiraFilter !== 'todas' && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCamareiraFilter('todas')}
+                        className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 hover:bg-emerald-100 cursor-pointer"
+                        title="Limpar filtro de camareira"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+                </div>
 
               </div>
 
@@ -2127,7 +2368,7 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                         </div>
                       </div>
 
-                      {/* Dados de Conclusão e Governança Resumidos */}
+                      {/* DADOS DE CONCLUSÃO E GOVERNANÇA (QUEM LIMPOU, TEMPO E HORÁRIOS) */}
                       <div className={`${theme.innerBg} rounded-lg sm:rounded-xl p-1.5 sm:p-3 border ${theme.innerBorder} text-[10px] sm:text-xs space-y-1 sm:space-y-1.5 shadow-xs`}>
                         <div className="flex items-center justify-between text-slate-700">
                           <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400">Data:</span>
@@ -2138,10 +2379,10 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                         </div>
 
                         <div className="flex items-center justify-between text-slate-700">
-                          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400">Hora:</span>
+                          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400">Tempo / Horário:</span>
                           <span className="font-bold text-slate-800 flex items-center gap-1">
                             <span className={`material-symbols-outlined text-[10px] sm:text-xs ${theme.iconColor}`}>schedule</span>
-                            <span>{item.horarioConclusao}</span>
+                            <span>{item.tempoGastoMinutos}m ({item.horarioInicio ? `${item.horarioInicio} - ` : ''}{item.horarioConclusao})</span>
                             {timesCleanedOnDate > 1 && (
                               <span className="text-[8px] sm:text-[10px] font-bold text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-200 ml-0.5">
                                 {cleanInstanceIndex}ª vez
@@ -2151,55 +2392,64 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                         </div>
 
                         <div className="flex items-center justify-between text-slate-700 pt-1 border-t border-slate-200/60">
-                          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400">Por:</span>
-                          <span className="font-bold text-slate-800 truncate ml-1 text-right max-w-[85px] sm:max-w-none flex items-center gap-0.5" title={item.limpoPor}>
-                            <span className={`material-symbols-outlined text-[10px] sm:text-xs ${theme.iconColor}`}>person</span>
+                          <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400">Camareira:</span>
+                          <span className="font-black text-emerald-800 truncate ml-1 text-right max-w-[120px] sm:max-w-none flex items-center gap-1" title={item.limpoPor}>
+                            <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] flex items-center justify-center font-bold">
+                              {item.limpoPor?.charAt(0).toUpperCase()}
+                            </span>
                             <span className="truncate">{item.limpoPor}</span>
                           </span>
                         </div>
                       </div>
 
-                      {/* Checklist: 1 linha compacta no mobile, expandido no desktop */}
+                      {/* SERVIÇOS DE LIMPEZA REALIZADOS NO QUARTO */}
                       <div>
-                        {/* Versão Mobile (1 linha resumida) */}
+                        {/* Versão Mobile (1 linha resumida com quantidade de serviços) */}
                         <div className={`sm:hidden flex items-center justify-between text-[10px] font-bold ${theme.checklistBg} px-2 py-1 rounded-lg border`}>
                           <span className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">checklist</span>
-                            <span>Checklist</span>
+                            <span className="material-symbols-outlined text-xs">cleaning_services</span>
+                            <span>Serviços ({item.servicosRealizados ? item.servicosRealizados.length : 5})</span>
                           </span>
                           <span className={`text-[9px] font-black ${theme.checkPill} px-1.5 py-0.2 rounded`}>
-                            100% ✓
+                            100% Concluído
                           </span>
                         </div>
 
-                        {/* Versão Desktop (completa) */}
+                        {/* Versão Desktop (detalhes dos serviços executados) */}
                         <div className="hidden sm:block space-y-1.5">
                           <div className="flex items-center justify-between text-[11px] text-slate-600">
                             <span className={`font-semibold flex items-center gap-1 ${theme.accentText}`}>
-                              <span className="material-symbols-outlined text-sm">checklist</span>
-                              Checklist de Governança
+                              <span className="material-symbols-outlined text-sm">cleaning_services</span>
+                              Serviços Realizados no Quarto
                             </span>
                             <span className={`font-bold text-[10px] ${theme.accentText}`}>100% Concluído</span>
                           </div>
-                          <div className="grid grid-cols-1 gap-1 text-[11px] text-slate-700 pl-1">
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className={`material-symbols-outlined text-xs font-bold ${theme.iconColor}`}>check</span>
-                              <span className="truncate">Troca e alinhamento de enxoval</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className={`material-symbols-outlined text-xs font-bold ${theme.iconColor}`}>check</span>
-                              <span className="truncate">Higienização do banheiro</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className={`material-symbols-outlined text-xs font-bold ${theme.iconColor}`}>check</span>
-                              <span className="truncate">Reposição de amenities e toalhas</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className={`material-symbols-outlined text-xs font-bold ${theme.iconColor}`}>check</span>
-                              <span className="truncate">Limpeza, aspiração e frigobar</span>
-                            </div>
+                          <div className="flex flex-wrap gap-1 text-[10px] text-slate-700 pl-0.5">
+                            {(item.servicosRealizados && item.servicosRealizados.length > 0 ? item.servicosRealizados : [
+                              'Troca de enxoval',
+                              'Higienização do banheiro',
+                              'Reposição de amenities',
+                              'Aspiração e chão',
+                              'Conferência frigobar'
+                            ]).map((srv, sIdx) => (
+                              <span key={sIdx} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100/90 text-slate-700 border border-slate-200/80 font-medium">
+                                <span className={`material-symbols-outlined text-[11px] font-bold ${theme.iconColor}`}>check</span>
+                                <span className="truncate max-w-[120px]">{srv}</span>
+                              </span>
+                            ))}
                           </div>
                         </div>
+
+                        {/* Observações da Camareira se houver */}
+                        {item.observacoes && (
+                          <div className="mt-1.5 p-1.5 sm:p-2 bg-amber-50/70 border border-amber-200/80 rounded-lg text-[10px] text-amber-900">
+                            <span className="font-bold flex items-center gap-1 text-amber-800">
+                              <span className="material-symbols-outlined text-xs">notes</span>
+                              Obs:
+                            </span>
+                            <p className="line-clamp-2 italic mt-0.5">{item.observacoes}</p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Rodapé do Card */}
@@ -2734,6 +2984,159 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
                 className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold"
               >
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 7: CONCLUIR LIMPEZA & REGISTRO DE GOVERNANÇA */}
+      {modalConcluirRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden p-5 sm:p-6 space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Higienização e Governança</span>
+                <h3 className="text-xl font-black text-slate-900">Concluir Quarto {modalConcluirRoom.number}</h3>
+                <p className="text-xs text-slate-500">{modalConcluirRoom.floor} • {modalConcluirRoom.category}</p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setModalConcluirRoom(null)} 
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs overflow-y-auto pr-1 flex-1">
+              {/* Quem está concluindo e Horário */}
+              <div className="bg-emerald-50/80 p-3 rounded-xl border border-emerald-100 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                    {loggedUser.iniciais || 'CR'}
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-emerald-800 font-bold uppercase block">Camareira Responsável</span>
+                    <strong className="text-slate-900 text-sm font-black">{loggedUser.nome}</strong>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-500 font-medium block">Início da Limpeza</span>
+                  <span className="text-xs font-bold text-slate-700">
+                    {modalConcluirRoom.inicioLimpeza ? new Date(modalConcluirRoom.inicioLimpeza).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Registrado'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Tempo gasto */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  ⏱ Tempo Total Gasto na Limpeza (minutos):
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="5"
+                    max="90"
+                    step="5"
+                    value={concluirMinutosGasto}
+                    onChange={(e) => setConcluirMinutosGasto(Number(e.target.value))}
+                    className="flex-1 accent-emerald-600 cursor-pointer"
+                  />
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      max="180"
+                      value={concluirMinutosGasto}
+                      onChange={(e) => setConcluirMinutosGasto(Math.max(1, Number(e.target.value)))}
+                      className="w-16 px-2 py-1 bg-slate-50 border border-slate-300 rounded-lg text-center font-bold text-slate-800"
+                    />
+                    <span className="text-xs text-slate-500 font-semibold">min</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Checklist de Serviços Realizados */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-bold text-slate-700">
+                    🧹 O que foi feito de limpeza no quarto?
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (concluirServicos.length === SERVICOS_LIMPEZA_PADRAO.length) {
+                        setConcluirServicos([]);
+                      } else {
+                        setConcluirServicos([...SERVICOS_LIMPEZA_PADRAO]);
+                      }
+                    }}
+                    className="text-[10px] text-emerald-700 font-bold hover:underline cursor-pointer"
+                  >
+                    {concluirServicos.length === SERVICOS_LIMPEZA_PADRAO.length ? 'Desmarcar todos' : 'Marcar todos'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  {SERVICOS_LIMPEZA_PADRAO.map(serv => {
+                    const isChecked = concluirServicos.includes(serv);
+                    return (
+                      <label 
+                        key={serv} 
+                        className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors text-[11px] ${
+                          isChecked ? 'bg-white font-semibold text-slate-900 shadow-2xs' : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setConcluirServicos(prev => [...prev, serv]);
+                            } else {
+                              setConcluirServicos(prev => prev.filter(s => s !== serv));
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                        />
+                        <span className="truncate">{serv}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Observações da camareira */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  📝 Observações para a Gestão / Recepção (opcional):
+                </label>
+                <textarea
+                  value={concluirObservacoes}
+                  onChange={(e) => setConcluirObservacoes(e.target.value)}
+                  placeholder="Ex: Deixei 1 cobertor extra no armário; controle da TV com pilha nova..."
+                  rows={2}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 shrink-0">
+              <button
+                type="button"
+                onClick={() => setModalConcluirRoom(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarConclusao}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+              >
+                <span className="material-symbols-outlined text-base">check_circle</span>
+                <span>Confirmar & Liberar Quarto</span>
               </button>
             </div>
           </div>

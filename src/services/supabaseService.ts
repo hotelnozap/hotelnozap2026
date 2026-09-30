@@ -3107,7 +3107,22 @@ const SEED_QUARTOS_PADRAO: any[] = [
 ];
 
 export const quartosService = {
-  notifyQuartoAlterado(data: { quartoId: string; numero?: string; status: string; hotel_id?: string; hospede_atual?: string | null; origem?: string }) {
+  notifyQuartoAlterado(data: { 
+    quartoId: string; 
+    numero?: string; 
+    status: string; 
+    hotel_id?: string; 
+    hospede_atual?: string | null; 
+    origem?: string;
+    camareira_id?: string | null;
+    camareira_nome?: string | null;
+    inicio_limpeza?: string | null;
+    hkStatus?: string;
+    tempo_gasto_minutos?: number;
+    servicos_realizados?: string[];
+    observacoes?: string;
+    [key: string]: any;
+  }) {
     // 1. Notifica subscribers locais registrados no mesmo processo
     _quartosSubscribers.forEach(cb => {
       try { cb(data); } catch {}
@@ -3455,6 +3470,9 @@ export const quartosService = {
     if (changes.comodidades) {
       finalItems.comodidades = changes.comodidades;
     }
+    if (changes.housekeeping !== undefined) {
+      finalItems.housekeeping = changes.housekeeping;
+    }
 
     const updated = local.map(q => (q.id === id || (changes.number && q.number === changes.number) || (changes.numero && q.number === changes.numero)) ? {
       ...q,
@@ -3603,7 +3621,22 @@ export const quartosService = {
     return true;
   },
 
-  subscribeQuartos(callback: (info?: { quartoId?: string; numero?: string; status?: string; hotel_id?: string; hospede_atual?: string | null }) => void): () => void {
+  subscribeQuartos(callback: (info?: { 
+    quartoId?: string; 
+    numero?: string; 
+    status?: string; 
+    hotel_id?: string; 
+    hospede_atual?: string | null;
+    origem?: string;
+    camareira_id?: string | null;
+    camareira_nome?: string | null;
+    inicio_limpeza?: string | null;
+    hkStatus?: string;
+    tempo_gasto_minutos?: number;
+    servicos_realizados?: string[];
+    observacoes?: string;
+    [key: string]: any;
+  }) => void): () => void {
     const listeners: Array<() => void> = [];
 
     // 1. Conecta no canal compartilhado Supabase Realtime (WebSocket cross-browser e multidispositivos)
@@ -6615,5 +6648,321 @@ export const hotelConfigService = {
     }
   }
 };
+
+// ============================================================================
+// SERVIÇO: STATUS DOS QUARTOS (GESTÃO ADMINISTRATIVA SAAS & MAPA DOS HOTÉIS)
+// ============================================================================
+
+export interface StatusQuartoData {
+  id: string;
+  slug: string;
+  nome: string;
+  descricao?: string;
+  icone: string;
+  cor_fundo: string;
+  cor_texto: string;
+  cor_borda: string;
+  permite_ocupacao: boolean;
+  padrao_sistema: boolean;
+  status: 'ativo' | 'inativo';
+  ordem: number;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+export const INITIAL_STATUS_QUARTOS: StatusQuartoData[] = [
+  {
+    id: 'status_livre_default',
+    slug: 'livre',
+    nome: 'Livre',
+    descricao: 'Quarto limpo, inspecionado e pronto para hospedagem ou venda.',
+    icone: 'check_circle',
+    cor_fundo: '#ECFDF5',
+    cor_texto: '#065F46',
+    cor_borda: '#A7F3D0',
+    permite_ocupacao: true,
+    padrao_sistema: true,
+    status: 'ativo',
+    ordem: 1
+  },
+  {
+    id: 'status_ocupado_default',
+    slug: 'ocupado',
+    nome: 'Ocupado',
+    descricao: 'Quarto com hóspede ativo e estadia em andamento.',
+    icone: 'lock',
+    cor_fundo: '#FEF2F2',
+    cor_texto: '#991B1B',
+    cor_borda: '#FECDD3',
+    permite_ocupacao: false,
+    padrao_sistema: true,
+    status: 'ativo',
+    ordem: 2
+  },
+  {
+    id: 'status_limpeza_default',
+    slug: 'limpeza',
+    nome: 'Em Limpeza',
+    descricao: 'Quarto aguardando ou em processo de higienização pela equipe de governança.',
+    icone: 'cleaning_services',
+    cor_fundo: '#FFFBEB',
+    cor_texto: '#92400E',
+    cor_borda: '#FDE68A',
+    permite_ocupacao: false,
+    padrao_sistema: true,
+    status: 'ativo',
+    ordem: 3
+  },
+  {
+    id: 'status_manutencao_default',
+    slug: 'manutencao',
+    nome: 'Em Manutenção',
+    descricao: 'Quarto temporariamente fora de serviço para reparos ou vistoria técnica.',
+    icone: 'build',
+    cor_fundo: '#EFF6FF',
+    cor_texto: '#1E40AF',
+    cor_borda: '#BFDBFE',
+    permite_ocupacao: false,
+    padrao_sistema: true,
+    status: 'ativo',
+    ordem: 4
+  },
+  {
+    id: 'status_reservado_default',
+    slug: 'reservado',
+    nome: 'Reservado',
+    descricao: 'Quarto bloqueado para reserva confirmada com check-in previsto.',
+    icone: 'bookmark',
+    cor_fundo: '#F5F3FF',
+    cor_texto: '#5B21B6',
+    cor_borda: '#DDD6FE',
+    permite_ocupacao: false,
+    padrao_sistema: false,
+    status: 'ativo',
+    ordem: 5
+  },
+  {
+    id: 'status_interditado_default',
+    slug: 'interditado',
+    nome: 'Interditado',
+    descricao: 'Quarto bloqueado administrativamente por período indeterminado.',
+    icone: 'block',
+    cor_fundo: '#F3F4F6',
+    cor_texto: '#374151',
+    cor_borda: '#E5E7EB',
+    permite_ocupacao: false,
+    padrao_sistema: false,
+    status: 'ativo',
+    ordem: 6
+  }
+];
+
+const LOCAL_STORAGE_STATUS_QUARTOS = 'hotelnozap_status_quartos_saas';
+
+export const statusQuartosService = {
+  getLocalStatus(): StatusQuartoData[] {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_STATUS_QUARTOS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { /* ignore */ }
+    return INITIAL_STATUS_QUARTOS;
+  },
+
+  setLocalStatus(list: StatusQuartoData[]): void {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_STATUS_QUARTOS, JSON.stringify(list));
+    } catch { /* ignore */ }
+  },
+
+  async getStatusQuartos(apenasAtivos: boolean = false): Promise<StatusQuartoData[]> {
+    try {
+      const { data, error } = await supabase
+        .from('status_quartos')
+        .select('*')
+        .order('ordem', { ascending: true });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const mapped: StatusQuartoData[] = data.map((row: any) => ({
+          id: row.id,
+          slug: row.slug,
+          nome: row.nome,
+          descricao: row.descricao || '',
+          icone: row.icone || 'bed',
+          cor_fundo: row.cor_fundo || '#ECFDF5',
+          cor_texto: row.cor_texto || '#065F46',
+          cor_borda: row.cor_borda || '#A7F3D0',
+          permite_ocupacao: Boolean(row.permite_ocupacao),
+          padrao_sistema: Boolean(row.padrao_sistema),
+          status: row.status === 'inativo' ? 'inativo' : 'ativo',
+          ordem: Number(row.ordem) || 1,
+          criado_em: row.criado_em,
+          atualizado_em: row.atualizado_em
+        }));
+
+        this.setLocalStatus(mapped);
+        return apenasAtivos ? mapped.filter(s => s.status === 'ativo') : mapped;
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar status_quartos no Supabase, usando cache local:', e);
+    }
+
+    const local = this.getLocalStatus();
+    return apenasAtivos ? local.filter(s => s.status === 'ativo') : local;
+  },
+
+  async createStatusQuarto(data: Omit<StatusQuartoData, 'id'>): Promise<{ success: boolean; data?: StatusQuartoData; error?: string }> {
+    const slug = data.slug.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '_');
+    const currentList = this.getLocalStatus();
+
+    if (currentList.some(s => s.slug === slug)) {
+      return { success: false, error: `Já existe um status com o código identificador "${slug}".` };
+    }
+
+    const newId = `status_${slug}_${Date.now()}`;
+    const newRecord: StatusQuartoData = {
+      ...data,
+      id: newId,
+      slug,
+      nome: data.nome.trim(),
+      descricao: data.descricao?.trim() || '',
+      icone: data.icone || 'bed',
+      cor_fundo: data.cor_fundo || '#ECFDF5',
+      cor_texto: data.cor_texto || '#065F46',
+      cor_borda: data.cor_borda || '#A7F3D0',
+      permite_ocupacao: Boolean(data.permite_ocupacao),
+      padrao_sistema: false,
+      status: data.status || 'ativo',
+      ordem: Number(data.ordem) || (currentList.length + 1)
+    };
+
+    // 1. Tenta salvar no Supabase
+    try {
+      const { data: inserted, error } = await supabase
+        .from('status_quartos')
+        .insert({
+          slug: newRecord.slug,
+          nome: newRecord.nome,
+          descricao: newRecord.descricao,
+          icone: newRecord.icone,
+          cor_fundo: newRecord.cor_fundo,
+          cor_texto: newRecord.cor_texto,
+          cor_borda: newRecord.cor_borda,
+          permite_ocupacao: newRecord.permite_ocupacao,
+          padrao_sistema: false,
+          status: newRecord.status,
+          ordem: newRecord.ordem
+        })
+        .select('*')
+        .single();
+
+      if (!error && inserted) {
+        newRecord.id = inserted.id;
+      }
+    } catch (e) {
+      console.warn('Aviso ao persistir status_quartos no banco:', e);
+    }
+
+    // 2. Persiste no LocalStorage
+    const updated = [...currentList, newRecord].sort((a, b) => a.ordem - b.ordem);
+    this.setLocalStatus(updated);
+
+    this.notifyStatusQuartosAlterado();
+    return { success: true, data: newRecord };
+  },
+
+  async updateStatusQuarto(id: string, changes: Partial<StatusQuartoData>): Promise<{ success: boolean; data?: StatusQuartoData; error?: string }> {
+    const currentList = this.getLocalStatus();
+    const existing = currentList.find(s => s.id === id || s.slug === id);
+
+    if (!existing) {
+      return { success: false, error: 'Status do quarto não encontrado.' };
+    }
+
+    // Não permite alterar o slug de status padrão do sistema
+    if (existing.padrao_sistema && changes.slug && changes.slug !== existing.slug) {
+      return { success: false, error: 'O código/slug dos status padrão do sistema não pode ser alterado para garantir a integridade das reservas.' };
+    }
+
+    const payload: any = {};
+    if (changes.nome !== undefined) payload.nome = changes.nome.trim();
+    if (changes.descricao !== undefined) payload.descricao = changes.descricao.trim();
+    if (changes.icone !== undefined) payload.icone = changes.icone.trim();
+    if (changes.cor_fundo !== undefined) payload.cor_fundo = changes.cor_fundo.trim();
+    if (changes.cor_texto !== undefined) payload.cor_texto = changes.cor_texto.trim();
+    if (changes.cor_borda !== undefined) payload.cor_borda = changes.cor_borda.trim();
+    if (changes.permite_ocupacao !== undefined) payload.permite_ocupacao = changes.permite_ocupacao;
+    if (changes.status !== undefined) payload.status = changes.status;
+    if (changes.ordem !== undefined) payload.ordem = Number(changes.ordem);
+
+    // 1. Tenta atualizar no Supabase
+    try {
+      await supabase
+        .from('status_quartos')
+        .update(payload)
+        .or(`id.eq.${id},slug.eq.${id}`);
+    } catch (e) {
+      console.warn('Aviso ao atualizar status_quartos no Supabase:', e);
+    }
+
+    // 2. Atualiza local storage
+    const updatedList = currentList.map(s => {
+      if (s.id === id || s.slug === id) {
+        return {
+          ...s,
+          ...changes,
+          nome: changes.nome !== undefined ? changes.nome.trim() : s.nome,
+          descricao: changes.descricao !== undefined ? changes.descricao.trim() : s.descricao,
+          icone: changes.icone !== undefined ? changes.icone.trim() : s.icone,
+          cor_fundo: changes.cor_fundo !== undefined ? changes.cor_fundo.trim() : s.cor_fundo,
+          cor_texto: changes.cor_texto !== undefined ? changes.cor_texto.trim() : s.cor_texto,
+          cor_borda: changes.cor_borda !== undefined ? changes.cor_borda.trim() : s.cor_borda,
+          status: changes.status !== undefined ? changes.status : s.status,
+          ordem: changes.ordem !== undefined ? Number(changes.ordem) : s.ordem
+        };
+      }
+      return s;
+    }).sort((a, b) => a.ordem - b.ordem);
+
+    this.setLocalStatus(updatedList);
+    this.notifyStatusQuartosAlterado();
+    return { success: true };
+  },
+
+  async deleteStatusQuarto(id: string): Promise<{ success: boolean; error?: string }> {
+    const currentList = this.getLocalStatus();
+    const existing = currentList.find(s => s.id === id || s.slug === id);
+
+    if (existing?.padrao_sistema) {
+      return { success: false, error: 'Status padrão do sistema não podem ser excluídos, pois são utilizados nas rotinas automáticas de reservas e check-in/out. Você pode editar seu nome ou cores se desejar.' };
+    }
+
+    // 1. Tenta deletar no Supabase
+    try {
+      await supabase
+        .from('status_quartos')
+        .delete()
+        .or(`id.eq.${id},slug.eq.${id}`);
+    } catch (e) {
+      console.warn('Aviso ao deletar status_quartos no Supabase:', e);
+    }
+
+    // 2. Atualiza local storage
+    const filtered = currentList.filter(s => s.id !== id && s.slug !== id);
+    this.setLocalStatus(filtered);
+
+    this.notifyStatusQuartosAlterado();
+    return { success: true };
+  },
+
+  notifyStatusQuartosAlterado() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('hotel_status_quartos_atualizado'));
+    }
+  }
+};
+
 
 
