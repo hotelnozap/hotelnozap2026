@@ -28,7 +28,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   // Planos vindos do Supabase
   const [planos, setPlanos] = useState<PlanoView[]>([]);
   const [loadingPlanos, setLoadingPlanos] = useState(true);
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
 
   // Calculadora de Economia
   const [roomsCount, setRoomsCount] = useState<number>(20);
@@ -1225,43 +1224,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0b1c30] mt-3 mb-4">
               Escolha o Plano Ideal para o Tamanho da sua Operação
             </h2>
-            <p className="text-[#45464d] text-sm sm:text-base mb-8">
+            <p className="text-[#45464d] text-sm sm:text-base">
               Sem taxas sobre reservas, sem pegadinhas contratuais. Ativação imediata e sem fidelidade.
             </p>
-
-            <div className="inline-flex items-center p-1.5 rounded-2xl bg-[#f8f9ff] border border-[#e2e8f0]">
-              <button
-                onClick={() => setBillingPeriod('monthly')}
-                className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                  billingPeriod === 'monthly'
-                    ? 'bg-[#003400] text-white shadow-xs'
-                    : 'text-[#45464d] hover:text-[#0b1c30]'
-                }`}
-              >
-                Faturamento Mensal
-              </button>
-              <button
-                onClick={() => setBillingPeriod('annual')}
-                className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  billingPeriod === 'annual'
-                    ? 'bg-[#003400] text-white shadow-xs'
-                    : 'text-[#45464d] hover:text-[#0b1c30]'
-                }`}
-              >
-                <span>Faturamento Anual</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FDB116] text-[#0b1c30]">
-                  20% OFF
-                </span>
-              </button>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-6xl mx-auto">
             {displayPlanos.map((plano) => {
-              const displayedPrice = billingPeriod === 'annual'
-                ? Math.round(plano.basePrice * 0.8)
-                : plano.basePrice;
-
               return (
                 <div
                   key={plano.id}
@@ -1300,10 +1269,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
                     <div className="mb-6 pb-6 border-b border-[#e2e8f0]">
                       <span className="text-3xl sm:text-4xl font-black text-[#0b1c30]">
-                        R$ {displayedPrice}
+                        R$ {plano.basePrice}
                       </span>
                       <span className="text-xs text-[#45464d] font-semibold ml-1">
-                        {billingPeriod === 'annual' ? '/mês no anual' : '/mês'}
+                        /mês
                       </span>
                     </div>
 
