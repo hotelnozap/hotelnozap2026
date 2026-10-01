@@ -259,20 +259,57 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     return counts;
   }, [hoteisComPlano, creditosMap]);
 
-  // Filtragem dos hotéis: APENAS com planos cadastrados e ORDEM: mais recente primeiro
+  // Hotéis com planos pagos (não estão no plano grátis)
+  const hoteisPagos = useMemo(() => {
+    return hoteisComPlano.filter(h => getHotelPlanKey(h) !== 'gratis');
+  }, [hoteisComPlano]);
+
+  // Filtragem dos hotéis:
+  // - Padrão: mostra somente os hotéis que NÃO estão no plano grátis
+  // - Pesquisa/Filtro: os demais hotéis ficam totalmente disponíveis para pesquisa ou quando selecionado o filtro
   const filteredHoteis = useMemo(() => {
+    const isSearching = Boolean(searchTerm && searchTerm.trim().length > 0);
+    const q = searchTerm.toLowerCase().trim();
+
     return hoteisComPlano
       .filter(h => {
-        const q = searchTerm.toLowerCase().trim();
-        const matchSearch = !q || h.name.toLowerCase().includes(q) || (h.cnpj || '').includes(q) || (h.managerName || '').toLowerCase().includes(q);
-        if (!matchSearch) return false;
+        const k = getHotelPlanKey(h);
+        const isGratis = k === 'gratis';
 
-        // Filtro por Plano
-        if (planFilter !== 'todos') {
-          const k = getHotelPlanKey(h);
-          if (k !== planFilter) return false;
+        // 1. Quando NÃO está em modo pesquisa por texto:
+        if (!isSearching) {
+          if (planFilter === 'todos') {
+            // Regra principal: mostrar somente os que NÃO estão no plano grátis
+            if (isGratis) return false;
+          } else if (planFilter === 'todos_com_gratis') {
+            // Se o admin escolher ver todos
+          } else {
+            // Filtro por plano específico (ex: 'gratis' ou '1', '2', etc.)
+            if (k !== planFilter) return false;
+          }
+        } else {
+          // 2. Quando ESTÁ pesquisando por texto:
+          // Se houver um filtro específico selecionado (diferente de 'todos' e 'todos_com_gratis'), respeita
+          if (planFilter !== 'todos' && planFilter !== 'todos_com_gratis') {
+            if (k !== planFilter) return false;
+          }
+          // Caso contrário (planFilter === 'todos'), todos os hotéis (incluindo plano grátis) ficam disponíveis para pesquisa!
         }
 
+        // Filtro de texto da pesquisa (nome, CNPJ, gestor, cidade, UF, email, etc.)
+        if (isSearching) {
+          const matchSearch =
+            h.name.toLowerCase().includes(q) ||
+            (h.cnpj || '').includes(q) ||
+            (h.managerName || '').toLowerCase().includes(q) ||
+            (h.city || '').toLowerCase().includes(q) ||
+            (h.uf || '').toLowerCase().includes(q) ||
+            (h.managerEmail || '').toLowerCase().includes(q) ||
+            (h.razaoSocial || '').toLowerCase().includes(q);
+          if (!matchSearch) return false;
+        }
+
+        // Filtro por status de crédito
         const info = creditosMap.get(h.id);
         if (!info) return true;
 
@@ -334,18 +371,26 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     carregarHoteis();
   };
 
-  // Totalizadores (apenas hotéis com plano cadastrado)
+  // Base para os totalizadores (hotéis em planos pagos por padrão, ou todos se selecionado ou pesquisando)
+  const baseParaTotalizadores = useMemo(() => {
+    if (planFilter === 'todos_com_gratis' || planFilter === 'gratis' || (searchTerm && searchTerm.trim().length > 0)) {
+      return hoteisComPlano;
+    }
+    return hoteisPagos;
+  }, [hoteisComPlano, hoteisPagos, planFilter, searchTerm]);
+
+  // Totalizadores
   const totalHoteisEmDegustacao = useMemo(() => {
-    return hoteisComPlano.filter(h => creditosMap.get(h.id)?.emDegustacao).length;
-  }, [hoteisComPlano, creditosMap]);
+    return baseParaTotalizadores.filter(h => creditosMap.get(h.id)?.emDegustacao).length;
+  }, [baseParaTotalizadores, creditosMap]);
 
   const totalEmAlerta = useMemo(() => {
-    return hoteisComPlano.filter(h => creditosMap.get(h.id)?.status === 'alerta').length;
-  }, [hoteisComPlano, creditosMap]);
+    return baseParaTotalizadores.filter(h => creditosMap.get(h.id)?.status === 'alerta').length;
+  }, [baseParaTotalizadores, creditosMap]);
 
   const totalExpirados = useMemo(() => {
-    return hoteisComPlano.filter(h => creditosMap.get(h.id)?.status === 'expirado').length;
-  }, [hoteisComPlano, creditosMap]);
+    return baseParaTotalizadores.filter(h => creditosMap.get(h.id)?.status === 'expirado').length;
+  }, [baseParaTotalizadores, creditosMap]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9ff] overflow-y-auto">
@@ -488,15 +533,25 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
 
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Barra de Pesquisa */}
-              <div className="relative min-w-[200px]">
+              <div className="relative min-w-[240px] sm:min-w-[280px]">
                 <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar hotel, CNPJ ou gestor..."
-                  className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#003400] bg-slate-50"
+                  placeholder="Pesquisar em todos os hotéis (nome, CNPJ)..."
+                  className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#003400] bg-slate-50 focus:bg-white transition-all shadow-2xs"
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 cursor-pointer p-0.5 rounded-full hover:bg-slate-200 transition-colors"
+                    title="Limpar pesquisa e voltar aos planos pagos"
+                  >
+                    <span className="material-symbols-outlined text-base">close</span>
+                  </button>
+                )}
               </div>
 
               {/* Filtro por Plano */}
@@ -504,9 +559,10 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                 <select
                   value={planFilter}
                   onChange={(e) => setPlanFilter(e.target.value)}
-                  className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#003400] cursor-pointer"
+                  className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#003400] cursor-pointer shadow-2xs"
                 >
-                  <option value="todos">Todos os Planos ({hoteisComPlano.length})</option>
+                  <option value="todos">Hotéis com Planos Pagos ({hoteisPagos.length})</option>
+                  <option value="todos_com_gratis">Todos os Hotéis ({hoteisComPlano.length})</option>
                   {PLANOS_CARDS.map((p) => (
                     <option key={p.key} value={p.key}>
                       {p.nome} ({planCounts[p.key] || 0})
@@ -524,7 +580,7 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                     statusFilter === 'todos' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Todos ({hoteisComPlano.length})
+                  Todos ({baseParaTotalizadores.length})
                 </button>
                 <button
                   type="button"
@@ -556,6 +612,26 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Banner Informativo quando pesquisando */}
+          {searchTerm.trim().length > 0 && (
+            <div className="px-4 sm:px-6 py-2 bg-emerald-50/80 border-b border-emerald-100 flex items-center justify-between text-xs text-emerald-950">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-700 text-base">manage_search</span>
+                <span>
+                  Pesquisando em todos os hotéis do sistema (incluindo Plano Grátis): <strong>{filteredHoteis.length}</strong> resultado(s) para &quot;<strong>{searchTerm}</strong>&quot;
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Voltar aos planos pagos</span>
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+          )}
 
           {/* Listagem em Tabela */}
           <div className="overflow-x-auto">
@@ -748,7 +824,14 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
               <div className="text-slate-600 font-medium">
                 Mostrando <span className="font-bold text-slate-900">{totalItems > 0 ? startIndex + 1 : 0}</span> a{' '}
                 <span className="font-bold text-slate-900">{endIndex}</span> de{' '}
-                <span className="font-bold text-slate-900">{totalItems}</span> hotéis com planos cadastrados
+                <span className="font-bold text-slate-900">{totalItems}</span> hotéis{' '}
+                {searchTerm.trim().length > 0
+                  ? 'encontrados na pesquisa'
+                  : planFilter === 'todos'
+                    ? 'com planos pagos (exceto grátis)'
+                    : planFilter === 'gratis'
+                      ? 'no Plano Grátis'
+                      : 'cadastrados no plano selecionado'}
               </div>
 
               {totalPages > 1 && (
