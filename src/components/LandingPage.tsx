@@ -252,50 +252,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] antialiased selection:bg-[#10b981] selection:text-white font-sans">
       {/* 1. HEADER & BARRA DE NAVEGAÇÃO STICKY */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#e2e8f0] transition-all">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          {/* LOGO */}
-          <a href="/lp" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#003400] to-[#006c49] flex items-center justify-center text-white font-extrabold text-lg shadow-sm group-hover:scale-105 transition-transform">
-              <span className="text-[#6cf8bb]">H</span>Z
-            </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold tracking-tight text-lg text-[#0b1c30] flex items-center gap-1.5 leading-tight">
-                HOTEL NO ZAP
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10b981]"></span>
-                </span>
-              </span>
-              <span className="text-[10px] font-semibold text-[#45464d] tracking-widest uppercase">PMS & Direct Booking</span>
-            </div>
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          {/* LOGO OFICIAL */}
+          <a href="/lp" className="flex items-center shrink-0 group">
+            <img
+              src="/logo.png"
+              alt="Hotel no Zap - Hospitalidade Digital"
+              className="h-10 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </a>
 
           {/* LINKS CENTRAIS (DESKTOP) */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-[#45464d]">
-            <a href="#funcionalidades" className="hover:text-[#006c49] transition-colors">Funcionalidades</a>
-            <a href="#motor-whatsapp" className="hover:text-[#006c49] transition-colors flex items-center gap-1">
-              Motor WhatsApp
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-7 text-xs xl:text-sm font-semibold text-[#45464d] whitespace-nowrap">
+            <a href="#funcionalidades" className="hover:text-[#006c49] transition-colors py-1">Funcionalidades</a>
+            <a href="#motor-whatsapp" className="hover:text-[#006c49] transition-colors py-1 flex items-center gap-1.5">
+              <span>Motor WhatsApp</span>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#10b981]/15 text-[#006c49]">24/7</span>
             </a>
-            <a href="#calculadora" className="hover:text-[#006c49] transition-colors">Calculadora de Economia</a>
-            <a href="#planos" className="hover:text-[#006c49] transition-colors">Planos & Preços</a>
-            <a href="#depoimentos" className="hover:text-[#006c49] transition-colors">Depoimentos</a>
+            <a href="#calculadora" className="hover:text-[#006c49] transition-colors py-1">Calculadora</a>
+            <a href="#planos" className="hover:text-[#006c49] transition-colors py-1">Planos & Preços</a>
+            <a href="#depoimentos" className="hover:text-[#006c49] transition-colors py-1">Depoimentos</a>
           </nav>
 
           {/* AÇÕES À DIREITA */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 whitespace-nowrap">
             <button
               onClick={onNavigateToLogin}
-              className="hidden sm:inline-flex text-sm font-semibold text-[#0b1c30] hover:text-[#006c49] px-3 py-2 transition-colors cursor-pointer"
+              className="hidden md:inline-flex text-xs xl:text-sm font-bold text-[#0b1c30] hover:text-[#006c49] px-2.5 xl:px-3 py-2 transition-colors cursor-pointer"
             >
-              Entrar no Sistema
+              Entrar
             </button>
             <button
               onClick={() => handleOpenProspectModal('Plano Professional')}
-              className="inline-flex items-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-extrabold text-xs sm:text-sm px-3.5 sm:px-5 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs xl:text-sm px-3 sm:px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
             >
               <span>Testar 30 Dias Grátis</span>
-              <span className="material-symbols-outlined text-base font-bold">arrow_forward</span>
+              <span className="material-symbols-outlined text-base font-bold hidden sm:inline">arrow_forward</span>
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -320,9 +312,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             <a 
               href="#motor-whatsapp" 
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-sm font-semibold text-[#0b1c30] hover:text-[#006c49] py-1"
+              className="block text-sm font-semibold text-[#0b1c30] hover:text-[#006c49] py-1 flex items-center justify-between"
             >
-              Motor WhatsApp (24/7)
+              <span>Motor WhatsApp</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#10b981]/15 text-[#006c49]">24/7</span>
             </a>
             <a 
               href="#calculadora" 
@@ -345,18 +338,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             >
               Depoimentos
             </a>
-            <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+            <div className="pt-3 border-t border-gray-100 flex items-center gap-3 justify-between">
               <button
                 onClick={() => { setMobileMenuOpen(false); onNavigateToLogin(); }}
-                className="text-sm font-bold text-[#006c49]"
+                className="text-xs sm:text-sm font-bold text-[#006c49] py-2 px-3 rounded-lg border border-[#006c49]/30"
               >
                 Acessar Login
               </button>
               <button
                 onClick={() => { setMobileMenuOpen(false); handleOpenProspectModal('Plano Professional'); }}
-                className="bg-[#003400] text-white text-xs font-bold px-3 py-1.5 rounded-lg"
+                className="bg-[#003400] text-white text-xs font-bold px-3.5 py-2 rounded-lg"
               >
-                Testar 30 Dias
+                Testar 30 Dias Grátis
               </button>
             </div>
           </div>
@@ -1369,11 +1362,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 mb-12">
             <div className="lg:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#003400] to-[#006c49] flex items-center justify-center text-white font-extrabold text-base">
-                  <span className="text-[#6cf8bb]">H</span>Z
+              <div className="mb-4">
+                <div className="inline-block bg-white p-2 rounded-xl shadow-xs">
+                  <img
+                    src="/logo.png"
+                    alt="Hotel no Zap - Hospitalidade Digital"
+                    className="h-8 sm:h-9 w-auto object-contain"
+                  />
                 </div>
-                <span className="font-extrabold text-lg text-white tracking-tight">HOTEL NO ZAP</span>
               </div>
               <p className="text-xs sm:text-sm text-white/60 leading-relaxed mb-6 max-w-sm">
                 A inteligência que seu hotel precisa no canal que seu hóspede usa. Gestão operacional completa e motor de reservas diretas sem comissões.
