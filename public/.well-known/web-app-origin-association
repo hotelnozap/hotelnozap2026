@@ -1,0 +1,16 @@
+{
+  "web_apps": [
+    {
+      "manifest": "https://hotelnozap.com.br/manifest.json",
+      "details": {
+        "paths": ["/*"]
+      }
+    },
+    {
+      "manifest": "https://app.hotelnozap.com.br/manifest.json",
+      "details": {
+        "paths": ["/*"]
+      }
+    }
+  ]
+}
