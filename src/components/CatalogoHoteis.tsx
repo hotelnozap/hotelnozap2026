@@ -1119,7 +1119,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium mt-1">
-                  Exibindo 5 acomodações por linha com reserva direta via WhatsApp. Role a página para carregar mais.
+                  Exibindo 5 acomodações em {focusedCity || searchQuery || 'sua cidade'}
                 </p>
               </div>
 
