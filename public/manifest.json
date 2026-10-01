@@ -6,13 +6,22 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "any",
   "background_color": "#003400",
   "theme_color": "#003400",
   "lang": "pt-BR",
   "dir": "ltr",
-  "categories": ["business", "travel", "productivity", "utilities"],
+  "categories": [
+    "business",
+    "travel",
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -45,6 +54,36 @@
       "purpose": "any"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "sizes": "1600x1280",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Painel Principal e Métricas do Hotel no Zap"
+    },
+    {
+      "src": "/screenshots/desktop-mapa.png",
+      "sizes": "1600x622",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Mapa de Ocupação e Status dos Quartos em Tempo Real"
+    },
+    {
+      "src": "/screenshots/mobile-dashboard.png",
+      "sizes": "455x1600",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Visão Mobile da Recepção e Operação Rápida"
+    },
+    {
+      "src": "/screenshots/mobile-mapa.png",
+      "sizes": "487x1457",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Gestão de Quartos e Reservas no Celular"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Visão Geral",
@@ -75,5 +114,12 @@
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "handle_links": "preferred",
   "prefer_related_applications": false
 }
