@@ -12,13 +12,13 @@ export interface PacoteCredito {
 export const PACOTES_CREDITOS_MODELO_1: PacoteCredito[] = [
   {
     id: '1-credito',
-    nome: '1 Crédito (Adesão / Teste)',
+    nome: '1 Crédito',
     creditos: 1,
     diasBase: 30,
     diasBonus: 15,
     totalDias: 45,
     preco: 197.00,
-    vantagem: 'Ideal para conhecer e começar com 15 dias de folga'
+    vantagem: 'Inicie sem medo • 15 dias de bônus'
   },
   {
     id: '2-creditos',
@@ -28,7 +28,7 @@ export const PACOTES_CREDITOS_MODELO_1: PacoteCredito[] = [
     diasBonus: 15,
     totalDias: 75,
     preco: 349.00,
-    vantagem: 'Economia imediata com 2 meses e meio de acesso'
+    vantagem: 'Econômico • 60 dias base + 15 dias bônus'
   },
   {
     id: '3-creditos',
@@ -37,30 +37,138 @@ export const PACOTES_CREDITOS_MODELO_1: PacoteCredito[] = [
     diasBase: 90,
     diasBonus: 30,
     totalDias: 120,
-    preco: 497.00,
-    vantagem: 'Perfeito para cobrir uma alta temporada inteira'
+    preco: 591.00,
+    vantagem: 'Mais Vendido • 90 dias base + 30 dias bônus'
+  },
+  {
+    id: '4-creditos',
+    nome: '4 Créditos',
+    creditos: 4,
+    diasBase: 120,
+    diasBonus: 30,
+    totalDias: 150,
+    preco: 788.00,
+    vantagem: 'Ganhe 1 Mês Grátis • 120 dias base + 30 dias bônus'
+  },
+  {
+    id: '5-creditos',
+    nome: '5 Créditos',
+    creditos: 5,
+    diasBase: 150,
+    diasBonus: 30,
+    totalDias: 180,
+    preco: 985.00,
+    vantagem: '5 Meses + 1 mês Grátis • 150 dias base + 30 dias bônus'
   },
   {
     id: '6-creditos',
-    nome: '6 Créditos (Semestral)',
+    nome: '6 Créditos',
     creditos: 6,
     diasBase: 180,
     diasBonus: 45,
     totalDias: 225,
-    preco: 890.00,
-    vantagem: 'Maior tranquilidade para o gestor'
+    preco: 1182.00,
+    vantagem: 'Semestral • 180 dias base + 45 dias bônus'
+  },
+  {
+    id: '7-creditos',
+    nome: '7 Créditos',
+    creditos: 7,
+    diasBase: 210,
+    diasBonus: 0,
+    totalDias: 210,
+    preco: 1379.00,
+    vantagem: 'Septemestral • 210 dias de acesso'
+  },
+  {
+    id: '8-creditos',
+    nome: '8 Créditos',
+    creditos: 8,
+    diasBase: 240,
+    diasBonus: 30,
+    totalDias: 270,
+    preco: 1576.00,
+    vantagem: '8 Meses + 1 Mês Grátis • 240 dias base + 30 dias bônus'
   },
   {
     id: '12-creditos',
-    nome: '12 Créditos (Anual Fidelidade)',
+    nome: '12 Créditos (Anual)',
     creditos: 12,
     diasBase: 365,
     diasBonus: 60,
     totalDias: 425,
-    preco: 1690.00,
-    vantagem: '2 meses inteiros de bônus e maior economia'
+    preco: 2364.00,
+    vantagem: '-35% OFF 14 Meses • 365 dias base + 60 dias bônus'
   }
 ];
+
+export function parseCreditosFromName(name?: string, ordem?: any): number {
+  const n = String(name || '').toLowerCase();
+  if (n.includes('12')) return 12;
+  if (n.includes('8')) return 8;
+  if (n.includes('7')) return 7;
+  if (n.includes('6')) return 6;
+  if (n.includes('5')) return 5;
+  if (n.includes('4')) return 4;
+  if (n.includes('3')) return 3;
+  if (n.includes('2')) return 2;
+  if (n.includes('1') && !n.includes('10') && !n.includes('15')) return 1;
+  const numOrdem = Number(String(ordem || '').replace(/\D/g, ''));
+  if (!isNaN(numOrdem) && numOrdem >= 1 && numOrdem <= 12) return numOrdem;
+  return 1;
+}
+
+export function getPeriodicityDays(p?: string): number {
+  const low = String(p || '').toLowerCase();
+  if (low.includes('anual') || low.includes('12')) return 365;
+  if (low.includes('hendeca') || low.includes('11')) return 330;
+  if (low.includes('deca') || low.includes('10')) return 300;
+  if (low.includes('nona') || low.includes('9')) return 270;
+  if (low.includes('octo') || low.includes('8')) return 240;
+  if (low.includes('sept') || low.includes('7')) return 210;
+  if (low.includes('semest') || low.includes('6')) return 180;
+  if (low.includes('quinque') || low.includes('5')) return 150;
+  if (low.includes('quadri') || low.includes('4')) return 120;
+  if (low.includes('trimest') || low.includes('3')) return 90;
+  if (low.includes('bimest') || low.includes('2')) return 60;
+  return 30;
+}
+
+export function converterPlanoParaPacote(plano: any): PacoteCredito {
+  const creditos = parseCreditosFromName(plano.name || plano.nome, plano.order || plano.ordem);
+  const diasBase = getPeriodicityDays(plano.periodicity || plano.periodicidade);
+  const diasBonus = Number(plano.bonusDays ?? plano.trialDays ?? plano.dias_bonus ?? plano.dias_trial ?? 0);
+  const totalDias = diasBase + diasBonus;
+  const preco = Number(plano.basePrice ?? plano.valor_base ?? 0);
+  const vantagem = plano.tag || plano.description || plano.descricao || `${creditos} créditos com ${diasBonus} dias de bônus`;
+
+  return {
+    id: plano.id || `pacote-${creditos}`,
+    nome: plano.name || plano.nome || `${creditos} Créditos`,
+    creditos,
+    diasBase,
+    diasBonus,
+    totalDias,
+    preco,
+    vantagem
+  };
+}
+
+export function converterPlanosParaPacotes(planos: any[]): PacoteCredito[] {
+  if (!Array.isArray(planos) || planos.length === 0) return PACOTES_CREDITOS_MODELO_1;
+
+  const creditosValidos = planos
+    .filter(p => {
+      const nomeLow = (p.name || p.nome || '').toLowerCase();
+      const statusLow = (p.status || '').toLowerCase();
+      const preco = Number(p.basePrice ?? p.valor_base ?? 0);
+      return statusLow !== 'inativo' && !nomeLow.includes('grátis') && !nomeLow.includes('gratis') && !nomeLow.includes('maps') && preco > 0;
+    })
+    .map(converterPlanoParaPacote)
+    .sort((a, b) => a.creditos - b.creditos);
+
+  return creditosValidos.length > 0 ? creditosValidos : PACOTES_CREDITOS_MODELO_1;
+}
 
 export interface InfoCreditoHotel {
   saldoCreditos: number;
@@ -240,6 +348,16 @@ export const creditosService = {
     const novoSaldoCreditos = creditosAtuais + pacote.creditos;
 
     this.saveCreditoHotel(hotelId, novoSaldoCreditos, novaExpiracao.toISOString(), false);
+
+    // Atualiza status e plano no Supabase se existir
+    try {
+      import('../lib/supabase').then(({ supabase }) => {
+        supabase.from('hoteis').update({
+          status: 'ativo',
+          plano: pacote.nome
+        }).eq('id', hotelId);
+      });
+    } catch { /* ignore */ }
 
     return {
       saldoCreditos: novoSaldoCreditos,
