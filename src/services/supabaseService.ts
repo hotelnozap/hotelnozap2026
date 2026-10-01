@@ -5389,10 +5389,14 @@ export const planosService = {
         dias_trial: Number(plano.bonusDays !== undefined ? plano.bonusDays : (plano.trialDays !== undefined ? plano.trialDays : (plano.dias_trial || 0))),
         limite_quartos: plano.roomLimit !== undefined && plano.roomLimit !== null ? Number(plano.roomLimit) : 15,
         permite_quartos_extras: plano.allowExtraRooms !== false,
-        valor_quarto_extra: Number(plano.extraRoomPrice?.toString().replace(',', '.')) || 3.50,
+        valor_quarto_extra: plano.extraRoomPrice !== undefined && plano.extraRoomPrice !== null
+          ? (typeof plano.extraRoomPrice === 'number' ? plano.extraRoomPrice : (parseFloat(plano.extraRoomPrice.toString().replace(',', '.')) || 0))
+          : 3.50,
         conexoes_whatsapp: plano.whatsappConnections !== undefined && plano.whatsappConnections !== null ? Number(plano.whatsappConnections) : 1,
         permite_conexoes_extras: plano.allowExtraWa !== false,
-        valor_conexao_extra: Number(plano.extraWaPrice?.toString().replace(',', '.')) || 49.90,
+        valor_conexao_extra: plano.extraWaPrice !== undefined && plano.extraWaPrice !== null
+          ? (typeof plano.extraWaPrice === 'number' ? plano.extraWaPrice : (parseFloat(plano.extraWaPrice.toString().replace(',', '.')) || 0))
+          : 49.90,
         hoteis_assinantes: plano.hotelsSubscribersCount || 0,
         recursos: plano.features || [],
         recursos_desabilitados: plano.disabledFeatures || [],
@@ -5435,10 +5439,20 @@ export const planosService = {
       }
       if (changes.roomLimit !== undefined) payload.limite_quartos = Number(changes.roomLimit);
       if (changes.allowExtraRooms !== undefined) payload.permite_quartos_extras = Boolean(changes.allowExtraRooms);
-      if (changes.extraRoomPrice !== undefined) payload.valor_quarto_extra = Number(changes.extraRoomPrice?.toString().replace(',', '.')) || 3.50;
+      if (changes.extraRoomPrice !== undefined && changes.extraRoomPrice !== null) {
+        const num = typeof changes.extraRoomPrice === 'number'
+          ? changes.extraRoomPrice
+          : parseFloat(changes.extraRoomPrice.toString().replace(',', '.'));
+        payload.valor_quarto_extra = !isNaN(num) ? num : 3.50;
+      }
       if (changes.whatsappConnections !== undefined) payload.conexoes_whatsapp = Number(changes.whatsappConnections);
       if (changes.allowExtraWa !== undefined) payload.permite_conexoes_extras = Boolean(changes.allowExtraWa);
-      if (changes.extraWaPrice !== undefined) payload.valor_conexao_extra = Number(changes.extraWaPrice?.toString().replace(',', '.')) || 49.90;
+      if (changes.extraWaPrice !== undefined && changes.extraWaPrice !== null) {
+        const num = typeof changes.extraWaPrice === 'number'
+          ? changes.extraWaPrice
+          : parseFloat(changes.extraWaPrice.toString().replace(',', '.'));
+        payload.valor_conexao_extra = !isNaN(num) ? num : 49.90;
+      }
       if (changes.order !== undefined) payload.ordem = Number(changes.order?.toString().replace(/\D/g, '')) || 1;
       if (changes.features !== undefined) payload.recursos = changes.features;
       if (changes.disabledFeatures !== undefined) payload.recursos_desabilitados = changes.disabledFeatures;

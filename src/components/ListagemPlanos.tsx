@@ -20,9 +20,14 @@ export interface Plano {
   roomLimit: number;
   roomLimitText: string;
   roomExtraPriceText: string;
+  extraRoomPrice?: number;
+  allowExtraRooms?: boolean;
   whatsappConnections: number;
   whatsappConnectionsText: string;
   whatsappExtraPriceText: string;
+  extraWaPrice?: number;
+  allowExtraWa?: boolean;
+  internalNotes?: string;
   hotelsSubscribersCount: number;
   status: 'Ativo' | 'Inativo';
   isFeatured?: boolean;

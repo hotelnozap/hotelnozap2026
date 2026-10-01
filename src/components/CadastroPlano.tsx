@@ -93,6 +93,34 @@ export const formatPlanDescription = (
   }
 };
 
+export const formatCurrencyInput = (val: any, fallback: string = '0,00'): string => {
+  if (val === undefined || val === null || val === '') return fallback;
+  if (typeof val === 'number') {
+    return isNaN(val) ? fallback : val.toFixed(2).replace('.', ',');
+  }
+  const str = String(val).trim();
+  const match = str.match(/R\$\s*([\d,.]+)/);
+  if (match) return match[1].trim();
+  const num = parseFloat(str.replace(',', '.'));
+  if (!isNaN(num)) return num.toFixed(2).replace('.', ',');
+  return str;
+};
+
+export const parseAllowExtraRooms = (plan?: any): boolean => {
+  if (!plan) return true;
+  if (plan.allowExtraRooms !== undefined) return Boolean(plan.allowExtraRooms);
+  if (plan.permite_quartos_extras !== undefined) return Boolean(plan.permite_quartos_extras);
+  if (typeof plan.roomExtraPriceText === 'string' && plan.roomExtraPriceText.toLowerCase().includes('sem quartos')) return false;
+  return true;
+};
+
+export const parseAllowExtraWa = (plan?: any): boolean => {
+  if (!plan) return true;
+  if (plan.allowExtraWa !== undefined) return Boolean(plan.allowExtraWa);
+  if (plan.permite_conexoes_extras !== undefined) return Boolean(plan.permite_conexoes_extras);
+  return true;
+};
+
 interface CadastroPlanoProps {
   planToEdit?: Plano | null;
   onBack: () => void;
@@ -122,9 +150,9 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
   const [billingCycle, setBillingCycle] = useState<number>(() => {
     return parsePeriodicityToMonths(planToEdit?.periodicity);
   });
-  const [basePrice, setBasePrice] = useState<string>(
-    planToEdit?.basePrice ? planToEdit.basePrice.toFixed(2).replace('.', ',') : '197,00'
-  );
+  const [basePrice, setBasePrice] = useState<string>(() => {
+    return formatCurrencyInput(planToEdit?.basePrice, '197,00');
+  });
   const [cycleDiscount, setCycleDiscount] = useState<string>(() => {
     if (!planToEdit) return '';
     const rawDisc = (planToEdit as any).cycleDiscount || '';
@@ -142,20 +170,34 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
   const [baseRooms, setBaseRooms] = useState<number>(
     planToEdit?.roomLimit !== undefined && planToEdit?.roomLimit !== null ? planToEdit.roomLimit : 45
   );
-  const [allowExtraRooms, setAllowExtraRooms] = useState<boolean>(true);
-  const [extraRoomPrice, setExtraRoomPrice] = useState<string>('3,50');
+  const [allowExtraRooms, setAllowExtraRooms] = useState<boolean>(() => parseAllowExtraRooms(planToEdit));
+  const [extraRoomPrice, setExtraRoomPrice] = useState<string>(() => {
+    const rawVal = planToEdit?.extraRoomPrice !== undefined && planToEdit?.extraRoomPrice !== null
+      ? planToEdit.extraRoomPrice
+      : (planToEdit as any)?.valor_quarto_extra !== undefined && (planToEdit as any)?.valor_quarto_extra !== null
+      ? (planToEdit as any).valor_quarto_extra
+      : planToEdit?.roomExtraPriceText;
+    return formatCurrencyInput(rawVal, '3,50');
+  });
 
   // WhatsApp
   const [baseWhatsapp, setBaseWhatsapp] = useState<number>(
     planToEdit?.whatsappConnections !== undefined && planToEdit?.whatsappConnections !== null ? planToEdit.whatsappConnections : 2
   );
-  const [allowExtraWa, setAllowExtraWa] = useState<boolean>(true);
-  const [extraWaPrice, setExtraWaPrice] = useState<string>('49,90');
+  const [allowExtraWa, setAllowExtraWa] = useState<boolean>(() => parseAllowExtraWa(planToEdit));
+  const [extraWaPrice, setExtraWaPrice] = useState<string>(() => {
+    const rawVal = planToEdit?.extraWaPrice !== undefined && planToEdit?.extraWaPrice !== null
+      ? planToEdit.extraWaPrice
+      : (planToEdit as any)?.valor_conexao_extra !== undefined && (planToEdit as any)?.valor_conexao_extra !== null
+      ? (planToEdit as any).valor_conexao_extra
+      : planToEdit?.whatsappExtraPriceText;
+    return formatCurrencyInput(rawVal, '49,90');
+  });
 
   // Observações internas
-  const [internalNotes, setInternalNotes] = useState<string>(
-    'Plano prioritário para prospecções de médio porte (hotéis independentes e resorts de até 80 acomodações). Apto a concessão de até 10% adicional com aval do Head Comercial.'
-  );
+  const [internalNotes, setInternalNotes] = useState<string>(() => {
+    return planToEdit?.internalNotes || (planToEdit as any)?.observacoes || 'Plano prioritário para prospecções de médio porte (hotéis independentes e resorts de até 80 acomodações). Apto a concessão de até 10% adicional com aval do Head Comercial.';
+  });
 
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -164,11 +206,15 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
     if (planToEdit) {
       setName(planToEdit.name || '');
       setTag(planToEdit.tag || '');
+      if (planToEdit.order) {
+        const num = parseInt(planToEdit.order.replace(/\D/g, ''), 10);
+        if (!isNaN(num)) setOrder(num);
+      }
       setDescription(planToEdit.description || '');
       setStatus(planToEdit.status || 'Ativo');
       setIsFeatured(planToEdit.isFeatured || false);
       setBillingCycle(parsePeriodicityToMonths(planToEdit.periodicity));
-      setBasePrice(planToEdit.basePrice ? planToEdit.basePrice.toFixed(2).replace('.', ',') : '197,00');
+      setBasePrice(formatCurrencyInput(planToEdit.basePrice, '197,00'));
       const rawDisc = (planToEdit as any).cycleDiscount || '';
       const p = parseDiscountPercent(rawDisc);
       setCycleDiscount(p > 0 ? `${p}%` : '');
@@ -179,7 +225,28 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         : (planToEdit as any).dias_trial;
       setBonusDays(rawBonus !== undefined ? Number(rawBonus) : 15);
       setBaseRooms(planToEdit.roomLimit !== undefined && planToEdit.roomLimit !== null ? planToEdit.roomLimit : 45);
+
+      // Quartos Adicionais
+      setAllowExtraRooms(parseAllowExtraRooms(planToEdit));
+      const rawRoomExtra = planToEdit.extraRoomPrice !== undefined && planToEdit.extraRoomPrice !== null
+        ? planToEdit.extraRoomPrice
+        : (planToEdit as any)?.valor_quarto_extra !== undefined && (planToEdit as any)?.valor_quarto_extra !== null
+        ? (planToEdit as any).valor_quarto_extra
+        : planToEdit.roomExtraPriceText;
+      setExtraRoomPrice(formatCurrencyInput(rawRoomExtra, '3,50'));
+
+      // WhatsApp
       setBaseWhatsapp(planToEdit.whatsappConnections !== undefined && planToEdit.whatsappConnections !== null ? planToEdit.whatsappConnections : 2);
+      setAllowExtraWa(parseAllowExtraWa(planToEdit));
+      const rawWaExtra = planToEdit.extraWaPrice !== undefined && planToEdit.extraWaPrice !== null
+        ? planToEdit.extraWaPrice
+        : (planToEdit as any)?.valor_conexao_extra !== undefined && (planToEdit as any)?.valor_conexao_extra !== null
+        ? (planToEdit as any).valor_conexao_extra
+        : planToEdit.whatsappExtraPriceText;
+      setExtraWaPrice(formatCurrencyInput(rawWaExtra, '49,90'));
+
+      // Observações
+      setInternalNotes(planToEdit.internalNotes || (planToEdit as any)?.observacoes || '');
     }
   }, [planToEdit]);
 
@@ -251,6 +318,9 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       const finalDescription = formatPlanDescription(name, currentCiclo.days, Number(bonusDays) || 0, baseWhatsapp);
       setDescription(finalDescription);
 
+      const parsedExtraRoomPrice = parseFloat(extraRoomPrice.replace(',', '.')) || 0;
+      const parsedExtraWaPrice = parseFloat(extraWaPrice.replace(',', '.')) || 0;
+
       const planData: Plano = {
         id: planToEdit?.id || `plano-${Date.now()}`,
         order: `#0${order}`,
@@ -268,9 +338,14 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         roomLimit: baseRooms,
         roomLimitText: baseRooms === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${baseRooms} quartos`,
         roomExtraPriceText: allowExtraRooms ? `R$ ${extraRoomPrice}/adicional` : 'Sem quartos adicionais',
+        extraRoomPrice: parsedExtraRoomPrice,
+        allowExtraRooms,
         whatsappConnections: baseWhatsapp,
         whatsappConnectionsText: baseWhatsapp === 0 ? 'Sem conexão WhatsApp inclusa' : `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp ${baseWhatsapp > 1 ? 'simultâneas' : 'oficial'}`,
         whatsappExtraPriceText: allowExtraWa ? `R$ ${extraWaPrice}/adicional` : 'Inclusas no pacote',
+        extraWaPrice: parsedExtraWaPrice,
+        allowExtraWa,
+        internalNotes,
         hotelsSubscribersCount: planToEdit?.hotelsSubscribersCount || 0,
         status,
         isFeatured,
@@ -292,9 +367,9 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
           trialDays: Number(bonusDays) || 0,
           cycleDiscount: discountFormatted,
           allowExtraRooms,
-          extraRoomPrice,
+          extraRoomPrice: parsedExtraRoomPrice,
           allowExtraWa,
-          extraWaPrice,
+          extraWaPrice: parsedExtraWaPrice,
           internalNotes
         });
       } else {
@@ -305,9 +380,9 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
           trialDays: Number(bonusDays) || 0,
           cycleDiscount: discountFormatted,
           allowExtraRooms,
-          extraRoomPrice,
+          extraRoomPrice: parsedExtraRoomPrice,
           allowExtraWa,
-          extraWaPrice,
+          extraWaPrice: parsedExtraWaPrice,
           internalNotes
         });
         if (created && created.id) {
