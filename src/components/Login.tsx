@@ -859,7 +859,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             {/* Botão de Suporte no WhatsApp (Portal do Parceiro removido conforme solicitado) */}
             <div>
               <a
-                href="https://wa.me/5581999999999?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20meu%20acesso%20ao%20Hotel%20no%20Zap"
+                href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20meu%20acesso%20ao%20Hotel%20no%20Zap"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-[0.99]"
@@ -941,7 +941,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   </button>
 
                   <a
-                    href={`https://wa.me/5581999999999?text=${encodeURIComponent(`Olá, solicitei a recuperação de senha no Hotel no Zap para o e-mail: ${forgotEmail}`)}`}
+                    href={`https://wa.me/5566981585014?text=${encodeURIComponent(`Olá, solicitei a recuperação de senha no Hotel no Zap para o e-mail: ${forgotEmail}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
@@ -1013,7 +1013,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
                 <div className="pt-3 border-t border-slate-100 text-center">
                   <a
-                    href={`https://wa.me/5581999999999?text=${encodeURIComponent('Olá, preciso de ajuda para recuperar minha senha de acesso ao Hotel no Zap.')}`}
+                    href={`https://wa.me/5566981585014?text=${encodeURIComponent('Olá, preciso de ajuda para recuperar minha senha de acesso ao Hotel no Zap.')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-700 font-medium transition-colors"

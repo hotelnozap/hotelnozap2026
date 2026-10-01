@@ -992,7 +992,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
                 ))}
               </div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href={'https://wa.me/5581999999999?text=Ola!%20Cadastrei%20o%20hotel%20' + encodeURIComponent(nomeFantasia) + '%20no%20Hotel%20no%20Zap!'} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#1fba58] text-white font-bold text-sm rounded-xl transition-colors cursor-pointer">
+                <a href={'https://wa.me/5566981585014?text=Ola!%20Cadastrei%20o%20hotel%20' + encodeURIComponent(nomeFantasia) + '%20no%20Hotel%20no%20Zap!'} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#1fba58] text-white font-bold text-sm rounded-xl transition-colors cursor-pointer">
                   <span className="material-symbols-outlined text-base">chat</span>Falar no WhatsApp
                 </a>
                 <button onClick={goToPainelAdmin} className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#003400] hover:bg-[#004d00] text-white font-bold text-sm rounded-xl transition-colors cursor-pointer">
