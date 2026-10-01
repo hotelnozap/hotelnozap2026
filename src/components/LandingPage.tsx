@@ -1005,7 +1005,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
-            {/* 6. FLUXO DE CAIXA & PDV */}
+            {/* 6. FIDELIZAÇÃO DO HÓSPEDE (ÁREA EXCLUSIVA) */}
+            <div className="bg-[#f8f9ff] rounded-2xl border-2 border-emerald-200/80 p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-[#006c49] text-white text-[10px] font-bold uppercase px-3 py-0.5 rounded-bl-xl tracking-wider">
+                Exclusivo
+              </div>
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#006c49] to-[#10b981] text-white flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">loyalty</span>
+                </div>
+                <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Fidelização Total</span>
+                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
+                  Fidelização do Hóspede & Área Exclusiva
+                </h3>
+                <p className="text-sm text-[#45464d] leading-relaxed">
+                  O hóspede recebe uma <strong>página exclusiva</strong> para acompanhar suas reservas em tempo real. Uma vez que o mesmo fez uma reserva com o hotel, <strong>nunca mais ele entra em contato com a recepção</strong>: basta orientá-lo que quando quiser fazer outra reserva, é só acessar a área exclusiva dele, verificar as acomodações disponíveis e efetuar a nova reserva em segundos.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#10b981]">verified</span> Recompra automática sem sobrecarregar a recepção
+              </div>
+            </div>
+
+            {/* 7. CUPONS DE DESCONTO */}
+            <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FDB116] to-amber-600 text-[#0b1c30] flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">sell</span>
+                </div>
+                <span className="text-xs font-bold uppercase text-amber-700 tracking-wider">Marketing Direto</span>
+                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
+                  Cupons de Desconto Personalizados
+                </h3>
+                <p className="text-sm text-[#45464d] leading-relaxed">
+                  Crie cupons promocionais sob medida (ex: <strong>VERAO10</strong>, <strong>CLIENTEVIP</strong>, <strong>CARNAVAL</strong>) em porcentagem ou valor fixo, com limite de usos e datas de validade. A ferramenta perfeita para incentivar reservas diretas e lotar o hotel na baixa temporada.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#10b981]">local_offer</span> Campanhas promocionais 100% no seu controle
+              </div>
+            </div>
+
+            {/* 8. FLUXO DE CAIXA & PDV */}
             <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
               <div>
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0b1c30] to-[#1e293b] text-white flex items-center justify-center mb-4 shadow-sm">
@@ -1024,28 +1065,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
-            {/* 7. CADASTRO DE HÓSPEDES & MULTI-CONEXÕES WHATSAPP (SPAN 3) */}
+            {/* 9. CENTRAL MULTI-CONEXÕES WHATSAPP & HISTÓRICO (SPAN 3) */}
             <div className="md:col-span-3 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/50 rounded-2xl border border-emerald-200 p-6 lg:p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-lg transition-all">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
-                  <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Histórico Centralizado & Multi-atendimento</span>
+                  <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Multi-Atendimento & Histórico Unificado</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mb-2">
-                  Histórico de Hóspedes, Cupons Promocionais & Múltiplas Conexões WhatsApp
+                  Múltiplas Conexões WhatsApp & Histórico Centralizado de Hóspedes
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Mantenha a base de dados organizada de todos os seus hóspedes, com histórico de estadias, documentos e preferências. Crie cupons de desconto exclusivos para campanhas de reservas diretas. Conecte múltiplos números de WhatsApp simultaneamente: Recepção, Comercial e Governança atendendo com rapidez e sem conflitos.
+                  Mantenha a base de dados organizada de todos os seus hóspedes, com histórico de estadias, documentos e preferências. Conecte múltiplos números de WhatsApp simultaneamente: Recepção, Comercial e Governança atendendo com rapidez e sem conflitos operacionais.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                 <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
-                  <p className="text-lg font-black text-[#003400]">Cupons</p>
-                  <p className="text-[11px] text-gray-500 font-medium">Descontos Próprios</p>
+                  <p className="text-lg font-black text-[#003400]">Multi-Zap</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Recepção & Comercial</p>
                 </div>
                 <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
-                  <p className="text-lg font-black text-[#10b981]">Multi-Zap</p>
-                  <p className="text-[11px] text-gray-500 font-medium">Recepção & Comercial</p>
+                  <p className="text-lg font-black text-[#10b981]">Histórico</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Base de Hóspedes</p>
                 </div>
               </div>
             </div>
