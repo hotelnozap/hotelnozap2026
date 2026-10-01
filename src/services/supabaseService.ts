@@ -5305,7 +5305,7 @@ export function mapPlanoDBToFrontend(row: any): any {
   if (valorBase === 0 || (row.nome || '').toLowerCase().includes('free')) {
     priceSubtitle = Number(row.dias_trial) === 0
       ? 'Acesso gratuito limitado contínuo até upgrade'
-      : `Período de teste grátis de ${row.dias_trial} dias`;
+      : `Período com ${row.dias_trial} dias de bônus inclusos`;
   } else if (periodicidade.toLowerCase() === 'anual') {
     priceSubtitle = `Equiv. R$ ${(valorBase / 12).toFixed(2).replace('.', ',')}/mês • Em até 12x`;
   } else if (destaque) {
@@ -5328,6 +5328,7 @@ export function mapPlanoDBToFrontend(row: any): any {
     pricePeriodText,
     priceSubtitle,
     trialDays: Number(row.dias_trial) || 0,
+    bonusDays: Number(row.dias_trial) || 0,
     cycleDiscount: row.desconto_ciclo || '',
     roomLimit: row.limite_quartos !== null && row.limite_quartos !== undefined ? Number(row.limite_quartos) : 15,
     roomLimitText: Number(row.limite_quartos) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${row.limite_quartos || 15} quartos`,
@@ -5380,7 +5381,7 @@ export const planosService = {
         periodicidade: plano.periodicity || 'Mensal',
         valor_base: plano.basePrice !== undefined ? Number(plano.basePrice) : 0,
         desconto_ciclo: plano.cycleDiscount || null,
-        dias_trial: Number(plano.trialDays !== undefined ? plano.trialDays : (plano.dias_trial || 0)),
+        dias_trial: Number(plano.bonusDays !== undefined ? plano.bonusDays : (plano.trialDays !== undefined ? plano.trialDays : (plano.dias_trial || 0))),
         limite_quartos: plano.roomLimit !== undefined && plano.roomLimit !== null ? Number(plano.roomLimit) : 15,
         permite_quartos_extras: plano.allowExtraRooms !== false,
         valor_quarto_extra: Number(plano.extraRoomPrice?.toString().replace(',', '.')) || 3.50,
@@ -5424,8 +5425,8 @@ export const planosService = {
       if (changes.periodicity !== undefined) payload.periodicidade = changes.periodicity;
       if (changes.basePrice !== undefined) payload.valor_base = Number(changes.basePrice);
       if (changes.cycleDiscount !== undefined) payload.desconto_ciclo = changes.cycleDiscount || null;
-      if (changes.trialDays !== undefined || changes.dias_trial !== undefined) {
-        payload.dias_trial = Number(changes.trialDays !== undefined ? changes.trialDays : changes.dias_trial) || 0;
+      if (changes.bonusDays !== undefined || changes.trialDays !== undefined || changes.dias_trial !== undefined) {
+        payload.dias_trial = Number(changes.bonusDays !== undefined ? changes.bonusDays : (changes.trialDays !== undefined ? changes.trialDays : changes.dias_trial)) || 0;
       }
       if (changes.roomLimit !== undefined) payload.limite_quartos = Number(changes.roomLimit);
       if (changes.allowExtraRooms !== undefined) payload.permite_quartos_extras = Boolean(changes.allowExtraRooms);

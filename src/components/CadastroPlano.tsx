@@ -96,9 +96,11 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
     const p = parseDiscountPercent(rawDisc);
     return p > 0 ? `${p}%` : '';
   });
-  const [trialDays, setTrialDays] = useState<number>(() => {
+  const [bonusDays, setBonusDays] = useState<number>(() => {
+    if ((planToEdit as any)?.bonusDays !== undefined) return Number((planToEdit as any).bonusDays);
     if ((planToEdit as any)?.trialDays !== undefined) return Number((planToEdit as any).trialDays);
-    return 7;
+    if ((planToEdit as any)?.dias_trial !== undefined) return Number((planToEdit as any).dias_trial);
+    return 15;
   });
 
   // Quartos
@@ -135,7 +137,12 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       const rawDisc = (planToEdit as any).cycleDiscount || '';
       const p = parseDiscountPercent(rawDisc);
       setCycleDiscount(p > 0 ? `${p}%` : '');
-      setTrialDays((planToEdit as any).trialDays !== undefined ? Number((planToEdit as any).trialDays) : 7);
+      const rawBonus = (planToEdit as any).bonusDays !== undefined
+        ? (planToEdit as any).bonusDays
+        : (planToEdit as any).trialDays !== undefined
+        ? (planToEdit as any).trialDays
+        : (planToEdit as any).dias_trial;
+      setBonusDays(rawBonus !== undefined ? Number(rawBonus) : 15);
       setBaseRooms(planToEdit.roomLimit !== undefined && planToEdit.roomLimit !== null ? planToEdit.roomLimit : 45);
       setBaseWhatsapp(planToEdit.whatsappConnections !== undefined && planToEdit.whatsappConnections !== null ? planToEdit.whatsappConnections : 2);
     }
@@ -194,9 +201,9 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
 
       const priceSubtitle =
         numericPrice === 0 || name.toLowerCase().includes('free')
-          ? Number(trialDays) === 0
+          ? Number(bonusDays) === 0
             ? 'Plano gratuito limitado contínuo até upgrade'
-            : `Período gratuito de ${trialDays} dias de teste`
+            : `Período com ${bonusDays} dias de bônus inclusos`
           : discountPercent > 0
           ? `${discountPercent}% de desconto no ciclo • ${periodicityFormatted}`
           : billingCycle === 12
@@ -216,7 +223,8 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         basePrice: typeof numericPrice === 'number' && !isNaN(numericPrice) ? numericPrice : 0,
         pricePeriodText,
         priceSubtitle,
-        trialDays: Number(trialDays) || 0,
+        trialDays: Number(bonusDays) || 0,
+        bonusDays: Number(bonusDays) || 0,
         cycleDiscount: discountFormatted,
         roomLimit: baseRooms,
         roomLimitText: baseRooms === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${baseRooms} quartos`,
@@ -240,7 +248,8 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       if (planToEdit?.id) {
         await planosService.updatePlano(planToEdit.id, {
           ...planData,
-          trialDays: Number(trialDays) || 0,
+          bonusDays: Number(bonusDays) || 0,
+          trialDays: Number(bonusDays) || 0,
           cycleDiscount: discountFormatted,
           allowExtraRooms,
           extraRoomPrice,
@@ -251,7 +260,8 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       } else {
         const created = await planosService.createPlano({
           ...planData,
-          trialDays: Number(trialDays) || 0,
+          bonusDays: Number(bonusDays) || 0,
+          trialDays: Number(bonusDays) || 0,
           cycleDiscount: discountFormatted,
           allowExtraRooms,
           extraRoomPrice,
@@ -577,29 +587,30 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
 
             <div className="flex flex-col gap-1">
               <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-slate-800" htmlFor="mob-plan-trial">
-                  Dias de Teste Grátis (Trial)
+                <label className="text-xs font-bold text-slate-800" htmlFor="mob-plan-bonus">
+                  Dias Bônus
                 </label>
-                <span className="text-[11px] text-[#006c49] font-bold">Sem cartão obrigatório</span>
+                <span className="text-[11px] text-[#006c49] font-bold">Bônus de Acesso</span>
               </div>
               <div className="relative flex items-center">
-                <span className="material-symbols-outlined absolute left-3 text-slate-400 text-[20px]">event_available</span>
+                <span className="material-symbols-outlined absolute left-3 text-slate-400 text-[20px]">card_giftcard</span>
                 <input
-                  id="mob-plan-trial"
+                  id="mob-plan-bonus"
                   type="number"
                   min={0}
-                  value={trialDays}
-                  onChange={(e) => setTrialDays(parseInt(e.target.value, 10) || 0)}
+                  max={365}
+                  value={bonusDays}
+                  onChange={(e) => setBonusDays(parseInt(e.target.value, 10) || 0)}
                   className="w-full h-11 pl-10 pr-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all"
                 />
               </div>
-              {trialDays === 0 ? (
+              {bonusDays === 0 ? (
                 <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 mt-1 flex items-start gap-1.5 leading-snug">
                   <span className="material-symbols-outlined text-sm text-amber-600 shrink-0 mt-0.5">info</span>
-                  <span><strong>Modo Free Limitado:</strong> Ao definir 0 dias, o plano funcionará de forma limitada contínua até o cliente assinar outro plano.</span>
+                  <span>Sem dias de bônus adicionais (acesso apenas durante o ciclo base).</span>
                 </p>
               ) : (
-                <span className="text-[10px] text-slate-500 mt-0.5">Período de teste sem custos antes da primeira cobrança.</span>
+                <span className="text-[10px] text-slate-500 mt-0.5">+{bonusDays} dias de bônus somados ao período base do plano.</span>
               )}
             </div>
           </section>
@@ -1074,29 +1085,36 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-800" htmlFor="desk-trial-days">
-                  Dias de Teste Grátis (Trial)
-                </label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-800" htmlFor="desk-bonus-days">
+                    Dias Bônus
+                  </label>
+                  {bonusDays > 0 && (
+                    <span className="text-[10px] font-bold text-[#006c49] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      +{bonusDays} dias bônus
+                    </span>
+                  )}
+                </div>
                 <div className="relative flex items-center">
-                  <span className="material-symbols-outlined absolute left-3 text-slate-400 text-base pointer-events-none">schedule</span>
+                  <span className="material-symbols-outlined absolute left-3 text-slate-400 text-base pointer-events-none">card_giftcard</span>
                   <input
-                    id="desk-trial-days"
+                    id="desk-bonus-days"
                     type="number"
                     min={0}
-                    max={60}
-                    value={trialDays}
-                    onChange={(e) => setTrialDays(parseInt(e.target.value, 10) || 0)}
+                    max={365}
+                    value={bonusDays}
+                    onChange={(e) => setBonusDays(parseInt(e.target.value, 10) || 0)}
                     className="w-full h-11 pl-10 pr-12 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-bold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                   />
                   <span className="absolute right-3 text-xs text-slate-400 pointer-events-none">dias</span>
                 </div>
-                {trialDays === 0 ? (
+                {bonusDays === 0 ? (
                   <p className="text-[11px] text-amber-800 bg-amber-50/90 p-2.5 rounded-xl border border-amber-200 mt-1 flex items-center gap-2 font-medium">
                     <span className="material-symbols-outlined text-base text-amber-600 shrink-0">info</span>
-                    <span><strong>Modo Free Limitado:</strong> Ao definir 0 dias de teste, este plano funcionará de forma limitada contínua até o cliente assinar outro plano.</span>
+                    <span>Sem dias de bônus adicionais (acesso apenas durante o período contratado).</span>
                   </p>
                 ) : (
-                  <p className="text-[11px] text-slate-500 mt-0.5">Período de teste sem custos antes da primeira cobrança recorrente.</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">+{bonusDays} dias de bônus adicionais somados ao período contratado no card do plano.</p>
                 )}
               </div>
             </div>

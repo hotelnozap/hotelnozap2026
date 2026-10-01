@@ -19,6 +19,7 @@ interface PlanoView {
   periodicity?: string;
   cycleDiscount?: string;
   trialDays: number;
+  bonusDays?: number;
   roomLimit: number;
   extraRoomPrice?: number;
   allowExtraRooms?: boolean;
@@ -307,7 +308,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 basePrice: Number(p.basePrice || p.valor_base) || 0,
                 periodicity: p.periodicity || p.periodicidade || 'Mensal',
                 cycleDiscount: p.cycleDiscount || p.desconto_ciclo || '',
-                trialDays: Number(p.trialDays || p.dias_trial) || 0,
+                trialDays: Number(p.bonusDays !== undefined ? p.bonusDays : (p.trialDays || p.dias_trial)) || 0,
+                bonusDays: Number(p.bonusDays !== undefined ? p.bonusDays : (p.trialDays || p.dias_trial)) || 0,
                 roomLimit: Number(p.roomLimit || p.limite_quartos) || 10,
                 extraRoomPrice: Number(p.extraRoomPrice || p.valor_quarto_extra) || 3.5,
                 allowExtraRooms: p.allowExtraRooms !== undefined ? p.allowExtraRooms : p.permite_quartos_extras !== false,
