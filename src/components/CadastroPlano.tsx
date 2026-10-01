@@ -58,6 +58,33 @@ export const parseDiscountPercent = (val: string): number => {
   return Math.min(num, 100);
 };
 
+export const formatPlanDescription = (
+  planName: string,
+  cicloDays: number,
+  bonusDays: number
+): string => {
+  const cleanName = planName.trim().replace(/\s*\([^)]*\)/g, '').trim();
+  const totalDays = cicloDays + bonusDays;
+  const totalMonths = totalDays / 30;
+
+  let periodInfo = '';
+  if (totalDays >= 365) {
+    const m = Math.floor(totalDays / 30);
+    periodInfo = ` / mais de ${m} meses`;
+  } else if (totalMonths >= 3) {
+    const formattedMonths = totalMonths % 1 === 0 ? totalMonths.toFixed(0) : totalMonths.toFixed(1).replace('.', ',');
+    periodInfo = ` / ${formattedMonths} meses`;
+  } else {
+    periodInfo = ' de acesso';
+  }
+
+  if (bonusDays > 0) {
+    return `${cleanName} • ${cicloDays} dias base + ${bonusDays} dias de bônus (${totalDays} dias${periodInfo})`;
+  } else {
+    return `${cleanName} • ${cicloDays} dias base (${totalDays} dias${periodInfo})`;
+  }
+};
+
 interface CadastroPlanoProps {
   planToEdit?: Plano | null;
   onBack: () => void;
@@ -210,7 +237,11 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
           ? `Equiv. R$ ${(effectivePrice / 12).toFixed(2).replace('.', ',')}/mês • Em até 12x`
           : isFeatured
           ? 'Mais recomendado para alta taxa de ocupação'
-          : `Cobrança ${periodicityFormatted.toLowerCase()} recorrente via PIX ou Cartão`;
+          : 'Contratação com ativação imediata';
+
+      // Gera a descrição comercial padronizada automaticamente ao salvar
+      const finalDescription = formatPlanDescription(name, currentCiclo.days, Number(bonusDays) || 0);
+      setDescription(finalDescription);
 
       const planData: Plano = {
         id: planToEdit?.id || `plano-${Date.now()}`,
@@ -218,7 +249,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         emoji: planToEdit?.emoji || (name.toLowerCase().includes('free') ? '🎁' : isFeatured ? '🥈' : order === 1 ? '🥇' : '💎'),
         name: name.trim(),
         tag: tag.trim() || undefined,
-        description: description.trim() || 'Plano customizado',
+        description: finalDescription,
         periodicity: periodicityFormatted,
         basePrice: typeof numericPrice === 'number' && !isNaN(numericPrice) ? numericPrice : 0,
         pricePeriodText,
@@ -248,6 +279,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       if (planToEdit?.id) {
         await planosService.updatePlano(planToEdit.id, {
           ...planData,
+          description: finalDescription,
           bonusDays: Number(bonusDays) || 0,
           trialDays: Number(bonusDays) || 0,
           cycleDiscount: discountFormatted,
@@ -260,6 +292,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
       } else {
         const created = await planosService.createPlano({
           ...planData,
+          description: finalDescription,
           bonusDays: Number(bonusDays) || 0,
           trialDays: Number(bonusDays) || 0,
           cycleDiscount: discountFormatted,
@@ -460,15 +493,25 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-slate-800" htmlFor="mob-plan-desc">
-                Descrição do Plano
-              </label>
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-800" htmlFor="mob-plan-desc">
+                  Descrição Resumida (Subtítulo Comercial)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setDescription(formatPlanDescription(name || 'Plano', currentCiclo.days, Number(bonusDays) || 0))}
+                  className="text-[10px] font-bold text-[#006c49] hover:underline flex items-center gap-0.5 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-xs">autorenew</span>
+                  Gerar
+                </button>
+              </div>
               <textarea
                 id="mob-plan-desc"
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva brevemente o público ideal deste plano..."
+                placeholder="Ex: 6 Créditos • 180 dias base + 45 dias de bônus (225 dias / 7,5 meses)"
                 className="w-full p-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all resize-none"
               />
             </div>
@@ -975,18 +1018,30 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
               </div>
 
               <div className="md:col-span-12 flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-800" htmlFor="desk-plan-summary">
-                  Descrição Resumida (Subtítulo Comercial)
-                </label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-800" htmlFor="desk-plan-summary">
+                    Descrição Resumida (Subtítulo Comercial)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setDescription(formatPlanDescription(name || 'Plano', currentCiclo.days, Number(bonusDays) || 0))}
+                    className="text-[11px] font-bold text-[#006c49] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm">autorenew</span>
+                    Gerar Automaticamente
+                  </button>
+                </div>
                 <input
                   id="desk-plan-summary"
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: Recomendado para pousadas e redes hoteleiras de médio porte com gestão integrada e alta taxa de ocupação"
+                  placeholder="Ex: 6 Créditos • 180 dias base + 45 dias de bônus (225 dias / 7,5 meses)"
                   className="w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                 />
-                <p className="text-[11px] text-slate-500">Esta descrição será exibida no card principal durante a escolha de plano pelo hoteleiro.</p>
+                <p className="text-[11px] text-slate-500">
+                  Gerada de forma automática ao salvar conforme o ciclo ({currentCiclo.days} dias base) e bônus ({bonusDays} dias).
+                </p>
               </div>
             </div>
           </div>

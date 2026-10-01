@@ -464,7 +464,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         name: '3 Créditos (Trimestre de Ouro)',
         tag: 'Mais Vendido',
         categoryLabel: 'Mais Escolhido • Alta Temporada',
-        description: '3 Créditos • 90 dias base + 30 dias de bônus (120 dias / 4 meses de acesso)',
+        description: '3 Créditos • 90 dias base + 30 dias de bônus (120 dias / 4 meses)',
         basePrice: 497,
         periodicity: 'Trimestral',
         cycleDiscount: '',

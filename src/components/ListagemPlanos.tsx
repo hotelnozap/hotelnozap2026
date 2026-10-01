@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { planosService, hoteisService } from '../services/supabaseService';
 import { Hotel } from './CadastroHoteis';
-import { CICLOS_COBRANCA, cleanDiscountInput, parseDiscountPercent } from './CadastroPlano';
+import { CICLOS_COBRANCA, cleanDiscountInput, parseDiscountPercent, formatPlanDescription } from './CadastroPlano';
 
 export interface Plano {
   id: string;
@@ -176,7 +176,7 @@ const INITIAL_PLANOS: Plano[] = [
     emoji: '💎',
     name: '12 Créditos (Anual Fidelidade)',
     tag: '-35%',
-    description: '12 Créditos • 365 dias base + 60 dias de bônus (425 dias / > 14 meses)',
+    description: '12 Créditos • 365 dias base + 60 dias de bônus (425 dias / mais de 14 meses)',
     periodicity: 'Anual',
     basePrice: 1690.00,
     pricePeriodText: '/425 dias',
@@ -477,9 +477,15 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
     const cycleMatch = CICLOS_COBRANCA.find(c => c.name.toLowerCase() === (formData.periodicity || '').toLowerCase());
     const computedPeriodText = cycleMatch ? cycleMatch.periodText : '/mês';
     const bDays = formData.bonusDays !== undefined ? Number(formData.bonusDays) : (formData.trialDays !== undefined ? Number(formData.trialDays) : 15);
+    const autoDesc = formatPlanDescription(
+      formData.name || 'Plano',
+      cycleMatch?.days || 30,
+      bDays
+    );
 
     const normalizedData = {
       ...formData,
+      description: autoDesc,
       bonusDays: bDays,
       trialDays: bDays,
       cycleDiscount: cleanDiscount,
