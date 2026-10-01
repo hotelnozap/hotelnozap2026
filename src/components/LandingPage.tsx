@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { planosService, hoteisService } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
 import { maskPhone } from '../utils/masks';
 
 interface LandingPageProps {
@@ -15,23 +16,244 @@ interface PlanoView {
   categoryLabel?: string;
   description: string;
   basePrice: number;
+  periodicity?: string;
+  cycleDiscount?: string;
   trialDays: number;
+  bonusDays?: number;
   roomLimit: number;
+  extraRoomPrice?: number;
+  allowExtraRooms?: boolean;
   whatsappConnections: number;
+  extraWaPrice?: number;
+  allowExtraWa?: boolean;
   isFeatured: boolean;
   features: string[];
   disabledFeatures: string[];
 }
 
+// Helper para formatar o sufixo de periodicidade ao lado do valor (ex: "/ mês", "Bimestral", "Trimestral", "Semestral", "Anual")
+export const getPeriodicitySuffix = (periodicity?: string): string => {
+  if (!periodicity) return '/ mês';
+  const p = periodicity.trim().toLowerCase();
+  if (p === 'mensal') return '/ mês';
+  return periodicity.trim();
+};
+
+// Helper para formatar o preço com separador decimal e de milhar no padrão pt-BR
+export const formatPrice = (val: number): string => {
+  if (typeof val !== 'number' || isNaN(val)) return '0';
+  return val.toLocaleString('pt-BR', {
+    minimumFractionDigits: val % 1 !== 0 ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
+};
+
+// Helper para formatar o título do plano incorporando desconto administrativo e ciclo
+export const formatPlanTitle = (name: string, periodicity?: string, cycleDiscount?: string): string => {
+  // Extrai nome base sem parênteses antigos ou descontos fixos (ex: "2 Créditos (Bimestral)" -> "2 Créditos")
+  const baseName = name
+    .replace(/\s*-\s*\d+%.*$/, '')
+    .replace(/\s*\([^)]*\)/g, '')
+    .trim();
+
+  const rawDisc = (cycleDiscount || '').replace(/[^0-9]/g, '');
+  const discNum = parseInt(rawDisc, 10);
+  const period = periodicity ? periodicity.trim() : 'Mensal';
+
+  if (!isNaN(discNum) && discNum > 0) {
+    return `${baseName} -${discNum}% (${period})`;
+  }
+
+  // Se não tem desconto e a periodicidade não é Mensal e não está no nome, adiciona o ciclo
+  if (period.toLowerCase() !== 'mensal' && !name.includes('(')) {
+    return `${baseName} (${period})`;
+  }
+
+  return name;
+};
+
+// Helper para ajustar terminologia com concordância contextual (ex: "instância" -> "conexão")
+export const sanitizeFeatureText = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/inst[aâ]ncia extra/gi, 'Conexão extra')
+    .replace(/inst[aâ]ncias extras/gi, 'Conexões extras')
+    .replace(/por inst[aâ]ncia/gi, 'por conexão')
+    .replace(/inst[aâ]ncias/gi, 'conexões')
+    .replace(/inst[aâ]ncia/gi, 'conexão')
+    .replace(/1 Conexão WhatsApp simultâneas/gi, '1 Conexão WhatsApp oficial')
+    .replace(/1 Conexão WhatsApp simultânea/gi, '1 Conexão WhatsApp oficial');
+};
+
+// Helper para construir todos os benefícios completos do hotel dinamicamente para cada plano
+export const buildPlanBenefits = (plano: PlanoView): string[] => {
+  const rooms = plano.roomLimit || 10;
+  const wa = plano.whatsappConnections || 1;
+  const roomExtraVal = plano.extraRoomPrice !== undefined ? plano.extraRoomPrice : 3.5;
+  const waExtraVal = plano.extraWaPrice !== undefined ? plano.extraWaPrice : 49.9;
+
+  const roomExtraText = plano.allowExtraRooms === false 
+    ? 'Sem quartos excedentes' 
+    : `Quartos excedentes: + R$ ${formatPrice(roomExtraVal)} /quarto`;
+
+  const waExtraText = plano.allowExtraWa === false 
+    ? 'Conexões extras inclusas' 
+    : `Conexão extra: + R$ ${formatPrice(waExtraVal)} /conexão`;
+
+  const waConnText = wa === 1 
+    ? '1 Conexão do WhatsApp' 
+    : `${wa} Conexões do WhatsApp simultâneas`;
+
+  return [
+    'Acesso total ao sistema',
+    `Capacidade para até ${rooms} quartos`,
+    'Área administrativa para acompanhar o desempenho do hotel',
+    'Área para camareira',
+    'Área exclusiva pra seu hóspede',
+    'Página de divulgação do seu hotel com todos os seus quartos cadastrados',
+    waConnText,
+    'Atendimento no WhatsApp por IA (Inteligência Artificial de forma humanizada)',
+    roomExtraText,
+    waExtraText,
+    'Mapa dos quartos',
+    'Reservas no balcão em menos de 5 minutos (feito pelo usuário recepcionista)',
+    'Controle de caixa',
+    'Cadastro de produtos e controle de estoque',
+    'Cardápio dos produtos cadastrados (disponível na área do hóspede)',
+    'Cadastro de cupons',
+    'Relatórios completos',
+    'Suporte humanizado'
+  ];
+};
+
+export interface PlanCardTheme {
+  isDark: boolean;
+  containerClass: string;
+  badgeClass?: string;
+  categoryClass: string;
+  titleClass: string;
+  descClass: string;
+  priceClass: string;
+  periodicityClass: string;
+  dividerClass: string;
+  featureItemClass: string;
+  checkIconClass: string;
+  benefitsBtnClass: string;
+  ctaBtnClass: string;
+  iconBoxClass: string;
+}
+
+export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme => {
+  // PLANO EM DESTAQUE - FUNDO VERDE ESCURO COM AJUSTE TOTAL DE CONTRASTE E TIPOGRAFIA CLARA
+  if (plano.isFeatured) {
+    return {
+      isDark: true,
+      containerClass: 'bg-gradient-to-b from-[#003400] to-[#002200] border-2 border-[#10b981] shadow-2xl lg:-translate-y-3 ring-4 ring-[#10b981]/25 text-white',
+      badgeClass: 'bg-[#FDB116] text-[#0b1c30] font-black',
+      categoryClass: 'text-emerald-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-emerald-400/25 font-bold inline-block',
+      titleClass: 'text-white font-black',
+      descClass: 'text-emerald-100/90',
+      priceClass: 'text-white font-black',
+      periodicityClass: 'text-emerald-300 font-semibold',
+      dividerClass: 'border-white/15',
+      featureItemClass: 'text-white font-medium',
+      checkIconClass: 'text-[#10b981]',
+      benefitsBtnClass: 'bg-white/10 hover:bg-white/20 text-emerald-200 border border-white/20 hover:border-emerald-400/40 font-bold',
+      ctaBtnClass: 'bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black shadow-lg hover:scale-[1.02]',
+      iconBoxClass: 'bg-white/10 text-[#FDB116] border border-white/20'
+    };
+  }
+
+  // DEMAIS PLANOS - CORES DE FUNDO DIFERENCIADAS (Fundo Claro com Alto Contraste)
+  const cycleIndex = index % 4;
+
+  if (cycleIndex === 0) {
+    // 1 Crédito / Estilo 1: Slate Suave / Branco Gelo
+    return {
+      isDark: false,
+      containerClass: 'bg-[#f8fafc] border-2 border-slate-200/90 hover:border-emerald-600/40 hover:shadow-lg',
+      categoryClass: 'text-[#006c49] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
+      titleClass: 'text-[#0b1c30] font-extrabold',
+      descClass: 'text-[#45464d]',
+      priceClass: 'text-[#0b1c30] font-black',
+      periodicityClass: 'text-[#45464d] font-semibold',
+      dividerClass: 'border-slate-200',
+      featureItemClass: 'text-[#0b1c30] font-medium',
+      checkIconClass: 'text-[#10b981]',
+      benefitsBtnClass: 'bg-white hover:bg-slate-100 text-[#006c49] border border-slate-200 font-bold',
+      ctaBtnClass: 'border-2 border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white font-bold',
+      iconBoxClass: 'bg-white border border-slate-200 text-[#006c49]'
+    };
+  }
+
+  if (cycleIndex === 1) {
+    // 2 Créditos / Estilo 2: Areia Dourada Quente (Warm Amber / Sand)
+    return {
+      isDark: false,
+      containerClass: 'bg-[#fffdf5] border-2 border-amber-200/80 hover:border-amber-400 hover:shadow-lg',
+      categoryClass: 'text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-200 font-bold inline-block',
+      titleClass: 'text-[#0b1c30] font-extrabold',
+      descClass: 'text-slate-600',
+      priceClass: 'text-[#0b1c30] font-black',
+      periodicityClass: 'text-slate-600 font-semibold',
+      dividerClass: 'border-amber-200/60',
+      featureItemClass: 'text-[#0b1c30] font-medium',
+      checkIconClass: 'text-amber-600',
+      benefitsBtnClass: 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-200 font-bold',
+      ctaBtnClass: 'border-2 border-amber-900 text-amber-950 hover:bg-amber-900 hover:text-white font-bold',
+      iconBoxClass: 'bg-amber-50 border border-amber-200 text-amber-700'
+    };
+  }
+
+  if (cycleIndex === 2) {
+    // 6 Créditos / Estilo 3: Azul Celeste Náutico (Sky Blue)
+    return {
+      isDark: false,
+      containerClass: 'bg-[#f0f9ff] border-2 border-sky-200/90 hover:border-sky-400 hover:shadow-lg',
+      categoryClass: 'text-sky-800 bg-sky-100/70 px-2.5 py-0.5 rounded-full border border-sky-200 font-bold inline-block',
+      titleClass: 'text-[#0b1c30] font-extrabold',
+      descClass: 'text-slate-600',
+      priceClass: 'text-[#0b1c30] font-black',
+      periodicityClass: 'text-slate-600 font-semibold',
+      dividerClass: 'border-sky-200/60',
+      featureItemClass: 'text-[#0b1c30] font-medium',
+      checkIconClass: 'text-sky-600',
+      benefitsBtnClass: 'bg-white hover:bg-sky-50 text-sky-900 border border-sky-200 font-bold',
+      ctaBtnClass: 'border-2 border-sky-900 text-sky-950 hover:bg-sky-900 hover:text-white font-bold',
+      iconBoxClass: 'bg-sky-50 border border-sky-200 text-sky-700'
+    };
+  }
+
+  // 12 Créditos / Estilo 4: Verde Menta Refrescante (Fresh Mint)
+  return {
+    isDark: false,
+    containerClass: 'bg-[#f2fbf7] border-2 border-emerald-200/80 hover:border-emerald-400 hover:shadow-lg',
+    categoryClass: 'text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
+    titleClass: 'text-[#0b1c30] font-extrabold',
+    descClass: 'text-slate-600',
+    priceClass: 'text-[#0b1c30] font-black',
+    periodicityClass: 'text-slate-600 font-semibold',
+    dividerClass: 'border-emerald-200/60',
+    featureItemClass: 'text-[#0b1c30] font-medium',
+    checkIconClass: 'text-emerald-600',
+    benefitsBtnClass: 'bg-white hover:bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold',
+    ctaBtnClass: 'border-2 border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white font-bold',
+    iconBoxClass: 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+  };
+};
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigateToSystem, onNavigateToNovoHotel }) => {
   // Planos vindos do Supabase
   const [planos, setPlanos] = useState<PlanoView[]>([]);
   const [loadingPlanos, setLoadingPlanos] = useState(true);
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+
+  // Modal para Visualizar Todos os Benefícios do Plano
+  const [selectedPlanForBenefits, setSelectedPlanForBenefits] = useState<PlanoView | null>(null);
 
   // Calculadora de Economia
   const [roomsCount, setRoomsCount] = useState<number>(20);
   const [dailyRate, setDailyRate] = useState<number>(350);
+  const [occupancyRate, setOccupancyRate] = useState<number>(60);
 
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -55,7 +277,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   const [isSubmittingProspect, setIsSubmittingProspect] = useState(false);
   const [prospectSuccess, setProspectSuccess] = useState(false);
 
-  // Carregar planos da tabela 'planos' no Supabase
+  // Carregar planos da tabela 'planos' no Supabase com sincronização em tempo real
   useEffect(() => {
     let isMounted = true;
     const fetchPlanos = async () => {
@@ -63,40 +285,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         setLoadingPlanos(true);
         const data = await planosService.getPlanos();
         if (data && data.length > 0 && isMounted) {
-          // Filtrar planos ativos e comerciais (plano grátis do Google Maps não fica disponível)
+          // Filtrar planos ativos e comerciais (exclui inativos, legado e grátis)
           const activePlanos = data
-            .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice) > 0)
+            .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice || p.valor_base) > 0)
             .map((p: any) => {
-              let categoryLabel = 'Pousadas e Hotéis';
-              if (p.name.toLowerCase().includes('starter')) categoryLabel = 'Pousadas Familiares';
+              let categoryLabel = p.tag || 'Pousadas e Hotéis';
+              if (p.name.includes('1 Crédito')) categoryLabel = 'Acesso Mensal Flexível';
+              else if (p.name.includes('2 Créditos')) categoryLabel = 'Pacote Econômico Bimestral';
+              else if (p.name.includes('3 Créditos')) categoryLabel = 'Mais Escolhido • Alta Temporada';
+              else if (p.name.includes('6 Créditos')) categoryLabel = 'Semestral • Estabilidade Total';
+              else if (p.name.includes('12 Créditos')) categoryLabel = 'Anual VIP • Maior Economia';
+              else if (p.name.toLowerCase().includes('starter')) categoryLabel = 'Pousadas Familiares';
               else if (p.name.toLowerCase().includes('pro')) categoryLabel = 'Hotéis de Médio Porte';
               else if (p.name.toLowerCase().includes('enterprise')) categoryLabel = 'Resorts & Redes';
-              else if (p.name.toLowerCase().includes('free')) categoryLabel = 'Acesso Básico';
 
               return {
                 id: p.id,
                 name: p.name,
-                tag: p.tag || (p.isFeatured ? 'Mais Vendido' : undefined),
+                tag: p.tag || (p.destaque || p.isFeatured ? 'Mais Vendido' : undefined),
                 categoryLabel,
-                description: p.description || 'Solução completa para gestão e motor de reservas via WhatsApp.',
-                basePrice: Number(p.basePrice) || 0,
-                trialDays: Number(p.trialDays) || 30,
-                roomLimit: Number(p.roomLimit) || 10,
-                whatsappConnections: Number(p.whatsappConnections) || 1,
-                isFeatured: Boolean(p.isFeatured || p.name.toLowerCase().includes('professional')),
-                features: Array.isArray(p.features) && p.features.length > 0 ? p.features : [
-                  `Capacidade para até ${p.roomLimit || 10} quartos`,
-                  `${p.whatsappConnections || 1} Conexão WhatsApp integrada`,
+                description: p.description || p.descricao || 'Solução completa para gestão e motor de reservas via WhatsApp.',
+                basePrice: Number(p.basePrice || p.valor_base) || 0,
+                periodicity: p.periodicity || p.periodicidade || 'Mensal',
+                cycleDiscount: p.cycleDiscount || p.desconto_ciclo || '',
+                trialDays: Number(p.bonusDays !== undefined ? p.bonusDays : (p.trialDays || p.dias_trial)) || 0,
+                bonusDays: Number(p.bonusDays !== undefined ? p.bonusDays : (p.trialDays || p.dias_trial)) || 0,
+                roomLimit: Number(p.roomLimit || p.limite_quartos) || 10,
+                extraRoomPrice: Number(p.extraRoomPrice || p.valor_quarto_extra) || 3.5,
+                allowExtraRooms: p.allowExtraRooms !== undefined ? p.allowExtraRooms : p.permite_quartos_extras !== false,
+                whatsappConnections: Number(p.whatsappConnections || p.conexoes_whatsapp) || 1,
+                extraWaPrice: Number(p.extraWaPrice || p.valor_conexao_extra) || 49.9,
+                allowExtraWa: p.allowExtraWa !== undefined ? p.allowExtraWa : p.permite_conexoes_extras !== false,
+                isFeatured: Boolean(p.isFeatured || p.destaque || p.name.toLowerCase().includes('trimestre') || p.name.toLowerCase().includes('professional')),
+                features: Array.isArray(p.features) && p.features.length > 0 ? p.features : Array.isArray(p.recursos) && p.recursos.length > 0 ? p.recursos : [
+                  `Capacidade para até ${p.roomLimit || p.limite_quartos || 10} quartos`,
+                  'Conexão WhatsApp oficial integrada',
                   'Mapa de quartos e controle de check-in',
-                  'Disparos de confirmação automática'
+                  'Confirmação de reserva no WhatsApp'
                 ],
-                disabledFeatures: Array.isArray(p.disabledFeatures) ? p.disabledFeatures : []
+                disabledFeatures: Array.isArray(p.disabledFeatures) ? p.disabledFeatures : Array.isArray(p.recursos_desabilitados) ? p.recursos_desabilitados : []
               };
             });
 
           if (activePlanos.length > 0) {
-            const commercial = activePlanos.filter((p: any) => !p.name.toLowerCase().includes('anual'));
-            setPlanos(commercial.length > 0 ? commercial : activePlanos);
+            setPlanos(activePlanos);
           }
         }
       } catch (err) {
@@ -107,7 +339,61 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     };
 
     fetchPlanos();
-    return () => { isMounted = false; };
+
+    // Sincronizar em tempo real quando alterações de preços ou descontos forem feitas no painel administrativo
+    const planosChannel = supabase
+      .channel('landing-page-planos-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'planos' },
+        () => {
+          fetchPlanos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(planosChannel);
+    };
+  }, []);
+
+  // Contagem dinâmica de hotéis cadastrados (atualizada em tempo real via Supabase)
+  const [totalHoteis, setTotalHoteis] = useState<number>(293);
+
+  // Carregar contagem real de hotéis cadastrados (planos + Google Maps) e escutar atualizações em tempo real
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchHoteisCount = async () => {
+      try {
+        const count = await hoteisService.getTotalHoteisCount();
+        if (isMounted && count > 0) {
+          setTotalHoteis(count);
+        }
+      } catch (err) {
+        console.warn('Erro ao buscar contagem de hotéis para a LP:', err);
+      }
+    };
+
+    fetchHoteisCount();
+
+    // Inscrever no canal Realtime do Supabase para atualizar automaticamente quando um hotel for adicionado (seja via plano ou importador)
+    const channel = supabase
+      .channel('landing-page-hoteis-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'hoteis' },
+        () => {
+          fetchHoteisCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Planos padrão de fallback se o banco estiver vazio ou offline
@@ -115,61 +401,81 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     if (planos.length > 0) return planos;
     return [
       {
-        id: 'starter-default',
-        name: 'Plano Starter',
-        tag: 'Básico',
-        categoryLabel: 'Pousadas Familiares',
-        description: 'Ideal para pousadas e chalés que desejam automatizar as reservas pelo WhatsApp.',
-        basePrice: 149,
-        trialDays: 30,
-        roomLimit: 10,
+        id: '1-credito-default',
+        name: '1 Crédito',
+        tag: 'Mensal',
+        categoryLabel: 'Acesso Mensal Flexível',
+        description: '1 Crédito • 30 dias base + 15 dias de bônus (45 dias de acesso)',
+        basePrice: 197,
+        periodicity: 'Mensal',
+        cycleDiscount: '',
+        trialDays: 15,
+        roomLimit: 50,
+        extraRoomPrice: 30,
+        allowExtraRooms: true,
         whatsappConnections: 1,
+        extraWaPrice: 49.9,
+        allowExtraWa: true,
         isFeatured: false,
         features: [
-          'Capacidade para até 10 quartos',
+          '1 Crédito de Acesso Oficial',
+          '30 dias base + 15 dias bônus (45 dias)',
+          'Capacidade para até 50 quartos',
           '1 Conexão WhatsApp oficial integrada',
-          'Mapa de quartos e controle de check-in',
-          'Disparos de confirmação automática'
-        ],
-        disabledFeatures: ['Múltiplos atendentes simultâneos']
-      },
-      {
-        id: 'pro-default',
-        name: 'Plano Professional',
-        tag: 'Mais Vendido',
-        categoryLabel: 'Hotéis de Médio Porte',
-        description: 'A solução completa para decolar ocupação com múltiplos atendentes e automação total.',
-        basePrice: 299,
-        trialDays: 30,
-        roomLimit: 30,
-        whatsappConnections: 2,
-        isFeatured: true,
-        features: [
-          'Capacidade para até 30 quartos',
-          '2 Conexões WhatsApp simultâneas',
-          'Módulo governança & limpeza em tempo real',
-          'Disparos de confirmação automática no Zap',
-          'Usuários ilimitados com permissões'
+          'Ideal para começar sem compromisso'
         ],
         disabledFeatures: []
       },
       {
-        id: 'enterprise-default',
-        name: 'Plano Enterprise',
-        tag: 'Ilimitado',
-        categoryLabel: 'Resorts & Redes',
-        description: 'Máximo desempenho, suporte VIP e alta escala para operações hoteleiras robustas.',
-        basePrice: 590,
-        trialDays: 30,
-        roomLimit: 150,
-        whatsappConnections: 5,
+        id: '2-creditos-default',
+        name: '2 Créditos (Bimestral)',
+        tag: 'Econômico',
+        categoryLabel: 'Pacote Econômico Bimestral',
+        description: '2 Créditos • 60 dias base + 15 dias de bônus (75 dias de acesso)',
+        basePrice: 354.60,
+        periodicity: 'Bimestral',
+        cycleDiscount: '10%',
+        trialDays: 0,
+        roomLimit: 25,
+        extraRoomPrice: 3.5,
+        allowExtraRooms: true,
+        whatsappConnections: 2,
+        extraWaPrice: 49.9,
+        allowExtraWa: true,
         isFeatured: false,
         features: [
-          'Até 150 quartos (sem sobretaxa)',
-          '5 Conexões WhatsApp dedicadas',
-          'IA de Atendimento 24/7 (Reserva Automática)',
-          'Gerente de contas e onboarding dedicado',
-          'Portal exclusivo de parceiros B2B'
+          '2 Créditos de Acesso',
+          '60 dias base + 15 dias bônus (75 dias)',
+          'Capacidade para até 25 quartos',
+          '2 Conexões WhatsApp simultâneas',
+          'Economia imediata de 2 meses e meio'
+        ],
+        disabledFeatures: []
+      },
+      {
+        id: '3-creditos-default',
+        name: '3 Créditos (Trimestre de Ouro)',
+        tag: 'Mais Vendido',
+        categoryLabel: 'Mais Escolhido • Alta Temporada',
+        description: '3 Créditos • 90 dias base + 30 dias de bônus (120 dias / 4 meses de acesso)',
+        basePrice: 497,
+        periodicity: 'Trimestral',
+        cycleDiscount: '',
+        trialDays: 0,
+        roomLimit: 40,
+        extraRoomPrice: 3,
+        allowExtraRooms: true,
+        whatsappConnections: 3,
+        extraWaPrice: 39.9,
+        allowExtraWa: true,
+        isFeatured: true,
+        features: [
+          '3 Créditos de Acesso',
+          '90 dias base + 30 dias bônus (4 meses)',
+          'Capacidade para até 40 quartos',
+          '3 Conexões WhatsApp simultâneas',
+          'Perfeito para cobrir a alta temporada',
+          'Suporte prioritário via WhatsApp'
         ],
         disabledFeatures: []
       }
@@ -177,26 +483,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   }, [planos]);
 
   // Cálculos do Simulador de Economia
-  const { economiaMensal, economiaAnual } = useMemo(() => {
-    const totalDiariasMes = roomsCount * 18;
-    const faturamentoMes = totalDiariasMes * dailyRate;
-    const economiaMes = faturamentoMes * 0.20;
+  const { economiaMensal, economiaAnual, faturamentoEstimado, totalDiariasMes } = useMemo(() => {
+    const totalDiarias = Math.round(roomsCount * 30 * (occupancyRate / 100));
+    const faturamentoMes = totalDiarias * dailyRate;
+    const economiaMes = faturamentoMes * 0.20; // 20% média praticada por OTAs
     const economiaAno = economiaMes * 12;
     return {
+      totalDiariasMes: totalDiarias,
+      faturamentoEstimado: faturamentoMes,
       economiaMensal: economiaMes,
       economiaAnual: economiaAno
     };
-  }, [roomsCount, dailyRate]);
+  }, [roomsCount, dailyRate, occupancyRate]);
 
   // Handler para navegar para o formulário de cadastro completo do hotel
   const handleOpenProspectModal = (_planName?: string) => {
-    // Navegar para a página de cadastro multi-etapas /lp/lpnovohotel
-    if (onNavigateToNovoHotel) {
-      onNavigateToNovoHotel();
-    } else {
-      window.history.pushState({}, '', '/lp/lpnovohotel');
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    }
+    // Abrir a página de cadastro multi-etapas /lp/lpnovohotel em nova aba
+    window.open('/lp/lpnovohotel', '_blank', 'noopener,noreferrer');
   };
 
   // Submissão do Prospecto no Supabase (tabela hoteis com status: 'prospecto')
@@ -235,7 +538,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
       if (result.success) {
         setProspectSuccess(true);
       } else {
-        alert('Não foi possível registrar o teste grátis no momento. Tente novamente ou nos chame no WhatsApp.');
+        alert('Não foi possível registrar o cadastro no momento. Tente novamente ou nos chame no WhatsApp.');
       }
     } catch (err) {
       console.error('Erro ao registrar prospecto:', err);
@@ -252,51 +555,45 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] antialiased selection:bg-[#10b981] selection:text-white font-sans">
       {/* 1. HEADER & BARRA DE NAVEGAÇÃO STICKY */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#e2e8f0] transition-all">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          {/* LOGO */}
-          <a href="/lp" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#003400] to-[#006c49] flex items-center justify-center text-white font-extrabold text-lg shadow-sm group-hover:scale-105 transition-transform">
-              <span className="text-[#6cf8bb]">H</span>Z
-            </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold tracking-tight text-lg text-[#0b1c30] flex items-center gap-1.5 leading-tight">
-                HOTEL NO ZAP
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10b981]"></span>
-                </span>
-              </span>
-              <span className="text-[10px] font-semibold text-[#45464d] tracking-widest uppercase">PMS & Direct Booking</span>
-            </div>
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between gap-4">
+          {/* LOGO OFICIAL */}
+          <a href="/lp" className="flex items-center shrink-0 group py-1">
+            <img
+              src="/logo.png"
+              alt="Hotel no Zap - Hospitalidade Digital"
+              className="h-12 sm:h-14 md:h-16 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </a>
 
           {/* LINKS CENTRAIS (DESKTOP) */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-[#45464d]">
-            <a href="#funcionalidades" className="hover:text-[#006c49] transition-colors">Funcionalidades</a>
-            <a href="#motor-whatsapp" className="hover:text-[#006c49] transition-colors flex items-center gap-1">
-              Motor WhatsApp
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-7 text-xs xl:text-sm font-semibold text-[#45464d] whitespace-nowrap">
+            <a href="#funcionalidades" className="hover:text-[#006c49] transition-colors py-1">Funcionalidades</a>
+            <a href="#motor-whatsapp" className="hover:text-[#006c49] transition-colors py-1 flex items-center gap-1.5">
+              <span>Motor WhatsApp</span>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#10b981]/15 text-[#006c49]">24/7</span>
             </a>
-            <a href="#calculadora" className="hover:text-[#006c49] transition-colors">Calculadora de Economia</a>
-            <a href="#planos" className="hover:text-[#006c49] transition-colors">Planos & Preços</a>
-            <a href="#depoimentos" className="hover:text-[#006c49] transition-colors">Depoimentos</a>
+            <a href="#calculadora" className="hover:text-[#006c49] transition-colors py-1">Calculadora</a>
+            <a href="#planos" className="hover:text-[#006c49] transition-colors py-1">Planos & Preços</a>
+            <a href="#depoimentos" className="hover:text-[#006c49] transition-colors py-1">Depoimentos</a>
           </nav>
 
           {/* AÇÕES À DIREITA */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 whitespace-nowrap">
             <button
               onClick={onNavigateToLogin}
-              className="hidden sm:inline-flex text-sm font-semibold text-[#0b1c30] hover:text-[#006c49] px-3 py-2 transition-colors cursor-pointer"
+              className="hidden md:inline-flex text-xs xl:text-sm font-bold text-[#0b1c30] hover:text-[#006c49] px-2.5 xl:px-3 py-2 transition-colors cursor-pointer"
             >
-              Entrar no Sistema
+              Entrar
             </button>
-            <button
-              onClick={() => handleOpenProspectModal('Plano Professional')}
-              className="inline-flex items-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-extrabold text-xs sm:text-sm px-3.5 sm:px-5 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            <a
+              href="/lp/lpnovohotel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs xl:text-sm px-3 sm:px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
             >
-              <span>Testar 30 Dias Grátis</span>
-              <span className="material-symbols-outlined text-base font-bold">arrow_forward</span>
-            </button>
+              <span>Cadastrar Meu Hotel</span>
+              <span className="material-symbols-outlined text-base font-bold hidden sm:inline">arrow_forward</span>
+            </a>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 rounded-lg text-[#0b1c30] hover:bg-gray-100 transition-colors cursor-pointer"
@@ -320,9 +617,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             <a 
               href="#motor-whatsapp" 
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-sm font-semibold text-[#0b1c30] hover:text-[#006c49] py-1"
+              className="block text-sm font-semibold text-[#0b1c30] hover:text-[#006c49] py-1 flex items-center justify-between"
             >
-              Motor WhatsApp (24/7)
+              <span>Motor WhatsApp</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#10b981]/15 text-[#006c49]">24/7</span>
             </a>
             <a 
               href="#calculadora" 
@@ -345,19 +643,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             >
               Depoimentos
             </a>
-            <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+            <div className="pt-3 border-t border-gray-100 flex items-center gap-3 justify-between">
               <button
                 onClick={() => { setMobileMenuOpen(false); onNavigateToLogin(); }}
-                className="text-sm font-bold text-[#006c49]"
+                className="text-xs sm:text-sm font-bold text-[#006c49] py-2 px-3 rounded-lg border border-[#006c49]/30"
               >
                 Acessar Login
               </button>
-              <button
-                onClick={() => { setMobileMenuOpen(false); handleOpenProspectModal('Plano Professional'); }}
-                className="bg-[#003400] text-white text-xs font-bold px-3 py-1.5 rounded-lg"
+              <a
+                href="/lp/lpnovohotel"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="bg-[#003400] text-white text-xs font-bold px-3.5 py-2 rounded-lg inline-flex items-center justify-center"
               >
-                Testar 30 Dias
-              </button>
+                Cadastrar Meu Hotel
+              </a>
             </div>
           </div>
         )}
@@ -380,36 +681,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               O primeiro sistema de gestão hoteleira (PMS) com inteligência automatizada no WhatsApp: controle mapa de quartos, check-in, frigobar e pagamentos enquanto sua taxa de ocupação decola.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-              <button
-                onClick={() => handleOpenProspectModal('Plano Professional')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#003400] hover:bg-[#002000] text-white font-bold text-sm sm:text-base px-7 py-3.5 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-xl text-[#6cf8bb]">rocket_launch</span>
-                <span>Iniciar Teste Gratuito de 30 Dias</span>
-              </button>
-
+            <div className="flex justify-center mb-6">
               <a
-                href="https://wa.me/5581999999999?text=Ol%C3%A1!%20Gostaria%20de%20ver%20uma%20demonstra%C3%A7%C3%A3o%20do%20Hotel%20no%20Zap"
+                href="/lp/lpnovohotel"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-white hover:bg-[#f8f9ff] text-[#0b1c30] border border-[#e2e8f0] font-semibold text-sm sm:text-base px-6 py-3.5 rounded-xl shadow-sm transition-all hover:border-[#10b981]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#003400] hover:bg-[#002000] text-white font-bold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
-                <span className="material-symbols-outlined text-xl text-[#10b981]">chat</span>
-                <span>Ver Demonstração ao Vivo no Zap</span>
+                <span className="material-symbols-outlined text-xl text-[#6cf8bb]">rocket_launch</span>
+                <span>Cadastrar Meu Hotel Agora</span>
               </a>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium text-[#45464d]">
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Sem necessidade de cartão
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Configuração em 2 minutos
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Suporte humano dedicado
-              </span>
+            <div className="flex flex-col items-center justify-center gap-2.5 max-w-2xl mx-auto">
+              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm font-semibold text-[#45464d]">
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Sem necessidade de cartão
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Suporte humano dedicado
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-[13px] text-[#45464d] leading-relaxed text-center">
+                (Seu único trabalho é cadastrar seus quartos com fotos reais e cadastrar a sua equipe de atendimento no sistema, Recepicionistas, Camareiras, Gerente e Administradores do Sistema.)
+              </p>
             </div>
           </div>
 
@@ -429,7 +725,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </div>
                 <div className="flex items-center gap-3 text-xs text-white/90">
                   <span className="inline-flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full text-[11px]">
-                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span> WhatsApp Conectado (Instância #01)
+                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span> WhatsApp Oficial Conectado
                   </span>
                   <span className="font-bold hidden md:inline">Ocupação: 84%</span>
                 </div>
@@ -540,7 +836,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     HZ
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-xs truncate">Hotel no Zap Bot</p>
+                    <p className="font-bold text-xs truncate">Hotel no Zap</p>
                     <p className="text-[10px] text-emerald-300">Online • Resposta Imediata</p>
                   </div>
                   <span className="material-symbols-outlined text-sm text-white/80">more_vert</span>
@@ -552,19 +848,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     <span className="text-[8px] text-gray-400 block text-right">14:32</span>
                   </div>
 
-                  <div className="bg-[#dcf8c6] p-2.5 rounded-lg rounded-tr-none shadow-xs ml-auto max-w-[90%] border border-[#c3ebb2]">
-                    <p className="font-bold text-[10px] text-[#003400] mb-0.5">🏨 Temos sim! 2 opções disponíveis:</p>
-                    <p className="text-[10px] text-gray-800 leading-tight mb-1.5">
-                      1. Suíte Luxo: R$ 420/dia<br />
-                      2. Master King: R$ 560/dia
+                  <div className="bg-[#dcf8c6] p-2.5 rounded-lg rounded-tr-none shadow-xs ml-auto max-w-[92%] border border-[#c3ebb2]">
+                    <p className="font-bold text-[10px] text-[#003400] mb-1">🏨 Olá! Temos vagas disponíveis sim no Hotel Morada da Lua!</p>
+                    <p className="text-[10px] text-gray-800 leading-tight mb-2">
+                      É só acessar nosso link oficial abaixo e fazer sua reserva em minutos:
                     </p>
-                    <div className="bg-white/80 p-1.5 rounded border border-emerald-300 text-center">
-                      <span className="text-[9px] font-bold text-[#006c49]">Toque para Bloquear Reserva:</span>
-                      <span className="block bg-[#10b981] text-white font-bold text-[9px] py-1 px-2 rounded mt-1 shadow-xs">
-                        Pagar no PIX e Receber Voucher
+                    <a
+                      href="https://hotelnozap.com.br/hoteis/hotelmoradalua"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-white p-2 rounded-lg border border-emerald-300 shadow-xs hover:bg-emerald-50/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="material-symbols-outlined text-xs text-[#006c49]">hotel</span>
+                        <span className="text-[10px] font-black text-[#003400] truncate">Hotel Morada da Lua</span>
+                      </div>
+                      <p className="text-[9px] text-blue-700 underline truncate font-medium">
+                        hotelnozap.com.br/hoteis/hotelmoradalua
+                      </p>
+                      <span className="block bg-[#10b981] text-white font-bold text-[9px] py-1 px-2 rounded mt-1.5 text-center shadow-xs">
+                        Acessar e Fazer Reserva em Minutos →
                       </span>
-                    </div>
-                    <span className="text-[8px] text-gray-500 block text-right mt-1">14:32 • Enviado Instantaneamente</span>
+                    </a>
+                    <span className="text-[8px] text-gray-500 block text-right mt-1.5">14:32 • Resposta Imediata</span>
                   </div>
                 </div>
               </div>
@@ -577,7 +883,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
       <section className="py-10 lg:py-12 bg-white border-y border-[#e2e8f0]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#45464d] mb-6 sm:mb-8">
-            Mais de 180+ hotéis, pousadas e resorts em todo o Brasil confiam no Hotel no Zap
+            Mais de {totalHoteis} hotéis, pousadas e resorts cadastrados no Hotel no Zap
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#e2e8f0]/80">
@@ -679,9 +985,172 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-[#10b981] text-lg shrink-0 mt-0.5">verified</span>
-                  <span><strong>CRM completo com disparos em 1 clique:</strong> fidelize hóspedes antigos em baixa temporada com ofertas exclusivas.</span>
+                  <span><strong>Histórico completo de hóspedes:</strong> consulte reservas anteriores, documentos e dados de contato de forma organizada e ágil.</span>
                 </li>
               </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4.1 COMO FUNCIONA EM 6 PASSOS SIMPLES */}
+      <section className="py-16 lg:py-20 bg-white border-b border-[#e2e8f0]">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#006c49] bg-[#10b981]/10 px-3 py-1 rounded-full">
+              Simplicidade Total
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0b1c30] mt-3 mb-4">
+              Como Colocar Seu Hotel no Piloto Automático em 6 Passos
+            </h2>
+            <p className="text-[#45464d] text-xs sm:text-sm sm:text-base">
+              Sem instalações pesadas, sem necessidade de computador caro. Tudo pronto para operar em minutos.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6 lg:gap-8 relative">
+            {/* Passo 1 - Cadastre Quartos e Valores */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    1
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">tune</span> 5 minutos
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Cadastre Quartos e Valores
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Adicione seus tipos de acomodação (Luxo, Standard, Família) e valores com <strong>fotos 100% reais dos seus quartos</strong>. Imagens reais geram alta credibilidade e aceleram o fechamento imediato.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">photo_camera</span>
+                <span>Fotos reais dos quartos</span>
+              </div>
+            </div>
+
+            {/* Passo 2 - Cadastrar a Equipe de Atendimento */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    2
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">badge</span> Equipe Unida
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Cadastre Sua Equipe no Sistema
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Dê o acesso perfeito para quem faz seu hotel girar: <strong>Recepção, Camareiras, Governança, Gerência e Administradores</strong>. Cada setor com sua tela inteligente e zero confusão operacional.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
+                <span>Acessos para toda a equipe</span>
+              </div>
+            </div>
+
+            {/* Passo 3 - Divulgar o Seu Link */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    3
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">share</span> Seu Link Web
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Divulgue o Seu Link Exclusivo
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Coloque o link oficial do seu hotel na bio do Instagram, no perfil do Google Meu Negócio e nas suas redes. Seus clientes acessam, escolhem as datas e reservam diretamente com você.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">link</span>
+                <span>Link direto no Instagram & Google</span>
+              </div>
+            </div>
+
+            {/* Passo 4 - Conecte seu WhatsApp Oficial */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#003400] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    4
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">qr_code_scanner</span> 30 segundos
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Conecte seu WhatsApp Oficial
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Basta apontar a câmera do seu celular e ler o QR Code, exatamente como no WhatsApp Web. Seu número atual é 100% mantido e você não perde nenhuma conversa anterior.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
+                <span>Sem troca de chip ou operadora</span>
+              </div>
+            </div>
+
+            {/* Passo 5 - Acompanhar as Reservas pelo Sistema */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    5
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">calendar_month</span> Gestão Total
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Acompanhe as Reservas pelo Sistema
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Controle check-ins, check-outs, mapa de ocupação e financeiro em tempo real. Veja quais quartos estão limpos ou ocupados e acompanhe o faturamento do seu hotel na palma da mão.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
+                <span>Mapa visual & governança ao vivo</span>
+              </div>
+            </div>
+
+            {/* Passo 6 - Receba Reservas no PIX 24/7 */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border-2 border-[#10b981]/50 shadow-md hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#10b981] to-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    6
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-amber-900 bg-amber-100 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm text-amber-600">payments</span> 100% no seu bolso
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Receba Reservas no PIX 24/7
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  O sistema atende, apresenta valores e gera a cobrança via PIX instantâneo. Ao pagar, o mapa de quartos atualiza sozinho e o voucher cai no Zap do hóspede com 0% de comissão retida.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
+                <span>Zero comissão para intermediários</span>
+              </div>
             </div>
           </div>
         </div>
@@ -703,6 +1172,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* 1. MAPA DE QUARTOS */}
             <div className="md:col-span-2 bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
               <div className="mb-6">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#003400] to-[#006c49] text-white flex items-center justify-center mb-4 shadow-sm">
@@ -727,6 +1197,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
+            {/* 2. MOTOR DE RESERVAS WHATSAPP */}
             <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all" id="motor-whatsapp">
               <div>
                 <div className="w-12 h-12 rounded-xl bg-[#10b981] text-white flex items-center justify-center mb-4 shadow-md">
@@ -737,7 +1208,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   Motor de Reservas no WhatsApp Oficial
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Disponibilize seu catálogo exclusivo com link direto (<code className="text-xs bg-emerald-100/70 text-[#003400] px-1.5 py-0.5 rounded">hotelnozap.com/hoteis/seuhotel</code>), gere vouchers com QR Code e receba via PIX ou Cartão sem intermediários.
+                  Disponibilize seu catálogo exclusivo com link direto, gere vouchers com QR Code e receba via PIX ou Cartão sem intermediários e com resposta em menos de 5 segundos.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#e2e8f0] flex items-center justify-between text-xs font-semibold text-[#006c49]">
@@ -746,6 +1217,105 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
+            {/* 3. PAINEL DA CAMAREIRA / GOVERNANÇA */}
+            <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">cleaning_services</span>
+                </div>
+                <span className="text-xs font-bold uppercase text-amber-700 tracking-wider">Governança Ágil</span>
+                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
+                  Painel Mobile da Camareira
+                </h3>
+                <p className="text-sm text-[#45464d] leading-relaxed">
+                  Sua equipe de limpeza acessa pelo smartphone sem precisar instalar apps pesados. Ao finalizar a faxina, a camareira atualiza para <strong>"Limpo"</strong> e a recepção é liberada instantaneamente para check-in antecipado.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#10b981]">smartphone</span> Fim dos rádios e interfones barulhentos
+              </div>
+            </div>
+
+            {/* 4. CADASTRO DE PRODUTOS E CONTROLE DE ESTOQUE */}
+            <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">inventory_2</span>
+                </div>
+                <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Estoque & Frigobar</span>
+                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
+                  Cadastro de Produtos e Controle de Estoque
+                </h3>
+                <p className="text-sm text-[#45464d] leading-relaxed">
+                  O hotel tem total controle dos produtos cadastrados no frigobar, bebidas, petiscos e comodidades. Todos os produtos podem ser solicitados pelo hóspede diretamente da sua <strong>área exclusiva</strong> pelo celular, e o sistema já realiza de forma 100% automática o <strong>controle e baixa de estoque</strong>, integrando os lançamentos à conta do quarto.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#10b981]">inventory</span> Baixa automática no estoque & pedidos via área exclusiva
+              </div>
+            </div>
+
+            {/* 5. VITRINE PRÓPRIA & MOTOR WEB */}
+            <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-600 to-blue-800 text-white flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">language</span>
+                </div>
+                <span className="text-xs font-bold uppercase text-sky-700 tracking-wider">Presença Digital</span>
+                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
+                  Página Própria do Hotel na Web
+                </h3>
+                <p className="text-sm text-[#45464d] leading-relaxed">
+                  Ganhe um link oficial exclusivo com fotos das suas suítes, mapa de comodidades e motor de reservas para colocar na bio do Instagram e Google Meu Negócio. Sem mensalidades para agências criarem sites.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#10b981]">link</span> Seu link próprio com fotos e reservas
+              </div>
+            </div>
+
+            {/* 6. FIDELIZAÇÃO DO HÓSPEDE (ÁREA EXCLUSIVA) */}
+            <div className="bg-[#f8f9ff] rounded-2xl border-2 border-emerald-200/80 p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-[#006c49] text-white text-[10px] font-bold uppercase px-3 py-0.5 rounded-bl-xl tracking-wider">
+                Exclusivo
+              </div>
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#006c49] to-[#10b981] text-white flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">loyalty</span>
+                </div>
+                <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Fidelização Total</span>
+                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
+                  Fidelização do Hóspede & Área Exclusiva
+                </h3>
+                <p className="text-sm text-[#45464d] leading-relaxed">
+                  O hóspede recebe uma <strong>página exclusiva</strong> para acompanhar suas reservas em tempo real. Uma vez que o mesmo fez uma reserva com o hotel, <strong>nunca mais ele entra em contato com a recepção</strong>: basta orientá-lo que quando quiser fazer outra reserva, é só acessar a área exclusiva dele, verificar as acomodações disponíveis e efetuar a nova reserva em segundos.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#10b981]">verified</span> Recompra automática sem sobrecarregar a recepção
+              </div>
+            </div>
+
+            {/* 7. CUPONS DE DESCONTO */}
+            <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
+              <div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FDB116] to-amber-600 text-[#0b1c30] flex items-center justify-center mb-4 shadow-sm">
+                  <span className="material-symbols-outlined text-2xl">sell</span>
+                </div>
+                <span className="text-xs font-bold uppercase text-amber-700 tracking-wider">Marketing Direto</span>
+                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
+                  Cupons de Desconto Personalizados
+                </h3>
+                <p className="text-sm text-[#45464d] leading-relaxed">
+                  Crie cupons promocionais sob medida (ex: <strong>VERAO10</strong>, <strong>CLIENTEVIP</strong>, <strong>CARNAVAL</strong>) em porcentagem ou valor fixo, com limite de usos e datas de validade. <strong>Todos os cupons ficam disponíveis na área do hóspede, que pode utilizá-los a qualquer momento</strong> — a estratégia perfeita para incentivar reservas diretas e lotar o seu hotel o ano inteiro.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-[#10b981]">local_offer</span> Cupons visíveis na área do hóspede para uso a qualquer momento
+              </div>
+            </div>
+
+            {/* 8. FLUXO DE CAIXA & PDV */}
             <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
               <div>
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0b1c30] to-[#1e293b] text-white flex items-center justify-center mb-4 shadow-sm">
@@ -756,7 +1326,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   Gestão Financeira & PDV Frigobar
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Contas a pagar e receber, fechamento de caixa diário por turno e lançamento instantâneo de consumo da recepção/frigobar diretamente na conta do quarto.
+                  Contas a pagar e receber, fechamento de caixa diário por turno e lançamento instantâneo de consumo da recepção/frigobar diretamente na conta do quarto com conciliação bancária.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#45464d] flex items-center gap-1.5">
@@ -764,39 +1334,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
-            <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
-              <div>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#003400] to-[#081a0b] text-white flex items-center justify-center mb-4 shadow-sm">
-                  <span className="material-symbols-outlined text-2xl">contacts</span>
+            {/* 9. CENTRAL HISTÓRICO & BASE DE HÓSPEDES (SPAN 3) */}
+            <div className="md:col-span-3 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/50 rounded-2xl border border-emerald-200 p-6 lg:p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-lg transition-all">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
+                  <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Base de Dados & Organização</span>
                 </div>
-                <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Fidelização</span>
-                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
-                  CRM de Hóspedes & Disparos
+                <h3 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mb-2">
+                  Histórico Centralizado & Ficha Completa de Hóspedes
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Base unificada de clientes com dados de contato, CPF/Passaporte e histórico de estadias. Envie mensagens de boas-vindas e cupons de retorno com apenas um toque.
+                  Mantenha a base de dados organizada de todos os seus hóspedes, com histórico de estadias anteriores, dados de contato, documentos e preferências. Localize cadastros em segundos e proporcione um atendimento muito mais ágil, seguro e acolhedor.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#45464d] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981]">mark_chat_read</span> Sem limite por quantidade de mensagens
-              </div>
-            </div>
-
-            <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
-              <div>
-                <div className="w-12 h-12 rounded-xl bg-[#006c49] text-white flex items-center justify-center mb-4 shadow-sm">
-                  <span className="material-symbols-outlined text-2xl">cell_tower</span>
+              <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
+                  <p className="text-lg font-black text-[#003400]">Histórico</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Estadias Anteriores</p>
                 </div>
-                <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Multi-dispositivo</span>
-                <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
-                  Múltiplas Conexões WhatsApp
-                </h3>
-                <p className="text-sm text-[#45464d] leading-relaxed">
-                  Conecte o número da recepção, comercial e governança de forma simultânea. Cada setor opera sua fila de mensagens sem risco de bloqueio ou desincronização.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#45464d] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981]">security</span> Conexão estável via QR Code
+                <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
+                  <p className="text-lg font-black text-[#10b981]">LGPD</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Dados Seguros</p>
+                </div>
               </div>
             </div>
           </div>
@@ -820,7 +1380,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                {/* 1. Quartos */}
                 <div className="bg-[#f8f9ff] p-5 rounded-2xl border border-[#e2e8f0]">
                   <div className="flex justify-between items-center mb-3">
                     <label className="font-bold text-xs sm:text-sm text-[#0b1c30]">Número de Quartos:</label>
@@ -844,6 +1405,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   </div>
                 </div>
 
+                {/* 2. Diária Média */}
                 <div className="bg-[#f8f9ff] p-5 rounded-2xl border border-[#e2e8f0]">
                   <div className="flex justify-between items-center mb-3">
                     <label className="font-bold text-xs sm:text-sm text-[#0b1c30]">Diária Média (R$):</label>
@@ -866,6 +1428,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     <span>R$ 1.200</span>
                   </div>
                 </div>
+
+                {/* 3. Taxa de Ocupação */}
+                <div className="bg-[#f8f9ff] p-5 rounded-2xl border border-[#e2e8f0]">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="font-bold text-xs sm:text-sm text-[#0b1c30]">Taxa de Ocupação:</label>
+                    <span className="text-base sm:text-lg font-extrabold text-[#006c49] bg-emerald-50 px-2.5 py-0.5 rounded-lg">
+                      {occupancyRate}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="20"
+                    max="100"
+                    step="5"
+                    value={occupancyRate}
+                    onChange={(e) => setOccupancyRate(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#006c49]"
+                  />
+                  <div className="flex justify-between text-[11px] text-[#45464d] mt-2 font-medium">
+                    <span>20% (baixa)</span>
+                    <span>60% (média)</span>
+                    <span>100% (lotado)</span>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-gradient-to-br from-[#003400] via-[#081a0b] to-[#000000] text-white rounded-2xl p-6 sm:p-8 text-center shadow-lg">
@@ -877,15 +1463,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     R$ {Math.round(economiaMensal).toLocaleString('pt-BR')},00 <span className="text-sm sm:text-base font-semibold text-white/80">/ mês</span>
                   </div>
                   <p className="text-xs sm:text-sm text-white/90 leading-relaxed mb-6">
-                    Você está deixando cerca de <strong className="text-[#6cf8bb]">R$ {Math.round(economiaAnual).toLocaleString('pt-BR')},00 por ano</strong> nas mãos de intermediários. Com o <strong>Hotel no Zap</strong>, esse lucro fica 100% no caixa da sua propriedade.
+                    Com <strong className="text-[#6cf8bb]">{occupancyRate}% de ocupação</strong> ({totalDiariasMes} diárias/mês), seu faturamento bruto é de cerca de <strong>R$ {Math.round(faturamentoEstimado).toLocaleString('pt-BR')},00/mês</strong>. Sem o Hotel no Zap, você deixaria cerca de <strong className="text-[#FDB116]">R$ {Math.round(economiaAnual).toLocaleString('pt-BR')},00 por ano</strong> em comissões para intermediários. Esse lucro agora fica 100% no seu caixa!
                   </p>
-                  <button
-                    onClick={() => handleOpenProspectModal('Plano Professional')}
+                  <a
+                    href="/lp/lpnovohotel"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs sm:text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
                   >
                     <span>Quero Reter 100% das Minhas Reservas</span>
                     <span className="material-symbols-outlined text-base">arrow_forward</span>
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -903,51 +1491,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0b1c30] mt-3 mb-4">
               Escolha o Plano Ideal para o Tamanho da sua Operação
             </h2>
-            <p className="text-[#45464d] text-sm sm:text-base mb-8">
-              Sem taxas sobre reservas, sem pegadinhas contratuais. Teste grátis por 30 dias.
+            <p className="text-[#45464d] text-sm sm:text-base">
+              Sem taxas sobre reservas, sem pegadinhas contratuais. Ativação imediata e sem fidelidade.
             </p>
-
-            <div className="inline-flex items-center p-1.5 rounded-2xl bg-[#f8f9ff] border border-[#e2e8f0]">
-              <button
-                onClick={() => setBillingPeriod('monthly')}
-                className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                  billingPeriod === 'monthly'
-                    ? 'bg-[#003400] text-white shadow-xs'
-                    : 'text-[#45464d] hover:text-[#0b1c30]'
-                }`}
-              >
-                Faturamento Mensal
-              </button>
-              <button
-                onClick={() => setBillingPeriod('annual')}
-                className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  billingPeriod === 'annual'
-                    ? 'bg-[#003400] text-white shadow-xs'
-                    : 'text-[#45464d] hover:text-[#0b1c30]'
-                }`}
-              >
-                <span>Faturamento Anual</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#FDB116] text-[#0b1c30]">
-                  20% OFF
-                </span>
-              </button>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-6xl mx-auto">
-            {displayPlanos.map((plano) => {
-              const displayedPrice = billingPeriod === 'annual'
-                ? Math.round(plano.basePrice * 0.8)
-                : plano.basePrice;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-6xl mx-auto">
+            {displayPlanos.map((plano, idx) => {
+              const formattedTitle = formatPlanTitle(plano.name, plano.periodicity, plano.cycleDiscount);
+              const periodicitySuffix = getPeriodicitySuffix(plano.periodicity);
+              const priceText = formatPrice(plano.basePrice);
+              const theme = getPlanCardTheme(plano, idx);
 
               return (
                 <div
                   key={plano.id}
-                  className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all relative ${
-                    plano.isFeatured
-                      ? 'bg-white border-2 border-[#FDB116] shadow-xl lg:-translate-y-2'
-                      : 'bg-[#f8f9ff] border border-[#e2e8f0] hover:shadow-md'
-                  }`}
+                  className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all relative ${theme.containerClass}`}
                 >
                   {plano.isFeatured && (
                     <div className="absolute top-0 right-0 bg-[#FDB116] text-[#0b1c30] font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs">
@@ -958,62 +1517,70 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   <div>
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <span className="text-[11px] font-bold text-[#006c49] uppercase tracking-wider">
-                          {plano.categoryLabel || 'Pousadas & Hotéis'}
+                        <span className={`text-[11px] uppercase tracking-wider ${theme.categoryClass}`}>
+                          {plano.categoryLabel || plano.tag || 'Pousadas & Hotéis'}
                         </span>
-                        <h3 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mt-0.5">
-                          {plano.name}
+                        <h3 className={`text-xl sm:text-2xl mt-1.5 ${theme.titleClass}`}>
+                          {formattedTitle}
                         </h3>
                       </div>
-                      <span className={`p-2.5 rounded-xl ${plano.isFeatured ? 'bg-amber-50 text-[#FDB116]' : 'bg-white border border-[#e2e8f0] text-[#006c49]'}`}>
+                      <span className={`p-2.5 rounded-xl ${theme.iconBoxClass}`}>
                         <span className="material-symbols-outlined font-bold">
                           {plano.isFeatured ? 'star' : plano.roomLimit > 50 ? 'apartment' : 'hotel'}
                         </span>
                       </span>
                     </div>
 
-                    <p className="text-xs text-[#45464d] mb-6 min-h-[32px]">
+                    <p className={`text-xs mb-6 min-h-[32px] ${theme.descClass}`}>
                       {plano.description}
                     </p>
 
-                    <div className="mb-6 pb-6 border-b border-[#e2e8f0]">
-                      <span className="text-3xl sm:text-4xl font-black text-[#0b1c30]">
-                        R$ {displayedPrice}
-                      </span>
-                      <span className="text-xs text-[#45464d] font-semibold ml-1">
-                        {billingPeriod === 'annual' ? '/mês no anual' : '/mês'}
-                      </span>
+                    <div className={`mb-6 pb-6 border-b ${theme.dividerClass}`}>
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className={`text-3xl sm:text-4xl ${theme.priceClass}`}>
+                          R$ {priceText}
+                        </span>
+                        <span className={`text-xs sm:text-sm ${theme.periodicityClass}`}>
+                          {periodicitySuffix}
+                        </span>
+                      </div>
                     </div>
 
-                    <ul className="space-y-3 text-xs text-[#0b1c30] mb-8 font-medium">
-                      {plano.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5">
-                          <span className="material-symbols-outlined text-sm font-bold shrink-0 mt-0.5 text-[#10b981]">
-                            check_circle
-                          </span>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                      {plano.disabledFeatures.map((disabled, idx) => (
-                        <li key={`dis-${idx}`} className="flex items-start gap-2.5 text-gray-400">
-                          <span className="material-symbols-outlined text-sm text-gray-300 font-bold shrink-0 mt-0.5">
-                            remove
-                          </span>
-                          <span>{disabled}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {(() => {
+                      const allBenefits = buildPlanBenefits(plano);
+                      const previewBenefits = allBenefits.slice(0, 6);
+
+                      return (
+                        <>
+                          <ul className="space-y-2.5 text-xs mb-4 font-medium min-h-[175px]">
+                            {previewBenefits.map((benefit, bIdx) => (
+                              <li key={bIdx} className={`flex items-start gap-2 ${theme.featureItemClass}`}>
+                                <span className={`material-symbols-outlined text-sm font-bold shrink-0 mt-0.5 ${theme.checkIconClass}`}>
+                                  check_circle
+                                </span>
+                                <span className="leading-snug">{benefit}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPlanForBenefits(plano)}
+                            className={`w-full mb-6 py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${theme.benefitsBtnClass}`}
+                          >
+                            <span className="material-symbols-outlined text-sm">checklist</span>
+                            <span>Ver todos os benefícios ({allBenefits.length})</span>
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <button
-                    onClick={() => handleOpenProspectModal(plano.name)}
-                    className={`w-full text-center py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer ${
-                      plano.isFeatured
-                        ? 'bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] shadow-md hover:scale-[1.02]'
-                        : 'border border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white'
-                    }`}
+                    onClick={() => handleOpenProspectModal(formattedTitle)}
+                    className={`w-full text-center py-3.5 rounded-xl text-xs sm:text-sm transition-all active:scale-95 cursor-pointer ${theme.ctaBtnClass}`}
                   >
-                    {plano.isFeatured ? 'Testar Professional 30 Dias Grátis' : `Testar ${plano.name.replace('Plano ', '')} Grátis`}
+                    {plano.isFeatured ? 'Assinar Plano em Destaque' : `Assinar ${plano.name.replace(/\s*\([^)]*\)/g, '').trim()}`}
                   </button>
                 </div>
               );
@@ -1021,10 +1588,81 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           </div>
 
           <div className="mt-10 text-center text-xs text-[#45464d]">
-            <p>💡 Quartos excedentes a partir de apenas R$ 2,50/adicional • Mensagens ilimitadas sem custo por disparo • Cancele a qualquer momento sem multa.</p>
+            <p>💡 Quartos excedentes a partir de apenas R$ 2,50/adicional • Sem cobranças extras por mensagens • Cancele a qualquer momento sem multa.</p>
           </div>
         </div>
       </section>
+
+      {/* MODAL: TODOS OS BENEFÍCIOS DO PLANO */}
+      {selectedPlanForBenefits && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setSelectedPlanForBenefits(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedPlanForBenefits(null)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Fechar modal"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+
+            <div className="border-b border-gray-100 pb-4 mb-4 pr-10">
+              <span className="text-[11px] font-bold text-[#006c49] uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+                Todos os Benefícios Inclusos
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-[#0b1c30] mt-2">
+                {formatPlanTitle(selectedPlanForBenefits.name, selectedPlanForBenefits.periodicity, selectedPlanForBenefits.cycleDiscount)}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {selectedPlanForBenefits.description} • <strong className="text-[#006c49]">R$ {formatPrice(selectedPlanForBenefits.basePrice)} {getPeriodicitySuffix(selectedPlanForBenefits.periodicity)}</strong>
+              </p>
+            </div>
+
+            <div className="overflow-y-auto pr-1 space-y-2.5 flex-1 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {buildPlanBenefits(selectedPlanForBenefits).map((benefit, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs text-[#0b1c30] font-medium"
+                  >
+                    <span className="material-symbols-outlined text-base font-bold shrink-0 text-[#10b981] mt-0.5">
+                      check_circle
+                    </span>
+                    <span className="leading-snug">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4 mt-4 flex items-center gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedPlanForBenefits(null)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const planToOpen = formatPlanTitle(selectedPlanForBenefits.name, selectedPlanForBenefits.periodicity, selectedPlanForBenefits.cycleDiscount);
+                  setSelectedPlanForBenefits(null);
+                  handleOpenProspectModal(planToOpen);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002000] text-white text-xs font-bold shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Quero Assinar Este Plano</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 8. DEPOIMENTOS */}
       <section className="py-16 lg:py-24 bg-[#f8f9ff]" id="depoimentos">
@@ -1133,8 +1771,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 a: 'Não! Você continua utilizando exatamente o mesmo número comercial da sua recepção ou pousada. A conexão é realizada em menos de 1 minuto via leitura de QR Code, similar ao WhatsApp Web.'
               },
               {
-                q: 'Como funciona o teste grátis de 30 dias?',
-                a: 'Você tem acesso total e irrestrito a todas as funcionalidades do sistema, incluindo mapa de quartos, motor de reservas e automações durante os 30 dias de teste. Não pedimos cartão de crédito e você não assume nenhum compromisso para iniciar o teste.'
+                q: 'Como funciona a contratação e ativação do sistema?',
+                a: 'Você escolhe o plano mais adequado para o tamanho da sua propriedade e preenche o cadastro. Nossa equipe auxilia você na ativação rápida para começar a receber reservas no WhatsApp imediatamente, sem fidelidade contratual.'
               },
               {
                 q: 'Consigo importar meus hóspedes e dados antigos?',
@@ -1180,7 +1818,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           <div className="max-w-3xl mx-auto">
             <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10b981]/20 border border-[#10b981]/40 text-[#6cf8bb] font-bold text-xs mb-6">
               <span className="w-2 h-2 rounded-full bg-[#10b981] animate-ping"></span>
-              Comece Hoje Mesmo • Configuração em 2 Minutos
+              Comece Hoje Mesmo • Ativação Imediata
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-6 leading-tight">
               Pronto Para Encher Seus Quartos e Parar de Pagar Comissões Abusivas?
@@ -1189,15 +1827,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               Junte-se a centenas de proprietários de pousadas e hotéis que retomaram a autonomia do seu negócio e transformaram o WhatsApp no seu canal mais rentável.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-              <button
-                onClick={() => handleOpenProspectModal('Plano Professional')}
+              <a
+                href="/lp/lpnovohotel"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-extrabold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
-                <span>Criar Minha Conta Grátis Agora</span>
+                <span>Cadastrar Meu Hotel Agora</span>
                 <span className="material-symbols-outlined text-xl">arrow_forward</span>
-              </button>
+              </a>
               <a
-                href="https://wa.me/5581999999999?text=Ol%C3%A1!%20Gostaria%20de%20tirar%20d%C3%BAvidas%20sobre%20o%20Hotel%20no%20Zap"
+                href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Gostaria%20de%20tirar%20d%C3%BAvidas%20sobre%20o%20Hotel%20no%20Zap"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base px-6 py-4 rounded-xl backdrop-blur-sm border border-white/15 transition-all"
@@ -1207,7 +1847,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </a>
             </div>
             <p className="text-xs text-white/60">
-              ✓ 30 dias de garantia incondicional • Sem fidelidade contratual • Ativação imediata
+              ✓ Sem fidelidade contratual • Ativação imediata • Suporte humano dedicado
             </p>
           </div>
         </div>
@@ -1218,11 +1858,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 mb-12">
             <div className="lg:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#003400] to-[#006c49] flex items-center justify-center text-white font-extrabold text-base">
-                  <span className="text-[#6cf8bb]">H</span>Z
+              <div className="mb-5">
+                <div className="inline-block bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm">
+                  <img
+                    src="/logo.png"
+                    alt="Hotel no Zap - Hospitalidade Digital"
+                    className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+                  />
                 </div>
-                <span className="font-extrabold text-lg text-white tracking-tight">HOTEL NO ZAP</span>
               </div>
               <p className="text-xs sm:text-sm text-white/60 leading-relaxed mb-6 max-w-sm">
                 A inteligência que seu hotel precisa no canal que seu hóspede usa. Gestão operacional completa e motor de reservas diretas sem comissões.
@@ -1237,6 +1880,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               <ul className="space-y-2.5 text-xs text-white/70">
                 <li><a href="#funcionalidades" className="hover:text-white transition-colors">Mapa de Quartos (PMS)</a></li>
                 <li><a href="#motor-whatsapp" className="hover:text-white transition-colors">Motor no WhatsApp</a></li>
+                <li><a href="#funcionalidades" className="hover:text-white transition-colors">Painel da Camareira</a></li>
+                <li><a href="#funcionalidades" className="hover:text-white transition-colors">Cardápio & Frigobar QR</a></li>
                 <li><a href="#funcionalidades" className="hover:text-white transition-colors">Controle Financeiro</a></li>
                 <li><a href="#planos" className="hover:text-white transition-colors">Tabela de Planos</a></li>
                 <li><a href="#calculadora" className="hover:text-white transition-colors">Calculadora de Economia</a></li>
@@ -1261,10 +1906,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 <span>Todos os serviços operacionais</span>
               </div>
               <p className="text-xs text-white/60 mb-2">Central de Atendimento:</p>
-              <a href="mailto:contato@hotelnozap.com" className="text-xs text-[#6cf8bb] hover:underline block mb-1">
-                contato@hotelnozap.com
+              <a
+                href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Gostaria%20de%20falar%20com%20o%20atendimento%20do%20Hotel%20no%20Zap"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-[#6cf8bb] hover:underline flex items-center gap-1.5 mb-2 font-semibold"
+              >
+                <span className="material-symbols-outlined text-sm">chat</span>
+                (66) 98158-5014 (WhatsApp)
               </a>
-              <span className="text-[11px] text-white/40">Segunda a Sábado, 08h às 20h</span>
+              <a
+                href="mailto:hotelnozap@gmail.com"
+                className="text-xs text-white/80 hover:text-white flex items-center gap-1.5 mb-2"
+              >
+                <span className="material-symbols-outlined text-sm text-gray-400">mail</span>
+                hotelnozap@gmail.com
+              </a>
+              <span className="text-[11px] text-white/40 block">Segunda a Sábado, 08h às 20h</span>
             </div>
           </div>
 
@@ -1294,13 +1952,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               <>
                 <div className="mb-6">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#006c49] bg-[#10b981]/15 px-3 py-1 rounded-full">
-                    🚀 Teste Grátis de 30 Dias
+                    🚀 Cadastre sua Propriedade
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-[#0b1c30] mt-2 mb-1">
                     Cadastre sua Propriedade
                   </h3>
                   <p className="text-xs text-gray-500">
-                    Acesso imediato sem necessidade de cartão de crédito. Comece em menos de 2 minutos.
+                    Acesso imediato e ativação rápida para começar a receber reservas diretas.
                   </p>
                 </div>
 
@@ -1415,7 +2073,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                       >
                         {displayPlanos.map((p) => (
                           <option key={p.id} value={p.name}>
-                            {p.name} (R$ {p.basePrice}/mês)
+                            {formatPlanTitle(p.name, p.periodicity, p.cycleDiscount)} (R$ {formatPrice(p.basePrice)} {getPeriodicitySuffix(p.periodicity)})
                           </option>
                         ))}
                       </select>
@@ -1431,12 +2089,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                       {isSubmittingProspect ? (
                         <>
                           <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                          <span>Ativando seu teste...</span>
+                          <span>Cadastrando propriedade...</span>
                         </>
                       ) : (
                         <>
                           <span className="material-symbols-outlined text-lg text-[#6cf8bb]">rocket_launch</span>
-                          <span>Ativar Meu Teste de 30 Dias Grátis</span>
+                          <span>Cadastrar Minha Propriedade Agora</span>
                         </>
                       )}
                     </button>
@@ -1462,16 +2120,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-200 text-left mb-6 text-xs text-emerald-900 space-y-2">
                   <p className="font-bold flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-base text-[#10b981]">verified</span>
-                    Status: Prospecto Ativado (Teste Grátis 30 Dias)
+                    Status: Solicitação Recebida com Sucesso
                   </p>
                   <p>
-                    Nossa equipe já preparou sua instância. Clique abaixo para conectar seu WhatsApp imediatamente ou acesse o sistema:
+                    Nossa equipe já preparou sua conexão. Clique abaixo para conectar seu WhatsApp imediatamente ou acesse o sistema:
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <a
-                    href={`https://wa.me/5581999999999?text=Ol%C3%A1!%20Acabei%20de%20cadastrar%20o%20hotel%20${encodeURIComponent(prospectForm.hotelName)}%20no%20teste%20gr%C3%A1tis%20do%20Hotel%20no%20Zap.%20Meu%20WhatsApp%20%C3%A9%20${encodeURIComponent(prospectForm.phone)}`}
+                    href={`https://wa.me/5566981585014?text=Ol%C3%A1!%20Acabei%20de%20cadastrar%20o%20hotel%20${encodeURIComponent(prospectForm.hotelName)}%20no%20plano%20${encodeURIComponent(selectedPlanForProspect)}%20do%20Hotel%20no%20Zap.%20Meu%20WhatsApp%20%C3%A9%20${encodeURIComponent(prospectForm.phone)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-3.5 rounded-xl bg-[#10b981] hover:bg-[#006c49] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all"
@@ -1479,6 +2137,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     <span className="material-symbols-outlined text-lg">chat</span>
                     <span>Conectar meu WhatsApp Agora</span>
                   </a>
+
+                  {onNavigateToNovoHotel && (
+                    <button
+                      onClick={() => {
+                        setIsProspectModalOpen(false);
+                        onNavigateToNovoHotel();
+                      }}
+                      className="w-full py-3 rounded-xl bg-[#003400] hover:bg-[#002000] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base text-[#6cf8bb]">domain_add</span>
+                      <span>Configurar Meus Quartos Agora (2 min)</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={() => {
@@ -1495,6 +2166,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           </div>
         </div>
       )}
+
+      {/* 13. BOTÃO FLUTUANTE DE WHATSAPP (ALTA CONVERSÃO) */}
+      <aside aria-label="Atendimento via WhatsApp" className="fixed bottom-6 right-6 z-40 flex items-center group">
+        <a
+          href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Estou%20no%20site%20do%20Hotel%20no%20Zap%20e%20gostaria%20de%20tirar%20algumas%20d%C3%BAvidas."
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-3.5 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 border-2 border-white/50 cursor-pointer"
+          title="Fale conosco no WhatsApp (66) 98158-5014"
+        >
+          <div className="relative flex items-center justify-center">
+            <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+            </svg>
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-300"></span>
+            </span>
+          </div>
+          <div className="hidden sm:flex flex-col text-left">
+            <span className="text-[11px] font-medium leading-none text-emerald-100">Atendimento Online</span>
+            <span className="text-sm font-extrabold leading-tight">Falar no WhatsApp</span>
+          </div>
+        </a>
+      </aside>
     </div>
   );
 };

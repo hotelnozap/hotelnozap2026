@@ -32,3 +32,4 @@ scratch/
 # Dev utility scripts (contain local credentials)
 check_live.js
 populate_live_data.js
+*.original.tsx

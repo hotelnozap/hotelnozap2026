@@ -678,6 +678,22 @@ export const usuariosService = {
 
 // Service para Hotéis no Supabase (Tabela: hoteis)
 export const hoteisService = {
+  async getTotalHoteisCount(): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('hoteis')
+        .select('id', { count: 'exact', head: true });
+
+      if (error || count === null || count === undefined) {
+        return 0;
+      }
+      return count;
+    } catch (err) {
+      console.error('Erro ao buscar contagem de hotéis:', err);
+      return 0;
+    }
+  },
+
   async getHoteis(): Promise<Hotel[]> {
     try {
       const { data, error } = await supabase
@@ -5259,7 +5275,8 @@ export interface PlanoDB {
   periodicidade: string;
   valor_base: number;
   desconto_ciclo?: string | null;
-  dias_trial: number;
+  dias_trial?: number;
+  dias_bonus?: number;
   limite_quartos: number;
   permite_quartos_extras: boolean;
   valor_quarto_extra: number;
@@ -5285,11 +5302,15 @@ export function mapPlanoDBToFrontend(row: any): any {
   else if (periodicidade.toLowerCase() === 'trimestral') pricePeriodText = '/trimestre';
   else if (periodicidade.toLowerCase() === 'semestral') pricePeriodText = '/semestre';
 
+  const bonusVal = row.dias_bonus !== undefined && row.dias_bonus !== null
+    ? Number(row.dias_bonus)
+    : (Number(row.dias_trial) || 0);
+
   let priceSubtitle = 'Cobrança recorrente';
   if (valorBase === 0 || (row.nome || '').toLowerCase().includes('free')) {
-    priceSubtitle = Number(row.dias_trial) === 0
+    priceSubtitle = bonusVal === 0
       ? 'Acesso gratuito limitado contínuo até upgrade'
-      : `Período de teste grátis de ${row.dias_trial} dias`;
+      : `Período com ${bonusVal} dias de bônus inclusos`;
   } else if (periodicidade.toLowerCase() === 'anual') {
     priceSubtitle = `Equiv. R$ ${(valorBase / 12).toFixed(2).replace('.', ',')}/mês • Em até 12x`;
   } else if (destaque) {
@@ -5311,14 +5332,19 @@ export function mapPlanoDBToFrontend(row: any): any {
     basePrice: valorBase,
     pricePeriodText,
     priceSubtitle,
-    trialDays: Number(row.dias_trial) || 0,
+    trialDays: bonusVal,
+    bonusDays: bonusVal,
     cycleDiscount: row.desconto_ciclo || '',
     roomLimit: row.limite_quartos !== null && row.limite_quartos !== undefined ? Number(row.limite_quartos) : 15,
     roomLimitText: Number(row.limite_quartos) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${row.limite_quartos || 15} quartos`,
     roomExtraPriceText: row.permite_quartos_extras !== false ? `R$ ${Number(row.valor_quarto_extra || 3.5).toFixed(2).replace('.', ',')}/adicional` : 'Sem quartos adicionais',
+    extraRoomPrice: row.valor_quarto_extra !== null && row.valor_quarto_extra !== undefined ? Number(row.valor_quarto_extra) : 3.5,
+    allowExtraRooms: row.permite_quartos_extras !== false,
     whatsappConnections: row.conexoes_whatsapp !== null && row.conexoes_whatsapp !== undefined ? Number(row.conexoes_whatsapp) : 1,
-    whatsappConnectionsText: Number(row.conexoes_whatsapp) === 0 ? 'Sem conexão WhatsApp inclusa' : `${row.conexoes_whatsapp || 1} Conexão${Number(row.conexoes_whatsapp || 1) > 1 ? 'ões' : ''} WhatsApp simultâneas`,
+    whatsappConnectionsText: Number(row.conexoes_whatsapp) === 0 ? 'Sem conexão WhatsApp inclusa' : `${row.conexoes_whatsapp || 1} Conexão${Number(row.conexoes_whatsapp || 1) > 1 ? 'ões' : ''} WhatsApp ${Number(row.conexoes_whatsapp || 1) > 1 ? 'simultâneas' : 'oficial'}`,
     whatsappExtraPriceText: row.permite_conexoes_extras !== false ? `R$ ${Number(row.valor_conexao_extra || 49.9).toFixed(2).replace('.', ',')}/adicional` : 'Inclusas no pacote',
+    extraWaPrice: row.valor_conexao_extra !== null && row.valor_conexao_extra !== undefined ? Number(row.valor_conexao_extra) : 49.9,
+    allowExtraWa: row.permite_conexoes_extras !== false,
     hotelsSubscribersCount: Number(row.hoteis_assinantes) || 0,
     status: row.status === 'Inativo' ? 'Inativo' : 'Ativo',
     isFeatured: destaque,
@@ -5360,7 +5386,7 @@ export const planosService = {
         periodicidade: plano.periodicity || 'Mensal',
         valor_base: plano.basePrice !== undefined ? Number(plano.basePrice) : 0,
         desconto_ciclo: plano.cycleDiscount || null,
-        dias_trial: Number(plano.trialDays !== undefined ? plano.trialDays : (plano.dias_trial || 0)),
+        dias_trial: Number(plano.bonusDays !== undefined ? plano.bonusDays : (plano.trialDays !== undefined ? plano.trialDays : (plano.dias_trial || 0))),
         limite_quartos: plano.roomLimit !== undefined && plano.roomLimit !== null ? Number(plano.roomLimit) : 15,
         permite_quartos_extras: plano.allowExtraRooms !== false,
         valor_quarto_extra: Number(plano.extraRoomPrice?.toString().replace(',', '.')) || 3.50,
@@ -5404,8 +5430,8 @@ export const planosService = {
       if (changes.periodicity !== undefined) payload.periodicidade = changes.periodicity;
       if (changes.basePrice !== undefined) payload.valor_base = Number(changes.basePrice);
       if (changes.cycleDiscount !== undefined) payload.desconto_ciclo = changes.cycleDiscount || null;
-      if (changes.trialDays !== undefined || changes.dias_trial !== undefined) {
-        payload.dias_trial = Number(changes.trialDays !== undefined ? changes.trialDays : changes.dias_trial) || 0;
+      if (changes.bonusDays !== undefined || changes.trialDays !== undefined || changes.dias_trial !== undefined) {
+        payload.dias_trial = Number(changes.bonusDays !== undefined ? changes.bonusDays : (changes.trialDays !== undefined ? changes.trialDays : changes.dias_trial)) || 0;
       }
       if (changes.roomLimit !== undefined) payload.limite_quartos = Number(changes.roomLimit);
       if (changes.allowExtraRooms !== undefined) payload.permite_quartos_extras = Boolean(changes.allowExtraRooms);

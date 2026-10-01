@@ -15,6 +15,7 @@ export interface Plano {
   pricePeriodText: string;
   priceSubtitle?: string;
   trialDays?: number;
+  bonusDays?: number;
   cycleDiscount?: string;
   roomLimit: number;
   roomLimitText: string;
@@ -47,7 +48,7 @@ const INITIAL_PLANOS: Plano[] = [
     roomExtraPriceText: 'Sem quartos adicionais',
     whatsappConnections: 0,
     whatsappConnectionsText: 'Sem conexão WhatsApp inclusa',
-    whatsappExtraPriceText: 'Sem instâncias extras',
+    whatsappExtraPriceText: 'Sem conexões extras',
     hotelsSubscribersCount: 8,
     status: 'Ativo',
     features: [
@@ -418,6 +419,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
       setPlanToEdit(plan);
       setFormData({
         ...plan,
+        bonusDays: plan.bonusDays !== undefined ? plan.bonusDays : (plan.trialDays !== undefined ? plan.trialDays : 15),
         cycleDiscount: plan.cycleDiscount ? cleanDiscountInput(plan.cycleDiscount) : ''
       });
     }
@@ -438,6 +440,8 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
         periodicity: 'Mensal',
         basePrice: 249.00,
         cycleDiscount: '',
+        bonusDays: 15,
+        trialDays: 15,
         pricePeriodText: '/mês',
         priceSubtitle: 'Cobrança recorrente automatizada',
         roomLimit: 25,
@@ -452,7 +456,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
           'Capacidade base de 25 quartos',
           '2 Conexões WhatsApp inclusas',
           'Quartos excedentes: + R$ 3,50 /quarto',
-          'Instância extra: + R$ 49,90 /conexão',
+          'Conexão extra: + R$ 49,90 /conexão',
           'Operadores simultâneos inclusos'
         ]
       });
@@ -472,9 +476,12 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
     const cleanDiscount = discP > 0 ? `${discP}%` : '';
     const cycleMatch = CICLOS_COBRANCA.find(c => c.name.toLowerCase() === (formData.periodicity || '').toLowerCase());
     const computedPeriodText = cycleMatch ? cycleMatch.periodText : '/mês';
+    const bDays = formData.bonusDays !== undefined ? Number(formData.bonusDays) : (formData.trialDays !== undefined ? Number(formData.trialDays) : 15);
 
     const normalizedData = {
       ...formData,
+      bonusDays: bDays,
+      trialDays: bDays,
       cycleDiscount: cleanDiscount,
       pricePeriodText: computedPeriodText
     };
@@ -1535,7 +1542,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
               <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1">
                 <h4 className="font-bold text-blue-950 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base text-blue-600">chat</span>
-                  Instâncias Extras de WhatsApp
+                  Conexões Extras de WhatsApp
                 </h4>
                 <p className="leading-relaxed">
                   Cada conexão adicional oficial integrada para atendimento simultâneo possui o custo de R$ 49,90/mês.
@@ -1643,7 +1650,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                     {planToEdit ? 'Editar Plano de Assinatura' : 'Novo Plano de Assinatura'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Defina os limites de quartos, instâncias de WhatsApp e periodicidade.
+                    Defina os limites de quartos, conexões de WhatsApp e periodicidade.
                   </p>
                 </div>
               </div>
@@ -1773,9 +1780,9 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Limite Base de Quartos</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Limite Base Quartos</label>
                   <input
                     type="number"
                     min={0}
@@ -1786,11 +1793,11 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                     }}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                   />
-                  <span className="text-[11px] text-slate-500">0 = sem quartos inclusos</span>
+                  <span className="text-[11px] text-slate-500">0 = sem quartos</span>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Conexões WhatsApp Inclusas</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Conexões WhatsApp</label>
                   <input
                     type="number"
                     min={0}
@@ -1801,7 +1808,24 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                     }}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                   />
-                  <span className="text-[11px] text-slate-500">0 = sem conexão WhatsApp</span>
+                  <span className="text-[11px] text-slate-500">0 = sem conexão</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Dias Bônus</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={365}
+                    value={formData.bonusDays !== undefined ? formData.bonusDays : (formData.trialDays !== undefined ? formData.trialDays : 15)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      const val = raw === '' ? 0 : Math.max(0, parseInt(raw, 10) || 0);
+                      setFormData({ ...formData, bonusDays: val, trialDays: val });
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-bold"
+                  />
+                  <span className="text-[11px] text-slate-500">somados no card</span>
                 </div>
               </div>
 
