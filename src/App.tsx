@@ -1258,17 +1258,28 @@ export const App: React.FC = () => {
   }
 
   // ── Bloqueio Inteligente: Hotel com Plano / Créditos / Dias Bônus Expirados ──
+  const isUserAuthenticated = Boolean(
+    currentUserRole || 
+    localStorage.getItem('hotelnozap_user_email')
+  );
+
+  const isMasterDefault = Boolean(
+    !activeHotel ||
+    activeHotel.id === 'default' ||
+    activeHotel.id === '11111111-1111-1111-1111-111111111111' ||
+    activeHotel.name?.toLowerCase() === 'hotel master'
+  );
+
   const hotelCreditInfo = useMemo(() => {
-    if (!isHotelUser || !activeHotel) return null;
-    const isMasterDefault = activeHotel.id === 'default' && (!activeHotel.name || activeHotel.name.toLowerCase() === 'hotel master');
-    if (isMasterDefault) return null;
+    if (!isUserAuthenticated || !isHotelUser || !activeHotel || isMasterDefault) return null;
     return creditosService.calcularInfoCreditos(activeHotel);
-  }, [isHotelUser, activeHotel]);
+  }, [isUserAuthenticated, isHotelUser, activeHotel, isMasterDefault]);
 
   const isHotelExpired = Boolean(
+    isUserAuthenticated &&
     isHotelUser &&
+    !isMasterDefault &&
     activeHotel &&
-    activeHotel.id !== 'default' &&
     hotelCreditInfo &&
     (hotelCreditInfo.status === 'expirado' || activeHotel.status === 'inativo' || activeHotel.status === 'bloqueado')
   );
