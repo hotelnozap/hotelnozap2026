@@ -1,0 +1,25 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "Hotel no Zap",
+      "weight": "Bolder",
+      "size": "Medium"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Encontre hotéis e reserve via WhatsApp com os melhores preços.",
+      "wrap": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "Acessar Hotel no Zap",
+      "url": "https://hotelnozap.com.br"
+    }
+  ]
+}
