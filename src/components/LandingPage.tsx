@@ -540,7 +540,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     HZ
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-xs truncate">Hotel no Zap Bot</p>
+                    <p className="font-bold text-xs truncate">Hotel no Zap</p>
                     <p className="text-[10px] text-emerald-300">Online • Resposta Imediata</p>
                   </div>
                   <span className="material-symbols-outlined text-sm text-white/80">more_vert</span>
@@ -776,7 +776,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   Receba Reservas no PIX 24/7
                 </h3>
                 <p className="text-xs sm:text-sm text-[#45464d] leading-relaxed">
-                  O bot atende orçamentos em segundos, envia fotos, calcula diárias e gera o link de pagamento. Ao pagar, o mapa de quartos atualiza sozinho e o voucher cai no Zap do hóspede.
+                  O sistema atende orçamentos em segundos, envia fotos, calcula diárias e gera o link de pagamento. Ao pagar, o mapa de quartos atualiza sozinho e o voucher cai no Zap do hóspede.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
