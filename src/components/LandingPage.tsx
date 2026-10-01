@@ -190,13 +190,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
   // Handler para navegar para o formulário de cadastro completo do hotel
   const handleOpenProspectModal = (_planName?: string) => {
-    // Navegar para a página de cadastro multi-etapas /lp/lpnovohotel
-    if (onNavigateToNovoHotel) {
-      onNavigateToNovoHotel();
-    } else {
-      window.history.pushState({}, '', '/lp/lpnovohotel');
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    }
+    // Abrir a página de cadastro multi-etapas /lp/lpnovohotel em nova aba
+    window.open('/lp/lpnovohotel', '_blank', 'noopener,noreferrer');
   };
 
   // Submissão do Prospecto no Supabase (tabela hoteis com status: 'prospecto')
@@ -252,13 +247,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] antialiased selection:bg-[#10b981] selection:text-white font-sans">
       {/* 1. HEADER & BARRA DE NAVEGAÇÃO STICKY */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#e2e8f0] transition-all">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between gap-4">
           {/* LOGO OFICIAL */}
-          <a href="/lp" className="flex items-center shrink-0 group">
+          <a href="/lp" className="flex items-center shrink-0 group py-1">
             <img
               src="/logo.png"
               alt="Hotel no Zap - Hospitalidade Digital"
-              className="h-10 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-12 sm:h-14 md:h-16 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </a>
 
@@ -282,13 +277,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             >
               Entrar
             </button>
-            <button
-              onClick={() => handleOpenProspectModal('Plano Professional')}
+            <a
+              href="/lp/lpnovohotel"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs xl:text-sm px-3 sm:px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
             >
               <span>Cadastrar Meu Hotel</span>
               <span className="material-symbols-outlined text-base font-bold hidden sm:inline">arrow_forward</span>
-            </button>
+            </a>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 rounded-lg text-[#0b1c30] hover:bg-gray-100 transition-colors cursor-pointer"
@@ -345,12 +342,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               >
                 Acessar Login
               </button>
-              <button
-                onClick={() => { setMobileMenuOpen(false); handleOpenProspectModal('Plano Professional'); }}
-                className="bg-[#003400] text-white text-xs font-bold px-3.5 py-2 rounded-lg"
+              <a
+                href="/lp/lpnovohotel"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="bg-[#003400] text-white text-xs font-bold px-3.5 py-2 rounded-lg inline-flex items-center justify-center"
               >
                 Cadastrar Meu Hotel
-              </button>
+              </a>
             </div>
           </div>
         )}
@@ -374,13 +374,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             </p>
 
             <div className="flex justify-center mb-6">
-              <button
-                onClick={() => handleOpenProspectModal('Plano Professional')}
+              <a
+                href="/lp/lpnovohotel"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#003400] hover:bg-[#002000] text-white font-bold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-xl text-[#6cf8bb]">rocket_launch</span>
                 <span>Cadastrar Meu Hotel Agora</span>
-              </button>
+              </a>
             </div>
 
             <div className="flex flex-col items-center justify-center gap-2.5 max-w-2xl mx-auto">
@@ -1326,13 +1328,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               Junte-se a centenas de proprietários de pousadas e hotéis que retomaram a autonomia do seu negócio e transformaram o WhatsApp no seu canal mais rentável.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-              <button
-                onClick={() => handleOpenProspectModal('Plano Professional')}
+              <a
+                href="/lp/lpnovohotel"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-extrabold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span>Cadastrar Meu Hotel Agora</span>
                 <span className="material-symbols-outlined text-xl">arrow_forward</span>
-              </button>
+              </a>
               <a
                 href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Gostaria%20de%20tirar%20d%C3%BAvidas%20sobre%20o%20Hotel%20no%20Zap"
                 target="_blank"
@@ -1355,12 +1359,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 mb-12">
             <div className="lg:col-span-2">
-              <div className="mb-4">
-                <div className="inline-block bg-white p-2 rounded-xl shadow-xs">
+              <div className="mb-5">
+                <div className="inline-block bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm">
                   <img
                     src="/logo.png"
                     alt="Hotel no Zap - Hospitalidade Digital"
-                    className="h-8 sm:h-9 w-auto object-contain"
+                    className="h-10 sm:h-12 md:h-14 w-auto object-contain"
                   />
                 </div>
               </div>
