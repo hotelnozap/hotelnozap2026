@@ -453,7 +453,11 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       }
     }
 
-    return result;
+    return result.sort((a, b) => {
+      const ordA = Number(String(a.order || a.ordem || '').replace(/\D/g, '')) || 0;
+      const ordB = Number(String(b.order || b.ordem || '').replace(/\D/g, '')) || 0;
+      return ordA - ordB;
+    });
   }, [planos, isGoogleMaps, hotelToEdit]);
 
   // Quantidade de dias totais (dias base + bônus) com base no plano selecionado
@@ -1940,7 +1944,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
               {planosAtivos.map((plano) => {
                 const selected = isPlanSelected(plano);
                 const isFeatured = Boolean(plano.isFeatured);
-                const tagText = plano.tag || (isFeatured ? 'Destaque' : undefined);
+                const tagText = plano.tag && plano.tag.trim() ? plano.tag.replace(/^★\s*/, '').trim() : (isFeatured ? 'Mais Escolhido' : undefined);
 
                 return (
                   <label
@@ -1972,8 +1976,10 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                           {plano.name}
                         </span>
                         {tagText && (
-                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 uppercase tracking-wider">
-                            {tagText}
+                          <span className={`px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider ${
+                            isFeatured ? 'bg-[#FDB116] text-[#0b1c30]' : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            ★ {tagText}
                           </span>
                         )}
                       </div>
@@ -1995,13 +2001,13 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                       ) : (
                         <>
                           R$ {Number(plano.basePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          <span className="text-xs font-medium text-slate-500"> {plano.pricePeriodText || '/mês'}</span>
+                          <span className="text-xs font-semibold text-slate-500"> {plano.pricePeriodText || '/mês'}</span>
                         </>
                       )}
                     </div>
 
                     {plano.description && (
-                      <p className="text-xs text-slate-500 mb-4 line-clamp-2">{plano.description}</p>
+                      <p className="text-xs text-slate-600 font-medium mb-4 leading-relaxed">{plano.description}</p>
                     )}
 
                     <div className="mt-auto space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
@@ -2011,7 +2017,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-sm text-emerald-600 shrink-0">chat</span>
-                        <span>{plano.whatsappConnectionsText || `${plano.whatsappConnections || 1} Instância(s) WhatsApp`}</span>
+                        <span>{plano.whatsappConnections ? (plano.whatsappConnections > 1 ? `${plano.whatsappConnections} Conexões de WhatsApp simultâneas` : '1 Conexão de WhatsApp oficial') : (plano.whatsappConnectionsText || '1 Conexão de WhatsApp')}</span>
                       </div>
                       {Array.isArray(plano.features) && plano.features.slice(0, 3).map((feat: string, idx: number) => (
                         <div key={idx} className="flex items-center gap-2 truncate">
