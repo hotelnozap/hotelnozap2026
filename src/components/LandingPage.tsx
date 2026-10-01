@@ -87,7 +87,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 isFeatured: Boolean(p.isFeatured || p.name.toLowerCase().includes('professional')),
                 features: Array.isArray(p.features) && p.features.length > 0 ? p.features : [
                   `Capacidade para até ${p.roomLimit || 10} quartos`,
-                  `${p.whatsappConnections || 1} Conexão WhatsApp integrada`,
+                  'Conexão WhatsApp oficial integrada',
                   'Mapa de quartos e controle de check-in',
                   'Confirmação de reserva no WhatsApp'
                 ],
@@ -166,29 +166,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         isFeatured: false,
         features: [
           'Capacidade para até 10 quartos',
-          '1 Conexão WhatsApp oficial integrada',
+          'Conexão WhatsApp oficial integrada',
           'Mapa de quartos e controle de check-in',
           'Confirmação de reserva no WhatsApp'
         ],
-        disabledFeatures: ['Múltiplos atendentes simultâneos']
+        disabledFeatures: []
       },
       {
         id: 'pro-default',
         name: 'Plano Professional',
         tag: 'Mais Vendido',
         categoryLabel: 'Hotéis de Médio Porte',
-        description: 'A solução completa para decolar ocupação com múltiplos atendentes e automação total.',
+        description: 'A solução completa para decolar ocupação com automação total e controle da sua equipe.',
         basePrice: 299,
         trialDays: 30,
         roomLimit: 30,
-        whatsappConnections: 2,
+        whatsappConnections: 1,
         isFeatured: true,
         features: [
           'Capacidade para até 30 quartos',
-          '2 Conexões WhatsApp simultâneas',
+          'Conexão WhatsApp oficial integrada',
           'Módulo governança & limpeza em tempo real',
           'Confirmação e voucher no WhatsApp',
-          'Usuários ilimitados com permissões'
+          'Usuários ilimitados para toda a equipe'
         ],
         disabledFeatures: []
       },
@@ -201,14 +201,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         basePrice: 590,
         trialDays: 30,
         roomLimit: 150,
-        whatsappConnections: 5,
+        whatsappConnections: 1,
         isFeatured: false,
         features: [
           'Até 150 quartos (sem sobretaxa)',
-          '5 Conexões WhatsApp dedicadas',
+          'Conexão WhatsApp oficial integrada',
           'IA de Atendimento 24/7 (Reserva Automática)',
           'Gerente de contas e onboarding dedicado',
-          'Portal exclusivo de parceiros B2B'
+          'Área exclusiva para hóspedes'
         ],
         disabledFeatures: []
       }
@@ -456,7 +456,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </div>
                 <div className="flex items-center gap-3 text-xs text-white/90">
                   <span className="inline-flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full text-[11px]">
-                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span> WhatsApp Conectado (Instância #01)
+                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span> WhatsApp Oficial Conectado
                   </span>
                   <span className="font-bold hidden md:inline">Ocupação: 84%</span>
                 </div>
@@ -1065,28 +1065,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
-            {/* 9. CENTRAL MULTI-CONEXÕES WHATSAPP & HISTÓRICO (SPAN 3) */}
+            {/* 9. CENTRAL HISTÓRICO & BASE DE HÓSPEDES (SPAN 3) */}
             <div className="md:col-span-3 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/50 rounded-2xl border border-emerald-200 p-6 lg:p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-lg transition-all">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
-                  <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Multi-Atendimento & Histórico Unificado</span>
+                  <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Base de Dados & Organização</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mb-2">
-                  Múltiplas Conexões WhatsApp & Histórico Centralizado de Hóspedes
+                  Histórico Centralizado & Ficha Completa de Hóspedes
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Mantenha a base de dados organizada de todos os seus hóspedes, com histórico de estadias, documentos e preferências. Conecte múltiplos números de WhatsApp simultaneamente: Recepção, Comercial e Governança atendendo com rapidez e sem conflitos operacionais.
+                  Mantenha a base de dados organizada de todos os seus hóspedes, com histórico de estadias anteriores, dados de contato, documentos e preferências. Localize cadastros em segundos e proporcione um atendimento muito mais ágil, seguro e acolhedor.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                 <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
-                  <p className="text-lg font-black text-[#003400]">Multi-Zap</p>
-                  <p className="text-[11px] text-gray-500 font-medium">Recepção & Comercial</p>
+                  <p className="text-lg font-black text-[#003400]">Histórico</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Estadias Anteriores</p>
                 </div>
                 <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
-                  <p className="text-lg font-black text-[#10b981]">Histórico</p>
-                  <p className="text-[11px] text-gray-500 font-medium">Base de Hóspedes</p>
+                  <p className="text-lg font-black text-[#10b981]">LGPD</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Dados Seguros</p>
                 </div>
               </div>
             </div>
