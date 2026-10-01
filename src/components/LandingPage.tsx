@@ -724,91 +724,163 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         </div>
       </section>
 
-      {/* 4.1 COMO FUNCIONA EM 3 PASSOS SIMPLES */}
+      {/* 4.1 COMO FUNCIONA EM 6 PASSOS SIMPLES */}
       <section className="py-16 lg:py-20 bg-white border-b border-[#e2e8f0]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
             <span className="text-xs font-bold uppercase tracking-widest text-[#006c49] bg-[#10b981]/10 px-3 py-1 rounded-full">
               Simplicidade Total
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0b1c30] mt-3 mb-4">
-              Como Colocar Seu Hotel no Piloto Automático em 3 Passos
+              Como Colocar Seu Hotel no Piloto Automático em 6 Passos
             </h2>
-            <p className="text-[#45464d] text-sm sm:text-base">
-              Sem instalações pesadas, sem necessidade de computador caro. Tudo pronto para operar em menos de 10 minutos.
+            <p className="text-[#45464d] text-xs sm:text-sm sm:text-base">
+              Sem instalações pesadas, sem necessidade de computador caro. Tudo pronto para operar em minutos.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 relative">
-            {/* Passo 1 */}
-            <div className="relative z-10 bg-[#f8f9ff] rounded-3xl p-6 sm:p-8 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6 lg:gap-8 relative">
+            {/* Passo 1 - Cadastre Quartos e Valores */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#003400] to-[#006c49] text-white flex items-center justify-center font-black text-xl shadow-md">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
                     1
                   </div>
-                  <span className="text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">qr_code_scanner</span> 30 segundos
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">tune</span> 5 minutos
                   </span>
                 </div>
-                <h3 className="text-lg sm:text-xl font-extrabold text-[#0b1c30] mb-2">
-                  Conecte seu WhatsApp Oficial
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Cadastre Quartos e Valores
                 </h3>
-                <p className="text-xs sm:text-sm text-[#45464d] leading-relaxed">
-                  Basta apontar a câmera do seu celular e ler o QR Code, exatamente como no WhatsApp Web. Seu número atual é mantido e você não perde nenhuma conversa antiga.
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Adicione seus tipos de acomodação (Luxo, Standard, Família) e valores com <strong>fotos 100% reais dos seus quartos</strong>. Imagens reais geram alta credibilidade e aceleram o fechamento imediato.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981]">check_circle</span>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">photo_camera</span>
+                <span>Fotos reais dos quartos</span>
+              </div>
+            </div>
+
+            {/* Passo 2 - Cadastrar a Equipe de Atendimento */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    2
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">badge</span> Equipe Unida
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Cadastre Sua Equipe no Sistema
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Dê o acesso perfeito para quem faz seu hotel girar: <strong>Recepção, Camareiras, Governança, Gerência e Administradores</strong>. Cada setor com sua tela inteligente e zero confusão operacional.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
+                <span>Acessos para toda a equipe</span>
+              </div>
+            </div>
+
+            {/* Passo 3 - Divulgar o Seu Link */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    3
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">share</span> Seu Link Web
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Divulgue o Seu Link Exclusivo
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Coloque o link oficial do seu hotel na bio do Instagram, no perfil do Google Meu Negócio e nas suas redes. Seus clientes acessam, escolhem as datas e reservam diretamente com você.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">link</span>
+                <span>Link direto no Instagram & Google</span>
+              </div>
+            </div>
+
+            {/* Passo 4 - Conecte seu WhatsApp Oficial */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#003400] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    4
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">qr_code_scanner</span> 30 segundos
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Conecte seu WhatsApp Oficial
+                </h3>
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Basta apontar a câmera do seu celular e ler o QR Code, exatamente como no WhatsApp Web. Seu número atual é 100% mantido e você não perde nenhuma conversa anterior.
+                </p>
+              </div>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
                 <span>Sem troca de chip ou operadora</span>
               </div>
             </div>
 
-            {/* Passo 2 */}
-            <div className="relative z-10 bg-[#f8f9ff] rounded-3xl p-6 sm:p-8 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+            {/* Passo 5 - Acompanhar as Reservas pelo Sistema */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-xl shadow-md">
-                    2
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    5
                   </div>
-                  <span className="text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">tune</span> 5 minutos
+                  <span className="text-[10px] sm:text-xs font-bold text-[#006c49] bg-emerald-100/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm">calendar_month</span> Gestão Total
                   </span>
                 </div>
-                <h3 className="text-lg sm:text-xl font-extrabold text-[#0b1c30] mb-2">
-                  Cadastre Quartos e Valores
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
+                  Acompanhe as Reservas pelo Sistema
                 </h3>
-                <p className="text-xs sm:text-sm text-[#45464d] leading-relaxed">
-                  Adicione seus tipos de acomodação (Luxo, Standard, Família), valores de diárias e fotos. O sistema gera automaticamente seu catálogo público e as regras de estadia.
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  Controle check-ins, check-outs, mapa de ocupação e financeiro em tempo real. Veja quais quartos estão limpos ou ocupados e acompanhe o faturamento do seu hotel na palma da mão.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981]">check_circle</span>
-                <span>Importação simples de dados</span>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
+                <span>Mapa visual & governança ao vivo</span>
               </div>
             </div>
 
-            {/* Passo 3 */}
-            <div className="relative z-10 bg-[#f8f9ff] rounded-3xl p-6 sm:p-8 border-2 border-[#10b981]/50 shadow-md hover:shadow-lg transition-all flex flex-col justify-between">
+            {/* Passo 6 - Receba Reservas no PIX 24/7 */}
+            <div className="relative z-10 bg-[#f8f9ff] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border-2 border-[#10b981]/50 shadow-md hover:shadow-lg transition-all flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#10b981] to-[#006c49] text-white flex items-center justify-center font-black text-xl shadow-md">
-                    3
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#10b981] to-[#006c49] text-white flex items-center justify-center font-black text-base sm:text-xl shadow-md">
+                    6
                   </div>
-                  <span className="text-xs font-bold text-amber-900 bg-amber-100 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm text-amber-600">payments</span> 100% no seu bolso
+                  <span className="text-[10px] sm:text-xs font-bold text-amber-900 bg-amber-100 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs sm:text-sm text-amber-600">payments</span> 100% no seu bolso
                   </span>
                 </div>
-                <h3 className="text-lg sm:text-xl font-extrabold text-[#0b1c30] mb-2">
+                <h3 className="text-sm sm:text-lg lg:text-xl font-extrabold text-[#0b1c30] mb-1.5 sm:mb-2">
                   Receba Reservas no PIX 24/7
                 </h3>
-                <p className="text-xs sm:text-sm text-[#45464d] leading-relaxed">
-                  O sistema atende orçamentos em segundos, envia fotos, calcula diárias e gera o link de pagamento. Ao pagar, o mapa de quartos atualiza sozinho e o voucher cai no Zap do hóspede.
+                <p className="text-[11px] sm:text-xs lg:text-sm text-[#45464d] leading-snug sm:leading-relaxed">
+                  O sistema atende, apresenta valores e gera a cobrança via PIX instantâneo. Ao pagar, o mapa de quartos atualiza sozinho e o voucher cai no Zap do hóspede com 0% de comissão retida.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981]">check_circle</span>
-                <span>Zero comissão retida</span>
+              <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#e2e8f0] text-[10px] sm:text-xs font-semibold text-[#006c49] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-xs sm:text-sm text-[#10b981]">check_circle</span>
+                <span>Zero comissão para intermediários</span>
               </div>
             </div>
           </div>
