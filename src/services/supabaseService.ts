@@ -678,6 +678,22 @@ export const usuariosService = {
 
 // Service para Hotéis no Supabase (Tabela: hoteis)
 export const hoteisService = {
+  async getTotalHoteisCount(): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('hoteis')
+        .select('id', { count: 'exact', head: true });
+
+      if (error || count === null || count === undefined) {
+        return 0;
+      }
+      return count;
+    } catch (err) {
+      console.error('Erro ao buscar contagem de hotéis:', err);
+      return 0;
+    }
+  },
+
   async getHoteis(): Promise<Hotel[]> {
     try {
       const { data, error } = await supabase

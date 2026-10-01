@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { planosService, hoteisService } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
 import { maskPhone } from '../utils/masks';
 
 interface LandingPageProps {
@@ -108,6 +109,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
     fetchPlanos();
     return () => { isMounted = false; };
+  }, []);
+
+  // Contagem dinâmica de hotéis cadastrados (atualizada em tempo real via Supabase)
+  const [totalHoteis, setTotalHoteis] = useState<number>(293);
+
+  // Carregar contagem real de hotéis cadastrados (planos + Google Maps) e escutar atualizações em tempo real
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchHoteisCount = async () => {
+      try {
+        const count = await hoteisService.getTotalHoteisCount();
+        if (isMounted && count > 0) {
+          setTotalHoteis(count);
+        }
+      } catch (err) {
+        console.warn('Erro ao buscar contagem de hotéis para a LP:', err);
+      }
+    };
+
+    fetchHoteisCount();
+
+    // Inscrever no canal Realtime do Supabase para atualizar automaticamente quando um hotel for adicionado (seja via plano ou importador)
+    const channel = supabase
+      .channel('landing-page-hoteis-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'hoteis' },
+        () => {
+          fetchHoteisCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Planos padrão de fallback se o banco estiver vazio ou offline
@@ -575,7 +614,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
       <section className="py-10 lg:py-12 bg-white border-y border-[#e2e8f0]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#45464d] mb-6 sm:mb-8">
-            Mais de 180+ hotéis, pousadas e resorts em todo o Brasil confiam no Hotel no Zap
+            Mais de {totalHoteis} hotéis, pousadas e resorts cadastrados no Hotel no Zap
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#e2e8f0]/80">
