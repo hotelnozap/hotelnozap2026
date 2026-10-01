@@ -5377,8 +5377,11 @@ export const planosService = {
 
   async createPlano(plano: any): Promise<any | null> {
     try {
-      const payload = {
-        ordem: Number(plano.order?.replace(/\D/g, '')) || 1,
+      const orderNum = Number(String(plano.order ?? plano.ordem ?? 1).replace(/\D/g, '')) || 1;
+      const bonusNum = Number(plano.bonusDays !== undefined ? plano.bonusDays : (plano.trialDays !== undefined ? plano.trialDays : (plano.dias_bonus !== undefined ? plano.dias_bonus : (plano.dias_trial || 0)))) || 0;
+
+      const payload: any = {
+        ordem: orderNum,
         nome: plano.name,
         tag: plano.tag || null,
         descricao: plano.description || null,
@@ -5387,7 +5390,8 @@ export const planosService = {
         periodicidade: plano.periodicity || 'Mensal',
         valor_base: plano.basePrice !== undefined ? Number(plano.basePrice) : 0,
         desconto_ciclo: plano.cycleDiscount || null,
-        dias_trial: Number(plano.bonusDays !== undefined ? plano.bonusDays : (plano.trialDays !== undefined ? plano.trialDays : (plano.dias_trial || 0))),
+        dias_trial: bonusNum,
+        dias_bonus: bonusNum,
         limite_quartos: plano.roomLimit !== undefined && plano.roomLimit !== null ? Number(plano.roomLimit) : 15,
         permite_quartos_extras: plano.allowExtraRooms !== false,
         valor_quarto_extra: plano.extraRoomPrice !== undefined && plano.extraRoomPrice !== null
@@ -5435,8 +5439,10 @@ export const planosService = {
       if (changes.periodicity !== undefined) payload.periodicidade = changes.periodicity;
       if (changes.basePrice !== undefined) payload.valor_base = Number(changes.basePrice);
       if (changes.cycleDiscount !== undefined) payload.desconto_ciclo = changes.cycleDiscount || null;
-      if (changes.bonusDays !== undefined || changes.trialDays !== undefined || changes.dias_trial !== undefined) {
-        payload.dias_trial = Number(changes.bonusDays !== undefined ? changes.bonusDays : (changes.trialDays !== undefined ? changes.trialDays : changes.dias_trial)) || 0;
+      if (changes.bonusDays !== undefined || changes.trialDays !== undefined || changes.dias_trial !== undefined || changes.dias_bonus !== undefined) {
+        const bonusNum = Number(changes.bonusDays !== undefined ? changes.bonusDays : (changes.trialDays !== undefined ? changes.trialDays : (changes.dias_bonus !== undefined ? changes.dias_bonus : changes.dias_trial))) || 0;
+        payload.dias_trial = bonusNum;
+        payload.dias_bonus = bonusNum;
       }
       if (changes.roomLimit !== undefined) payload.limite_quartos = Number(changes.roomLimit);
       if (changes.allowExtraRooms !== undefined) payload.permite_quartos_extras = Boolean(changes.allowExtraRooms);
@@ -5454,7 +5460,9 @@ export const planosService = {
           : parseFloat(changes.extraWaPrice.toString().replace(',', '.'));
         payload.valor_conexao_extra = !isNaN(num) ? num : 49.90;
       }
-      if (changes.order !== undefined) payload.ordem = Number(changes.order?.toString().replace(/\D/g, '')) || 1;
+      if (changes.order !== undefined || changes.ordem !== undefined) {
+        payload.ordem = Number(String(changes.order ?? changes.ordem ?? 1).replace(/\D/g, '')) || 1;
+      }
       if (changes.features !== undefined) payload.recursos = changes.features;
       if (changes.disabledFeatures !== undefined) payload.recursos_desabilitados = changes.disabledFeatures;
       if (changes.internalNotes !== undefined) payload.observacoes = changes.internalNotes;

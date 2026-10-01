@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { hoteisService } from '../services/supabaseService';
+import { hoteisService, planosService } from '../services/supabaseService';
 import { Hotel } from './CadastroHoteis';
-import { creditosService, PACOTES_CREDITOS_MODELO_1, PacoteCredito, InfoCreditoHotel } from '../services/creditosService';
+import { creditosService, PACOTES_CREDITOS_MODELO_1, PacoteCredito, InfoCreditoHotel, converterPlanosParaPacotes } from '../services/creditosService';
 
 export interface GestaoCreditosSaaSProps {
   onBackToDashboard?: () => void;
@@ -17,6 +17,9 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'degustacao' | 'alerta' | 'expirado'>('todos');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Pacotes de Créditos Oficiais (carregados dinamicamente do banco de dados)
+  const [pacotesDisponiveis, setPacotesDisponiveis] = useState<PacoteCredito[]>(PACOTES_CREDITOS_MODELO_1);
 
   // Modal de Recarga
   const [selectedHotelForRecharge, setSelectedHotelForRecharge] = useState<Hotel | null>(null);
@@ -45,15 +48,37 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     }
   };
 
+  const carregarPlanos = async () => {
+    try {
+      const data = await planosService.getPlanos();
+      if (data && data.length > 0) {
+        const convertidos = converterPlanosParaPacotes(data);
+        setPacotesDisponiveis(convertidos);
+        setSelectedPackage(prev => {
+          const match = convertidos.find(p => p.id === prev.id || p.creditos === prev.creditos);
+          return match || convertidos[0];
+        });
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar planos reais do banco para recarga:', e);
+    }
+  };
+
   useEffect(() => {
     carregarHoteis();
+    carregarPlanos();
 
-    const unsub = hoteisService.subscribeHoteis
+    const unsubHoteis = hoteisService.subscribeHoteis
       ? hoteisService.subscribeHoteis(() => carregarHoteis())
       : null;
 
+    const unsubPlanos = planosService.subscribePlanos
+      ? planosService.subscribePlanos(() => carregarPlanos())
+      : null;
+
     return () => {
-      if (typeof unsub === 'function') (unsub as () => void)();
+      if (typeof unsubHoteis === 'function') (unsubHoteis as () => void)();
+      if (typeof unsubPlanos === 'function') (unsubPlanos as () => void)();
     };
   }, []);
 
@@ -789,7 +814,9 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                               type="button"
                               onClick={() => {
                                 setSelectedHotelForRecharge(hotel);
-                                setSelectedPackage(PACOTES_CREDITOS_MODELO_1[0]);
+                                const k = getHotelPlanKey(hotel);
+                                const matched = pacotesDisponiveis.find(p => String(p.creditos) === k) || pacotesDisponiveis[0];
+                                setSelectedPackage(matched);
                               }}
                               className="px-3 py-1.5 rounded-lg bg-[#003400] hover:bg-[#002500] text-white text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1 active:scale-95"
                             >
@@ -955,7 +982,7 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
               </label>
 
               <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                {PACOTES_CREDITOS_MODELO_1.map((p) => {
+                {pacotesDisponiveis.map((p) => {
                   const isSelected = selectedPackage.id === p.id;
                   return (
                     <div
