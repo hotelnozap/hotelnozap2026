@@ -107,11 +107,11 @@ export const buildPlanBenefits = (plano: PlanoView): string[] => {
   return [
     'Acesso total ao sistema',
     `Capacidade para até ${rooms} quartos`,
+    waConnText,
     'Área administrativa para acompanhar o desempenho do hotel',
     'Área para camareira',
     'Área exclusiva pra seu hóspede',
     'Página de divulgação do seu hotel com todos os seus quartos cadastrados',
-    waConnText,
     'Atendimento no WhatsApp por IA (Inteligência Artificial de forma humanizada)',
     roomExtraText,
     waExtraText,
@@ -172,6 +172,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
     return {
       isDark: false,
       containerClass: 'bg-[#f8fafc] border-2 border-slate-200/90 hover:border-emerald-600/40 hover:shadow-lg',
+      badgeClass: 'bg-[#006c49] text-white',
       categoryClass: 'text-[#006c49] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
       titleClass: 'text-[#0b1c30] font-extrabold',
       descClass: 'text-[#45464d]',
@@ -191,6 +192,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
     return {
       isDark: false,
       containerClass: 'bg-[#fffdf5] border-2 border-amber-200/80 hover:border-amber-400 hover:shadow-lg',
+      badgeClass: 'bg-amber-600 text-white',
       categoryClass: 'text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-200 font-bold inline-block',
       titleClass: 'text-[#0b1c30] font-extrabold',
       descClass: 'text-slate-600',
@@ -210,6 +212,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
     return {
       isDark: false,
       containerClass: 'bg-[#f0f9ff] border-2 border-sky-200/90 hover:border-sky-400 hover:shadow-lg',
+      badgeClass: 'bg-sky-600 text-white',
       categoryClass: 'text-sky-800 bg-sky-100/70 px-2.5 py-0.5 rounded-full border border-sky-200 font-bold inline-block',
       titleClass: 'text-[#0b1c30] font-extrabold',
       descClass: 'text-slate-600',
@@ -228,6 +231,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
   return {
     isDark: false,
     containerClass: 'bg-[#f2fbf7] border-2 border-emerald-200/80 hover:border-emerald-400 hover:shadow-lg',
+    badgeClass: 'bg-emerald-700 text-white',
     categoryClass: 'text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
     titleClass: 'text-[#0b1c30] font-extrabold',
     descClass: 'text-slate-600',
@@ -289,10 +293,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           const activePlanos = data
             .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice || p.valor_base) > 0)
             .map((p: any) => {
-              let categoryLabel = p.tag || 'Pousadas e Hotéis';
+              const cleanTag = (p.tag !== undefined && p.tag !== null) ? String(p.tag).trim() : '';
+
+              let categoryLabel = 'Pousadas e Hotéis';
               if (p.name.includes('1 Crédito')) categoryLabel = 'Acesso Mensal Flexível';
               else if (p.name.includes('2 Créditos')) categoryLabel = 'Pacote Econômico Bimestral';
               else if (p.name.includes('3 Créditos')) categoryLabel = 'Mais Escolhido • Alta Temporada';
+              else if (p.name.includes('4 Créditos')) categoryLabel = 'Quadrimestral Flex';
               else if (p.name.includes('6 Créditos')) categoryLabel = 'Semestral • Estabilidade Total';
               else if (p.name.includes('12 Créditos')) categoryLabel = 'Anual VIP • Maior Economia';
               else if (p.name.toLowerCase().includes('starter')) categoryLabel = 'Pousadas Familiares';
@@ -302,7 +309,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               return {
                 id: p.id,
                 name: p.name,
-                tag: p.tag || (p.destaque || p.isFeatured ? 'Mais Vendido' : undefined),
+                tag: cleanTag || undefined,
                 categoryLabel,
                 description: p.description || p.descricao || 'Solução completa para gestão e motor de reservas via WhatsApp.',
                 basePrice: Number(p.basePrice || p.valor_base) || 0,
@@ -403,9 +410,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
       {
         id: '1-credito-default',
         name: '1 Crédito',
-        tag: 'Mensal',
+        tag: 'Inicie sem medo',
         categoryLabel: 'Acesso Mensal Flexível',
-        description: '1 Crédito • 30 dias base + 15 dias de bônus (45 dias de acesso)',
+        description: '1 Crédito • 30 dias base + 15 dias de bônus + 1 Conexão no Whatsapp (45 dias de acesso)',
         basePrice: 197,
         periodicity: 'Mensal',
         cycleDiscount: '',
@@ -431,7 +438,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         name: '2 Créditos (Bimestral)',
         tag: 'Econômico',
         categoryLabel: 'Pacote Econômico Bimestral',
-        description: '2 Créditos • 60 dias base + 15 dias de bônus (75 dias de acesso)',
+        description: '2 Créditos • 60 dias base + 15 dias de bônus + 1 Conexão no Whatsapp (75 dias de acesso)',
         basePrice: 354.60,
         periodicity: 'Bimestral',
         cycleDiscount: '10%',
@@ -439,7 +446,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         roomLimit: 25,
         extraRoomPrice: 3.5,
         allowExtraRooms: true,
-        whatsappConnections: 2,
+        whatsappConnections: 1,
         extraWaPrice: 49.9,
         allowExtraWa: true,
         isFeatured: false,
@@ -447,7 +454,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           '2 Créditos de Acesso',
           '60 dias base + 15 dias bônus (75 dias)',
           'Capacidade para até 25 quartos',
-          '2 Conexões WhatsApp simultâneas',
+          '1 Conexão WhatsApp oficial',
           'Economia imediata de 2 meses e meio'
         ],
         disabledFeatures: []
@@ -457,7 +464,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         name: '3 Créditos (Trimestre de Ouro)',
         tag: 'Mais Vendido',
         categoryLabel: 'Mais Escolhido • Alta Temporada',
-        description: '3 Créditos • 90 dias base + 30 dias de bônus (120 dias / 4 meses de acesso)',
+        description: '3 Créditos • 90 dias base + 30 dias de bônus + 1 Conexão no Whatsapp (120 dias / 4 meses)',
         basePrice: 497,
         periodicity: 'Trimestral',
         cycleDiscount: '',
@@ -1508,17 +1515,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   key={plano.id}
                   className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all relative ${theme.containerClass}`}
                 >
-                  {plano.isFeatured && (
-                    <div className="absolute top-0 right-0 bg-[#FDB116] text-[#0b1c30] font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs">
-                      ★ Mais Escolhido
+                  {plano.tag && plano.tag.trim() ? (
+                    <div className={`absolute top-0 right-0 font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs ${
+                      plano.isFeatured 
+                        ? 'bg-[#FDB116] text-[#0b1c30]' 
+                        : (theme.badgeClass || 'bg-[#006c49] text-white')
+                    }`}>
+                      ★ {plano.tag.replace(/^★\s*/, '').trim()}
                     </div>
-                  )}
+                  ) : null}
 
                   <div>
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <span className={`text-[11px] uppercase tracking-wider ${theme.categoryClass}`}>
-                          {plano.categoryLabel || plano.tag || 'Pousadas & Hotéis'}
+                          {plano.categoryLabel || 'Pousadas & Hotéis'}
                         </span>
                         <h3 className={`text-xl sm:text-2xl mt-1.5 ${theme.titleClass}`}>
                           {formattedTitle}
@@ -1587,8 +1598,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             })}
           </div>
 
-          <div className="mt-10 text-center text-xs text-[#45464d]">
-            <p>💡 Quartos excedentes a partir de apenas R$ 2,50/adicional • Sem cobranças extras por mensagens • Cancele a qualquer momento sem multa.</p>
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center justify-center gap-2.5 bg-emerald-50 border border-emerald-200/90 px-6 py-3.5 rounded-2xl shadow-xs">
+              <span className="material-symbols-outlined text-[#006c49] text-xl shrink-0">verified_user</span>
+              <p className="text-sm sm:text-base md:text-lg font-extrabold text-[#0b1c30] tracking-tight">
+                Sem cobranças extras por mensagens • Cancele a qualquer momento sem multa.
+              </p>
+            </div>
           </div>
         </div>
       </section>
