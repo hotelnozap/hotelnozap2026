@@ -194,7 +194,7 @@ export class EvolutionApiService {
       }
       return [];
     } catch (err) {
-      console.error('Falha na requisição fetchInstances:', err);
+      console.warn('Falha na requisição fetchInstances (servidor offline ou CORS):', err);
       return [];
     }
   }

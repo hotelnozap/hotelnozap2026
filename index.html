@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
     
     <!-- PWA & Meta Tags Primárias -->
     <title>Sistema de Gestão Hoteleira</title>
@@ -69,17 +68,25 @@
     <!-- Registro PWA Service Worker (PWABuilder Compliance) -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(reg) {
-              console.log('[PWA] Service Worker registrado. Escopo:', reg.scope);
-            })
-            .catch(function(err) {
-              console.warn('[PWA] Falha ao registrar Service Worker:', err);
-            });
-        });
-        if (document.readyState === 'complete') {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let registration of registrations) {
+              registration.unregister();
+            }
+          });
+        } else {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+              .then(function(reg) {
+                console.log('[PWA] Service Worker registrado. Escopo:', reg.scope);
+              })
+              .catch(function(err) {
+                console.warn('[PWA] Falha ao registrar Service Worker:', err);
+              });
+          });
+          if (document.readyState === 'complete') {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' });
+          }
         }
       }
     </script>
