@@ -33,6 +33,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   // Calculadora de Economia
   const [roomsCount, setRoomsCount] = useState<number>(20);
   const [dailyRate, setDailyRate] = useState<number>(350);
+  const [occupancyRate, setOccupancyRate] = useState<number>(60);
 
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -216,16 +217,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   }, [planos]);
 
   // Cálculos do Simulador de Economia
-  const { economiaMensal, economiaAnual } = useMemo(() => {
-    const totalDiariasMes = roomsCount * 18;
-    const faturamentoMes = totalDiariasMes * dailyRate;
-    const economiaMes = faturamentoMes * 0.20;
+  const { economiaMensal, economiaAnual, faturamentoEstimado, totalDiariasMes } = useMemo(() => {
+    const totalDiarias = Math.round(roomsCount * 30 * (occupancyRate / 100));
+    const faturamentoMes = totalDiarias * dailyRate;
+    const economiaMes = faturamentoMes * 0.20; // 20% média praticada por OTAs
     const economiaAno = economiaMes * 12;
     return {
+      totalDiariasMes: totalDiarias,
+      faturamentoEstimado: faturamentoMes,
       economiaMensal: economiaMes,
       economiaAnual: economiaAno
     };
-  }, [roomsCount, dailyRate]);
+  }, [roomsCount, dailyRate, occupancyRate]);
 
   // Handler para navegar para o formulário de cadastro completo do hotel
   const handleOpenProspectModal = (_planName?: string) => {
@@ -1111,7 +1114,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                {/* 1. Quartos */}
                 <div className="bg-[#f8f9ff] p-5 rounded-2xl border border-[#e2e8f0]">
                   <div className="flex justify-between items-center mb-3">
                     <label className="font-bold text-xs sm:text-sm text-[#0b1c30]">Número de Quartos:</label>
@@ -1135,6 +1139,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   </div>
                 </div>
 
+                {/* 2. Diária Média */}
                 <div className="bg-[#f8f9ff] p-5 rounded-2xl border border-[#e2e8f0]">
                   <div className="flex justify-between items-center mb-3">
                     <label className="font-bold text-xs sm:text-sm text-[#0b1c30]">Diária Média (R$):</label>
@@ -1157,6 +1162,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     <span>R$ 1.200</span>
                   </div>
                 </div>
+
+                {/* 3. Taxa de Ocupação */}
+                <div className="bg-[#f8f9ff] p-5 rounded-2xl border border-[#e2e8f0]">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="font-bold text-xs sm:text-sm text-[#0b1c30]">Taxa de Ocupação:</label>
+                    <span className="text-base sm:text-lg font-extrabold text-[#006c49] bg-emerald-50 px-2.5 py-0.5 rounded-lg">
+                      {occupancyRate}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="20"
+                    max="100"
+                    step="5"
+                    value={occupancyRate}
+                    onChange={(e) => setOccupancyRate(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#006c49]"
+                  />
+                  <div className="flex justify-between text-[11px] text-[#45464d] mt-2 font-medium">
+                    <span>20% (baixa)</span>
+                    <span>60% (média)</span>
+                    <span>100% (lotado)</span>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-gradient-to-br from-[#003400] via-[#081a0b] to-[#000000] text-white rounded-2xl p-6 sm:p-8 text-center shadow-lg">
@@ -1168,15 +1197,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     R$ {Math.round(economiaMensal).toLocaleString('pt-BR')},00 <span className="text-sm sm:text-base font-semibold text-white/80">/ mês</span>
                   </div>
                   <p className="text-xs sm:text-sm text-white/90 leading-relaxed mb-6">
-                    Você está deixando cerca de <strong className="text-[#6cf8bb]">R$ {Math.round(economiaAnual).toLocaleString('pt-BR')},00 por ano</strong> nas mãos de intermediários. Com o <strong>Hotel no Zap</strong>, esse lucro fica 100% no caixa da sua propriedade.
+                    Com <strong className="text-[#6cf8bb]">{occupancyRate}% de ocupação</strong> ({totalDiariasMes} diárias/mês), seu faturamento bruto é de cerca de <strong>R$ {Math.round(faturamentoEstimado).toLocaleString('pt-BR')},00/mês</strong>. Sem o Hotel no Zap, você deixaria cerca de <strong className="text-[#FDB116]">R$ {Math.round(economiaAnual).toLocaleString('pt-BR')},00 por ano</strong> em comissões para intermediários. Esse lucro agora fica 100% no seu caixa!
                   </p>
-                  <button
-                    onClick={() => handleOpenProspectModal('Plano Professional')}
+                  <a
+                    href="/lp/lpnovohotel"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs sm:text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
                   >
                     <span>Quero Reter 100% das Minhas Reservas</span>
                     <span className="material-symbols-outlined text-base">arrow_forward</span>
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
