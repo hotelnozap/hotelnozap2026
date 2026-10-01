@@ -20,7 +20,11 @@ interface PlanoView {
   cycleDiscount?: string;
   trialDays: number;
   roomLimit: number;
+  extraRoomPrice?: number;
+  allowExtraRooms?: boolean;
   whatsappConnections: number;
+  extraWaPrice?: number;
+  allowExtraWa?: boolean;
   isFeatured: boolean;
   features: string[];
   disabledFeatures: string[];
@@ -80,10 +84,54 @@ export const sanitizeFeatureText = (text: string): string => {
     .replace(/1 Conexão WhatsApp simultânea/gi, '1 Conexão WhatsApp oficial');
 };
 
+// Helper para construir todos os benefícios completos do hotel dinamicamente para cada plano
+export const buildPlanBenefits = (plano: PlanoView): string[] => {
+  const rooms = plano.roomLimit || 10;
+  const wa = plano.whatsappConnections || 1;
+  const roomExtraVal = plano.extraRoomPrice !== undefined ? plano.extraRoomPrice : 3.5;
+  const waExtraVal = plano.extraWaPrice !== undefined ? plano.extraWaPrice : 49.9;
+
+  const roomExtraText = plano.allowExtraRooms === false 
+    ? 'Sem quartos excedentes' 
+    : `Quartos excedentes: + R$ ${formatPrice(roomExtraVal)} /quarto`;
+
+  const waExtraText = plano.allowExtraWa === false 
+    ? 'Conexões extras inclusas' 
+    : `Conexão extra: + R$ ${formatPrice(waExtraVal)} /conexão`;
+
+  const waConnText = wa === 1 
+    ? '1 Conexão do WhatsApp' 
+    : `${wa} Conexões do WhatsApp simultâneas`;
+
+  return [
+    'Acesso total ao sistema',
+    `Capacidade para até ${rooms} quartos`,
+    'Área administrativa para acompanhar o desempenho do hotel',
+    'Área para camareira',
+    'Área exclusiva pra seu hóspede',
+    'Página de divulgação do seu hotel com todos os seus quartos cadastrados',
+    waConnText,
+    'Atendimento no WhatsApp por IA (Inteligência Artificial de forma humanizada)',
+    roomExtraText,
+    waExtraText,
+    'Mapa dos quartos',
+    'Reservas no balcão em menos de 5 minutos (feito pelo usuário recepcionista)',
+    'Controle de caixa',
+    'Cadastro de produtos e controle de estoque',
+    'Cardápio dos produtos cadastrados (disponível na área do hóspede)',
+    'Cadastro de cupons',
+    'Relatórios completos',
+    'Suporte humanizado'
+  ];
+};
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigateToSystem, onNavigateToNovoHotel }) => {
   // Planos vindos do Supabase
   const [planos, setPlanos] = useState<PlanoView[]>([]);
   const [loadingPlanos, setLoadingPlanos] = useState(true);
+
+  // Modal para Visualizar Todos os Benefícios do Plano
+  const [selectedPlanForBenefits, setSelectedPlanForBenefits] = useState<PlanoView | null>(null);
 
   // Calculadora de Economia
   const [roomsCount, setRoomsCount] = useState<number>(20);
@@ -145,7 +193,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 cycleDiscount: p.cycleDiscount || p.desconto_ciclo || '',
                 trialDays: Number(p.trialDays || p.dias_trial) || 0,
                 roomLimit: Number(p.roomLimit || p.limite_quartos) || 10,
+                extraRoomPrice: Number(p.extraRoomPrice || p.valor_quarto_extra) || 3.5,
+                allowExtraRooms: p.allowExtraRooms !== undefined ? p.allowExtraRooms : p.permite_quartos_extras !== false,
                 whatsappConnections: Number(p.whatsappConnections || p.conexoes_whatsapp) || 1,
+                extraWaPrice: Number(p.extraWaPrice || p.valor_conexao_extra) || 49.9,
+                allowExtraWa: p.allowExtraWa !== undefined ? p.allowExtraWa : p.permite_conexoes_extras !== false,
                 isFeatured: Boolean(p.isFeatured || p.destaque || p.name.toLowerCase().includes('trimestre') || p.name.toLowerCase().includes('professional')),
                 features: Array.isArray(p.features) && p.features.length > 0 ? p.features : Array.isArray(p.recursos) && p.recursos.length > 0 ? p.recursos : [
                   `Capacidade para até ${p.roomLimit || p.limite_quartos || 10} quartos`,
@@ -241,7 +293,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         cycleDiscount: '',
         trialDays: 15,
         roomLimit: 50,
+        extraRoomPrice: 30,
+        allowExtraRooms: true,
         whatsappConnections: 1,
+        extraWaPrice: 49.9,
+        allowExtraWa: true,
         isFeatured: false,
         features: [
           '1 Crédito de Acesso Oficial',
@@ -263,7 +319,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         cycleDiscount: '10%',
         trialDays: 0,
         roomLimit: 25,
+        extraRoomPrice: 3.5,
+        allowExtraRooms: true,
         whatsappConnections: 2,
+        extraWaPrice: 49.9,
+        allowExtraWa: true,
         isFeatured: false,
         features: [
           '2 Créditos de Acesso',
@@ -285,7 +345,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         cycleDiscount: '',
         trialDays: 0,
         roomLimit: 40,
+        extraRoomPrice: 3,
+        allowExtraRooms: true,
         whatsappConnections: 3,
+        extraWaPrice: 39.9,
+        allowExtraWa: true,
         isFeatured: true,
         features: [
           '3 Créditos de Acesso',
@@ -1367,24 +1431,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                       </div>
                     </div>
 
-                    <ul className="space-y-3 text-xs text-[#0b1c30] mb-8 font-medium">
-                      {plano.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5">
-                          <span className="material-symbols-outlined text-sm font-bold shrink-0 mt-0.5 text-[#10b981]">
-                            check_circle
-                          </span>
-                          <span>{sanitizeFeatureText(feature)}</span>
-                        </li>
-                      ))}
-                      {plano.disabledFeatures.map((disabled, idx) => (
-                        <li key={`dis-${idx}`} className="flex items-start gap-2.5 text-gray-400">
-                          <span className="material-symbols-outlined text-sm text-gray-300 font-bold shrink-0 mt-0.5">
-                            remove
-                          </span>
-                          <span>{sanitizeFeatureText(disabled)}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {(() => {
+                      const allBenefits = buildPlanBenefits(plano);
+                      const previewBenefits = allBenefits.slice(0, 6);
+
+                      return (
+                        <>
+                          <ul className="space-y-2.5 text-xs text-[#0b1c30] mb-4 font-medium min-h-[175px]">
+                            {previewBenefits.map((benefit, idx) => (
+                              <li key={idx} className="flex items-start gap-2">
+                                <span className="material-symbols-outlined text-sm font-bold shrink-0 mt-0.5 text-[#10b981]">
+                                  check_circle
+                                </span>
+                                <span className="leading-snug">{benefit}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPlanForBenefits(plano)}
+                            className="w-full mb-6 py-2 px-3 rounded-xl bg-emerald-50/80 hover:bg-emerald-100 text-[#006c49] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-200/80 hover:border-emerald-300"
+                          >
+                            <span className="material-symbols-outlined text-sm text-[#10b981]">checklist</span>
+                            <span>Ver todos os benefícios ({allBenefits.length})</span>
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <button
@@ -1407,6 +1481,77 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           </div>
         </div>
       </section>
+
+      {/* MODAL: TODOS OS BENEFÍCIOS DO PLANO */}
+      {selectedPlanForBenefits && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setSelectedPlanForBenefits(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedPlanForBenefits(null)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Fechar modal"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+
+            <div className="border-b border-gray-100 pb-4 mb-4 pr-10">
+              <span className="text-[11px] font-bold text-[#006c49] uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+                Todos os Benefícios Inclusos
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-[#0b1c30] mt-2">
+                {formatPlanTitle(selectedPlanForBenefits.name, selectedPlanForBenefits.periodicity, selectedPlanForBenefits.cycleDiscount)}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {selectedPlanForBenefits.description} • <strong className="text-[#006c49]">R$ {formatPrice(selectedPlanForBenefits.basePrice)} {getPeriodicitySuffix(selectedPlanForBenefits.periodicity)}</strong>
+              </p>
+            </div>
+
+            <div className="overflow-y-auto pr-1 space-y-2.5 flex-1 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {buildPlanBenefits(selectedPlanForBenefits).map((benefit, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs text-[#0b1c30] font-medium"
+                  >
+                    <span className="material-symbols-outlined text-base font-bold shrink-0 text-[#10b981] mt-0.5">
+                      check_circle
+                    </span>
+                    <span className="leading-snug">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4 mt-4 flex items-center gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedPlanForBenefits(null)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const planToOpen = formatPlanTitle(selectedPlanForBenefits.name, selectedPlanForBenefits.periodicity, selectedPlanForBenefits.cycleDiscount);
+                  setSelectedPlanForBenefits(null);
+                  handleOpenProspectModal(planToOpen);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002000] text-white text-xs font-bold shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Quero Assinar Este Plano</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 8. DEPOIMENTOS */}
       <section className="py-16 lg:py-24 bg-[#f8f9ff]" id="depoimentos">
