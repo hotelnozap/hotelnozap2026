@@ -373,36 +373,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               O primeiro sistema de gestão hoteleira (PMS) com inteligência automatizada no WhatsApp: controle mapa de quartos, check-in, frigobar e pagamentos enquanto sua taxa de ocupação decola.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            <div className="flex justify-center mb-6">
               <button
                 onClick={() => handleOpenProspectModal('Plano Professional')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#003400] hover:bg-[#002000] text-white font-bold text-sm sm:text-base px-7 py-3.5 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#003400] hover:bg-[#002000] text-white font-bold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-xl text-[#6cf8bb]">rocket_launch</span>
                 <span>Iniciar Teste Gratuito de 30 Dias</span>
               </button>
-
-              <a
-                href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Gostaria%20de%20ver%20uma%20demonstra%C3%A7%C3%A3o%20do%20Hotel%20no%20Zap"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-white hover:bg-[#f8f9ff] text-[#0b1c30] border border-[#e2e8f0] font-semibold text-sm sm:text-base px-6 py-3.5 rounded-xl shadow-sm transition-all hover:border-[#10b981]"
-              >
-                <span className="material-symbols-outlined text-xl text-[#10b981]">chat</span>
-                <span>Ver Demonstração ao Vivo no Zap</span>
-              </a>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium text-[#45464d]">
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Sem necessidade de cartão
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Configuração em 2 minutos
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Suporte humano dedicado
-              </span>
+            <div className="flex flex-col items-center justify-center gap-2.5 max-w-2xl mx-auto">
+              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm font-semibold text-[#45464d]">
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Sem necessidade de cartão
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm text-[#10b981] font-bold">check_circle</span> Suporte humano dedicado
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-[13px] text-[#45464d] leading-relaxed text-center">
+                (Seu único trabalho é cadastrar seus quartos com fotos reais e cadastrar a sua equipe de atendimento no sistema, Recepicionistas, Camareiras, Gerente e Administradores do Sistema.)
+              </p>
             </div>
           </div>
 
