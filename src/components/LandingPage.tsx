@@ -1591,8 +1591,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             })}
           </div>
 
-          <div className="mt-10 text-center text-xs text-[#45464d]">
-            <p>💡 Quartos excedentes a partir de apenas R$ 2,50/adicional • Sem cobranças extras por mensagens • Cancele a qualquer momento sem multa.</p>
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center justify-center gap-2.5 bg-emerald-50 border border-emerald-200/90 px-6 py-3.5 rounded-2xl shadow-xs">
+              <span className="material-symbols-outlined text-[#006c49] text-xl shrink-0">verified_user</span>
+              <p className="text-sm sm:text-base md:text-lg font-extrabold text-[#0b1c30] tracking-tight">
+                Sem cobranças extras por mensagens • Cancele a qualquer momento sem multa.
+              </p>
+            </div>
           </div>
         </div>
       </section>
