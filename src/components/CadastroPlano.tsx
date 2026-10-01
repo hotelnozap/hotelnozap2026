@@ -61,7 +61,8 @@ export const parseDiscountPercent = (val: string): number => {
 export const formatPlanDescription = (
   planName: string,
   cicloDays: number,
-  bonusDays: number
+  bonusDays: number,
+  whatsappConnections: number = 1
 ): string => {
   const cleanName = planName.trim().replace(/\s*\([^)]*\)/g, '').trim();
   const totalDays = cicloDays + bonusDays;
@@ -78,10 +79,17 @@ export const formatPlanDescription = (
     periodInfo = ' de acesso';
   }
 
+  const waNum = Number(whatsappConnections) || 0;
+  const waText = waNum > 1
+    ? ` + ${waNum} Conexões no Whatsapp`
+    : waNum === 1
+    ? ' + 1 Conexão no Whatsapp'
+    : '';
+
   if (bonusDays > 0) {
-    return `${cleanName} • ${cicloDays} dias base + ${bonusDays} dias de bônus (${totalDays} dias${periodInfo})`;
+    return `${cleanName} • ${cicloDays} dias base + ${bonusDays} dias de bônus${waText} (${totalDays} dias${periodInfo})`;
   } else {
-    return `${cleanName} • ${cicloDays} dias base (${totalDays} dias${periodInfo})`;
+    return `${cleanName} • ${cicloDays} dias base${waText} (${totalDays} dias${periodInfo})`;
   }
 };
 
@@ -240,7 +248,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
           : 'Contratação com ativação imediata';
 
       // Gera a descrição comercial padronizada automaticamente ao salvar
-      const finalDescription = formatPlanDescription(name, currentCiclo.days, Number(bonusDays) || 0);
+      const finalDescription = formatPlanDescription(name, currentCiclo.days, Number(bonusDays) || 0, baseWhatsapp);
       setDescription(finalDescription);
 
       const planData: Plano = {
@@ -499,7 +507,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                 </label>
                 <button
                   type="button"
-                  onClick={() => setDescription(formatPlanDescription(name || 'Plano', currentCiclo.days, Number(bonusDays) || 0))}
+                  onClick={() => setDescription(formatPlanDescription(name || 'Plano', currentCiclo.days, Number(bonusDays) || 0, baseWhatsapp))}
                   className="text-[10px] font-bold text-[#006c49] hover:underline flex items-center gap-0.5 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-xs">autorenew</span>
@@ -511,7 +519,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: 6 Créditos • 180 dias base + 45 dias de bônus (225 dias / 7,5 meses)"
+                placeholder="Ex: 1 Crédito • 30 dias base + 15 dias de bônus + 1 Conexão no Whatsapp (45 dias de acesso)"
                 className="w-full p-3 rounded-lg bg-slate-50 text-slate-900 text-xs border border-slate-200 focus:border-[#003400] focus:ring-1 focus:ring-[#003400] outline-none transition-all resize-none"
               />
             </div>
@@ -1024,7 +1032,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   </label>
                   <button
                     type="button"
-                    onClick={() => setDescription(formatPlanDescription(name || 'Plano', currentCiclo.days, Number(bonusDays) || 0))}
+                    onClick={() => setDescription(formatPlanDescription(name || 'Plano', currentCiclo.days, Number(bonusDays) || 0, baseWhatsapp))}
                     className="text-[11px] font-bold text-[#006c49] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-sm">autorenew</span>
@@ -1036,11 +1044,11 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: 6 Créditos • 180 dias base + 45 dias de bônus (225 dias / 7,5 meses)"
+                  placeholder="Ex: 1 Crédito • 30 dias base + 15 dias de bônus + 1 Conexão no Whatsapp (45 dias de acesso)"
                   className="w-full h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                 />
                 <p className="text-[11px] text-slate-500">
-                  Gerada de forma automática ao salvar conforme o ciclo ({currentCiclo.days} dias base) e bônus ({bonusDays} dias).
+                  Gerada de forma automática ao salvar conforme o ciclo ({currentCiclo.days} dias base), bônus ({bonusDays} dias) e conexões ({baseWhatsapp}).
                 </p>
               </div>
             </div>

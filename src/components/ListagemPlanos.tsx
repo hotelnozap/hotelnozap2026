@@ -66,7 +66,7 @@ const INITIAL_PLANOS: Plano[] = [
     name: '1 Crédito (Adesão / Teste)',
     tag: 'Inicie sem medo',
     isFeatured: false,
-    description: '1 Crédito • 30 dias base + 15 dias de bônus (45 dias de acesso)',
+    description: '1 Crédito • 30 dias base + 15 dias de bônus + 1 Conexão no Whatsapp (45 dias de acesso)',
     periodicity: 'Mensal',
     basePrice: 197.00,
     pricePeriodText: '/45 dias',
@@ -93,7 +93,7 @@ const INITIAL_PLANOS: Plano[] = [
     emoji: '⚡',
     name: '2 Créditos (Bimestral)',
     tag: 'Econômico',
-    description: '2 Créditos • 60 dias base + 15 dias de bônus (75 dias de acesso)',
+    description: '2 Créditos • 60 dias base + 15 dias de bônus + 1 Conexão no Whatsapp (75 dias de acesso)',
     periodicity: 'Mensal',
     basePrice: 349.00,
     pricePeriodText: '/75 dias',
@@ -101,8 +101,8 @@ const INITIAL_PLANOS: Plano[] = [
     roomLimit: 25,
     roomLimitText: 'Capacidade para até 25 quartos',
     roomExtraPriceText: 'R$ 3,50/adicional',
-    whatsappConnections: 2,
-    whatsappConnectionsText: '2 Conexões WhatsApp simultâneas',
+    whatsappConnections: 1,
+    whatsappConnectionsText: '1 Conexão WhatsApp simultâneas',
     whatsappExtraPriceText: 'R$ 49,90/adicional',
     hotelsSubscribersCount: 0,
     status: 'Ativo',
@@ -110,7 +110,7 @@ const INITIAL_PLANOS: Plano[] = [
       '2 Créditos de Acesso',
       '60 dias base + 15 dias bônus (75 dias)',
       'Capacidade para até 25 quartos',
-      '2 Conexões WhatsApp simultâneas',
+      '1 Conexão WhatsApp oficial',
       'Economia imediata de 2 meses e meio'
     ]
   },
@@ -121,7 +121,7 @@ const INITIAL_PLANOS: Plano[] = [
     name: '3 Créditos (Trimestre de Ouro)',
     tag: 'Mais Vendido',
     isFeatured: true,
-    description: '3 Créditos • 90 dias base + 30 dias de bônus (120 dias / 4 meses)',
+    description: '3 Créditos • 90 dias base + 30 dias de bônus + 1 Conexão no Whatsapp (120 dias / 4 meses)',
     periodicity: 'Trimestral',
     basePrice: 497.00,
     pricePeriodText: '/120 dias',
@@ -129,8 +129,8 @@ const INITIAL_PLANOS: Plano[] = [
     roomLimit: 40,
     roomLimitText: 'Capacidade para até 40 quartos',
     roomExtraPriceText: 'R$ 3,00/adicional',
-    whatsappConnections: 3,
-    whatsappConnectionsText: '3 Conexões WhatsApp simultâneas',
+    whatsappConnections: 1,
+    whatsappConnectionsText: '1 Conexão WhatsApp oficial',
     whatsappExtraPriceText: 'R$ 39,90/adicional',
     hotelsSubscribersCount: 0,
     status: 'Ativo',
@@ -138,7 +138,7 @@ const INITIAL_PLANOS: Plano[] = [
       '3 Créditos de Acesso',
       '90 dias base + 30 dias bônus (4 meses)',
       'Capacidade para até 40 quartos',
-      '3 Conexões WhatsApp simultâneas',
+      '1 Conexão WhatsApp oficial',
       'Perfeito para cobrir a alta temporada',
       'Suporte prioritário via WhatsApp'
     ]
@@ -149,7 +149,7 @@ const INITIAL_PLANOS: Plano[] = [
     emoji: '🎖️',
     name: '6 Créditos (Semestral)',
     tag: 'Popular',
-    description: '6 Créditos • 180 dias base + 45 dias de bônus (225 dias / 7,5 meses)',
+    description: '6 Créditos • 180 dias base + 45 dias de bônus + 2 Conexões no Whatsapp (225 dias / 7,5 meses)',
     periodicity: 'Semestral',
     basePrice: 890.00,
     pricePeriodText: '/225 dias',
@@ -157,8 +157,8 @@ const INITIAL_PLANOS: Plano[] = [
     roomLimit: 80,
     roomLimitText: 'Capacidade para até 80 quartos',
     roomExtraPriceText: 'R$ 2,50/adicional',
-    whatsappConnections: 4,
-    whatsappConnectionsText: '4 Conexões WhatsApp dedicadas',
+    whatsappConnections: 2,
+    whatsappConnectionsText: '2 Conexões WhatsApp dedicadas',
     whatsappExtraPriceText: 'R$ 39,90/adicional',
     hotelsSubscribersCount: 0,
     status: 'Ativo',
@@ -166,7 +166,7 @@ const INITIAL_PLANOS: Plano[] = [
       '6 Créditos de Acesso',
       '180 dias base + 45 dias bônus (225 dias)',
       'Capacidade para até 80 quartos',
-      '4 Conexões WhatsApp dedicadas',
+      '2 Conexões WhatsApp dedicadas',
       'Mais de 7 meses de tranquilidade'
     ]
   },
@@ -176,7 +176,7 @@ const INITIAL_PLANOS: Plano[] = [
     emoji: '💎',
     name: '12 Créditos (Anual Fidelidade)',
     tag: '-35%',
-    description: '12 Créditos • 365 dias base + 60 dias de bônus (425 dias / mais de 14 meses)',
+    description: '12 Créditos • 365 dias base + 60 dias de bônus + 2 Conexões no Whatsapp (425 dias / mais de 14 meses)',
     periodicity: 'Anual',
     basePrice: 1690.00,
     pricePeriodText: '/425 dias',
@@ -480,7 +480,8 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
     const autoDesc = formatPlanDescription(
       formData.name || 'Plano',
       cycleMatch?.days || 30,
-      bDays
+      bDays,
+      formData.whatsappConnections !== undefined ? Number(formData.whatsappConnections) : 1
     );
 
     const normalizedData = {
