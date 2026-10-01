@@ -57,6 +57,10 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     };
   }, []);
 
+  // Paginação: 20 hotéis por página
+  const PAGE_SIZE = 20;
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
   // Mapa de status de crédito por hotel
   const creditosMap = useMemo(() => {
     const map = new Map<string, InfoCreditoHotel>();
@@ -66,18 +70,151 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     return map;
   }, [hoteis]);
 
-  // Configuração dos 10 Planos Oficiais do Sistema
+  // Identifica se o hotel possui plano cadastrado válido
+  const hotelTemPlano = (h: Hotel): boolean => {
+    if (!h.plan || typeof h.plan !== 'string') return false;
+    const p = h.plan.trim().toLowerCase();
+    if (!p || p === 'sem plano' || p === 'sem_plano' || p === 'nenhum') return false;
+    return true;
+  };
+
+  // Apenas hotéis que possuem plano cadastrado
+  const hoteisComPlano = useMemo(() => {
+    return hoteis.filter(h => hotelTemPlano(h));
+  }, [hoteis]);
+
+  // Configuração dos 10 Planos Oficiais do Sistema com cores nos fundos dos cards
   const PLANOS_CARDS = [
-    { key: '1', nome: '1 Crédito', badge: 'Adesão', icon: 'credit_card', border: 'border-emerald-200' },
-    { key: '2', nome: '2 Créditos', badge: 'Bimestral', icon: 'credit_card', border: 'border-emerald-200' },
-    { key: '3', nome: '3 Créditos', badge: 'Trimestral', icon: 'credit_card', border: 'border-emerald-200' },
-    { key: '4', nome: '4 Créditos', badge: 'Quadrimestral', icon: 'credit_card', border: 'border-teal-200' },
-    { key: '5', nome: '5 Créditos', badge: 'Quinquemestral', icon: 'credit_card', border: 'border-teal-200' },
-    { key: '6', nome: '6 Créditos', badge: 'Semestral', icon: 'credit_card', border: 'border-blue-200' },
-    { key: '7', nome: '7 Créditos', badge: 'Septemestral', icon: 'credit_card', border: 'border-blue-200' },
-    { key: '8', nome: '8 Créditos', badge: 'Octomestral', icon: 'credit_card', border: 'border-indigo-200' },
-    { key: '12', nome: '12 Créditos', badge: 'Anual', icon: 'workspace_premium', border: 'border-amber-300' },
-    { key: 'gratis', nome: 'Plano Grátis', badge: 'Google Maps', icon: 'map', border: 'border-slate-200' }
+    { 
+      key: '1', 
+      nome: '1 Crédito', 
+      badge: 'Adesão', 
+      icon: 'credit_card', 
+      bg: 'bg-emerald-50 hover:bg-emerald-100/70', 
+      border: 'border-emerald-300', 
+      titleColor: 'text-emerald-950', 
+      badgeColor: 'text-emerald-800 bg-emerald-200/70', 
+      iconColor: 'text-emerald-600',
+      countColor: 'text-emerald-950',
+      subColor: 'text-emerald-700'
+    },
+    { 
+      key: '2', 
+      nome: '2 Créditos', 
+      badge: 'Bimestral', 
+      icon: 'credit_card', 
+      bg: 'bg-teal-50 hover:bg-teal-100/70', 
+      border: 'border-teal-300', 
+      titleColor: 'text-teal-950', 
+      badgeColor: 'text-teal-800 bg-teal-200/70', 
+      iconColor: 'text-teal-600',
+      countColor: 'text-teal-950',
+      subColor: 'text-teal-700'
+    },
+    { 
+      key: '3', 
+      nome: '3 Créditos', 
+      badge: 'Trimestral', 
+      icon: 'credit_card', 
+      bg: 'bg-cyan-50 hover:bg-cyan-100/70', 
+      border: 'border-cyan-300', 
+      titleColor: 'text-cyan-950', 
+      badgeColor: 'text-cyan-800 bg-cyan-200/70', 
+      iconColor: 'text-cyan-600',
+      countColor: 'text-cyan-950',
+      subColor: 'text-cyan-700'
+    },
+    { 
+      key: '4', 
+      nome: '4 Créditos', 
+      badge: 'Quadrimestral', 
+      icon: 'credit_card', 
+      bg: 'bg-sky-50 hover:bg-sky-100/70', 
+      border: 'border-sky-300', 
+      titleColor: 'text-sky-950', 
+      badgeColor: 'text-sky-800 bg-sky-200/70', 
+      iconColor: 'text-sky-600',
+      countColor: 'text-sky-950',
+      subColor: 'text-sky-700'
+    },
+    { 
+      key: '5', 
+      nome: '5 Créditos', 
+      badge: 'Quinquemestral', 
+      icon: 'credit_card', 
+      bg: 'bg-blue-50 hover:bg-blue-100/70', 
+      border: 'border-blue-300', 
+      titleColor: 'text-blue-950', 
+      badgeColor: 'text-blue-800 bg-blue-200/70', 
+      iconColor: 'text-blue-600',
+      countColor: 'text-blue-950',
+      subColor: 'text-blue-700'
+    },
+    { 
+      key: '6', 
+      nome: '6 Créditos', 
+      badge: 'Semestral', 
+      icon: 'credit_card', 
+      bg: 'bg-indigo-50 hover:bg-indigo-100/70', 
+      border: 'border-indigo-300', 
+      titleColor: 'text-indigo-950', 
+      badgeColor: 'text-indigo-800 bg-indigo-200/70', 
+      iconColor: 'text-indigo-600',
+      countColor: 'text-indigo-950',
+      subColor: 'text-indigo-700'
+    },
+    { 
+      key: '7', 
+      nome: '7 Créditos', 
+      badge: 'Septemestral', 
+      icon: 'credit_card', 
+      bg: 'bg-purple-50 hover:bg-purple-100/70', 
+      border: 'border-purple-300', 
+      titleColor: 'text-purple-950', 
+      badgeColor: 'text-purple-800 bg-purple-200/70', 
+      iconColor: 'text-purple-600',
+      countColor: 'text-purple-950',
+      subColor: 'text-purple-700'
+    },
+    { 
+      key: '8', 
+      nome: '8 Créditos', 
+      badge: 'Octomestral', 
+      icon: 'credit_card', 
+      bg: 'bg-rose-50 hover:bg-rose-100/70', 
+      border: 'border-rose-300', 
+      titleColor: 'text-rose-950', 
+      badgeColor: 'text-rose-800 bg-rose-200/70', 
+      iconColor: 'text-rose-600',
+      countColor: 'text-rose-950',
+      subColor: 'text-rose-700'
+    },
+    { 
+      key: '12', 
+      nome: '12 Créditos', 
+      badge: 'Anual', 
+      icon: 'workspace_premium', 
+      bg: 'bg-amber-50 hover:bg-amber-100/70', 
+      border: 'border-amber-300', 
+      titleColor: 'text-amber-950', 
+      badgeColor: 'text-amber-800 bg-amber-200/70', 
+      iconColor: 'text-amber-600',
+      countColor: 'text-amber-950',
+      subColor: 'text-amber-700'
+    },
+    { 
+      key: 'gratis', 
+      nome: 'Plano Grátis', 
+      badge: 'Google Maps', 
+      icon: 'map', 
+      bg: 'bg-slate-100 hover:bg-slate-200/70', 
+      border: 'border-slate-300', 
+      titleColor: 'text-slate-900', 
+      badgeColor: 'text-slate-700 bg-slate-200', 
+      iconColor: 'text-slate-600',
+      countColor: 'text-slate-900',
+      subColor: 'text-slate-600'
+    }
   ];
 
   // Helper para identificar a qual plano um hotel pertence
@@ -105,13 +242,13 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     return '1';
   };
 
-  // Contagem de hotéis por plano
+  // Contagem de hotéis com plano cadastrado por categoria de plano
   const planCounts = useMemo(() => {
     const counts: Record<string, number> = {
       '1': 0, '2': 0, '3': 0, '4': 0, '5': 0,
       '6': 0, '7': 0, '8': 0, '12': 0, 'gratis': 0
     };
-    hoteis.forEach(h => {
+    hoteisComPlano.forEach(h => {
       const k = getHotelPlanKey(h);
       if (counts[k] !== undefined) {
         counts[k]++;
@@ -120,31 +257,52 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
       }
     });
     return counts;
-  }, [hoteis, creditosMap]);
+  }, [hoteisComPlano, creditosMap]);
 
-  // Filtragem dos hotéis
+  // Filtragem dos hotéis: APENAS com planos cadastrados e ORDEM: mais recente primeiro
   const filteredHoteis = useMemo(() => {
-    return hoteis.filter(h => {
-      const q = searchTerm.toLowerCase().trim();
-      const matchSearch = !q || h.name.toLowerCase().includes(q) || (h.cnpj || '').includes(q) || (h.managerName || '').toLowerCase().includes(q);
-      if (!matchSearch) return false;
+    return hoteisComPlano
+      .filter(h => {
+        const q = searchTerm.toLowerCase().trim();
+        const matchSearch = !q || h.name.toLowerCase().includes(q) || (h.cnpj || '').includes(q) || (h.managerName || '').toLowerCase().includes(q);
+        if (!matchSearch) return false;
 
-      // Filtro por Plano
-      if (planFilter !== 'todos') {
-        const k = getHotelPlanKey(h);
-        if (k !== planFilter) return false;
-      }
+        // Filtro por Plano
+        if (planFilter !== 'todos') {
+          const k = getHotelPlanKey(h);
+          if (k !== planFilter) return false;
+        }
 
-      const info = creditosMap.get(h.id);
-      if (!info) return true;
+        const info = creditosMap.get(h.id);
+        if (!info) return true;
 
-      if (statusFilter === 'degustacao') return info.emDegustacao;
-      if (statusFilter === 'alerta') return info.status === 'alerta';
-      if (statusFilter === 'expirado') return info.status === 'expirado';
+        if (statusFilter === 'degustacao') return info.emDegustacao;
+        if (statusFilter === 'alerta') return info.status === 'alerta';
+        if (statusFilter === 'expirado') return info.status === 'expirado';
 
-      return true;
-    });
-  }, [hoteis, searchTerm, statusFilter, planFilter, creditosMap]);
+        return true;
+      })
+      .sort((a, b) => {
+        // O primeiro sempre será o último hotel que se cadastrou (ordem cronológica decrescente)
+        const timeA = new Date((a as any).createdAt || (a as any).criado_em || 0).getTime();
+        const timeB = new Date((b as any).createdAt || (b as any).criado_em || 0).getTime();
+        return timeB - timeA;
+      });
+  }, [hoteisComPlano, searchTerm, statusFilter, planFilter, creditosMap]);
+
+  // Resetar página ao mudar filtros de busca/plano/status
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, planFilter, statusFilter]);
+
+  // Cálculos de Paginação (20 hotéis por página)
+  const totalItems = filteredHoteis.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+  const paginatedHoteis = useMemo(() => {
+    return filteredHoteis.slice(startIndex, endIndex);
+  }, [filteredHoteis, startIndex, endIndex]);
 
   // Ação: Adicionar 15 dias de bônus cortesia
   const handleDarBonus = (hotel: Hotel) => {
@@ -176,18 +334,18 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     carregarHoteis();
   };
 
-  // Totalizadores
+  // Totalizadores (apenas hotéis com plano cadastrado)
   const totalHoteisEmDegustacao = useMemo(() => {
-    return Array.from(creditosMap.values()).filter(i => i.emDegustacao).length;
-  }, [creditosMap]);
+    return hoteisComPlano.filter(h => creditosMap.get(h.id)?.emDegustacao).length;
+  }, [hoteisComPlano, creditosMap]);
 
   const totalEmAlerta = useMemo(() => {
-    return Array.from(creditosMap.values()).filter(i => i.status === 'alerta').length;
-  }, [creditosMap]);
+    return hoteisComPlano.filter(h => creditosMap.get(h.id)?.status === 'alerta').length;
+  }, [hoteisComPlano, creditosMap]);
 
   const totalExpirados = useMemo(() => {
-    return Array.from(creditosMap.values()).filter(i => i.status === 'expirado').length;
-  }, [creditosMap]);
+    return hoteisComPlano.filter(h => creditosMap.get(h.id)?.status === 'expirado').length;
+  }, [hoteisComPlano, creditosMap]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#f8f9ff] overflow-y-auto">
@@ -272,24 +430,24 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                   key={p.key}
                   type="button"
                   onClick={() => setPlanFilter(prev => prev === p.key ? 'todos' : p.key)}
-                  className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between shadow-2xs hover:shadow-sm active:scale-98 ${
+                  className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-98 ${
                     isSelected
                       ? 'bg-[#003400] text-white border-emerald-500 ring-2 ring-emerald-500 shadow-md'
-                      : `bg-white hover:border-emerald-400 ${p.border}`
+                      : `${p.bg} ${p.border}`
                   }`}
                   title={`Clique para filtrar os hotéis cadastrados no plano ${p.nome}`}
                 >
                   {/* Topo do Card: Nome do Plano */}
                   <div className="flex items-start justify-between gap-1.5 w-full">
                     <div className="min-w-0">
-                      <span className={`block font-black text-xs sm:text-sm tracking-tight truncate ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                      <span className={`block font-black text-xs sm:text-sm tracking-tight truncate ${isSelected ? 'text-white' : p.titleColor}`}>
                         {p.nome}
                       </span>
-                      <span className={`text-[10px] font-semibold uppercase tracking-wider block ${isSelected ? 'text-emerald-300' : 'text-slate-400'}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md inline-block mt-0.5 ${isSelected ? 'text-emerald-200 bg-emerald-900/60' : p.badgeColor}`}>
                         {p.badge}
                       </span>
                     </div>
-                    <span className={`material-symbols-outlined text-lg shrink-0 ${isSelected ? 'text-emerald-300' : 'text-slate-400'}`}>
+                    <span className={`material-symbols-outlined text-lg shrink-0 ${isSelected ? 'text-emerald-300' : p.iconColor}`}>
                       {p.icon}
                     </span>
                   </div>
@@ -297,12 +455,12 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                   {/* Base do Card: Quantidade de Hotéis */}
                   <div 
                     className="pt-2 sm:pt-3 mt-2.5 border-t flex items-baseline justify-between w-full"
-                    style={{ borderColor: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)' }}
+                    style={{ borderColor: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)' }}
                   >
-                    <span className={`text-2xl sm:text-3xl font-black ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                    <span className={`text-2xl sm:text-3xl font-black ${isSelected ? 'text-white' : p.countColor}`}>
                       {count}
                     </span>
-                    <span className={`text-[11px] font-bold ${isSelected ? 'text-emerald-200' : 'text-slate-500'}`}>
+                    <span className={`text-[11px] font-bold ${isSelected ? 'text-emerald-200' : p.subColor}`}>
                       {count === 1 ? 'hotel' : 'hotéis'}
                     </span>
                   </div>
@@ -348,7 +506,7 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                   onChange={(e) => setPlanFilter(e.target.value)}
                   className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#003400] cursor-pointer"
                 >
-                  <option value="todos">Todos os Planos ({hoteis.length})</option>
+                  <option value="todos">Todos os Planos ({hoteisComPlano.length})</option>
                   {PLANOS_CARDS.map((p) => (
                     <option key={p.key} value={p.key}>
                       {p.nome} ({planCounts[p.key] || 0})
@@ -366,7 +524,7 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                     statusFilter === 'todos' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Todos ({hoteis.length})
+                  Todos ({hoteisComPlano.length})
                 </button>
                 <button
                   type="button"
@@ -430,7 +588,7 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  filteredHoteis.map((hotel) => {
+                  paginatedHoteis.map((hotel) => {
                     const info = creditosMap.get(hotel.id) || creditosService.calcularInfoCreditos(hotel);
 
                     return (
@@ -583,6 +741,100 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
               </tbody>
             </table>
           </div>
+
+          {/* Rodapé com Paginação de 20 linhas */}
+          {filteredHoteis.length > 0 && (
+            <div className="p-4 sm:px-6 py-4 bg-slate-50/90 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div className="text-slate-600 font-medium">
+                Mostrando <span className="font-bold text-slate-900">{totalItems > 0 ? startIndex + 1 : 0}</span> a{' '}
+                <span className="font-bold text-slate-900">{endIndex}</span> de{' '}
+                <span className="font-bold text-slate-900">{totalItems}</span> hotéis com planos cadastrados
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  {/* Primeira página */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Primeira página"
+                  >
+                    <span className="material-symbols-outlined text-base">first_page</span>
+                  </button>
+
+                  {/* Anterior */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-0.5"
+                    title="Página anterior"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_left</span>
+                    <span className="hidden sm:inline font-semibold text-[11px]">Anterior</span>
+                  </button>
+
+                  {/* Indicadores de Páginas */}
+                  <div className="flex items-center gap-1 px-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        if (totalPages <= 7) return true;
+                        if (page === 1 || page === totalPages) return true;
+                        return Math.abs(page - currentPage) <= 2;
+                      })
+                      .map((page, idx, arr) => {
+                        const prevPage = arr[idx - 1];
+                        const showEllipsis = prevPage && page - prevPage > 1;
+
+                        return (
+                          <React.Fragment key={page}>
+                            {showEllipsis && (
+                              <span className="px-1 text-slate-400 font-bold select-none">...</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setCurrentPage(page)}
+                              className={`min-w-[32px] h-8 px-2 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
+                                currentPage === page
+                                  ? 'bg-[#003400] text-white shadow-xs'
+                                  : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
+
+                  {/* Próxima */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-0.5"
+                    title="Próxima página"
+                  >
+                    <span className="hidden sm:inline font-semibold text-[11px]">Próxima</span>
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+
+                  {/* Última página */}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Última página"
+                  >
+                    <span className="material-symbols-outlined text-base">last_page</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
       </div>
