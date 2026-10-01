@@ -5275,7 +5275,8 @@ export interface PlanoDB {
   periodicidade: string;
   valor_base: number;
   desconto_ciclo?: string | null;
-  dias_trial: number;
+  dias_trial?: number;
+  dias_bonus?: number;
   limite_quartos: number;
   permite_quartos_extras: boolean;
   valor_quarto_extra: number;
@@ -5301,11 +5302,15 @@ export function mapPlanoDBToFrontend(row: any): any {
   else if (periodicidade.toLowerCase() === 'trimestral') pricePeriodText = '/trimestre';
   else if (periodicidade.toLowerCase() === 'semestral') pricePeriodText = '/semestre';
 
+  const bonusVal = row.dias_bonus !== undefined && row.dias_bonus !== null
+    ? Number(row.dias_bonus)
+    : (Number(row.dias_trial) || 0);
+
   let priceSubtitle = 'Cobrança recorrente';
   if (valorBase === 0 || (row.nome || '').toLowerCase().includes('free')) {
-    priceSubtitle = Number(row.dias_trial) === 0
+    priceSubtitle = bonusVal === 0
       ? 'Acesso gratuito limitado contínuo até upgrade'
-      : `Período com ${row.dias_trial} dias de bônus inclusos`;
+      : `Período com ${bonusVal} dias de bônus inclusos`;
   } else if (periodicidade.toLowerCase() === 'anual') {
     priceSubtitle = `Equiv. R$ ${(valorBase / 12).toFixed(2).replace('.', ',')}/mês • Em até 12x`;
   } else if (destaque) {
@@ -5327,8 +5332,8 @@ export function mapPlanoDBToFrontend(row: any): any {
     basePrice: valorBase,
     pricePeriodText,
     priceSubtitle,
-    trialDays: Number(row.dias_trial) || 0,
-    bonusDays: Number(row.dias_trial) || 0,
+    trialDays: bonusVal,
+    bonusDays: bonusVal,
     cycleDiscount: row.desconto_ciclo || '',
     roomLimit: row.limite_quartos !== null && row.limite_quartos !== undefined ? Number(row.limite_quartos) : 15,
     roomLimitText: Number(row.limite_quartos) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${row.limite_quartos || 15} quartos`,
