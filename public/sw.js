@@ -117,3 +117,47 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// ==========================================
+// 4. Background Sync (Sincronização em 2º Plano)
+// ==========================================
+self.addEventListener('sync', (event) => {
+  console.log('[SW] Evento sync recebido:', event.tag);
+  event.waitUntil(
+    (async () => {
+      try {
+        const clients = await self.clients.matchAll({ includeUncontrolled: true });
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'BACKGROUND_SYNC',
+            tag: event.tag,
+            timestamp: Date.now()
+          });
+        });
+      } catch (err) {
+        console.warn('[SW] Erro durante Background Sync:', err);
+      }
+    })()
+  );
+});
+
+// ==========================================
+// 5. Periodic Sync (Sincronização Periódica)
+// ==========================================
+self.addEventListener('periodicsync', (event) => {
+  console.log('[SW] Evento periodicsync recebido:', event.tag);
+  event.waitUntil(
+    (async () => {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        const response = await fetch('/?ref=periodic-sync', { cache: 'no-cache' });
+        if (response && response.status === 200) {
+          await cache.put('/', response);
+        }
+      } catch (err) {
+        console.warn('[SW] Falha na sincronização periódica de dados:', err);
+      }
+    })()
+  );
+});
+
