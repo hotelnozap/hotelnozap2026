@@ -290,7 +290,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice || p.valor_base) > 0)
             .map((p: any) => {
               let categoryLabel = p.tag || 'Pousadas e Hotéis';
-              if (p.name.includes('1 Crédito')) categoryLabel = 'Acesso Mensal Flexível';
+              if (p.name.includes('1 Crédito')) categoryLabel = 'Inicie sem medo • Acesso Mensal';
               else if (p.name.includes('2 Créditos')) categoryLabel = 'Pacote Econômico Bimestral';
               else if (p.name.includes('3 Créditos')) categoryLabel = 'Mais Escolhido • Alta Temporada';
               else if (p.name.includes('6 Créditos')) categoryLabel = 'Semestral • Estabilidade Total';
@@ -403,8 +403,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
       {
         id: '1-credito-default',
         name: '1 Crédito',
-        tag: 'Mensal',
-        categoryLabel: 'Acesso Mensal Flexível',
+        tag: 'Inicie sem medo',
+        categoryLabel: 'Inicie sem medo • Acesso Mensal',
         description: '1 Crédito • 30 dias base + 15 dias de bônus (45 dias de acesso)',
         basePrice: 197,
         periodicity: 'Mensal',
@@ -1508,11 +1508,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   key={plano.id}
                   className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all relative ${theme.containerClass}`}
                 >
-                  {plano.isFeatured && (
+                  {plano.isFeatured ? (
                     <div className="absolute top-0 right-0 bg-[#FDB116] text-[#0b1c30] font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs">
                       ★ Mais Escolhido
                     </div>
-                  )}
+                  ) : (plano.tag && plano.tag.toLowerCase().includes('inicie')) || plano.name.includes('1 Crédito') ? (
+                    <div className="absolute top-0 right-0 bg-[#006c49] text-white font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs">
+                      ★ Inicie sem medo
+                    </div>
+                  ) : null}
 
                   <div>
                     <div className="flex justify-between items-start mb-4">

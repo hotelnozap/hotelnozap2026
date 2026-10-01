@@ -64,7 +64,7 @@ const INITIAL_PLANOS: Plano[] = [
     order: '#01',
     emoji: '🎁',
     name: '1 Crédito (Adesão / Teste)',
-    tag: 'Degustação',
+    tag: 'Inicie sem medo',
     isFeatured: false,
     description: '1 Crédito • 30 dias base + 15 dias de bônus (45 dias de acesso)',
     periodicity: 'Mensal',
