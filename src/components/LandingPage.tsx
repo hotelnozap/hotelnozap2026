@@ -16,6 +16,8 @@ interface PlanoView {
   categoryLabel?: string;
   description: string;
   basePrice: number;
+  periodicity?: string;
+  cycleDiscount?: string;
   trialDays: number;
   roomLimit: number;
   whatsappConnections: number;
@@ -23,6 +25,47 @@ interface PlanoView {
   features: string[];
   disabledFeatures: string[];
 }
+
+// Helper para formatar o sufixo de periodicidade ao lado do valor (ex: "/ mês", "Bimestral", "Trimestral", "Semestral", "Anual")
+export const getPeriodicitySuffix = (periodicity?: string): string => {
+  if (!periodicity) return '/ mês';
+  const p = periodicity.trim().toLowerCase();
+  if (p === 'mensal') return '/ mês';
+  return periodicity.trim();
+};
+
+// Helper para formatar o preço com separador decimal e de milhar no padrão pt-BR
+export const formatPrice = (val: number): string => {
+  if (typeof val !== 'number' || isNaN(val)) return '0';
+  return val.toLocaleString('pt-BR', {
+    minimumFractionDigits: val % 1 !== 0 ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
+};
+
+// Helper para formatar o título do plano incorporando desconto administrativo e ciclo
+export const formatPlanTitle = (name: string, periodicity?: string, cycleDiscount?: string): string => {
+  // Extrai nome base sem parênteses antigos ou descontos fixos (ex: "2 Créditos (Bimestral)" -> "2 Créditos")
+  const baseName = name
+    .replace(/\s*-\s*\d+%.*$/, '')
+    .replace(/\s*\([^)]*\)/g, '')
+    .trim();
+
+  const rawDisc = (cycleDiscount || '').replace(/[^0-9]/g, '');
+  const discNum = parseInt(rawDisc, 10);
+  const period = periodicity ? periodicity.trim() : 'Mensal';
+
+  if (!isNaN(discNum) && discNum > 0) {
+    return `${baseName} -${discNum}% (${period})`;
+  }
+
+  // Se não tem desconto e a periodicidade não é Mensal e não está no nome, adiciona o ciclo
+  if (period.toLowerCase() !== 'mensal' && !name.includes('(')) {
+    return `${baseName} (${period})`;
+  }
+
+  return name;
+};
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigateToSystem, onNavigateToNovoHotel }) => {
   // Planos vindos do Supabase
@@ -56,7 +99,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   const [isSubmittingProspect, setIsSubmittingProspect] = useState(false);
   const [prospectSuccess, setProspectSuccess] = useState(false);
 
-  // Carregar planos da tabela 'planos' no Supabase
+  // Carregar planos da tabela 'planos' no Supabase com sincronização em tempo real
   useEffect(() => {
     let isMounted = true;
     const fetchPlanos = async () => {
@@ -64,40 +107,45 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         setLoadingPlanos(true);
         const data = await planosService.getPlanos();
         if (data && data.length > 0 && isMounted) {
-          // Filtrar planos ativos e comerciais (plano grátis do Google Maps não fica disponível)
+          // Filtrar planos ativos e comerciais (exclui inativos, legado e grátis)
           const activePlanos = data
-            .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice) > 0)
+            .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice || p.valor_base) > 0)
             .map((p: any) => {
-              let categoryLabel = 'Pousadas e Hotéis';
-              if (p.name.toLowerCase().includes('starter')) categoryLabel = 'Pousadas Familiares';
+              let categoryLabel = p.tag || 'Pousadas e Hotéis';
+              if (p.name.includes('1 Crédito')) categoryLabel = 'Acesso Mensal Flexível';
+              else if (p.name.includes('2 Créditos')) categoryLabel = 'Pacote Econômico Bimestral';
+              else if (p.name.includes('3 Créditos')) categoryLabel = 'Mais Escolhido • Alta Temporada';
+              else if (p.name.includes('6 Créditos')) categoryLabel = 'Semestral • Estabilidade Total';
+              else if (p.name.includes('12 Créditos')) categoryLabel = 'Anual VIP • Maior Economia';
+              else if (p.name.toLowerCase().includes('starter')) categoryLabel = 'Pousadas Familiares';
               else if (p.name.toLowerCase().includes('pro')) categoryLabel = 'Hotéis de Médio Porte';
               else if (p.name.toLowerCase().includes('enterprise')) categoryLabel = 'Resorts & Redes';
-              else if (p.name.toLowerCase().includes('free')) categoryLabel = 'Acesso Básico';
 
               return {
                 id: p.id,
                 name: p.name,
-                tag: p.tag || (p.isFeatured ? 'Mais Vendido' : undefined),
+                tag: p.tag || (p.destaque || p.isFeatured ? 'Mais Vendido' : undefined),
                 categoryLabel,
-                description: p.description || 'Solução completa para gestão e motor de reservas via WhatsApp.',
-                basePrice: Number(p.basePrice) || 0,
-                trialDays: Number(p.trialDays) || 30,
-                roomLimit: Number(p.roomLimit) || 10,
-                whatsappConnections: Number(p.whatsappConnections) || 1,
-                isFeatured: Boolean(p.isFeatured || p.name.toLowerCase().includes('professional')),
-                features: Array.isArray(p.features) && p.features.length > 0 ? p.features : [
-                  `Capacidade para até ${p.roomLimit || 10} quartos`,
+                description: p.description || p.descricao || 'Solução completa para gestão e motor de reservas via WhatsApp.',
+                basePrice: Number(p.basePrice || p.valor_base) || 0,
+                periodicity: p.periodicity || p.periodicidade || 'Mensal',
+                cycleDiscount: p.cycleDiscount || p.desconto_ciclo || '',
+                trialDays: Number(p.trialDays || p.dias_trial) || 0,
+                roomLimit: Number(p.roomLimit || p.limite_quartos) || 10,
+                whatsappConnections: Number(p.whatsappConnections || p.conexoes_whatsapp) || 1,
+                isFeatured: Boolean(p.isFeatured || p.destaque || p.name.toLowerCase().includes('trimestre') || p.name.toLowerCase().includes('professional')),
+                features: Array.isArray(p.features) && p.features.length > 0 ? p.features : Array.isArray(p.recursos) && p.recursos.length > 0 ? p.recursos : [
+                  `Capacidade para até ${p.roomLimit || p.limite_quartos || 10} quartos`,
                   'Conexão WhatsApp oficial integrada',
                   'Mapa de quartos e controle de check-in',
                   'Confirmação de reserva no WhatsApp'
                 ],
-                disabledFeatures: Array.isArray(p.disabledFeatures) ? p.disabledFeatures : []
+                disabledFeatures: Array.isArray(p.disabledFeatures) ? p.disabledFeatures : Array.isArray(p.recursos_desabilitados) ? p.recursos_desabilitados : []
               };
             });
 
           if (activePlanos.length > 0) {
-            const commercial = activePlanos.filter((p: any) => !p.name.toLowerCase().includes('anual'));
-            setPlanos(commercial.length > 0 ? commercial : activePlanos);
+            setPlanos(activePlanos);
           }
         }
       } catch (err) {
@@ -108,7 +156,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     };
 
     fetchPlanos();
-    return () => { isMounted = false; };
+
+    // Sincronizar em tempo real quando alterações de preços ou descontos forem feitas no painel administrativo
+    const planosChannel = supabase
+      .channel('landing-page-planos-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'planos' },
+        () => {
+          fetchPlanos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(planosChannel);
+    };
   }, []);
 
   // Contagem dinâmica de hotéis cadastrados (atualizada em tempo real via Supabase)
@@ -154,61 +218,69 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     if (planos.length > 0) return planos;
     return [
       {
-        id: 'starter-default',
-        name: 'Plano Starter',
-        tag: 'Básico',
-        categoryLabel: 'Pousadas Familiares',
-        description: 'Ideal para pousadas e chalés que desejam automatizar as reservas pelo WhatsApp.',
-        basePrice: 149,
-        trialDays: 30,
-        roomLimit: 10,
+        id: '1-credito-default',
+        name: '1 Crédito',
+        tag: 'Mensal',
+        categoryLabel: 'Acesso Mensal Flexível',
+        description: '1 Crédito • 30 dias base + 15 dias de bônus (45 dias de acesso)',
+        basePrice: 197,
+        periodicity: 'Mensal',
+        cycleDiscount: '',
+        trialDays: 15,
+        roomLimit: 50,
         whatsappConnections: 1,
         isFeatured: false,
         features: [
-          'Capacidade para até 10 quartos',
-          'Conexão WhatsApp oficial integrada',
-          'Mapa de quartos e controle de check-in',
-          'Confirmação de reserva no WhatsApp'
+          '1 Crédito de Acesso Oficial',
+          '30 dias base + 15 dias bônus (45 dias)',
+          'Capacidade para até 50 quartos',
+          '1 Conexão WhatsApp oficial integrada',
+          'Ideal para começar sem compromisso'
         ],
         disabledFeatures: []
       },
       {
-        id: 'pro-default',
-        name: 'Plano Professional',
+        id: '2-creditos-default',
+        name: '2 Créditos (Bimestral)',
+        tag: 'Econômico',
+        categoryLabel: 'Pacote Econômico Bimestral',
+        description: '2 Créditos • 60 dias base + 15 dias de bônus (75 dias de acesso)',
+        basePrice: 354.60,
+        periodicity: 'Bimestral',
+        cycleDiscount: '10%',
+        trialDays: 0,
+        roomLimit: 25,
+        whatsappConnections: 2,
+        isFeatured: false,
+        features: [
+          '2 Créditos de Acesso',
+          '60 dias base + 15 dias bônus (75 dias)',
+          'Capacidade para até 25 quartos',
+          '2 Conexões WhatsApp simultâneas',
+          'Economia imediata de 2 meses e meio'
+        ],
+        disabledFeatures: []
+      },
+      {
+        id: '3-creditos-default',
+        name: '3 Créditos (Trimestre de Ouro)',
         tag: 'Mais Vendido',
-        categoryLabel: 'Hotéis de Médio Porte',
-        description: 'A solução completa para decolar ocupação com automação total e controle da sua equipe.',
-        basePrice: 299,
-        trialDays: 30,
-        roomLimit: 30,
-        whatsappConnections: 1,
+        categoryLabel: 'Mais Escolhido • Alta Temporada',
+        description: '3 Créditos • 90 dias base + 30 dias de bônus (120 dias / 4 meses de acesso)',
+        basePrice: 497,
+        periodicity: 'Trimestral',
+        cycleDiscount: '',
+        trialDays: 0,
+        roomLimit: 40,
+        whatsappConnections: 3,
         isFeatured: true,
         features: [
-          'Capacidade para até 30 quartos',
-          'Conexão WhatsApp oficial integrada',
-          'Módulo governança & limpeza em tempo real',
-          'Confirmação e voucher no WhatsApp',
-          'Usuários ilimitados para toda a equipe'
-        ],
-        disabledFeatures: []
-      },
-      {
-        id: 'enterprise-default',
-        name: 'Plano Enterprise',
-        tag: 'Ilimitado',
-        categoryLabel: 'Resorts & Redes',
-        description: 'Máximo desempenho, suporte VIP e alta escala para operações hoteleiras robustas.',
-        basePrice: 590,
-        trialDays: 30,
-        roomLimit: 150,
-        whatsappConnections: 1,
-        isFeatured: false,
-        features: [
-          'Até 150 quartos (sem sobretaxa)',
-          'Conexão WhatsApp oficial integrada',
-          'IA de Atendimento 24/7 (Reserva Automática)',
-          'Gerente de contas e onboarding dedicado',
-          'Área exclusiva para hóspedes'
+          '3 Créditos de Acesso',
+          '90 dias base + 30 dias bônus (4 meses)',
+          'Capacidade para até 40 quartos',
+          '3 Conexões WhatsApp simultâneas',
+          'Perfeito para cobrir a alta temporada',
+          'Suporte prioritário via WhatsApp'
         ],
         disabledFeatures: []
       }
@@ -1229,8 +1301,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-6xl mx-auto">
             {displayPlanos.map((plano) => {
+              const formattedTitle = formatPlanTitle(plano.name, plano.periodicity, plano.cycleDiscount);
+              const periodicitySuffix = getPeriodicitySuffix(plano.periodicity);
+              const priceText = formatPrice(plano.basePrice);
+
               return (
                 <div
                   key={plano.id}
@@ -1250,10 +1326,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <span className="text-[11px] font-bold text-[#006c49] uppercase tracking-wider">
-                          {plano.categoryLabel || 'Pousadas & Hotéis'}
+                          {plano.categoryLabel || plano.tag || 'Pousadas & Hotéis'}
                         </span>
                         <h3 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mt-0.5">
-                          {plano.name}
+                          {formattedTitle}
                         </h3>
                       </div>
                       <span className={`p-2.5 rounded-xl ${plano.isFeatured ? 'bg-amber-50 text-[#FDB116]' : 'bg-white border border-[#e2e8f0] text-[#006c49]'}`}>
@@ -1268,12 +1344,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     </p>
 
                     <div className="mb-6 pb-6 border-b border-[#e2e8f0]">
-                      <span className="text-3xl sm:text-4xl font-black text-[#0b1c30]">
-                        R$ {plano.basePrice}
-                      </span>
-                      <span className="text-xs text-[#45464d] font-semibold ml-1">
-                        /mês
-                      </span>
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-3xl sm:text-4xl font-black text-[#0b1c30]">
+                          R$ {priceText}
+                        </span>
+                        <span className="text-xs sm:text-sm text-[#45464d] font-semibold">
+                          {periodicitySuffix}
+                        </span>
+                      </div>
                     </div>
 
                     <ul className="space-y-3 text-xs text-[#0b1c30] mb-8 font-medium">
@@ -1297,14 +1375,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   </div>
 
                   <button
-                    onClick={() => handleOpenProspectModal(plano.name)}
+                    onClick={() => handleOpenProspectModal(formattedTitle)}
                     className={`w-full text-center py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer ${
                       plano.isFeatured
                         ? 'bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] shadow-md hover:scale-[1.02]'
                         : 'border border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white'
                     }`}
                   >
-                    {plano.isFeatured ? 'Assinar Plano Professional' : `Assinar ${plano.name.replace('Plano ', '')}`}
+                    {plano.isFeatured ? 'Assinar Plano em Destaque' : `Assinar ${plano.name.replace(/\s*\([^)]*\)/g, '').trim()}`}
                   </button>
                 </div>
               );
@@ -1726,7 +1804,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                       >
                         {displayPlanos.map((p) => (
                           <option key={p.id} value={p.name}>
-                            {p.name} (R$ {p.basePrice}/mês)
+                            {formatPlanTitle(p.name, p.periodicity, p.cycleDiscount)} (R$ {formatPrice(p.basePrice)} {getPeriodicitySuffix(p.periodicity)})
                           </option>
                         ))}
                       </select>
