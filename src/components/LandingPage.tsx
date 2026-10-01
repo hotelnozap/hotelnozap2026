@@ -235,7 +235,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
       if (result.success) {
         setProspectSuccess(true);
       } else {
-        alert('Não foi possível registrar o teste grátis no momento. Tente novamente ou nos chame no WhatsApp.');
+        alert('Não foi possível registrar o cadastro no momento. Tente novamente ou nos chame no WhatsApp.');
       }
     } catch (err) {
       console.error('Erro ao registrar prospecto:', err);
@@ -286,7 +286,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               onClick={() => handleOpenProspectModal('Plano Professional')}
               className="inline-flex items-center gap-1.5 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs xl:text-sm px-3 sm:px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
             >
-              <span>Testar 30 Dias Grátis</span>
+              <span>Cadastrar Meu Hotel</span>
               <span className="material-symbols-outlined text-base font-bold hidden sm:inline">arrow_forward</span>
             </button>
             <button
@@ -349,7 +349,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 onClick={() => { setMobileMenuOpen(false); handleOpenProspectModal('Plano Professional'); }}
                 className="bg-[#003400] text-white text-xs font-bold px-3.5 py-2 rounded-lg"
               >
-                Testar 30 Dias Grátis
+                Cadastrar Meu Hotel
               </button>
             </div>
           </div>
@@ -379,7 +379,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#003400] hover:bg-[#002000] text-white font-bold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-xl text-[#6cf8bb]">rocket_launch</span>
-                <span>Iniciar Teste Gratuito de 30 Dias</span>
+                <span>Cadastrar Meu Hotel Agora</span>
               </button>
             </div>
 
@@ -1041,7 +1041,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               Escolha o Plano Ideal para o Tamanho da sua Operação
             </h2>
             <p className="text-[#45464d] text-sm sm:text-base mb-8">
-              Sem taxas sobre reservas, sem pegadinhas contratuais. Teste grátis por 30 dias.
+              Sem taxas sobre reservas, sem pegadinhas contratuais. Ativação imediata e sem fidelidade.
             </p>
 
             <div className="inline-flex items-center p-1.5 rounded-2xl bg-[#f8f9ff] border border-[#e2e8f0]">
@@ -1150,7 +1150,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                         : 'border border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white'
                     }`}
                   >
-                    {plano.isFeatured ? 'Testar Professional 30 Dias Grátis' : `Testar ${plano.name.replace('Plano ', '')} Grátis`}
+                    {plano.isFeatured ? 'Assinar Plano Professional' : `Assinar ${plano.name.replace('Plano ', '')}`}
                   </button>
                 </div>
               );
@@ -1270,8 +1270,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 a: 'Não! Você continua utilizando exatamente o mesmo número comercial da sua recepção ou pousada. A conexão é realizada em menos de 1 minuto via leitura de QR Code, similar ao WhatsApp Web.'
               },
               {
-                q: 'Como funciona o teste grátis de 30 dias?',
-                a: 'Você tem acesso total e irrestrito a todas as funcionalidades do sistema, incluindo mapa de quartos, motor de reservas e automações durante os 30 dias de teste. Não pedimos cartão de crédito e você não assume nenhum compromisso para iniciar o teste.'
+                q: 'Como funciona a contratação e ativação do sistema?',
+                a: 'Você escolhe o plano mais adequado para o tamanho da sua propriedade e preenche o cadastro. Nossa equipe auxilia você na ativação rápida para começar a receber reservas no WhatsApp imediatamente, sem fidelidade contratual.'
               },
               {
                 q: 'Consigo importar meus hóspedes e dados antigos?',
@@ -1317,7 +1317,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           <div className="max-w-3xl mx-auto">
             <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10b981]/20 border border-[#10b981]/40 text-[#6cf8bb] font-bold text-xs mb-6">
               <span className="w-2 h-2 rounded-full bg-[#10b981] animate-ping"></span>
-              Comece Hoje Mesmo • Configuração em 2 Minutos
+              Comece Hoje Mesmo • Ativação Imediata
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-6 leading-tight">
               Pronto Para Encher Seus Quartos e Parar de Pagar Comissões Abusivas?
@@ -1330,7 +1330,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 onClick={() => handleOpenProspectModal('Plano Professional')}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-extrabold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
-                <span>Criar Minha Conta Grátis Agora</span>
+                <span>Cadastrar Meu Hotel Agora</span>
                 <span className="material-symbols-outlined text-xl">arrow_forward</span>
               </button>
               <a
@@ -1344,7 +1344,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </a>
             </div>
             <p className="text-xs text-white/60">
-              ✓ 30 dias de garantia incondicional • Sem fidelidade contratual • Ativação imediata
+              ✓ Sem fidelidade contratual • Ativação imediata • Suporte humano dedicado
             </p>
           </div>
         </div>
@@ -1449,13 +1449,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               <>
                 <div className="mb-6">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#006c49] bg-[#10b981]/15 px-3 py-1 rounded-full">
-                    🚀 Teste Grátis de 30 Dias
+                    🚀 Cadastre sua Propriedade
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-[#0b1c30] mt-2 mb-1">
                     Cadastre sua Propriedade
                   </h3>
                   <p className="text-xs text-gray-500">
-                    Acesso imediato sem necessidade de cartão de crédito. Comece em menos de 2 minutos.
+                    Acesso imediato e ativação rápida para começar a receber reservas diretas.
                   </p>
                 </div>
 
@@ -1586,12 +1586,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                       {isSubmittingProspect ? (
                         <>
                           <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                          <span>Ativando seu teste...</span>
+                          <span>Cadastrando propriedade...</span>
                         </>
                       ) : (
                         <>
                           <span className="material-symbols-outlined text-lg text-[#6cf8bb]">rocket_launch</span>
-                          <span>Ativar Meu Teste de 30 Dias Grátis</span>
+                          <span>Cadastrar Minha Propriedade Agora</span>
                         </>
                       )}
                     </button>
@@ -1617,7 +1617,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-200 text-left mb-6 text-xs text-emerald-900 space-y-2">
                   <p className="font-bold flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-base text-[#10b981]">verified</span>
-                    Status: Prospecto Ativado (Teste Grátis 30 Dias)
+                    Status: Solicitação Recebida com Sucesso
                   </p>
                   <p>
                     Nossa equipe já preparou sua instância. Clique abaixo para conectar seu WhatsApp imediatamente ou acesse o sistema:
@@ -1626,7 +1626,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
                 <div className="space-y-3">
                   <a
-                    href={`https://wa.me/5566981585014?text=Ol%C3%A1!%20Acabei%20de%20cadastrar%20o%20hotel%20${encodeURIComponent(prospectForm.hotelName)}%20no%20teste%20gr%C3%A1tis%20do%20Hotel%20no%20Zap.%20Meu%20WhatsApp%20%C3%A9%20${encodeURIComponent(prospectForm.phone)}`}
+                    href={`https://wa.me/5566981585014?text=Ol%C3%A1!%20Acabei%20de%20cadastrar%20o%20hotel%20${encodeURIComponent(prospectForm.hotelName)}%20no%20plano%20${encodeURIComponent(selectedPlanForProspect)}%20do%20Hotel%20no%20Zap.%20Meu%20WhatsApp%20%C3%A9%20${encodeURIComponent(prospectForm.phone)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-3.5 rounded-xl bg-[#10b981] hover:bg-[#006c49] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all"
