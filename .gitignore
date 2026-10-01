@@ -28,6 +28,7 @@ Thumbs.db
 
 # Temp / scratch
 scratch/
+imagens para corre*/
 
 # Dev utility scripts (contain local credentials)
 check_live.js

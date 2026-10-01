@@ -299,6 +299,21 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
     };
   }, []);
 
+  // Bloqueia rolagem de fundo no mobile quando o drawer estiver aberto
+  useEffect(() => {
+    if (isMobileDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [isMobileDrawerOpen]);
+
   // Lista de Pedidos Ativos nesta estadia (inicia vazia ou baseada na estadia real)
   const [pedidos, setPedidos] = useState<PedidoItem[]>([]);
 
@@ -796,11 +811,13 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
       <div className="flex-1 flex flex-col min-w-0 lg:ml-72 bg-slate-50 min-h-screen">
         
         {/* CABEÇALHO MOBILE (390px / Dispositivos móveis) */}
-        <header className="lg:hidden sticky top-0 z-40 bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3.5 shadow-md flex items-center justify-between">
+        <header className="lg:hidden sticky top-0 z-40 bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3 shadow-md flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
             <button
+              type="button"
               onClick={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
-              className="p-1 rounded-lg hover:bg-white/10 active:scale-95 transition-transform text-white focus:outline-none"
+              className="p-1 rounded-lg hover:bg-white/10 active:scale-95 transition-transform text-white focus:outline-none cursor-pointer"
+              aria-label="Abrir menu lateral"
             >
               <span className="material-symbols-outlined text-[26px]">menu</span>
             </button>
@@ -813,8 +830,9 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           <div className="flex items-center space-x-2">
             {temEstadiaOuReserva && perfil?.hotelWifi && (
               <button
+                type="button"
                 onClick={() => showToast(`Wi-Fi: ${perfil.hotelWifi}`)}
-                className="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/10 text-[11px] font-medium transition-all text-emerald-300 border border-emerald-500/30"
+                className="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/10 text-[11px] font-medium transition-all text-emerald-300 border border-emerald-500/30 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[15px]">wifi</span>
                 <span>Wi-Fi</span>
@@ -822,11 +840,24 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             )}
 
             <button
+              type="button"
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              className="relative p-1.5 rounded-full hover:bg-white/10 text-white transition-transform"
+              className="relative p-1.5 rounded-full hover:bg-white/10 text-white transition-transform cursor-pointer"
+              aria-label="Notificações"
             >
               <span className="material-symbols-outlined text-[22px]">notifications</span>
               {temEstadiaOuReserva && <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-black"></span>}
+            </button>
+
+            {/* Atalho rápido para Sair direto no topo mobile */}
+            <button
+              type="button"
+              onClick={handleSairDaConta}
+              className="p-1.5 rounded-full hover:bg-white/10 text-red-300 hover:text-red-200 transition-colors cursor-pointer"
+              title="Sair da Conta"
+              aria-label="Sair da Conta"
+            >
+              <span className="material-symbols-outlined text-[22px]">logout</span>
             </button>
 
             <div className="w-8 h-8 rounded-full bg-emerald-800 border border-emerald-400 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
@@ -835,23 +866,37 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           </div>
         </header>
 
-        {/* DRAWER MENU MOBILE (DESLIZANTE) */}
+        {/* DRAWER MENU MOBILE (DESLIZANTE COM Z-INDEX ELEVADO E ROLAGEM DEDICADA) */}
         {isMobileDrawerOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex">
-            <div className="w-4/5 max-w-xs bg-gradient-to-b from-[#003400] to-[#000000] text-white p-5 flex flex-col justify-between h-full shadow-2xl animate-in slide-in-from-left duration-200">
-              <div>
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-400 text-2xl">hotel</span>
-                    <span className="font-extrabold text-white text-base">HOTEL NO ZAP</span>
-                  </div>
-                  <button onClick={() => setIsMobileDrawerOpen(false)} className="text-slate-400 hover:text-white">
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
-                </div>
+          <div className="lg:hidden fixed inset-0 z-[100] flex">
+            {/* Backdrop com clique para fechar */}
+            <div
+              className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity"
+              onClick={() => setIsMobileDrawerOpen(false)}
+            />
 
+            {/* Painel lateral com scroll interno seguro */}
+            <div className="relative z-10 w-[84%] max-w-xs bg-gradient-to-b from-[#003400] via-[#002000] to-[#000d00] text-white flex flex-col h-[100dvh] max-h-[100dvh] shadow-2xl animate-in slide-in-from-left duration-200 overflow-hidden">
+              {/* Topo fixo do drawer */}
+              <div className="p-4 sm:p-5 flex items-center justify-between border-b border-white/10 shrink-0 bg-[#003400]">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-400 text-2xl">hotel</span>
+                  <span className="font-extrabold text-white text-base">HOTEL NO ZAP</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+                  aria-label="Fechar menu"
+                >
+                  <span className="material-symbols-outlined text-2xl">close</span>
+                </button>
+              </div>
+
+              {/* Corpo de navegação com rolagem independente */}
+              <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3 space-y-1 overscroll-contain">
                 {temEstadiaOuReserva && (
-                  <div className="mt-4 p-3 rounded-xl bg-white/10 border border-white/15">
+                  <div className="mb-3 p-3 rounded-xl bg-white/10 border border-white/15">
                     <span className={`text-[10px] uppercase font-bold ${perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-300'}`}>
                       {perfil?.temCheckinAtivo ? `Quarto ${perfil?.quartoNumero} • ${perfil?.statusEstadia}` : 'Reserva Ativa'}
                     </span>
@@ -862,10 +907,11 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   </div>
                 )}
 
-                <nav className="mt-5 space-y-1">
+                <nav className="space-y-1">
                   <button
+                    type="button"
                     onClick={() => { setActiveSubTab('dashboard'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">dashboard</span>
                     {temEstadiaOuReserva ? 'Visão Geral & Estadia' : 'Visão Geral'}
@@ -873,8 +919,9 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                   {temEstadiaOuReserva && (
                     <button
+                      type="button"
                       onClick={() => { setActiveSubTab('pedidos'); setIsMobileDrawerOpen(false); }}
-                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-emerald-400 text-lg">room_service</span>
@@ -885,16 +932,18 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   )}
 
                   <button
+                    type="button"
                     onClick={() => { setActiveSubTab('minhas-reservas'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">calendar_month</span>
                     {temEstadiaOuReserva ? 'Minhas Reservas' : 'Histórico de Hospedagens'}
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => { setActiveSubTab('cupons'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <span className="material-symbols-outlined text-emerald-400 text-lg">confirmation_number</span>
@@ -907,8 +956,9 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                   {temEstadiaOuReserva && (
                     <button
+                      type="button"
                       onClick={() => { setActiveSubTab('horarios'); setIsMobileDrawerOpen(false); }}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-emerald-400 text-lg">schedule</span>
                       Horários & Hotel
@@ -916,16 +966,18 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   )}
 
                   <button
+                    type="button"
                     onClick={() => { setActiveSubTab('dados-cadastrais'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">badge</span>
                     Meus Dados Cadastrais
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => { setActiveSubTab('seguranca'); setIsMobileDrawerOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">lock</span>
                     Segurança & Senha
@@ -933,8 +985,9 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                   {temEstadiaOuReserva && (
                     <button
+                      type="button"
                       onClick={() => { setActiveSubTab('consumo'); setIsMobileDrawerOpen(false); }}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200"
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-emerald-400 text-lg">receipt_long</span>
                       Extrato de Consumo
@@ -943,25 +996,30 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                 </nav>
               </div>
 
-              <div className="pt-4 border-t border-white/10 space-y-2">
+              {/* Rodapé fixo do drawer: botão Sair da Conta SEMPRE visível e clicável */}
+              <div className="p-4 border-t border-white/10 shrink-0 bg-[#001400]/95 space-y-2 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 {(normalizedRole === 'administrador' || normalizedRole === 'admin') && onNavigateToSystem && (
                   <button
-                    onClick={onNavigateToSystem}
-                    className="w-full py-2 bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-bold"
+                    type="button"
+                    onClick={() => { setIsMobileDrawerOpen(false); onNavigateToSystem(); }}
+                    className="w-full py-2 bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition-colors hover:bg-emerald-600/50 cursor-pointer"
                   >
                     Painel Admin do Hotel
                   </button>
                 )}
                 <button
-                  onClick={handleSairDaConta}
-                  className="w-full py-2 text-white hover:bg-white/10 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                  type="button"
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    handleSairDaConta();
+                  }}
+                  className="w-full py-3 bg-red-600/25 hover:bg-red-600/40 text-red-200 border border-red-500/40 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 shadow-sm"
                 >
-                  <span className="material-symbols-outlined text-base">logout</span>
+                  <span className="material-symbols-outlined text-lg">logout</span>
                   Sair da Conta
                 </button>
               </div>
             </div>
-            <div className="flex-1" onClick={() => setIsMobileDrawerOpen(false)}></div>
           </div>
         )}
 
@@ -1444,22 +1502,6 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   <p className="text-xs lg:text-sm text-slate-200 leading-relaxed">
                     Você não possui nenhuma hospedagem ou reserva em andamento no momento. Navegue pelos hotéis da rede para reservar sua próxima viagem ou consulte o histórico das suas estadias anteriores.
                   </p>
-                  <div className="flex flex-wrap gap-3 pt-2">
-                    <button
-                      onClick={() => setActiveSubTab('minhas-reservas')}
-                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-base text-emerald-400">calendar_month</span>
-                      Histórico de Hospedagens
-                    </button>
-                    <button
-                      onClick={() => setActiveSubTab('dados-cadastrais')}
-                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-base text-emerald-400">badge</span>
-                      Meus Dados Cadastrais
-                    </button>
-                  </div>
                 </div>
 
                 {/* Card de Ação Rápida */}
@@ -2052,13 +2094,26 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           {/* ABA: MEUS DADOS CADASTRAIS                                        */}
           {/* ================================================================= */}
           {activeSubTab === 'dados-cadastrais' && (
-            <MeusDadosCadastrais
-              userRole={userRole}
-              userName={perfil?.nome || userName}
-              userEmail={perfil?.email || userEmail}
-              onNavigateBack={() => setActiveSubTab('dashboard')}
-              onNavigateToLogin={onNavigateToLogin}
-            />
+            <div className="space-y-6 pb-6">
+              <MeusDadosCadastrais
+                userRole={userRole}
+                userName={perfil?.nome || userName}
+                userEmail={perfil?.email || userEmail}
+                onNavigateBack={() => setActiveSubTab('dashboard')}
+                onNavigateToLogin={onNavigateToLogin}
+              />
+              <div className="lg:hidden p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center gap-2 mb-8">
+                <p className="text-xs text-slate-500 font-medium">Deseja desconectar sua conta deste aparelho?</p>
+                <button
+                  type="button"
+                  onClick={handleSairDaConta}
+                  className="w-full py-3 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">logout</span>
+                  Sair da Conta
+                </button>
+              </div>
+            </div>
           )}
 
           {/* ================================================================= */}
