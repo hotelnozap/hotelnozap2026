@@ -125,6 +125,122 @@ export const buildPlanBenefits = (plano: PlanoView): string[] => {
   ];
 };
 
+export interface PlanCardTheme {
+  isDark: boolean;
+  containerClass: string;
+  badgeClass?: string;
+  categoryClass: string;
+  titleClass: string;
+  descClass: string;
+  priceClass: string;
+  periodicityClass: string;
+  dividerClass: string;
+  featureItemClass: string;
+  checkIconClass: string;
+  benefitsBtnClass: string;
+  ctaBtnClass: string;
+  iconBoxClass: string;
+}
+
+export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme => {
+  // PLANO EM DESTAQUE - FUNDO VERDE ESCURO COM AJUSTE TOTAL DE CONTRASTE E TIPOGRAFIA CLARA
+  if (plano.isFeatured) {
+    return {
+      isDark: true,
+      containerClass: 'bg-gradient-to-b from-[#003400] to-[#002200] border-2 border-[#10b981] shadow-2xl lg:-translate-y-3 ring-4 ring-[#10b981]/25 text-white',
+      badgeClass: 'bg-[#FDB116] text-[#0b1c30] font-black',
+      categoryClass: 'text-emerald-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-emerald-400/25 font-bold inline-block',
+      titleClass: 'text-white font-black',
+      descClass: 'text-emerald-100/90',
+      priceClass: 'text-white font-black',
+      periodicityClass: 'text-emerald-300 font-semibold',
+      dividerClass: 'border-white/15',
+      featureItemClass: 'text-white font-medium',
+      checkIconClass: 'text-[#10b981]',
+      benefitsBtnClass: 'bg-white/10 hover:bg-white/20 text-emerald-200 border border-white/20 hover:border-emerald-400/40 font-bold',
+      ctaBtnClass: 'bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black shadow-lg hover:scale-[1.02]',
+      iconBoxClass: 'bg-white/10 text-[#FDB116] border border-white/20'
+    };
+  }
+
+  // DEMAIS PLANOS - CORES DE FUNDO DIFERENCIADAS (Fundo Claro com Alto Contraste)
+  const cycleIndex = index % 4;
+
+  if (cycleIndex === 0) {
+    // 1 Crédito / Estilo 1: Slate Suave / Branco Gelo
+    return {
+      isDark: false,
+      containerClass: 'bg-[#f8fafc] border-2 border-slate-200/90 hover:border-emerald-600/40 hover:shadow-lg',
+      categoryClass: 'text-[#006c49] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
+      titleClass: 'text-[#0b1c30] font-extrabold',
+      descClass: 'text-[#45464d]',
+      priceClass: 'text-[#0b1c30] font-black',
+      periodicityClass: 'text-[#45464d] font-semibold',
+      dividerClass: 'border-slate-200',
+      featureItemClass: 'text-[#0b1c30] font-medium',
+      checkIconClass: 'text-[#10b981]',
+      benefitsBtnClass: 'bg-white hover:bg-slate-100 text-[#006c49] border border-slate-200 font-bold',
+      ctaBtnClass: 'border-2 border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white font-bold',
+      iconBoxClass: 'bg-white border border-slate-200 text-[#006c49]'
+    };
+  }
+
+  if (cycleIndex === 1) {
+    // 2 Créditos / Estilo 2: Areia Dourada Quente (Warm Amber / Sand)
+    return {
+      isDark: false,
+      containerClass: 'bg-[#fffdf5] border-2 border-amber-200/80 hover:border-amber-400 hover:shadow-lg',
+      categoryClass: 'text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-200 font-bold inline-block',
+      titleClass: 'text-[#0b1c30] font-extrabold',
+      descClass: 'text-slate-600',
+      priceClass: 'text-[#0b1c30] font-black',
+      periodicityClass: 'text-slate-600 font-semibold',
+      dividerClass: 'border-amber-200/60',
+      featureItemClass: 'text-[#0b1c30] font-medium',
+      checkIconClass: 'text-amber-600',
+      benefitsBtnClass: 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-200 font-bold',
+      ctaBtnClass: 'border-2 border-amber-900 text-amber-950 hover:bg-amber-900 hover:text-white font-bold',
+      iconBoxClass: 'bg-amber-50 border border-amber-200 text-amber-700'
+    };
+  }
+
+  if (cycleIndex === 2) {
+    // 6 Créditos / Estilo 3: Azul Celeste Náutico (Sky Blue)
+    return {
+      isDark: false,
+      containerClass: 'bg-[#f0f9ff] border-2 border-sky-200/90 hover:border-sky-400 hover:shadow-lg',
+      categoryClass: 'text-sky-800 bg-sky-100/70 px-2.5 py-0.5 rounded-full border border-sky-200 font-bold inline-block',
+      titleClass: 'text-[#0b1c30] font-extrabold',
+      descClass: 'text-slate-600',
+      priceClass: 'text-[#0b1c30] font-black',
+      periodicityClass: 'text-slate-600 font-semibold',
+      dividerClass: 'border-sky-200/60',
+      featureItemClass: 'text-[#0b1c30] font-medium',
+      checkIconClass: 'text-sky-600',
+      benefitsBtnClass: 'bg-white hover:bg-sky-50 text-sky-900 border border-sky-200 font-bold',
+      ctaBtnClass: 'border-2 border-sky-900 text-sky-950 hover:bg-sky-900 hover:text-white font-bold',
+      iconBoxClass: 'bg-sky-50 border border-sky-200 text-sky-700'
+    };
+  }
+
+  // 12 Créditos / Estilo 4: Verde Menta Refrescante (Fresh Mint)
+  return {
+    isDark: false,
+    containerClass: 'bg-[#f2fbf7] border-2 border-emerald-200/80 hover:border-emerald-400 hover:shadow-lg',
+    categoryClass: 'text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
+    titleClass: 'text-[#0b1c30] font-extrabold',
+    descClass: 'text-slate-600',
+    priceClass: 'text-[#0b1c30] font-black',
+    periodicityClass: 'text-slate-600 font-semibold',
+    dividerClass: 'border-emerald-200/60',
+    featureItemClass: 'text-[#0b1c30] font-medium',
+    checkIconClass: 'text-emerald-600',
+    benefitsBtnClass: 'bg-white hover:bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold',
+    ctaBtnClass: 'border-2 border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white font-bold',
+    iconBoxClass: 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+  };
+};
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigateToSystem, onNavigateToNovoHotel }) => {
   // Planos vindos do Supabase
   const [planos, setPlanos] = useState<PlanoView[]>([]);
@@ -1379,19 +1495,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-6xl mx-auto">
-            {displayPlanos.map((plano) => {
+            {displayPlanos.map((plano, idx) => {
               const formattedTitle = formatPlanTitle(plano.name, plano.periodicity, plano.cycleDiscount);
               const periodicitySuffix = getPeriodicitySuffix(plano.periodicity);
               const priceText = formatPrice(plano.basePrice);
+              const theme = getPlanCardTheme(plano, idx);
 
               return (
                 <div
                   key={plano.id}
-                  className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all relative ${
-                    plano.isFeatured
-                      ? 'bg-white border-2 border-[#FDB116] shadow-xl lg:-translate-y-2'
-                      : 'bg-[#f8f9ff] border border-[#e2e8f0] hover:shadow-md'
-                  }`}
+                  className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all relative ${theme.containerClass}`}
                 >
                   {plano.isFeatured && (
                     <div className="absolute top-0 right-0 bg-[#FDB116] text-[#0b1c30] font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs">
@@ -1402,30 +1515,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   <div>
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <span className="text-[11px] font-bold text-[#006c49] uppercase tracking-wider">
+                        <span className={`text-[11px] uppercase tracking-wider ${theme.categoryClass}`}>
                           {plano.categoryLabel || plano.tag || 'Pousadas & Hotéis'}
                         </span>
-                        <h3 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mt-0.5">
+                        <h3 className={`text-xl sm:text-2xl mt-1.5 ${theme.titleClass}`}>
                           {formattedTitle}
                         </h3>
                       </div>
-                      <span className={`p-2.5 rounded-xl ${plano.isFeatured ? 'bg-amber-50 text-[#FDB116]' : 'bg-white border border-[#e2e8f0] text-[#006c49]'}`}>
+                      <span className={`p-2.5 rounded-xl ${theme.iconBoxClass}`}>
                         <span className="material-symbols-outlined font-bold">
                           {plano.isFeatured ? 'star' : plano.roomLimit > 50 ? 'apartment' : 'hotel'}
                         </span>
                       </span>
                     </div>
 
-                    <p className="text-xs text-[#45464d] mb-6 min-h-[32px]">
+                    <p className={`text-xs mb-6 min-h-[32px] ${theme.descClass}`}>
                       {plano.description}
                     </p>
 
-                    <div className="mb-6 pb-6 border-b border-[#e2e8f0]">
+                    <div className={`mb-6 pb-6 border-b ${theme.dividerClass}`}>
                       <div className="flex items-baseline gap-1.5 flex-wrap">
-                        <span className="text-3xl sm:text-4xl font-black text-[#0b1c30]">
+                        <span className={`text-3xl sm:text-4xl ${theme.priceClass}`}>
                           R$ {priceText}
                         </span>
-                        <span className="text-xs sm:text-sm text-[#45464d] font-semibold">
+                        <span className={`text-xs sm:text-sm ${theme.periodicityClass}`}>
                           {periodicitySuffix}
                         </span>
                       </div>
@@ -1437,10 +1550,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
                       return (
                         <>
-                          <ul className="space-y-2.5 text-xs text-[#0b1c30] mb-4 font-medium min-h-[175px]">
-                            {previewBenefits.map((benefit, idx) => (
-                              <li key={idx} className="flex items-start gap-2">
-                                <span className="material-symbols-outlined text-sm font-bold shrink-0 mt-0.5 text-[#10b981]">
+                          <ul className="space-y-2.5 text-xs mb-4 font-medium min-h-[175px]">
+                            {previewBenefits.map((benefit, bIdx) => (
+                              <li key={bIdx} className={`flex items-start gap-2 ${theme.featureItemClass}`}>
+                                <span className={`material-symbols-outlined text-sm font-bold shrink-0 mt-0.5 ${theme.checkIconClass}`}>
                                   check_circle
                                 </span>
                                 <span className="leading-snug">{benefit}</span>
@@ -1451,9 +1564,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                           <button
                             type="button"
                             onClick={() => setSelectedPlanForBenefits(plano)}
-                            className="w-full mb-6 py-2 px-3 rounded-xl bg-emerald-50/80 hover:bg-emerald-100 text-[#006c49] font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-200/80 hover:border-emerald-300"
+                            className={`w-full mb-6 py-2 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${theme.benefitsBtnClass}`}
                           >
-                            <span className="material-symbols-outlined text-sm text-[#10b981]">checklist</span>
+                            <span className="material-symbols-outlined text-sm">checklist</span>
                             <span>Ver todos os benefícios ({allBenefits.length})</span>
                           </button>
                         </>
@@ -1463,11 +1576,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
                   <button
                     onClick={() => handleOpenProspectModal(formattedTitle)}
-                    className={`w-full text-center py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer ${
-                      plano.isFeatured
-                        ? 'bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] shadow-md hover:scale-[1.02]'
-                        : 'border border-[#003400] text-[#003400] hover:bg-[#003400] hover:text-white'
-                    }`}
+                    className={`w-full text-center py-3.5 rounded-xl text-xs sm:text-sm transition-all active:scale-95 cursor-pointer ${theme.ctaBtnClass}`}
                   >
                     {plano.isFeatured ? 'Assinar Plano em Destaque' : `Assinar ${plano.name.replace(/\s*\([^)]*\)/g, '').trim()}`}
                   </button>
