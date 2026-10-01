@@ -161,3 +161,59 @@ self.addEventListener('periodicsync', (event) => {
   );
 });
 
+// ==========================================
+// 6. Push Notifications (OneSignal & Web Push)
+// ==========================================
+try {
+  importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+} catch (e) {
+  console.warn('[SW] OneSignal worker import ignorado no contexto local:', e);
+}
+
+self.addEventListener('push', (event) => {
+  console.log('[SW] Notificação Push recebida:', event);
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      const title = data.title || 'Hotel no Zap';
+      const options = {
+        body: data.body || data.message || 'Nova notificação de reserva!',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        data: data.url || '/'
+      };
+      event.waitUntil(self.registration.showNotification(title, options));
+    } catch (err) {
+      const text = event.data.text();
+      event.waitUntil(
+        self.registration.showNotification('Hotel no Zap', {
+          body: text,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png'
+        })
+      );
+    }
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const urlToOpen = (event.notification.data && typeof event.notification.data === 'string')
+    ? event.notification.data
+    : '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let client of windowClients) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
+
