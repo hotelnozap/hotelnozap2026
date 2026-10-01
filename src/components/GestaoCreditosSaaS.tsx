@@ -66,6 +66,62 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     return map;
   }, [hoteis]);
 
+  // Configuração dos 10 Planos Oficiais do Sistema
+  const PLANOS_CARDS = [
+    { key: '1', nome: '1 Crédito', badge: 'Adesão', icon: 'credit_card', border: 'border-emerald-200' },
+    { key: '2', nome: '2 Créditos', badge: 'Bimestral', icon: 'credit_card', border: 'border-emerald-200' },
+    { key: '3', nome: '3 Créditos', badge: 'Trimestral', icon: 'credit_card', border: 'border-emerald-200' },
+    { key: '4', nome: '4 Créditos', badge: 'Quadrimestral', icon: 'credit_card', border: 'border-teal-200' },
+    { key: '5', nome: '5 Créditos', badge: 'Quinquemestral', icon: 'credit_card', border: 'border-teal-200' },
+    { key: '6', nome: '6 Créditos', badge: 'Semestral', icon: 'credit_card', border: 'border-blue-200' },
+    { key: '7', nome: '7 Créditos', badge: 'Septemestral', icon: 'credit_card', border: 'border-blue-200' },
+    { key: '8', nome: '8 Créditos', badge: 'Octomestral', icon: 'credit_card', border: 'border-indigo-200' },
+    { key: '12', nome: '12 Créditos', badge: 'Anual', icon: 'workspace_premium', border: 'border-amber-300' },
+    { key: 'gratis', nome: 'Plano Grátis', badge: 'Google Maps', icon: 'map', border: 'border-slate-200' }
+  ];
+
+  // Helper para identificar a qual plano um hotel pertence
+  const getHotelPlanKey = (h: Hotel): string => {
+    const pLower = (h.plan || '').toLowerCase();
+    const notesLower = ((h as any).notes || (h as any).observacoes || '').toLowerCase();
+    const isGoogle = pLower.includes('grátis') || pLower.includes('gratis') || pLower.includes('maps') || pLower.includes('free') || notesLower.includes('google') || Boolean((h as any).isImportedFromGoogle);
+    if (isGoogle) return 'gratis';
+
+    if (pLower.includes('12')) return '12';
+    if (pLower.includes('8')) return '8';
+    if (pLower.includes('7')) return '7';
+    if (pLower.includes('6')) return '6';
+    if (pLower.includes('5')) return '5';
+    if (pLower.includes('4')) return '4';
+    if (pLower.includes('3')) return '3';
+    if (pLower.includes('2')) return '2';
+    if (pLower.includes('1') && !pLower.includes('10') && !pLower.includes('15')) return '1';
+
+    const info = creditosMap.get(h.id);
+    if (info) {
+      if (info.saldoCreditos === 12) return '12';
+      if (info.saldoCreditos >= 1 && info.saldoCreditos <= 8) return String(info.saldoCreditos);
+    }
+    return '1';
+  };
+
+  // Contagem de hotéis por plano
+  const planCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      '1': 0, '2': 0, '3': 0, '4': 0, '5': 0,
+      '6': 0, '7': 0, '8': 0, '12': 0, 'gratis': 0
+    };
+    hoteis.forEach(h => {
+      const k = getHotelPlanKey(h);
+      if (counts[k] !== undefined) {
+        counts[k]++;
+      } else {
+        counts['1']++;
+      }
+    });
+    return counts;
+  }, [hoteis, creditosMap]);
+
   // Filtragem dos hotéis
   const filteredHoteis = useMemo(() => {
     return hoteis.filter(h => {
@@ -75,12 +131,8 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
 
       // Filtro por Plano
       if (planFilter !== 'todos') {
-        const pLower = (h.plan || '').toLowerCase();
-        if (planFilter === 'gratis') {
-          if (!pLower.includes('grátis') && !pLower.includes('gratis') && !pLower.includes('maps')) return false;
-        } else if (!pLower.includes(planFilter.toLowerCase())) {
-          return false;
-        }
+        const k = getHotelPlanKey(h);
+        if (k !== planFilter) return false;
       }
 
       const info = creditosMap.get(h.id);
@@ -191,31 +243,72 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
 
       <div className="p-4 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
         
-        {/* BANNER DE REGRA: Degustação Sem Compromisso */}
-        <div className="bg-gradient-to-r from-emerald-900 via-[#003400] to-emerald-950 rounded-2xl p-5 sm:p-6 text-white shadow-md border border-emerald-700/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-300/40 flex items-center justify-center text-emerald-300 shrink-0">
-              <span className="material-symbols-outlined text-2xl">card_giftcard</span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded bg-emerald-400/20 text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider">
-                  Regra Oficial para Novos Hotéis
-                </span>
-                <span className="text-xs text-emerald-200/80">Ativado Automaticamente</span>
-              </div>
-              <h3 className="text-base sm:text-lg font-black text-white">
-                30 Dias Base + 15 Dias de Bônus = 45 Dias Sem Compromisso
-              </h3>
-              <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed max-w-3xl">
-                Todo novo hotel cadastrado no Hotel no Zap inicia automaticamente com <strong>1 Crédito</strong> e <strong>45 dias de acesso liberado</strong> para degustar todas as ferramentas (WhatsApp, Mapa de Quartos, Reservas e Catálogo) antes de qualquer cobrança.
-              </p>
-            </div>
+        {/* CARDS RESUMO DOS PLANOS (2 LINHAS NO DESKTOP COM 5 CARDS / 2 CARDS POR LINHA NO MOBILE) */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span className="material-symbols-outlined text-emerald-700 text-lg">view_cozy</span>
+              <span>Distribuição de Hotéis por Plano</span>
+            </h2>
+            {planFilter !== 'todos' && (
+              <button
+                type="button"
+                onClick={() => setPlanFilter('todos')}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">clear_all</span>
+                <span>Limpar filtro de plano ({planFilter === 'gratis' ? 'Plano Grátis' : `${planFilter} Créditos`})</span>
+              </button>
+            )}
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-xl px-4 py-3 shrink-0 text-center w-full md:w-auto">
-            <span className="text-[10px] uppercase font-extrabold tracking-wider text-emerald-300 block">Hotéis em Degustação</span>
-            <span className="text-2xl font-black text-white">{totalHoteisEmDegustacao}</span>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-3.5">
+            {PLANOS_CARDS.map((p) => {
+              const count = planCounts[p.key] || 0;
+              const isSelected = planFilter === p.key;
+
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPlanFilter(prev => prev === p.key ? 'todos' : p.key)}
+                  className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between shadow-2xs hover:shadow-sm active:scale-98 ${
+                    isSelected
+                      ? 'bg-[#003400] text-white border-emerald-500 ring-2 ring-emerald-500 shadow-md'
+                      : `bg-white hover:border-emerald-400 ${p.border}`
+                  }`}
+                  title={`Clique para filtrar os hotéis cadastrados no plano ${p.nome}`}
+                >
+                  {/* Topo do Card: Nome do Plano */}
+                  <div className="flex items-start justify-between gap-1.5 w-full">
+                    <div className="min-w-0">
+                      <span className={`block font-black text-xs sm:text-sm tracking-tight truncate ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                        {p.nome}
+                      </span>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider block ${isSelected ? 'text-emerald-300' : 'text-slate-400'}`}>
+                        {p.badge}
+                      </span>
+                    </div>
+                    <span className={`material-symbols-outlined text-lg shrink-0 ${isSelected ? 'text-emerald-300' : 'text-slate-400'}`}>
+                      {p.icon}
+                    </span>
+                  </div>
+
+                  {/* Base do Card: Quantidade de Hotéis */}
+                  <div 
+                    className="pt-2 sm:pt-3 mt-2.5 border-t flex items-baseline justify-between w-full"
+                    style={{ borderColor: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)' }}
+                  >
+                    <span className={`text-2xl sm:text-3xl font-black ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                      {count}
+                    </span>
+                    <span className={`text-[11px] font-bold ${isSelected ? 'text-emerald-200' : 'text-slate-500'}`}>
+                      {count === 1 ? 'hotel' : 'hotéis'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -255,13 +348,12 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                   onChange={(e) => setPlanFilter(e.target.value)}
                   className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#003400] cursor-pointer"
                 >
-                  <option value="todos">Todos os Planos</option>
-                  <option value="1 Crédito">1 Crédito</option>
-                  <option value="2 Créditos">2 Créditos</option>
-                  <option value="3 Créditos">3 Créditos</option>
-                  <option value="6 Créditos">6 Créditos</option>
-                  <option value="12 Créditos">12 Créditos</option>
-                  <option value="gratis">Grátis / Degustação</option>
+                  <option value="todos">Todos os Planos ({hoteis.length})</option>
+                  {PLANOS_CARDS.map((p) => (
+                    <option key={p.key} value={p.key}>
+                      {p.nome} ({planCounts[p.key] || 0})
+                    </option>
+                  ))}
                 </select>
               </div>
 
