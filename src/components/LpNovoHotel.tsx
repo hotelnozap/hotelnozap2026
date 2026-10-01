@@ -40,9 +40,41 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
         !p.name?.toLowerCase().includes('maps') &&
         !p.name?.toLowerCase().includes('legado') &&
         Number(p.basePrice) > 0
-      );
+      ).sort((a: any, b: any) => {
+        const ordA = Number(String(a.order || a.ordem || '').replace(/\D/g, '')) || 0;
+        const ordB = Number(String(b.order || b.ordem || '').replace(/\D/g, '')) || 0;
+        return ordA - ordB;
+      });
       setPlanos(active);
       setLoadingPlanos(false);
+
+      // Pré-selecionar plano se vier na URL (?plano=...) ou o padrão em destaque
+      try {
+        const params = new URLSearchParams(window.location.search);
+        let urlPlan = params.get('plano') || params.get('plan');
+        if (!urlPlan && window.location.hash && window.location.hash.includes('?')) {
+          const hParams = new URLSearchParams(window.location.hash.split('?')[1]);
+          urlPlan = hParams.get('plano') || hParams.get('plan');
+        }
+
+        if (urlPlan) {
+          const cleanSearch = urlPlan.trim().toLowerCase();
+          const match = active.find((p: any) => 
+            p.name.toLowerCase().includes(cleanSearch) || 
+            cleanSearch.includes(p.name.toLowerCase())
+          );
+          if (match) {
+            setPlanoSelecionado(match.name);
+            return;
+          }
+        }
+        
+        // Se nenhum na URL, seleciona o plano em destaque ou o primeiro
+        const featured = active.find((p: any) => p.isFeatured) || active[0];
+        if (featured) {
+          setPlanoSelecionado(featured.name);
+        }
+      } catch { /* ignore */ }
     }).catch(() => setLoadingPlanos(false));
   }, []);
 
@@ -345,6 +377,7 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
         managerRole: cargoResponsavel,
         loginEmail: loginEmail.trim(),
         status: 'prospecto',
+        partnerRef: 'HOTELNOZAP',
         notes: 'Cadastro via /lp/lpnovohotel em ' + new Date().toLocaleDateString('pt-BR') + '. Parceiro: HOTELNOZAP.',
       } as any);
 
@@ -713,25 +746,89 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
               ) : planos.length === 0 ? (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm">Planos nao disponiveis no momento. Entre em contato.</div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {planos.map(p => (
-                    <button key={p.id} type="button" onClick={() => setPlanoSelecionado(p.name)}
-                      className={'relative text-left px-5 py-5 rounded-2xl border-2 transition-all cursor-pointer ' + (planoSelecionado === p.name ? 'border-emerald-500 bg-emerald-50 shadow-md' : 'border-gray-200 bg-white hover:border-emerald-300')}>
-                      {p.isFeatured && <span className="absolute -top-2.5 right-3 bg-emerald-500 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">Mais Popular</span>}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="font-black text-gray-900 text-sm">{p.name}</p>
-                        <div className={'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ' + (planoSelecionado === p.name ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300 bg-white')}>
-                          {planoSelecionado === p.name && <span className="material-symbols-outlined text-white text-xs">check</span>}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {planos.map(p => {
+                    const isSelected = planoSelecionado === p.name;
+                    const tagText = p.tag && p.tag.trim() ? p.tag.replace(/^★\s*/, '').trim() : (p.isFeatured ? 'Mais Escolhido' : undefined);
+                    const periodText = p.pricePeriodText || (p.periodicity ? `/${p.periodicity.toLowerCase()}` : '/mês');
+                    const rooms = p.roomLimit || 15;
+                    const wa = p.whatsappConnections || 1;
+
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPlanoSelecionado(p.name)}
+                        className={`relative text-left p-6 rounded-3xl border-2 transition-all flex flex-col justify-between cursor-pointer ${
+                          isSelected
+                            ? 'border-emerald-600 bg-emerald-50/50 shadow-lg ring-2 ring-emerald-500/20'
+                            : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-md'
+                        }`}
+                      >
+                        {tagText && (
+                          <div className={`absolute top-0 right-0 font-black text-[10px] uppercase px-3.5 py-1 rounded-bl-2xl tracking-wider shadow-xs ${
+                            p.isFeatured ? 'bg-[#FDB116] text-[#0b1c30]' : 'bg-[#006c49] text-white'
+                          }`}>
+                            ★ {tagText}
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-2 pr-12">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                                {p.categoryLabel || 'Pousadas & Hotéis'}
+                              </span>
+                              <h3 className="font-black text-slate-900 text-lg mt-1">{p.name}</h3>
+                            </div>
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
+                              isSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white'
+                            }`}>
+                              {isSelected && <span className="material-symbols-outlined text-sm font-bold">check</span>}
+                            </div>
+                          </div>
+
+                          <p className="text-slate-600 text-xs mb-4 min-h-[36px] font-medium leading-relaxed">
+                            {p.description || 'Solução completa para gestão hoteleira via WhatsApp com inteligência artificial.'}
+                          </p>
+
+                          <div className="mb-4 pb-4 border-b border-slate-100">
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                              <span className="font-black text-slate-900 text-2xl sm:text-3xl">
+                                {Number(p.basePrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </span>
+                              <span className="text-xs font-semibold text-slate-500">{periodText}</span>
+                            </div>
+                          </div>
+
+                          <ul className="space-y-2 text-xs text-slate-700 font-medium mb-2">
+                            <li className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm text-emerald-600 font-bold shrink-0">check_circle</span>
+                              <span>Capacidade para até {rooms} quartos</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm text-emerald-600 font-bold shrink-0">check_circle</span>
+                              <span>{wa > 1 ? `${wa} Conexões de WhatsApp simultâneas` : '1 Conexão de WhatsApp oficial'}</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm text-emerald-600 font-bold shrink-0">check_circle</span>
+                              <span>Atendimento WhatsApp por IA 24/7</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm text-emerald-600 font-bold shrink-0">check_circle</span>
+                              <span>Sem cobranças extras por mensagens</span>
+                            </li>
+                          </ul>
                         </div>
-                      </div>
-                      <p className="text-gray-500 text-xs mb-2 line-clamp-2">{p.description || 'Solucao completa para gestao hoteleira via WhatsApp.'}</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-black text-emerald-700 text-xl">{Number(p.basePrice).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
-                        <span className="text-xs text-gray-400">/credito</span>
-                      </div>
-                      {p.roomLimit && <p className="text-[11px] text-gray-400 mt-1">Ate {p.roomLimit} quartos</p>}
-                    </button>
-                  ))}
+
+                        <div className={`mt-4 w-full py-2.5 rounded-xl text-center text-xs font-bold transition-all ${
+                          isSelected ? 'bg-[#003400] text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800'
+                        }`}>
+                          {isSelected ? '✓ Plano Selecionado' : 'Selecionar Plano'}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

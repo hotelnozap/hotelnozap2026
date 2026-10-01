@@ -504,9 +504,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   }, [roomsCount, dailyRate, occupancyRate]);
 
   // Handler para navegar para o formulário de cadastro completo do hotel
-  const handleOpenProspectModal = (_planName?: string) => {
-    // Abrir a página de cadastro multi-etapas /lp/lpnovohotel em nova aba
-    window.open('/lp/lpnovohotel', '_blank', 'noopener,noreferrer');
+  const handleOpenProspectModal = (planName?: string) => {
+    // Abrir a página de cadastro multi-etapas /lp/lpnovohotel em nova aba passando o plano selecionado
+    const cleanPlan = planName ? planName.split('•')[0].trim() : '';
+    const url = cleanPlan 
+      ? `/lp/lpnovohotel?plano=${encodeURIComponent(cleanPlan)}` 
+      : '/lp/lpnovohotel';
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Submissão do Prospecto no Supabase (tabela hoteis com status: 'prospecto')
@@ -537,7 +541,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         managerEmail: prospectForm.email.trim(),
         loginEmail: prospectForm.email.trim(),
         status: 'prospecto',
-        notes: `Prospecto cadastrado na Landing Page (/lp) em ${new Date().toLocaleDateString('pt-BR')}. Plano escolhido: ${selectedPlanForProspect}. Observações: ${prospectForm.notes}`,
+        partnerRef: 'HOTELNOZAP',
+        notes: `Prospecto cadastrado na Landing Page (/lp) em ${new Date().toLocaleDateString('pt-BR')}. Plano escolhido: ${selectedPlanForProspect}. Parceiro: HOTELNOZAP. Observações: ${prospectForm.notes}`,
         link: `/hoteis/${prospectForm.hotelName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
       };
 
