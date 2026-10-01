@@ -88,7 +88,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   `Capacidade para até ${p.roomLimit || 10} quartos`,
                   `${p.whatsappConnections || 1} Conexão WhatsApp integrada`,
                   'Mapa de quartos e controle de check-in',
-                  'Disparos de confirmação automática'
+                  'Confirmação de reserva no WhatsApp'
                 ],
                 disabledFeatures: Array.isArray(p.disabledFeatures) ? p.disabledFeatures : []
               };
@@ -129,7 +129,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           'Capacidade para até 10 quartos',
           '1 Conexão WhatsApp oficial integrada',
           'Mapa de quartos e controle de check-in',
-          'Disparos de confirmação automática'
+          'Confirmação de reserva no WhatsApp'
         ],
         disabledFeatures: ['Múltiplos atendentes simultâneos']
       },
@@ -148,7 +148,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           'Capacidade para até 30 quartos',
           '2 Conexões WhatsApp simultâneas',
           'Módulo governança & limpeza em tempo real',
-          'Disparos de confirmação automática no Zap',
+          'Confirmação e voucher no WhatsApp',
           'Usuários ilimitados com permissões'
         ],
         disabledFeatures: []
@@ -552,19 +552,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     <span className="text-[8px] text-gray-400 block text-right">14:32</span>
                   </div>
 
-                  <div className="bg-[#dcf8c6] p-2.5 rounded-lg rounded-tr-none shadow-xs ml-auto max-w-[90%] border border-[#c3ebb2]">
-                    <p className="font-bold text-[10px] text-[#003400] mb-0.5">🏨 Temos sim! 2 opções disponíveis:</p>
-                    <p className="text-[10px] text-gray-800 leading-tight mb-1.5">
-                      1. Suíte Luxo: R$ 420/dia<br />
-                      2. Master King: R$ 560/dia
+                  <div className="bg-[#dcf8c6] p-2.5 rounded-lg rounded-tr-none shadow-xs ml-auto max-w-[92%] border border-[#c3ebb2]">
+                    <p className="font-bold text-[10px] text-[#003400] mb-1">🏨 Olá! Temos vagas disponíveis sim no Hotel Morada da Lua!</p>
+                    <p className="text-[10px] text-gray-800 leading-tight mb-2">
+                      É só acessar nosso link oficial abaixo e fazer sua reserva em minutos:
                     </p>
-                    <div className="bg-white/80 p-1.5 rounded border border-emerald-300 text-center">
-                      <span className="text-[9px] font-bold text-[#006c49]">Toque para Bloquear Reserva:</span>
-                      <span className="block bg-[#10b981] text-white font-bold text-[9px] py-1 px-2 rounded mt-1 shadow-xs">
-                        Pagar no PIX e Receber Voucher
+                    <a
+                      href="https://hotelnozap.com.br/hoteis/hotelmoradalua"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-white p-2 rounded-lg border border-emerald-300 shadow-xs hover:bg-emerald-50/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="material-symbols-outlined text-xs text-[#006c49]">hotel</span>
+                        <span className="text-[10px] font-black text-[#003400] truncate">Hotel Morada da Lua</span>
+                      </div>
+                      <p className="text-[9px] text-blue-700 underline truncate font-medium">
+                        hotelnozap.com.br/hoteis/hotelmoradalua
+                      </p>
+                      <span className="block bg-[#10b981] text-white font-bold text-[9px] py-1 px-2 rounded mt-1.5 text-center shadow-xs">
+                        Acessar e Fazer Reserva em Minutos →
                       </span>
-                    </div>
-                    <span className="text-[8px] text-gray-500 block text-right mt-1">14:32 • Enviado Instantaneamente</span>
+                    </a>
+                    <span className="text-[8px] text-gray-500 block text-right mt-1.5">14:32 • Resposta Imediata</span>
                   </div>
                 </div>
               </div>
@@ -679,7 +689,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-[#10b981] text-lg shrink-0 mt-0.5">verified</span>
-                  <span><strong>CRM completo com disparos em 1 clique:</strong> fidelize hóspedes antigos em baixa temporada com ofertas exclusivas.</span>
+                  <span><strong>Histórico completo de hóspedes:</strong> consulte reservas anteriores, documentos e dados de contato de forma organizada e ágil.</span>
                 </li>
               </ul>
             </div>
@@ -915,24 +925,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
-            {/* 7. CRM DE HÓSPEDES & MULTI-CONEXÕES WHATSAPP (SPAN 3) */}
+            {/* 7. CADASTRO DE HÓSPEDES & MULTI-CONEXÕES WHATSAPP (SPAN 3) */}
             <div className="md:col-span-3 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/50 rounded-2xl border border-emerald-200 p-6 lg:p-8 flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-lg transition-all">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
-                  <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Fidelização Ativa & Multi-atendimento</span>
+                  <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Histórico Centralizado & Multi-atendimento</span>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mb-2">
-                  CRM de Hóspedes, Cupons de Baixa Temporada & Múltiplas Conexões
+                  Histórico de Hóspedes, Cupons Promocionais & Múltiplas Conexões WhatsApp
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Mantenha o histórico unificado de todos que já se hospedaram. Envie ofertas exclusivas e cupons de desconto pelo WhatsApp com 1 clique para lotar na baixa temporada. Conecte múltiplos números simultâneos: Recepção, Comercial e Governança operando juntos sem conflito.
+                  Mantenha a base de dados organizada de todos os seus hóspedes, com histórico de estadias, documentos e preferências. Crie cupons de desconto exclusivos para campanhas de reservas diretas. Conecte múltiplos números de WhatsApp simultaneamente: Recepção, Comercial e Governança atendendo com rapidez e sem conflitos.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                 <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
-                  <p className="text-lg font-black text-[#003400]">100%</p>
-                  <p className="text-[11px] text-gray-500 font-medium">Disparos Ilimitados</p>
+                  <p className="text-lg font-black text-[#003400]">Cupons</p>
+                  <p className="text-[11px] text-gray-500 font-medium">Descontos Próprios</p>
                 </div>
                 <div className="bg-white p-3.5 rounded-xl border border-emerald-200 shadow-xs text-center">
                   <p className="text-lg font-black text-[#10b981]">Multi-Zap</p>
@@ -1162,7 +1172,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           </div>
 
           <div className="mt-10 text-center text-xs text-[#45464d]">
-            <p>💡 Quartos excedentes a partir de apenas R$ 2,50/adicional • Mensagens ilimitadas sem custo por disparo • Cancele a qualquer momento sem multa.</p>
+            <p>💡 Quartos excedentes a partir de apenas R$ 2,50/adicional • Sem cobranças extras por mensagens • Cancele a qualquer momento sem multa.</p>
           </div>
         </div>
       </section>
