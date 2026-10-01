@@ -5333,7 +5333,7 @@ export function mapPlanoDBToFrontend(row: any): any {
     roomLimitText: Number(row.limite_quartos) === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${row.limite_quartos || 15} quartos`,
     roomExtraPriceText: row.permite_quartos_extras !== false ? `R$ ${Number(row.valor_quarto_extra || 3.5).toFixed(2).replace('.', ',')}/adicional` : 'Sem quartos adicionais',
     whatsappConnections: row.conexoes_whatsapp !== null && row.conexoes_whatsapp !== undefined ? Number(row.conexoes_whatsapp) : 1,
-    whatsappConnectionsText: Number(row.conexoes_whatsapp) === 0 ? 'Sem conexão WhatsApp inclusa' : `${row.conexoes_whatsapp || 1} Conexão${Number(row.conexoes_whatsapp || 1) > 1 ? 'ões' : ''} WhatsApp simultâneas`,
+    whatsappConnectionsText: Number(row.conexoes_whatsapp) === 0 ? 'Sem conexão WhatsApp inclusa' : `${row.conexoes_whatsapp || 1} Conexão${Number(row.conexoes_whatsapp || 1) > 1 ? 'ões' : ''} WhatsApp ${Number(row.conexoes_whatsapp || 1) > 1 ? 'simultâneas' : 'oficial'}`,
     whatsappExtraPriceText: row.permite_conexoes_extras !== false ? `R$ ${Number(row.valor_conexao_extra || 49.9).toFixed(2).replace('.', ',')}/adicional` : 'Inclusas no pacote',
     hotelsSubscribersCount: Number(row.hoteis_assinantes) || 0,
     status: row.status === 'Inativo' ? 'Inativo' : 'Ativo',

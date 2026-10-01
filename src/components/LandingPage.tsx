@@ -67,6 +67,19 @@ export const formatPlanTitle = (name: string, periodicity?: string, cycleDiscoun
   return name;
 };
 
+// Helper para ajustar terminologia com concordância contextual (ex: "instância" -> "conexão")
+export const sanitizeFeatureText = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/inst[aâ]ncia extra/gi, 'Conexão extra')
+    .replace(/inst[aâ]ncias extras/gi, 'Conexões extras')
+    .replace(/por inst[aâ]ncia/gi, 'por conexão')
+    .replace(/inst[aâ]ncias/gi, 'conexões')
+    .replace(/inst[aâ]ncia/gi, 'conexão')
+    .replace(/1 Conexão WhatsApp simultâneas/gi, '1 Conexão WhatsApp oficial')
+    .replace(/1 Conexão WhatsApp simultânea/gi, '1 Conexão WhatsApp oficial');
+};
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigateToSystem, onNavigateToNovoHotel }) => {
   // Planos vindos do Supabase
   const [planos, setPlanos] = useState<PlanoView[]>([]);
@@ -1360,7 +1373,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                           <span className="material-symbols-outlined text-sm font-bold shrink-0 mt-0.5 text-[#10b981]">
                             check_circle
                           </span>
-                          <span>{feature}</span>
+                          <span>{sanitizeFeatureText(feature)}</span>
                         </li>
                       ))}
                       {plano.disabledFeatures.map((disabled, idx) => (
@@ -1368,7 +1381,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                           <span className="material-symbols-outlined text-sm text-gray-300 font-bold shrink-0 mt-0.5">
                             remove
                           </span>
-                          <span>{disabled}</span>
+                          <span>{sanitizeFeatureText(disabled)}</span>
                         </li>
                       ))}
                     </ul>
@@ -1854,7 +1867,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     Status: Solicitação Recebida com Sucesso
                   </p>
                   <p>
-                    Nossa equipe já preparou sua instância. Clique abaixo para conectar seu WhatsApp imediatamente ou acesse o sistema:
+                    Nossa equipe já preparou sua conexão. Clique abaixo para conectar seu WhatsApp imediatamente ou acesse o sistema:
                   </p>
                 </div>
 

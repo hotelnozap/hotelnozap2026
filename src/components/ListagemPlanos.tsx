@@ -47,7 +47,7 @@ const INITIAL_PLANOS: Plano[] = [
     roomExtraPriceText: 'Sem quartos adicionais',
     whatsappConnections: 0,
     whatsappConnectionsText: 'Sem conexão WhatsApp inclusa',
-    whatsappExtraPriceText: 'Sem instâncias extras',
+    whatsappExtraPriceText: 'Sem conexões extras',
     hotelsSubscribersCount: 8,
     status: 'Ativo',
     features: [
@@ -452,7 +452,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
           'Capacidade base de 25 quartos',
           '2 Conexões WhatsApp inclusas',
           'Quartos excedentes: + R$ 3,50 /quarto',
-          'Instância extra: + R$ 49,90 /conexão',
+          'Conexão extra: + R$ 49,90 /conexão',
           'Operadores simultâneos inclusos'
         ]
       });
@@ -1535,7 +1535,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
               <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1">
                 <h4 className="font-bold text-blue-950 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base text-blue-600">chat</span>
-                  Instâncias Extras de WhatsApp
+                  Conexões Extras de WhatsApp
                 </h4>
                 <p className="leading-relaxed">
                   Cada conexão adicional oficial integrada para atendimento simultâneo possui o custo de R$ 49,90/mês.
@@ -1643,7 +1643,7 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                     {planToEdit ? 'Editar Plano de Assinatura' : 'Novo Plano de Assinatura'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Defina os limites de quartos, instâncias de WhatsApp e periodicidade.
+                    Defina os limites de quartos, conexões de WhatsApp e periodicidade.
                   </p>
                 </div>
               </div>

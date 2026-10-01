@@ -222,16 +222,16 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
         roomLimitText: baseRooms === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${baseRooms} quartos`,
         roomExtraPriceText: allowExtraRooms ? `R$ ${extraRoomPrice}/adicional` : 'Sem quartos adicionais',
         whatsappConnections: baseWhatsapp,
-        whatsappConnectionsText: baseWhatsapp === 0 ? 'Sem conexão WhatsApp inclusa' : `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp simultâneas`,
+        whatsappConnectionsText: baseWhatsapp === 0 ? 'Sem conexão WhatsApp inclusa' : `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp ${baseWhatsapp > 1 ? 'simultâneas' : 'oficial'}`,
         whatsappExtraPriceText: allowExtraWa ? `R$ ${extraWaPrice}/adicional` : 'Inclusas no pacote',
         hotelsSubscribersCount: planToEdit?.hotelsSubscribersCount || 0,
         status,
         isFeatured,
         features: [
           baseRooms === 0 ? 'Sem cadastro de quartos incluso' : `Capacidade para até ${baseRooms} quartos`,
-          baseWhatsapp === 0 ? 'Sem conexão WhatsApp inclusa' : `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp simultâneas`,
+          baseWhatsapp === 0 ? 'Sem conexão WhatsApp inclusa' : `${baseWhatsapp} Conexão${baseWhatsapp > 1 ? 'ões' : ''} WhatsApp ${baseWhatsapp > 1 ? 'simultâneas' : 'oficial'}`,
           allowExtraRooms ? `Quartos excedentes: + R$ ${extraRoomPrice} /quarto` : 'Sem quartos excedentes',
-          allowExtraWa ? `Instância extra: + R$ ${extraWaPrice} /conexão` : 'Instâncias extras inclusas',
+          allowExtraWa ? `Conexão extra: + R$ ${extraWaPrice} /adicional` : 'Conexões extras inclusas',
           'Módulo de atendimento & reservas em tempo real'
         ]
       };
@@ -1222,7 +1222,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   <span className="material-symbols-outlined text-xl">chat</span>
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">4. Conexões de WhatsApp (Instâncias Multi-Dispositivo)</h2>
+                  <h2 className="text-base font-bold text-slate-900">4. Conexões de WhatsApp</h2>
                   <p className="text-xs text-slate-500">Controle a infraestrutura de números integrados ao motor de inteligência e atendimento.</p>
                 </div>
               </div>
@@ -1232,7 +1232,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
               <div className="md:col-span-4 flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-800" htmlFor="desk-base-wa">
-                  Instâncias Inclusas no Plano <span className="text-red-600">*</span>
+                  Conexões Inclusas no Plano <span className="text-red-600">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <span className="material-symbols-outlined absolute left-3 text-slate-400 text-base pointer-events-none">devices</span>
@@ -1250,7 +1250,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                   />
                   <span className="absolute right-3 text-xs text-slate-400 pointer-events-none font-medium">conexões</span>
                 </div>
-                <span className="text-[11px] text-slate-500">{baseWhatsapp === 0 ? 'Nenhuma instância inclusa (bloqueado para este plano).' : 'Números operando simultaneamente.'}</span>
+                <span className="text-[11px] text-slate-500">{baseWhatsapp === 0 ? 'Nenhuma conexão inclusa (bloqueado para este plano).' : 'Números operando simultaneamente.'}</span>
               </div>
 
               <div className="md:col-span-4 flex flex-col gap-1.5 justify-center">
@@ -1265,13 +1265,13 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                     />
                     <div className="w-10 h-5 bg-slate-300 rounded-full peer peer-checked:bg-[#003400] peer-focus:outline-none transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow-sm peer-checked:after:translate-x-5"></div>
                   </label>
-                  <span className="text-xs font-semibold text-slate-700">Sim, permitir instâncias extras</span>
+                  <span className="text-xs font-semibold text-slate-700">Sim, permitir conexões extras</span>
                 </div>
               </div>
 
               <div className="md:col-span-4 flex flex-col gap-1.5" style={{ opacity: allowExtraWa ? 1 : 0.4 }}>
                 <label className="text-xs font-bold text-slate-800" htmlFor="desk-wa-extra">
-                  Valor por Instância Extra <span className="text-red-600">*</span>
+                  Valor por Conexão Extra <span className="text-red-600">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <span className="absolute left-3 text-xs font-bold text-slate-500 pointer-events-none">R$</span>
@@ -1283,7 +1283,7 @@ export const CadastroPlano: React.FC<CadastroPlanoProps> = ({
                     onChange={(e) => setExtraWaPrice(e.target.value)}
                     className="w-full h-11 pl-10 pr-28 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm font-semibold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-xs"
                   />
-                  <span className="absolute right-3 text-[11px] text-slate-400 pointer-events-none font-medium">/instância/mês</span>
+                  <span className="absolute right-3 text-[11px] text-slate-400 pointer-events-none font-medium">/conexão/mês</span>
                 </div>
                 <span className="text-[11px] text-slate-500">Cobrança pró-rata adicionada na fatura.</span>
               </div>
