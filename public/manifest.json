@@ -1,7 +1,7 @@
 {
-  "name": "Hotel no Zap - Sistema de Gestão Hoteleira",
+  "name": "Hotel no Zap - Guia de Hotéis, Pousadas e Reservas",
   "short_name": "Hotel no Zap",
-  "description": "Plataforma Inteligente de Gestão Hoteleira, Recepção, Reservas e Atendimento via WhatsApp",
+  "description": "O jeito mais inteligente de se hospedar. Encontre os melhores hotéis da sua cidade, veja fotos, avaliações, reserve em instantes e aproveite o melhor da hospitalidade digital.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -56,32 +56,46 @@
   ],
   "screenshots": [
     {
+      "src": "https://obkvgluunbnktzulzjfg.supabase.co/storage/v1/object/public/hotelnozap/screnshorts/WhatsApp%20Image%202026-10-01%20at%2017.05.042.jpeg",
+      "sizes": "852x1600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Busca e Reserva de Hotéis e Pousadas"
+    },
+    {
+      "src": "https://obkvgluunbnktzulzjfg.supabase.co/storage/v1/object/public/hotelnozap/screnshorts/WhatsApp%20Image%202026-10-01%20at%2017.05.053.jpeg",
+      "sizes": "848x1600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Login e Acesso Seguro ao Sistema"
+    },
+    {
+      "src": "https://obkvgluunbnktzulzjfg.supabase.co/storage/v1/object/public/hotelnozap/screnshorts/WhatsApp%20Image%202026-10-01%20at%2017.05.042.jpeg",
+      "sizes": "852x1600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Catálogo Oficial de Hotéis e Hospedagens"
+    },
+    {
+      "src": "https://obkvgluunbnktzulzjfg.supabase.co/storage/v1/object/public/hotelnozap/screnshorts/WhatsApp%20Image%202026-10-01%20at%2017.05.03.jpeg",
+      "sizes": "786x1600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Painel de Camareira e Governança em Tempo Real"
+    },
+    {
+      "src": "https://obkvgluunbnktzulzjfg.supabase.co/storage/v1/object/public/hotelnozap/screnshorts/WhatsApp%20Image%202026-10-01%20at%2017.05.04.jpeg",
+      "sizes": "778x1600",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Portal do Hóspede VIP e Programa Fidelidade"
+    },
+    {
       "src": "/screenshots/desktop-dashboard.png",
       "sizes": "1600x1280",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Painel Principal e Métricas do Hotel no Zap"
-    },
-    {
-      "src": "/screenshots/desktop-mapa.png",
-      "sizes": "1600x622",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Mapa de Ocupação e Status dos Quartos em Tempo Real"
-    },
-    {
-      "src": "/screenshots/mobile-dashboard.png",
-      "sizes": "455x1600",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Visão Mobile da Recepção e Operação Rápida"
-    },
-    {
-      "src": "/screenshots/mobile-mapa.png",
-      "sizes": "487x1457",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Gestão de Quartos e Reservas no Celular"
     }
   ],
   "shortcuts": [
