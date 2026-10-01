@@ -1,5 +1,29 @@
-import { hotelConfigService, HotelConfigData } from './supabaseService';
+import { hotelConfigService, HotelConfigData, hoteisService } from './supabaseService';
 import { systemLogsService } from './systemLogsService';
+import { creditosService } from './creditosService';
+
+export interface CriarPixMasterParams {
+  hotelId: string;
+  hotelNome: string;
+  planoId?: string;
+  planoNome: string;
+  valor: number;
+  pagadorEmail: string;
+  pagadorNome: string;
+  pagadorDoc?: string;
+}
+
+export interface PixMasterResult {
+  success: boolean;
+  paymentId: string;
+  status: 'pending' | 'approved' | 'in_process' | 'rejected';
+  qrCode: string;
+  qrCodeBase64?: string;
+  fallbackQrUrl?: string;
+  ticketUrl?: string;
+  gateway: 'mercadopago' | 'pix_chave';
+  error?: string;
+}
 
 export interface MercadoPagoCredentials {
   environment: 'production' | 'sandbox';
@@ -246,5 +270,270 @@ export const mercadopagoService = {
       publicKeyMaster: masterCreds.publicKey,
       ambiente: masterCreds.environment
     };
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5. GERADOR EMV BR CODE PIX (PADRÃO BANCO CENTRAL)
+  // ─────────────────────────────────────────────────────────────────────────
+  gerarPayloadPixEstatico(params: {
+    chavePix: string;
+    beneficiarioNome: string;
+    cidade: string;
+    valor: number;
+    identificador: string;
+    descricao?: string;
+  }): string {
+    const formatField = (id: string, val: string) => {
+      const len = String(val.length).padStart(2, '0');
+      return `${id}${len}${val}`;
+    };
+
+    const chave = params.chavePix.trim();
+    const nome = params.beneficiarioNome
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .substring(0, 25)
+      .trim() || 'HOTEL NO ZAP';
+    const cidade = params.cidade
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .substring(0, 15)
+      .trim() || 'BRASILIA';
+    const txid = (params.identificador || 'HOTELNOZAP')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .substring(0, 25) || 'HOTELNOZAP';
+    const valorStr = params.valor.toFixed(2);
+
+    let mai = formatField('00', 'br.gov.bcb.pix') + formatField('01', chave);
+    if (params.descricao) {
+      const desc = params.descricao
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .substring(0, 35);
+      mai += formatField('02', desc);
+    }
+
+    const additional = formatField('05', txid);
+
+    const payloadSemCrc =
+      formatField('00', '01') +
+      formatField('26', mai) +
+      formatField('52', '0000') +
+      formatField('53', '986') +
+      formatField('54', valorStr) +
+      formatField('58', 'BR') +
+      formatField('59', nome) +
+      formatField('60', cidade) +
+      formatField('62', additional) +
+      '6304';
+
+    let crc = 0xFFFF;
+    for (let i = 0; i < payloadSemCrc.length; i++) {
+      crc ^= payloadSemCrc.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        if ((crc & 0x8000) !== 0) {
+          crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+        } else {
+          crc = (crc << 1) & 0xFFFF;
+        }
+      }
+    }
+    const crcHex = (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    return `${payloadSemCrc}${crcHex}`;
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 6. CRIAÇÃO DE PAGAMENTO PIX MASTER (MERCADO PAGO + FALLBACK)
+  // ─────────────────────────────────────────────────────────────────────────
+  async criarPagamentoPixMaster(params: CriarPixMasterParams): Promise<PixMasterResult> {
+    const { hotelId, hotelNome, planoNome, valor, pagadorEmail, pagadorNome, pagadorDoc } = params;
+    const masterCreds = this.getMasterCredentials();
+    const token = masterCreds.accessToken?.trim();
+
+    // 1. Se houver token do Mercado Pago, tenta gerar via API oficial
+    if (token && token.length > 15) {
+      try {
+        const cleanDoc = (pagadorDoc || '').replace(/\D/g, '') || '00000000000';
+        const docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
+        const nameParts = (pagadorNome || hotelNome).trim().split(' ');
+        const firstName = nameParts[0] || 'Cliente';
+        const lastName = nameParts.slice(1).join(' ') || 'Hotel';
+
+        const idempotencyKey = `mp_pix_${hotelId}_${Date.now()}`;
+        const response = await fetch('https://api.mercadopago.com/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'X-Idempotency-Key': idempotencyKey
+          },
+          body: JSON.stringify({
+            transaction_amount: Number(valor.toFixed(2)),
+            description: `Assinatura ${planoNome} - ${hotelNome}`,
+            payment_method_id: 'pix',
+            payer: {
+              email: pagadorEmail || 'contato@hotelnozap.com.br',
+              first_name: firstName,
+              last_name: lastName,
+              identification: {
+                type: docType,
+                number: cleanDoc
+              }
+            },
+            external_reference: `hotel_${hotelId}`
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const qrCode = data.point_of_interaction?.transaction_data?.qr_code || '';
+          const qrCodeBase64 = data.point_of_interaction?.transaction_data?.qr_code_base64 || '';
+          const ticketUrl = data.point_of_interaction?.transaction_data?.ticket_url;
+
+          return {
+            success: true,
+            paymentId: String(data.id),
+            status: data.status || 'pending',
+            qrCode: qrCode,
+            qrCodeBase64: qrCodeBase64 ? `data:image/png;base64,${qrCodeBase64}` : undefined,
+            fallbackQrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(qrCode)}`,
+            ticketUrl,
+            gateway: 'mercadopago'
+          };
+        } else {
+          console.warn('Mercado Pago API retornou status não-200. Utilizando gerador Pix padrão.');
+        }
+      } catch (err) {
+        console.warn('Erro ao conectar na API do Mercado Pago. Acionando fallback PIX:', err);
+      }
+    }
+
+    // 2. Fallback: Gera Pix Copia e Cola Oficial com Chave Pix Master
+    let chavePix = 'financeiro@hotelnozap.com.br';
+    try {
+      const paramsStorage = localStorage.getItem(STORAGE_KEY_PARAMETROS);
+      if (paramsStorage) {
+        const parsed = JSON.parse(paramsStorage);
+        if (parsed.gatewayPixKey) chavePix = parsed.gatewayPixKey.trim();
+        else if (parsed.chave_pix_master) chavePix = parsed.chave_pix_master.trim();
+      }
+    } catch { /* ignore */ }
+
+    const txid = `HNZ${hotelId.replace(/\D/g, '').substring(0, 10)}${Date.now().toString().slice(-6)}`;
+    const pixCopiaECola = this.gerarPayloadPixEstatico({
+      chavePix,
+      beneficiarioNome: 'HOTEL NO ZAP SAAS',
+      cidade: 'BRASILIA',
+      valor,
+      identificador: txid,
+      descricao: `Plano ${planoNome.substring(0, 20)}`
+    });
+
+    return {
+      success: true,
+      paymentId: `pix_hnz_${Date.now()}`,
+      status: 'pending',
+      qrCode: pixCopiaECola,
+      fallbackQrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(pixCopiaECola)}`,
+      gateway: 'pix_chave'
+    };
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 7. CONSULTA DE STATUS DE PAGAMENTO
+  // ─────────────────────────────────────────────────────────────────────────
+  async consultarPagamentoMaster(paymentId: string): Promise<{ approved: boolean; status: string }> {
+    if (!paymentId) return { approved: false, status: 'unknown' };
+
+    // Se for mock/chave local com flag de aprovação manual simulada
+    if (paymentId.startsWith('pix_hnz_')) {
+      const isApprovedLocal = localStorage.getItem(`hotelnozap_pay_approved_${paymentId}`) === 'true';
+      return {
+        approved: isApprovedLocal,
+        status: isApprovedLocal ? 'approved' : 'pending'
+      };
+    }
+
+    const masterCreds = this.getMasterCredentials();
+    const token = masterCreds.accessToken?.trim();
+    if (!token) return { approved: false, status: 'pending' };
+
+    try {
+      const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const isApproved = data.status === 'approved';
+        return {
+          approved: isApproved,
+          status: data.status || 'pending'
+        };
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar status no Mercado Pago:', e);
+    }
+
+    return { approved: false, status: 'pending' };
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 8. ATIVAÇÃO AUTOMÁTICA DA CONTA DO HOTEL APÓS PAGAMENTO
+  // ─────────────────────────────────────────────────────────────────────────
+  async ativarHotelAposPagamento(params: {
+    hotelId: string;
+    hotelNome?: string;
+    plano: any;
+    paymentId?: string;
+    metodo: string;
+    valor: number;
+  }): Promise<boolean> {
+    const { hotelId, hotelNome, plano, paymentId = 'manual', metodo, valor } = params;
+    if (!hotelId) return false;
+
+    try {
+      // 1. Atualizar hotel para 'ativo' no Supabase
+      const updateOk = await hoteisService.updateHotel(hotelId, {
+        status: 'ativo',
+        plan: plano?.name || 'Plano Oficial',
+        notes: `Conta ativada automaticamente com pagamento aprovado via ${metodo} (Ref: ${paymentId}) em ${new Date().toLocaleString('pt-BR')}. Valor: R$ ${valor.toFixed(2)}.`
+      } as any);
+
+      // 2. Calcular validade e registrar créditos SaaS
+      const cicloDays = Number(plano?.cicloDays || 30);
+      const bonusDays = Number(plano?.bonusDays || 15);
+      const totalDias = cicloDays + bonusDays;
+      const creditos = Number(plano?.creditos || 1);
+
+      const now = new Date();
+      const expDate = new Date(now.getTime() + totalDias * 24 * 60 * 60 * 1000);
+      const todayStr = now.toISOString().split('T')[0];
+
+      creditosService.saveCreditoHotel(hotelId, creditos, expDate.toISOString(), false, todayStr);
+
+      // 3. Registrar auditoria no Log do Sistema
+      await systemLogsService.addLog({
+        level: 'success',
+        module: 'financeiro',
+        action: `Assinatura de Plano Ativada (${plano?.name || 'SaaS'})`,
+        details: `Hotel "${hotelNome || hotelId}" liberado para uso. Pagamento via ${metodo}. Validade: +${totalDias} dias (${expDate.toLocaleDateString('pt-BR')}).`,
+        hotelId,
+        hotelName: hotelNome,
+        metadata: {
+          paymentId,
+          metodo,
+          valor,
+          plano: plano?.name,
+          diasLiberados: totalDias
+        }
+      });
+
+      return updateOk;
+    } catch (err) {
+      console.error('Erro na liberação automática da conta do hotel:', err);
+      return false;
+    }
   }
 };
