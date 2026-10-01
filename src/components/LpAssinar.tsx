@@ -5,6 +5,7 @@ import { hoteisService, planosService, usuariosService, parceirosService, catego
 import { supabase } from '../lib/supabase';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotelUrlAvailabilityInSupabase } from '../utils/hotelUrl';
+import { CheckoutPlanoStep } from './CheckoutPlanoStep';
 
 interface LpAssinarProps {
   onNavigateToLP?: () => void;
@@ -17,7 +18,7 @@ const STEPS = [
   { id: 3, icon: 'location_on',  label: 'Endereco'       },
   { id: 4, icon: 'person',       label: 'Responsavel'    },
   { id: 5, icon: 'lock',         label: 'Acesso'         },
-  { id: 6, icon: 'check_circle', label: 'Concluido'      },
+  { id: 6, icon: 'payments',     label: 'Pagamento & Ativação' },
 ];
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
@@ -27,6 +28,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [hasAttemptedNext, setHasAttemptedNext] = useState(false);
+  const [createdHotelId, setCreatedHotelId] = useState('');
   const topRef = useRef<HTMLDivElement>(null);
   const formCardRef = useRef<HTMLDivElement>(null);
 
@@ -431,6 +433,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
         return;
       }
       hotelCriadoId = hotelRes.id;
+      setCreatedHotelId(hotelRes.id || '');
 
       // 2. Criar o Usuário do Hotel na tabela `usuarios` e registrar no Supabase Auth com a senha real.
       //    adminMode = false: deixa o novo usuário logado automaticamente (é signup público via link parceiro).
@@ -1058,44 +1061,21 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
             </div>
           )}
 
-          {/* STEP 6 - Sucesso */}
+          {/* STEP 6 - Checkout Automático & Ativação de Conta */}
           {step === 6 && (
-            <div className="px-6 pt-12 pb-14 text-center space-y-6">
-              <div className="relative w-20 h-20 mx-auto">
-                <div className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-50" />
-                <div className="relative w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center shadow-lg">
-                  <span className="material-symbols-outlined text-emerald-600 text-4xl">check_circle</span>
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-gray-900 mb-2">Cadastro enviado! 🎉</h2>
-                <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
-                  O cadastro de <strong className="text-gray-800">{nomeFantasia}</strong> foi recebido com sucesso. Nossa equipe ira verificar e ativar seu acesso em ate <strong>24 horas uteis</strong>.
-                </p>
-              </div>
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-left space-y-3 max-w-md mx-auto">
-                <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Proximos Passos</p>
-                {[
-                  {icon:'email', text:'Confira o e-mail ' + loginEmail + ' para confirmacao.'},
-                  {icon:'support_agent', text:'Nossa equipe entrara em contato via WhatsApp.'},
-                  {icon:'login', text:'Apos ativacao, acesse com seu e-mail e senha.'},
-                  {icon:'rocket_launch', text:'Comece a receber reservas via WhatsApp!'},
-                ].map((item,i) => (
-                  <div key={i} className="flex items-start gap-2.5 text-xs text-emerald-800">
-                    <span className="material-symbols-outlined text-emerald-600 text-base mt-0.5 shrink-0">{item.icon}</span>
-                    <span className="leading-relaxed">{item.text}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href={'https://wa.me/5566981585014?text=Ola!%20Cadastrei%20o%20hotel%20' + encodeURIComponent(nomeFantasia) + '%20no%20Hotel%20no%20Zap!'} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#1fba58] text-white font-bold text-sm rounded-xl transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-base">chat</span>Falar no WhatsApp
-                </a>
-                <button onClick={goToPainelAdmin} className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#003400] hover:bg-[#004d00] text-white font-bold text-sm rounded-xl transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-base">login</span>Acessar o Painel Admin
-                </button>
-              </div>
-            </div>
+            <CheckoutPlanoStep
+              hotelId={createdHotelId}
+              hotelNome={nomeFantasia}
+              loginEmail={loginEmail}
+              nomeResponsavel={nomeResponsavel}
+              cpfOuCnpj={cnpj || cpfResponsavel}
+              whatsapp={whatsapp}
+              plano={selectedPlanoObj}
+              onGoToDashboard={goToPainelAdmin}
+              onFalarWhatsApp={() => {
+                window.open('https://wa.me/5566981585014?text=Ola!%20Cadastrei%20o%20hotel%20' + encodeURIComponent(nomeFantasia) + '%20no%20Hotel%20no%20Zap!%20Parceiro:%20' + encodeURIComponent(refCode), '_blank');
+              }}
+            />
           )}
 
           {/* Footer nav */}
