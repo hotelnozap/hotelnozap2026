@@ -172,6 +172,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
     return {
       isDark: false,
       containerClass: 'bg-[#f8fafc] border-2 border-slate-200/90 hover:border-emerald-600/40 hover:shadow-lg',
+      badgeClass: 'bg-[#006c49] text-white',
       categoryClass: 'text-[#006c49] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
       titleClass: 'text-[#0b1c30] font-extrabold',
       descClass: 'text-[#45464d]',
@@ -191,6 +192,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
     return {
       isDark: false,
       containerClass: 'bg-[#fffdf5] border-2 border-amber-200/80 hover:border-amber-400 hover:shadow-lg',
+      badgeClass: 'bg-amber-600 text-white',
       categoryClass: 'text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full border border-amber-200 font-bold inline-block',
       titleClass: 'text-[#0b1c30] font-extrabold',
       descClass: 'text-slate-600',
@@ -210,6 +212,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
     return {
       isDark: false,
       containerClass: 'bg-[#f0f9ff] border-2 border-sky-200/90 hover:border-sky-400 hover:shadow-lg',
+      badgeClass: 'bg-sky-600 text-white',
       categoryClass: 'text-sky-800 bg-sky-100/70 px-2.5 py-0.5 rounded-full border border-sky-200 font-bold inline-block',
       titleClass: 'text-[#0b1c30] font-extrabold',
       descClass: 'text-slate-600',
@@ -228,6 +231,7 @@ export const getPlanCardTheme = (plano: PlanoView, index: number): PlanCardTheme
   return {
     isDark: false,
     containerClass: 'bg-[#f2fbf7] border-2 border-emerald-200/80 hover:border-emerald-400 hover:shadow-lg',
+    badgeClass: 'bg-emerald-700 text-white',
     categoryClass: 'text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold inline-block',
     titleClass: 'text-[#0b1c30] font-extrabold',
     descClass: 'text-slate-600',
@@ -289,10 +293,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           const activePlanos = data
             .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice || p.valor_base) > 0)
             .map((p: any) => {
-              let categoryLabel = p.tag || 'Pousadas e Hotéis';
-              if (p.name.includes('1 Crédito')) categoryLabel = 'Inicie sem medo • Acesso Mensal';
+              const cleanTag = (p.tag !== undefined && p.tag !== null) ? String(p.tag).trim() : '';
+
+              let categoryLabel = 'Pousadas e Hotéis';
+              if (p.name.includes('1 Crédito')) categoryLabel = 'Acesso Mensal Flexível';
               else if (p.name.includes('2 Créditos')) categoryLabel = 'Pacote Econômico Bimestral';
               else if (p.name.includes('3 Créditos')) categoryLabel = 'Mais Escolhido • Alta Temporada';
+              else if (p.name.includes('4 Créditos')) categoryLabel = 'Quadrimestral Flex';
               else if (p.name.includes('6 Créditos')) categoryLabel = 'Semestral • Estabilidade Total';
               else if (p.name.includes('12 Créditos')) categoryLabel = 'Anual VIP • Maior Economia';
               else if (p.name.toLowerCase().includes('starter')) categoryLabel = 'Pousadas Familiares';
@@ -302,7 +309,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               return {
                 id: p.id,
                 name: p.name,
-                tag: p.tag || (p.destaque || p.isFeatured ? 'Mais Vendido' : undefined),
+                tag: cleanTag || undefined,
                 categoryLabel,
                 description: p.description || p.descricao || 'Solução completa para gestão e motor de reservas via WhatsApp.',
                 basePrice: Number(p.basePrice || p.valor_base) || 0,
@@ -404,7 +411,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         id: '1-credito-default',
         name: '1 Crédito',
         tag: 'Inicie sem medo',
-        categoryLabel: 'Inicie sem medo • Acesso Mensal',
+        categoryLabel: 'Acesso Mensal Flexível',
         description: '1 Crédito • 30 dias base + 15 dias de bônus (45 dias de acesso)',
         basePrice: 197,
         periodicity: 'Mensal',
@@ -1508,13 +1515,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   key={plano.id}
                   className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all relative ${theme.containerClass}`}
                 >
-                  {plano.isFeatured ? (
-                    <div className="absolute top-0 right-0 bg-[#FDB116] text-[#0b1c30] font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs">
-                      ★ Mais Escolhido
-                    </div>
-                  ) : (plano.tag && plano.tag.toLowerCase().includes('inicie')) || plano.name.includes('1 Crédito') ? (
-                    <div className="absolute top-0 right-0 bg-[#006c49] text-white font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs">
-                      ★ Inicie sem medo
+                  {plano.tag && plano.tag.trim() ? (
+                    <div className={`absolute top-0 right-0 font-black text-[10px] uppercase px-4 py-1 rounded-bl-2xl tracking-wider shadow-xs ${
+                      plano.isFeatured 
+                        ? 'bg-[#FDB116] text-[#0b1c30]' 
+                        : (theme.badgeClass || 'bg-[#006c49] text-white')
+                    }`}>
+                      ★ {plano.tag.replace(/^★\s*/, '').trim()}
                     </div>
                   ) : null}
 
@@ -1522,7 +1529,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <span className={`text-[11px] uppercase tracking-wider ${theme.categoryClass}`}>
-                          {plano.categoryLabel || plano.tag || 'Pousadas & Hotéis'}
+                          {plano.categoryLabel || 'Pousadas & Hotéis'}
                         </span>
                         <h3 className={`text-xl sm:text-2xl mt-1.5 ${theme.titleClass}`}>
                           {formattedTitle}
