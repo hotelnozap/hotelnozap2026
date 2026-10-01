@@ -8,6 +8,7 @@
   "display": "standalone",
   "display_override": [
     "window-controls-overlay",
+    "tabbed",
     "standalone",
     "minimal-ui"
   ],
@@ -137,10 +138,51 @@
   "handle_links": "preferred",
   "scope_extensions": [
     {
-      "origin": "https://hotelnozap.com.br"
+      "origin": "https://app.hotelnozap.com.br"
     },
     {
-      "origin": "https://app.hotelnozap.com.br"
+      "origin": "https://admin.hotelnozap.com.br"
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+hotelnozap",
+      "url": "/?url=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "name": "Comprovante de Reserva",
+      "accept": {
+        "text/plain": [".txt"],
+        "application/pdf": [".pdf"],
+        "image/png": [".png"],
+        "image/jpeg": [".jpg", ".jpeg"]
+      }
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Hotel no Zap - Reservas Rápidas",
+      "short_name": "Hotel no Zap",
+      "description": "Veja acomodações e ofertas rápidas no Hotel no Zap",
+      "tag": "hotelnozap-widget",
+      "template": "hotelnozap-template",
+      "ms_ac_template": "/widgets/widget-template.json",
+      "data": "/widgets/widget-data.json",
+      "type": "application/json",
+      "auth": false,
+      "update": 3600
     }
   ],
   "related_applications": [

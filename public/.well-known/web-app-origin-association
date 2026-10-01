@@ -11,6 +11,12 @@
       "details": {
         "paths": ["/*"]
       }
+    },
+    {
+      "manifest": "https://admin.hotelnozap.com.br/manifest.json",
+      "details": {
+        "paths": ["/*"]
+      }
     }
   ]
 }
