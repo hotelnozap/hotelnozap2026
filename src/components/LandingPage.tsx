@@ -967,22 +967,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               </div>
             </div>
 
-            {/* 4. CARDÁPIO DIGITAL & FRIGOBAR VIA QR CODE */}
+            {/* 4. CADASTRO DE PRODUTOS E CONTROLE DE ESTOQUE */}
             <div className="bg-[#f8f9ff] rounded-2xl border border-[#e2e8f0] p-6 lg:p-8 flex flex-col justify-between hover:shadow-lg transition-all">
               <div>
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center mb-4 shadow-sm">
-                  <span className="material-symbols-outlined text-2xl">restaurant_menu</span>
+                  <span className="material-symbols-outlined text-2xl">inventory_2</span>
                 </div>
-                <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Receita Adicional</span>
+                <span className="text-xs font-bold uppercase text-[#006c49] tracking-wider">Estoque & Frigobar</span>
                 <h3 className="text-xl font-extrabold text-[#0b1c30] mt-1 mb-2">
-                  Cardápio & Frigobar no Quarto via QR Code
+                  Cadastro de Produtos e Controle de Estoque
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Coloque um display com QR Code na cabeceira da cama. O hóspede escolhe bebidas, petiscos e serviços pelo próprio celular. O pedido cai na cozinha/recepção e é lançado automaticamente na conta do quarto.
+                  O hotel tem total controle dos produtos cadastrados no frigobar, bebidas, petiscos e comodidades. Todos os produtos podem ser solicitados pelo hóspede diretamente da sua <strong>área exclusiva</strong> pelo celular, e o sistema já realiza de forma 100% automática o <strong>controle e baixa de estoque</strong>, integrando os lançamentos à conta do quarto.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981]">trending_up</span> +30% de aumento no consumo interno
+                <span className="material-symbols-outlined text-sm text-[#10b981]">inventory</span> Baixa automática no estoque & pedidos via área exclusiva
               </div>
             </div>
 
@@ -1038,11 +1038,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                   Cupons de Desconto Personalizados
                 </h3>
                 <p className="text-sm text-[#45464d] leading-relaxed">
-                  Crie cupons promocionais sob medida (ex: <strong>VERAO10</strong>, <strong>CLIENTEVIP</strong>, <strong>CARNAVAL</strong>) em porcentagem ou valor fixo, com limite de usos e datas de validade. A ferramenta perfeita para incentivar reservas diretas e lotar o hotel na baixa temporada.
+                  Crie cupons promocionais sob medida (ex: <strong>VERAO10</strong>, <strong>CLIENTEVIP</strong>, <strong>CARNAVAL</strong>) em porcentagem ou valor fixo, com limite de usos e datas de validade. <strong>Todos os cupons ficam disponíveis na área do hóspede, que pode utilizá-los a qualquer momento</strong> — a estratégia perfeita para incentivar reservas diretas e lotar o seu hotel o ano inteiro.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#e2e8f0] text-xs text-[#006c49] font-bold flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-[#10b981]">local_offer</span> Campanhas promocionais 100% no seu controle
+                <span className="material-symbols-outlined text-sm text-[#10b981]">local_offer</span> Cupons visíveis na área do hóspede para uso a qualquer momento
               </div>
             </div>
 
