@@ -252,6 +252,10 @@ export const creditosService = {
   },
 
   adicionarDiasBonus(hotelId: string, diasBonus: number = 15): InfoCreditoHotel {
+    return this.adicionarDiasAoHotel(hotelId, diasBonus, 'Bônus de cortesia');
+  },
+
+  adicionarDiasAoHotel(hotelId: string, diasBonus: number, motivo?: string, hotelNome?: string): InfoCreditoHotel {
     const map = this.getAllCreditosMap();
     const stored = map[hotelId];
     const now = new Date();
@@ -269,6 +273,30 @@ export const creditosService = {
 
     const novaExpiracao = new Date(dataBase.getTime() + diasBonus * 24 * 60 * 60 * 1000);
     this.saveCreditoHotel(hotelId, creditosAtuais, novaExpiracao.toISOString(), false);
+
+    // Se estiver no banco Supabase com status inativo/expirado, reativa para 'ativo'
+    try {
+      import('../lib/supabase').then(({ supabase }) => {
+        supabase.from('hoteis').update({
+          status: 'ativo',
+          observacoes: `Prorrogação de +${diasBonus} dias aplicada em ${new Date().toLocaleDateString('pt-BR')}. Motivo: ${motivo || 'Programação de compra'}.`
+        }).eq('id', hotelId).then(() => {});
+      }).catch(() => {});
+    } catch { /* ignore */ }
+
+    // Registra log de auditoria
+    try {
+      import('./systemLogsService').then(({ systemLogsService }) => {
+        systemLogsService.addLog({
+          level: 'success',
+          module: 'financeiro',
+          action: `Prorrogação de Prazo (+${diasBonus} dias)`,
+          details: `Adicionados +${diasBonus} dias ao hotel "${hotelNome || hotelId}". Nova validade: ${novaExpiracao.toLocaleDateString('pt-BR')}. Motivo: ${motivo || 'Programação de compra'}.`,
+          hotelId,
+          hotelName: hotelNome
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch { /* ignore */ }
 
     return {
       saldoCreditos: creditosAtuais,

@@ -22,6 +22,12 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
   const [selectedHotelForRecharge, setSelectedHotelForRecharge] = useState<Hotel | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<PacoteCredito>(PACOTES_CREDITOS_MODELO_1[0]);
 
+  // Modal de Inclusão de Dias / Prorrogação
+  const [selectedHotelForAddDays, setSelectedHotelForAddDays] = useState<Hotel | null>(null);
+  const [daysToAdd, setDaysToAdd] = useState<number>(15);
+  const [reasonToAdd, setReasonToAdd] = useState<string>('Prorrogação para programação de compra');
+  const [planFilter, setPlanFilter] = useState<string>('todos');
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -65,22 +71,47 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
     return hoteis.filter(h => {
       const q = searchTerm.toLowerCase().trim();
       const matchSearch = !q || h.name.toLowerCase().includes(q) || (h.cnpj || '').includes(q) || (h.managerName || '').toLowerCase().includes(q);
-      
+      if (!matchSearch) return false;
+
+      // Filtro por Plano
+      if (planFilter !== 'todos') {
+        const pLower = (h.plan || '').toLowerCase();
+        if (planFilter === 'gratis') {
+          if (!pLower.includes('grátis') && !pLower.includes('gratis') && !pLower.includes('maps')) return false;
+        } else if (!pLower.includes(planFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
       const info = creditosMap.get(h.id);
-      if (!info) return matchSearch;
+      if (!info) return true;
 
-      if (statusFilter === 'degustacao') return matchSearch && info.emDegustacao;
-      if (statusFilter === 'alerta') return matchSearch && info.status === 'alerta';
-      if (statusFilter === 'expirado') return matchSearch && info.status === 'expirado';
+      if (statusFilter === 'degustacao') return info.emDegustacao;
+      if (statusFilter === 'alerta') return info.status === 'alerta';
+      if (statusFilter === 'expirado') return info.status === 'expirado';
 
-      return matchSearch;
+      return true;
     });
-  }, [hoteis, searchTerm, statusFilter, creditosMap]);
+  }, [hoteis, searchTerm, statusFilter, planFilter, creditosMap]);
 
   // Ação: Adicionar 15 dias de bônus cortesia
   const handleDarBonus = (hotel: Hotel) => {
-    const novaInfo = creditosService.adicionarDiasBonus(hotel.id, 15);
+    const novaInfo = creditosService.adicionarDiasAoHotel(hotel.id, 15, 'Bônus rápido +15d', hotel.name);
     showToast(`+15 dias de bônus adicionados com sucesso ao "${hotel.name}"! Nova validade: ${novaInfo.dataExpiracaoFormatada}`);
+    carregarHoteis();
+  };
+
+  // Ação: Confirmar Inclusão Personalizada de Dias
+  const handleConfirmarInclusaoDias = () => {
+    if (!selectedHotelForAddDays || daysToAdd <= 0) return;
+    const novaInfo = creditosService.adicionarDiasAoHotel(
+      selectedHotelForAddDays.id,
+      daysToAdd,
+      reasonToAdd,
+      selectedHotelForAddDays.name
+    );
+    showToast(`+${daysToAdd} dias adicionados com sucesso ao "${selectedHotelForAddDays.name}"! Nova validade: ${novaInfo.dataExpiracaoFormatada}`);
+    setSelectedHotelForAddDays(null);
     carregarHoteis();
   };
 
@@ -280,7 +311,7 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
 
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Barra de Pesquisa */}
-              <div className="relative min-w-[220px]">
+              <div className="relative min-w-[200px]">
                 <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
                 <input
                   type="text"
@@ -289,6 +320,23 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                   placeholder="Buscar hotel, CNPJ ou gestor..."
                   className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#003400] bg-slate-50"
                 />
+              </div>
+
+              {/* Filtro por Plano */}
+              <div className="relative">
+                <select
+                  value={planFilter}
+                  onChange={(e) => setPlanFilter(e.target.value)}
+                  className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#003400] cursor-pointer"
+                >
+                  <option value="todos">Todos os Planos</option>
+                  <option value="1 Crédito">1 Crédito</option>
+                  <option value="2 Créditos">2 Créditos</option>
+                  <option value="3 Créditos">3 Créditos</option>
+                  <option value="6 Créditos">6 Créditos</option>
+                  <option value="12 Créditos">12 Créditos</option>
+                  <option value="gratis">Grátis / Degustação</option>
+                </select>
               </div>
 
               {/* Filtros Rápidos */}
@@ -458,6 +506,21 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
                         {/* Botões de Ação */}
                         <td className="px-4 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            {/* Incluir Dias (Prorrogação de Prazo) */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedHotelForAddDays(hotel);
+                                setDaysToAdd(15);
+                                setReasonToAdd('Prorrogação para programação de compra');
+                              }}
+                              title="Incluir dias adicionais para programação de compra do cliente"
+                              className="px-2.5 py-1.5 rounded-lg border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+                            >
+                              <span className="material-symbols-outlined text-sm text-blue-600">more_time</span>
+                              <span>Incluir Dias</span>
+                            </button>
+
                             {/* Dar +15 dias bônus imediato */}
                             <button
                               type="button"
@@ -595,6 +658,125 @@ export const GestaoCreditosSaaS: React.FC<GestaoCreditosSaaSProps> = ({
               >
                 <span className="material-symbols-outlined text-base">check</span>
                 <span>Confirmar Recarga</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE INCLUSÃO DE DIAS / PRORROGAÇÃO PARA PROGRAMAÇÃO DE COMPRA */}
+      {selectedHotelForAddDays && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-xl">more_time</span>
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900">
+                    Incluir Dias ao Hotel
+                  </h3>
+                  <p className="text-xs text-slate-500 truncate max-w-[240px]">
+                    Hotel: <strong>{selectedHotelForAddDays.name}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedHotelForAddDays(null)}
+                className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Plano Atual:</span>
+                  <strong className="text-slate-800">{selectedHotelForAddDays.plan || 'Plano Degustação'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Validade Atual:</span>
+                  <strong className="text-slate-800">
+                    {creditosMap.get(selectedHotelForAddDays.id)?.dataExpiracaoFormatada || 'Expirado'}
+                  </strong>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Selecione ou digite os dias a adicionar:
+                </label>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[7, 15, 30, 45].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDaysToAdd(d)}
+                      className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        daysToAdd === d
+                          ? 'bg-[#003400] text-white border-[#003400] shadow-xs'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      +{d} Dias
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={daysToAdd}
+                    onChange={(e) => setDaysToAdd(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:border-[#003400]"
+                    placeholder="Outra quantidade de dias..."
+                  />
+                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-bold">dias de cortesia</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Motivo da Concessão:
+                </label>
+                <input
+                  type="text"
+                  value={reasonToAdd}
+                  onChange={(e) => setReasonToAdd(e.target.value)}
+                  placeholder="Ex: Programação para próxima contratação"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#003400]"
+                />
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-900 flex items-center justify-between">
+                <span>Nova data estimada:</span>
+                <strong className="font-extrabold text-sm">
+                  {new Date(Date.now() + daysToAdd * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
+                </strong>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedHotelForAddDays(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmarInclusaoDias}
+                className="px-5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs cursor-pointer active:scale-95 flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-base">check</span>
+                <span>Adicionar Dias e Liberar</span>
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Dashboard from './components/Dashboard';
 import MapaQuartos, { Room } from './components/MapaQuartos';
 import CadastroQuarto, { EditingQuartoData } from './components/CadastroQuarto';
@@ -40,6 +40,8 @@ import { FormHotel } from './components/FormHotel';
 import ListagemCategoriasHotel from './components/ListagemCategoriasHotel';
 import CadastroCategoriaHotel from './components/CadastroCategoriaHotel';
 import { GestaoCreditosSaaS } from './components/GestaoCreditosSaaS';
+import { TelaPlanoExpirado } from './components/TelaPlanoExpirado';
+import { creditosService } from './services/creditosService';
 import { ConfiguracoesMercadoPago } from './components/ConfiguracoesMercadoPago';
 import { ConfiguracoesHotel } from './components/ConfiguracoesHotel';
 import RelatoriosHotel from './components/RelatoriosHotel';
@@ -396,7 +398,16 @@ export const App: React.FC = () => {
               cityUf: matched.cityUf,
               cnpj: matched.cnpj,
               status: matched.status,
-              imageUrl: matched.imageUrl
+              imageUrl: matched.imageUrl,
+              plan: matched.plan,
+              managerName: matched.managerName,
+              managerEmail: matched.managerEmail,
+              managerPhone: matched.managerPhone,
+              managerCpf: matched.managerCpf,
+              loginEmail: matched.loginEmail,
+              whatsapp: matched.whatsapp,
+              notes: (matched as any).notes || (matched as any).observacoes,
+              isImportedFromGoogle: (matched as any).isImportedFromGoogle
             };
             currentHotelService.setCurrentHotel(freshActive);
             setActiveHotel(freshActive);
@@ -421,12 +432,18 @@ export const App: React.FC = () => {
       });
     };
 
+    const handleCreditosChanged = () => {
+      syncActiveHotel();
+    };
+
     window.addEventListener('hotel_changed', handleHotelChanged);
     window.addEventListener('hotel_novo_hotel', syncActiveHotel);
+    window.addEventListener('hotel_creditos_changed', handleCreditosChanged);
 
     return () => {
       window.removeEventListener('hotel_changed', handleHotelChanged);
       window.removeEventListener('hotel_novo_hotel', syncActiveHotel);
+      window.removeEventListener('hotel_creditos_changed', handleCreditosChanged);
     };
   }, []);
 
@@ -835,6 +852,7 @@ export const App: React.FC = () => {
     { id: 'status-quartos', label: 'Status dos Quartos', icon: 'room_preferences' },
     { id: 'parceiros', label: 'Parceiros', icon: 'handshake' },
     { id: 'planos', label: 'Planos & Preços', icon: 'sell' },
+    { id: 'creditos-saas', label: 'Controle de Planos & Créditos', icon: 'fact_check' },
     { id: 'usuarios', label: 'Usuários do Sistema', icon: 'manage_accounts' },
     { id: 'admin-conexoes', label: 'Conexões WhatsApp', icon: 'sync_alt' },
     { id: 'admin-financeiro', label: 'Receita & Repasses', icon: 'payments' },
@@ -1239,6 +1257,63 @@ export const App: React.FC = () => {
     );
   }
 
+  // ── Bloqueio Inteligente: Hotel com Plano / Créditos / Dias Bônus Expirados ──
+  const hotelCreditInfo = useMemo(() => {
+    if (!isHotelUser || !activeHotel) return null;
+    const isMasterDefault = activeHotel.id === 'default' && (!activeHotel.name || activeHotel.name.toLowerCase() === 'hotel master');
+    if (isMasterDefault) return null;
+    return creditosService.calcularInfoCreditos(activeHotel);
+  }, [isHotelUser, activeHotel]);
+
+  const isHotelExpired = Boolean(
+    isHotelUser &&
+    activeHotel &&
+    activeHotel.id !== 'default' &&
+    hotelCreditInfo &&
+    (hotelCreditInfo.status === 'expirado' || activeHotel.status === 'inativo' || activeHotel.status === 'bloqueado')
+  );
+
+  if (isHotelExpired && hotelCreditInfo) {
+    return (
+      <TelaPlanoExpirado
+        hotel={activeHotel}
+        infoCredito={hotelCreditInfo}
+        onPlanSubscribed={async () => {
+          try {
+            const dbHoteis = await hoteisService.getHoteis();
+            if (dbHoteis && dbHoteis.length > 0) {
+              const matched = dbHoteis.find(h => h.id === activeHotel.id);
+              if (matched) {
+                const freshActive: HotelAtivo = {
+                  id: matched.id,
+                  name: matched.name,
+                  category: matched.category,
+                  cityUf: matched.cityUf,
+                  cnpj: matched.cnpj,
+                  status: matched.status,
+                  imageUrl: matched.imageUrl,
+                  plan: matched.plan,
+                  managerName: matched.managerName,
+                  managerEmail: matched.managerEmail,
+                  managerPhone: matched.managerPhone,
+                  managerCpf: matched.managerCpf,
+                  loginEmail: matched.loginEmail,
+                  whatsapp: matched.whatsapp,
+                  notes: (matched as any).notes || (matched as any).observacoes,
+                  isImportedFromGoogle: (matched as any).isImportedFromGoogle
+                };
+                currentHotelService.setCurrentHotel(freshActive);
+                setActiveHotel(freshActive);
+              }
+            }
+          } catch { /* ignore */ }
+          setActiveTab('dashboard');
+        }}
+        onLogout={() => handleLogout()}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col lg:flex-row h-screen w-screen overflow-hidden bg-[#f8f9ff]">
       
@@ -1546,10 +1621,10 @@ export const App: React.FC = () => {
                         : 'text-white/80 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    <span className={`material-symbols-outlined ${activeTab === 'creditos-saas' ? 'text-emerald-400' : ''}`}>hourglass_top</span>
-                    <span>Créditos</span>
+                    <span className={`material-symbols-outlined ${activeTab === 'creditos-saas' ? 'text-emerald-400' : ''}`}>fact_check</span>
+                    <span>Controle de Planos &amp; Créditos</span>
                     <span className="ml-auto text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300">
-                      Modelo 1
+                      Gestão
                     </span>
                   </button>
 
@@ -1985,10 +2060,10 @@ export const App: React.FC = () => {
                     : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <span className={`material-symbols-outlined ${activeTab === 'creditos-saas' ? 'text-emerald-400' : ''}`}>hourglass_top</span>
-                <span>Créditos</span>
+                <span className={`material-symbols-outlined ${activeTab === 'creditos-saas' ? 'text-emerald-400' : ''}`}>fact_check</span>
+                <span>Controle de Planos &amp; Créditos</span>
                 <span className="ml-auto text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300">
-                  Modelo 1
+                  Gestão
                 </span>
               </button>
 
