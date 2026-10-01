@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Dashboard from './components/Dashboard';
 import MapaQuartos, { Room } from './components/MapaQuartos';
 import CadastroQuarto, { EditingQuartoData } from './components/CadastroQuarto';
@@ -1270,18 +1270,13 @@ export const App: React.FC = () => {
     activeHotel.name?.toLowerCase() === 'hotel master'
   );
 
-  const hotelCreditInfo = useMemo(() => {
-    if (!isUserAuthenticated || !isHotelUser || !activeHotel || isMasterDefault) return null;
-    return creditosService.calcularInfoCreditos(activeHotel);
-  }, [isUserAuthenticated, isHotelUser, activeHotel, isMasterDefault]);
+  const hotelCreditInfo = (isUserAuthenticated && isHotelUser && activeHotel && !isMasterDefault)
+    ? creditosService.calcularInfoCreditos(activeHotel)
+    : null;
 
   const isHotelExpired = Boolean(
-    isUserAuthenticated &&
-    isHotelUser &&
-    !isMasterDefault &&
-    activeHotel &&
     hotelCreditInfo &&
-    (hotelCreditInfo.status === 'expirado' || activeHotel.status === 'inativo' || activeHotel.status === 'bloqueado')
+    (hotelCreditInfo.status === 'expirado' || activeHotel?.status === 'inativo' || activeHotel?.status === 'bloqueado')
   );
 
   if (isHotelExpired && hotelCreditInfo) {
