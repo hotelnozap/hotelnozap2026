@@ -53,7 +53,7 @@ export const DEFAULT_MP_CREDENTIALS: MercadoPagoCredentials = {
   enableCreditCard: true,
   enableBoleto: false,
   maxInstallments: '12',
-  chavePixMaster: 'def0e87a-f7d0-4c54-830b-473206cf78c6'
+  chavePixMaster: ''
 };
 
 export const getApiBaseUrl = (): string => {
@@ -379,7 +379,7 @@ export const mercadopagoService = {
   // 6. BUSCA INTELIGENTE DA CHAVE PIX MASTER & CREDENCIAIS
   // ─────────────────────────────────────────────────────────────────────────
   async buscarChavePixMaster(): Promise<{ chavePix: string; token?: string; provider?: string }> {
-    const DEFAULT_KEY = 'def0e87a-f7d0-4c54-830b-473206cf78c6';
+    const DEFAULT_KEY = '';
 
     // 1. Tenta API Serverless da Vercel (com service role para leitura pública segura)
     try {
@@ -436,7 +436,7 @@ export const mercadopagoService = {
     
     // Busca chave PIX e credenciais corretas do sistema
     const configMaster = await this.buscarChavePixMaster();
-    const chavePix = configMaster.chavePix || 'def0e87a-f7d0-4c54-830b-473206cf78c6';
+    const chavePix = configMaster.chavePix || '';
     const masterCreds = this.getMasterCredentials();
     const token = (configMaster.token || masterCreds.accessToken)?.trim();
 
@@ -467,7 +467,7 @@ export const mercadopagoService = {
       console.warn('Erro ao chamar /api/mercadopago-pix create:', e);
     }
 
-    // 2. Fallback Oficial: Gera Pix Copia e Cola com a Chave Pix Master Correta (def0e87a-f7d0-4c54-830b-473206cf78c6)
+    // 2. Fallback Oficial: Gera Pix Copia e Cola com a Chave Pix Master carregada do DB/API
     const txid = `HNZ${hotelId.replace(/\D/g, '').substring(0, 10)}${Date.now().toString().slice(-6)}`;
     const pixCopiaECola = this.gerarPayloadPixEstatico({
       chavePix,

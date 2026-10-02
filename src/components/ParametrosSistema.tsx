@@ -73,27 +73,27 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
   };
 
   // 1. Chaves de API & Integrações
-  const [openaiKey, setOpenaiKey] = useState('sk-proj-498172918274910283019283019283019283');
+  const [openaiKey, setOpenaiKey] = useState('');
   const [openaiModel, setOpenaiModel] = useState('gpt-4o-mini');
   const [openaiTemp, setOpenaiTemp] = useState(0.3);
   const [showOpenaiKey, setShowOpenaiKey] = useState(false);
   const [isTestingOpenai, setIsTestingOpenai] = useState(false);
 
   const [whatsappApiUrl, setWhatsappApiUrl] = useState('https://api.hotelnozap.com.br');
-  const [whatsappToken, setWhatsappToken] = useState('EVOLUTION_MASTER_GLOBAL_SEC_9921');
+  const [whatsappToken, setWhatsappToken] = useState('');
   const [whatsappWebhook, setWhatsappWebhook] = useState('https://api.hotelnozap.com.br/webhooks/global');
   const [showWhatsappToken, setShowWhatsappToken] = useState(false);
   const [isTestingWhatsapp, setIsTestingWhatsapp] = useState(false);
 
   const [gatewayProvider, setGatewayProvider] = useState<'mercadopago' | 'asaas' | 'stripe'>('mercadopago');
   const [gatewayEnvironment, setGatewayEnvironment] = useState<'production' | 'sandbox'>('production');
-  const [gatewayPixKey, setGatewayPixKey] = useState('def0e87a-f7d0-4c54-830b-473206cf78c6');
+  const [gatewayPixKey, setGatewayPixKey] = useState('');
   const [gatewayToken, setGatewayToken] = useState('');
   const [showGatewayToken, setShowGatewayToken] = useState(false);
   const [isTestingGateway, setIsTestingGateway] = useState(false);
   const [gatewayFeedback, setGatewayFeedback] = useState<string | null>(null);
 
-  const [googlePlacesKey, setGooglePlacesKey] = useState('AIzaSyBpN5K5Hg9BqIMvHguh3gyUEnbYcqEgDi8');
+  const [googlePlacesKey, setGooglePlacesKey] = useState('');
   const [showGoogleKey, setShowGoogleKey] = useState(false);
 
   // 2. Templates de Mensagens WhatsApp
@@ -753,7 +753,7 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
                       type="text"
                       value={gatewayPixKey}
                       onChange={(e) => setGatewayPixKey(e.target.value)}
-                      placeholder="def0e87a-f7d0-4c54-830b-473206cf78c6"
+                      placeholder="sua-chave-pix-cadastrada-no-gateway"
                       className="w-full py-2 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800"
                     />
                   </div>

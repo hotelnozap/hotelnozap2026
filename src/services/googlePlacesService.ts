@@ -1,7 +1,7 @@
 // Serviço de integração com Google Places API (New)
 // Suporta busca estruturada por Estado/Cidade e autopreenchimento individual
 
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyBpN5K5Hg9BqIMvHguh3gyUEnbYcqEgDi8';
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || '';
 
 export interface GooglePlaceHotel {
   placeId: string;
