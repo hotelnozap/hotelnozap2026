@@ -13,7 +13,9 @@ export default async function handler(req, res) {
   const DEFAULT_PIX_KEY = 'def0e87a-f7d0-4c54-830b-473206cf78c6';
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ia3ZnbHV1bmJua3R6dWx6amZnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Nzg0OTMyOCwiZXhwIjoyMTAzNDI1MzI4fQ.VlbPt6MgzjMJHbUt9nuCWhBNEv_6dmkeZnaVH9zJe3E';
 
   if (!serviceKey) {
     if (req.method === 'POST') {
