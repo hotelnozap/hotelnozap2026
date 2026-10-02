@@ -491,8 +491,23 @@ export const mercadopagoService = {
   // ─────────────────────────────────────────────────────────────────────────
   // 8. CONSULTA DE STATUS DE PAGAMENTO EM TEMPO REAL
   // ─────────────────────────────────────────────────────────────────────────
-  async consultarPagamentoMaster(paymentId: string, hotelId?: string, valor?: number): Promise<{ approved: boolean; status: string }> {
-    if (!paymentId) return { approved: false, status: 'unknown' };
+  async consultarPagamentoMaster(
+    paymentId: string,
+    hotelId?: string,
+    valor?: number
+  ): Promise<{
+    approved: boolean;
+    status: string;
+    rejected: boolean;
+    errorMessage?: string;
+    rawStatus?: string;
+  }> {
+    if (!paymentId) {
+      return { approved: false, status: 'unknown', rejected: false, rawStatus: 'unknown' };
+    }
+
+    let rawStatusResposta: string | undefined;
+    let mensagemErro: string | undefined;
 
     // 1. Consulta em tempo real via Serverless API (com verificação de banco, paymentId e busca de pagamentos recentes)
     try {
@@ -505,30 +520,101 @@ export const mercadopagoService = {
       const resp = await fetch(`${getApiBaseUrl()}/api/mercadopago-pix?${queryParams.toString()}`);
       if (resp.ok) {
         const data = await resp.json();
+        rawStatusResposta = String(data?.status || data?.state || data?.result || '').toLowerCase();
+
         if (data?.approved) {
-          return { approved: true, status: 'approved' };
+          return {
+            approved: true,
+            status: 'approved',
+            rejected: false,
+            rawStatus: rawStatusResposta || 'approved'
+          };
+        }
+
+        if (rawStatusResposta) {
+          const STATUS_REJEICAO = [
+            'rejected', 'recusado', 'recusada', 'rejeitado', 'rejeitada',
+            'cancelled', 'canceled', 'cancelado', 'cancelada',
+            'charged_back', 'chargedback', 'chargeback', 'estornado',
+            'refunded', 'reembolsado', 'reembolsada',
+            'denied', 'negado', 'negada'
+          ];
+          const STATUS_PENDENTE = [
+            'pending', 'pendente', 'in_process', 'inprocess', 'processando',
+            'waiting', 'aguardando', 'authorized', 'autorizado'
+          ];
+
+          if (STATUS_REJEICAO.some(s => rawStatusResposta!.includes(s))) {
+            mensagemErro = data?.message || data?.error || data?.detail ||
+              'Pagamento recusado pela instituição financeira. Tente novamente ou entre em contato com o seu banco.';
+            return {
+              approved: false,
+              status: 'rejected',
+              rejected: true,
+              errorMessage: mensagemErro,
+              rawStatus: rawStatusResposta
+            };
+          }
+
+          if (STATUS_PENDENTE.some(s => rawStatusResposta!.includes(s))) {
+            return {
+              approved: false,
+              status: 'pending',
+              rejected: false,
+              rawStatus: rawStatusResposta
+            };
+          }
         }
       }
     } catch (e) {
       console.warn('Erro ao consultar /api/mercadopago-pix check:', e);
     }
 
-    // 2. Se hotelId for informado, verifica se o hotel já foi ativado no Supabase (ex: via webhook ou admin)
+    // 2. Se hotelId for informado, verifica status do hotel no Supabase (fonte da verdade: webhook server-side ou admin)
     if (hotelId) {
       try {
         const { data: h } = await supabase
           .from('hoteis')
-          .select('id, status')
+          .select('id, status, notes')
           .eq('id', hotelId)
           .maybeSingle();
 
-        if (h && (h.status === 'ativo' || (h as any).status === 'Ativo')) {
-          return { approved: true, status: 'approved' };
+        if (h) {
+          const hotelStatus = String(h.status || '').toLowerCase().trim();
+
+          if (hotelStatus === 'ativo' || hotelStatus === 'Ativo'.toLowerCase()) {
+            return {
+              approved: true,
+              status: 'approved',
+              rejected: false,
+              rawStatus: `hotel:${hotelStatus}`
+            };
+          }
+
+          const REJEITADOS_HOTEL = [
+            'bloqueado', 'rejeitado', 'rejeitada', 'cancelado', 'cancelada',
+            'recusado', 'recusada', 'negado', 'inadimplente', 'suspenso'
+          ];
+          if (REJEITADOS_HOTEL.some(s => hotelStatus.includes(s))) {
+            mensagemErro = 'Transação não aprovada. Entre em contato com o seu banco ou tente outro método de pagamento.';
+            return {
+              approved: false,
+              status: 'rejected',
+              rejected: true,
+              errorMessage: mensagemErro,
+              rawStatus: `hotel:${hotelStatus}`
+            };
+          }
         }
       } catch { /* ignore */ }
     }
 
-    return { approved: false, status: 'pending' };
+    return {
+      approved: false,
+      status: 'pending',
+      rejected: false,
+      rawStatus: rawStatusResposta || 'pending'
+    };
   },
 
   // ─────────────────────────────────────────────────────────────────────────

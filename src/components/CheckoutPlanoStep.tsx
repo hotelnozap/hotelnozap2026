@@ -42,6 +42,10 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   const [isAtivando, setIsAtivando] = useState(false);
   const [erroMsg, setErroMsg] = useState<string | null>(null);
 
+  // Status de Rejeição de Pagamento (detectado em tempo real)
+  const [isRejected, setIsRejected] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+
   // Timer de 5 minutos (300s) e Bloqueio Automático
   const [timeLeft, setTimeLeft] = useState(300);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -102,6 +106,9 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   // Desbloquear e tentar novamente (novo PIX + 5 minutos)
   const handleReiniciarPix = async () => {
     setIsBlocked(false);
+    setIsRejected(false);
+    setRejectionReason(null);
+    setErroMsg(null);
     setTimeLeft(300);
     try {
       await hoteisService.updateHotel(hotelId, {
@@ -167,7 +174,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
 
   // 3. Polling inteligente e automático de consulta em tempo real (a cada 2 segundos)
   useEffect(() => {
-    if (isApproved || isGratis || isBlocked || !pixResult?.paymentId) return;
+    if (isApproved || isGratis || isBlocked || isRejected || !pixResult?.paymentId) return;
 
     pollingRef.current = setInterval(async () => {
       try {
@@ -176,6 +183,17 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
           if (pollingRef.current) clearInterval(pollingRef.current);
           if (timerRef.current) clearInterval(timerRef.current);
           handleAprovarPagamento(pixResult.paymentId, 'PIX Instantâneo');
+        } else if (check.rejected) {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          if (timerRef.current) clearInterval(timerRef.current);
+          setRejectionReason(check.errorMessage || 'Pagamento não aprovado pela instituição financeira.');
+          setIsRejected(true);
+          try {
+            await hoteisService.updateHotel(hotelId, {
+              status: 'bloqueado',
+              notes: `Pagamento PIX rejeitado/cancelado automaticamente em ${new Date().toLocaleString('pt-BR')}. Motivo: ${check.errorMessage || check.rawStatus || 'N/D'}.`
+            } as any);
+          } catch { /* ignore */ }
         }
       } catch { /* ignore polling errors */ }
     }, 2000);
@@ -183,20 +201,28 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [pixResult?.paymentId, isApproved, isGratis, isBlocked, hotelId]);
+  }, [pixResult?.paymentId, isApproved, isGratis, isBlocked, isRejected, hotelId]);
 
   // Redirecionamento automático quando o pagamento for aprovado
   useEffect(() => {
     if (isApproved) {
+      const TARGET_URL = 'https://app.hotelnozap.com.br';
       const redirectTimer = setTimeout(() => {
-        window.location.href = 'https://app.hotelnozap.com.br';
+        try { window.location.replace(TARGET_URL); } catch { window.location.href = TARGET_URL; }
       }, 2500);
-      return () => clearTimeout(redirectTimer);
+      const fallbackTimer = setTimeout(() => {
+        window.location.href = TARGET_URL;
+      }, 4000);
+      return () => {
+        clearTimeout(redirectTimer);
+        clearTimeout(fallbackTimer);
+      };
     }
   }, [isApproved]);
 
   // Handler de aprovação e liberação
   const handleAprovarPagamento = async (paymentId: string, metodo: string) => {
+    const TARGET_URL = 'https://app.hotelnozap.com.br';
     setIsAtivando(true);
     setErroMsg(null);
     try {
@@ -213,10 +239,11 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     } finally {
       setIsApproved(true);
       setIsAtivando(false);
-      // Redirecionamento garantido para https://app.hotelnozap.com.br
+      // Redirecionamento garantido (dupla segurança para app.hotelnozap.com.br)
       setTimeout(() => {
-        window.location.href = 'https://app.hotelnozap.com.br';
+        try { window.location.replace(TARGET_URL); } catch { window.location.href = TARGET_URL; }
       }, 2500);
+      setTimeout(() => { window.location.href = TARGET_URL; }, 4500);
     }
   };
 
@@ -333,6 +360,93 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
             type="button"
             onClick={onFalarWhatsApp}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[#25D366] text-lg">chat</span>
+            Falar com Suporte
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TELA DE PAGAMENTO RECUSADO / CANCELADO (detecção em tempo real)
+  // ───────────────────────────────────────────────────────────────────────────
+  if (isRejected) {
+    return (
+      <div className="py-8 px-4 max-w-xl mx-auto text-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-rose-500/20 ring-8 ring-rose-50">
+          <span className="material-symbols-outlined text-4xl font-bold">cancel</span>
+        </div>
+
+        <span className="inline-block px-3.5 py-1 bg-rose-50 text-rose-800 border border-rose-200 text-xs font-black uppercase tracking-wider rounded-full mb-3">
+          Pagamento Não Aprovado • Tente Novamente
+        </span>
+
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">
+          Pagamento Recusado pela Instituição
+        </h2>
+        <p className="text-sm text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
+          Infelizmente o pagamento PIX do hotel <strong>{hotelNome}</strong> não foi aprovado pela sua instituição financeira. Você pode tentar novamente gerando um novo código PIX ou escolher pagar com cartão de crédito.
+        </p>
+
+        {rejectionReason && (
+          <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 text-xs text-rose-900 mb-6 text-left flex items-start gap-3">
+            <span className="material-symbols-outlined text-rose-600 shrink-0 mt-0.5 text-lg">error</span>
+            <div>
+              <strong className="block font-bold mb-1">Motivo informado pela instituição:</strong>
+              <span className="leading-relaxed">{rejectionReason}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4 text-xs text-sky-900 mb-6 text-left flex items-start gap-3">
+          <span className="material-symbols-outlined text-sky-600 shrink-0 mt-0.5">tips_and_updates</span>
+          <div>
+            <strong className="block font-bold mb-0.5">Dicas para concluir seu pagamento:</strong>
+            1. Verifique saldo disponível e limites no seu app do banco.
+            <br />
+            2. Certifique-se de que a chave PIX está correta ao copiar.
+            <br />
+            3. Use cartão de crédito como alternativa se o PIX persistir recusando.
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            type="button"
+            onClick={handleReiniciarPix}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#003400] hover:bg-[#004d00] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer active:scale-95"
+          >
+            <span className="material-symbols-outlined text-lg">refresh</span>
+            Gerar Novo Código PIX
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsRejected(false);
+              setRejectionReason(null);
+              setErroMsg(null);
+              setMetodoSelecionado('cartao');
+              if (timerRef.current) clearInterval(timerRef.current);
+              if (pollingRef.current) clearInterval(pollingRef.current);
+              setTimeLeft(300);
+              setIsBlocked(false);
+            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-base">credit_card</span>
+            Pagar com Cartão de Crédito
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const msg = `Olá! Fiz o cadastro do hotel ${hotelNome} no Hotel no Zap mas o pagamento PIX foi recusado. Poderiam me ajudar a concluir?`;
+              window.open(`https://wa.me/5566981585014?text=${encodeURIComponent(msg)}`, '_blank');
+            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-900 font-bold text-sm rounded-xl transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[#25D366] text-lg">chat</span>
             Falar com Suporte
