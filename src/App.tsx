@@ -84,17 +84,23 @@ const checkIsAssinarUrl = (pathname: string, search: string, hash: string): bool
   const hashClean = (hash || '').toLowerCase().replace(/^#\/?/, '');
   const hashParts = hashClean.split('?')[0].split('/').filter(Boolean);
   
-  if (parts[0] === 'assinar' || hashParts[0] === 'assinar') return true;
+  const isAssinarPath = 
+    parts[0] === 'assinar' || 
+    (parts[0] === 'parceiros' && parts[1] === 'assinar') ||
+    hashParts[0] === 'assinar' ||
+    (hashParts[0] === 'parceiros' && hashParts[1] === 'assinar');
+
+  if (isAssinarPath) return true;
 
   try {
     const sParams = new URLSearchParams(search || '');
     const hasSearchRef = sParams.has('ref') || sParams.has('cupom') || sParams.has('coupon');
-    if (hasSearchRef && (parts.length === 0 || parts[0] === 'assinar')) return true;
+    if (hasSearchRef && (parts.length === 0 || parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar'))) return true;
 
     if (hash && hash.includes('?')) {
       const hParams = new URLSearchParams(hash.split('?')[1]);
       const hasHashRef = hParams.has('ref') || hParams.has('cupom') || hParams.has('coupon');
-      if (hasHashRef && (parts.length === 0 || parts[0] === 'assinar')) return true;
+      if (hasHashRef && (parts.length === 0 || parts[0] === 'assinar' || (hashParts[0] === 'parceiros' && hashParts[1] === 'assinar'))) return true;
     }
   } catch { /* ignore */ }
 
@@ -112,7 +118,10 @@ export const App: React.FC = () => {
     try {
       if (checkIsAssinarUrl(window.location.pathname, window.location.search, window.location.hash)) {
         if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+          window.location.href = `https://hotelnozap.com.br/parceiros/assinar${window.location.search}${window.location.hash}`;
+        }
+        if (typeof window !== 'undefined' && window.location.pathname === '/assinar') {
+          window.history.replaceState({}, '', `/parceiros/assinar${window.location.search}${window.location.hash}`);
         }
         return 'assinar';
       }
@@ -125,9 +134,12 @@ export const App: React.FC = () => {
       if (parts[0] === 'camareira') return 'camareira';
       if (parts[0] === 'lp' && parts[1] === 'lpnovohotel') return 'lp-novo-hotel';
       if (parts[0] === 'lp') return 'landingpage';
-      if (parts[0] === 'assinar') {
+      if (parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar')) {
         if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+          window.location.href = `https://hotelnozap.com.br/parceiros/assinar${window.location.search}${window.location.hash}`;
+        }
+        if (typeof window !== 'undefined' && window.location.pathname === '/assinar') {
+          window.history.replaceState({}, '', `/parceiros/assinar${window.location.search}${window.location.hash}`);
         }
         return 'assinar';
       }
@@ -200,8 +212,11 @@ export const App: React.FC = () => {
     const handleLocationChange = () => {
       if (checkIsAssinarUrl(window.location.pathname, window.location.search, window.location.hash)) {
         if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+          window.location.href = `https://hotelnozap.com.br/parceiros/assinar${window.location.search}${window.location.hash}`;
           return;
+        }
+        if (typeof window !== 'undefined' && window.location.pathname === '/assinar') {
+          window.history.replaceState({}, '', `/parceiros/assinar${window.location.search}${window.location.hash}`);
         }
         setActiveTab('assinar');
         return;
@@ -223,10 +238,13 @@ export const App: React.FC = () => {
         setActiveTab('lp-novo-hotel');
       } else if (parts[0] === 'lp') {
         setActiveTab('landingpage');
-      } else if (parts[0] === 'assinar') {
+      } else if (parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar')) {
         if (isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-          window.location.href = `https://hotelnozap.com.br${window.location.pathname}${window.location.search}${window.location.hash}`;
+          window.location.href = `https://hotelnozap.com.br/parceiros/assinar${window.location.search}${window.location.hash}`;
           return;
+        }
+        if (typeof window !== 'undefined' && window.location.pathname === '/assinar') {
+          window.history.replaceState({}, '', `/parceiros/assinar${window.location.search}${window.location.hash}`);
         }
         setActiveTab('assinar');
       } else if (parts[0] === 'paineladmin') {
@@ -567,6 +585,7 @@ export const App: React.FC = () => {
         currentParts[0] === 'cardapio' ||
         currentParts[0] === 'lp' ||
         currentParts[0] === 'assinar' ||
+        (currentParts[0] === 'parceiros' && currentParts[1] === 'assinar') ||
         currentParts[0] === 'privacidade' ||
         currentParts[0] === 'termos' ||
         currentParts[0] === 'empresa' ||
@@ -1091,6 +1110,7 @@ export const App: React.FC = () => {
     pathParts[0] === 'cardapio' ||
     pathParts[0] === 'lp' ||
     pathParts[0] === 'assinar' ||
+    (pathParts[0] === 'parceiros' && pathParts[1] === 'assinar') ||
     activeTab === 'pagina-hotel' ||
     activeTab === 'catalogo-hoteis' ||
     activeTab === 'detalhes-quarto' ||

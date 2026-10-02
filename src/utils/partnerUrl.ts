@@ -1,7 +1,7 @@
 /**
  * Utilitário para geração e manipulação do link de indicação de parceiros.
  * Em produção, o link oficial sempre utiliza o domínio público principal:
- * https://hotelnozap.com.br/assinar?ref=CODIGO (sem o subdomínio app.)
+ * https://hotelnozap.com.br/parceiros/assinar?ref=CODIGO (sem o subdomínio app.)
  * Em ambiente local (localhost), mantém a porta/origem atual para testes.
  */
 
@@ -37,7 +37,7 @@ export const getAppLoginUrl = (): string => {
 export const getPartnerReferralLink = (coupon?: string): string => {
   const code = (coupon || 'HOTELNOZAP').trim();
   const baseUrl = getPartnerPublicBaseUrl();
-  return `${baseUrl}/assinar?ref=${encodeURIComponent(code)}`;
+  return `${baseUrl}/parceiros/assinar?ref=${encodeURIComponent(code)}`;
 };
 
 export const copyPartnerReferralLink = async (coupon?: string): Promise<boolean> => {

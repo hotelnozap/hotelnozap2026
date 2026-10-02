@@ -504,7 +504,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
         loginEmail: loginEmail.trim(),
         status: 'prospecto',
         partnerRef: refCode,
-        notes: 'Cadastro via link de parceiro (/assinar?ref=' + refCode + ') em ' + new Date().toLocaleDateString('pt-BR') + '. Parceiro: ' + refCode,
+        notes: 'Cadastro via link de parceiro (/parceiros/assinar?ref=' + refCode + ') em ' + new Date().toLocaleDateString('pt-BR') + '. Parceiro: ' + refCode,
       } as any);
 
       if (!hotelRes.success) {
