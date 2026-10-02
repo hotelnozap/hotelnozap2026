@@ -37,6 +37,7 @@ export interface MercadoPagoCredentials {
   enableBoleto: boolean;
   maxInstallments: string;
   updatedAt?: string;
+  chavePixMaster?: string;
 }
 
 export const STORAGE_KEY_MASTER_MP = 'hotelnozap_config_mercadopago_master';
@@ -51,7 +52,8 @@ export const DEFAULT_MP_CREDENTIALS: MercadoPagoCredentials = {
   enablePix: true,
   enableCreditCard: true,
   enableBoleto: false,
-  maxInstallments: '12'
+  maxInstallments: '12',
+  chavePixMaster: 'def0e87a-f7d0-4c54-830b-473206cf78c6'
 };
 
 export const mercadopagoService = {
@@ -104,6 +106,7 @@ export const mercadopagoService = {
           environment: parsedP.gatewayEnvironment || 'production',
           accessToken: parsedP.gatewayToken || '',
           publicKey: parsedP.gatewayPublicKey || '',
+          chavePixMaster: parsedP.chave_pix_master || parsedP.gatewayPixKey || DEFAULT_MP_CREDENTIALS.chavePixMaster
         };
       }
     } catch (e) {
@@ -121,28 +124,49 @@ export const mercadopagoService = {
 
       localStorage.setItem(STORAGE_KEY_MASTER_MP, JSON.stringify(payload));
 
-      // Sincroniza com hotelnozap_parametros_sistema
+      // Sincroniza com hotelnozap_parametros_sistema local
       try {
         const storedParams = localStorage.getItem(STORAGE_KEY_PARAMETROS);
         const parsedP = storedParams ? JSON.parse(storedParams) : {};
         parsedP.gatewayEnvironment = payload.environment;
         parsedP.gatewayToken = payload.accessToken;
+        parsedP.gatewayPublicKey = payload.publicKey;
         parsedP.gatewayProvider = 'mercadopago';
+        if (payload.chavePixMaster) {
+          parsedP.chave_pix_master = payload.chavePixMaster.trim();
+        }
         localStorage.setItem(STORAGE_KEY_PARAMETROS, JSON.stringify(parsedP));
       } catch { /* ignore */ }
+
+      // Sincroniza no Supabase via Serverless API (usando service_role)
+      try {
+        await fetch('/api/get-pix-master', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chavePix: payload.chavePixMaster,
+            gatewayToken: payload.accessToken,
+            gatewayPublicKey: payload.publicKey,
+            gatewayEnvironment: payload.environment
+          })
+        });
+      } catch (apiErr) {
+        console.warn('Aviso ao sincronizar credenciais master via API:', apiErr);
+      }
 
       // Registra evento de auditoria
       await systemLogsService.addLog({
         level: 'success',
         module: 'financeiro',
         action: 'Credenciais Master SaaS Mercado Pago Salvas',
-        details: `Ambiente: ${payload.environment === 'production' ? 'Produção' : 'Sandbox'}. Chaves configuradas para cobrança exclusiva de planos SaaS.`,
+        details: `Ambiente: ${payload.environment === 'production' ? 'Produção' : 'Sandbox'}. Chaves configuradas para cobrança exclusiva de planos SaaS. Chave PIX: ${payload.chavePixMaster || 'Padrão'}.`,
         metadata: {
           scope: 'admin_master_saas',
           environment: payload.environment,
           enablePix: payload.enablePix,
           enableCreditCard: payload.enableCreditCard,
-          enableBoleto: payload.enableBoleto
+          enableBoleto: payload.enableBoleto,
+          chavePixMaster: payload.chavePixMaster
         }
       });
 
