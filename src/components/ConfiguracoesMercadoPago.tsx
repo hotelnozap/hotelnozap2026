@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { systemLogsService } from '../services/systemLogsService';
-import { mercadopagoService, MercadoPagoCredentials } from '../services/mercadopagoService';
+import { mercadopagoService, MercadoPagoCredentials, getApiBaseUrl } from '../services/mercadopagoService';
 import { currentHotelService, hoteisService } from '../services/supabaseService';
 import { Hotel } from './CadastroHoteis';
 
@@ -82,13 +82,15 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
       }
 
       // Sincroniza em tempo real com o banco de dados via API
-      fetch('/api/get-pix-master')
+      fetch(`${getApiBaseUrl()}/api/get-pix-master`)
         .then(res => res.json())
         .then(data => {
           if (data && data.success) {
             if (data.chavePix) setChavePixMaster(data.chavePix);
             if (data.publicKey && !creds.publicKey) setPublicKey(data.publicKey);
-            if (data.token && !creds.accessToken) setAccessToken(data.token);
+            if (data.token && !creds.accessToken && !data.token.includes('9812401928409182')) {
+              setAccessToken(data.token);
+            }
             if (data.environment) setEnvironment(data.environment);
           }
         })

@@ -785,12 +785,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className={lCls + ' mb-0'}>Nome Fantasia *</label>
-                    <span className="text-[11px] text-slate-400">
-                      (Digite <strong className="text-emerald-600 font-bold">hotel01</strong> para autocompletar)
-                    </span>
-                  </div>
+                  <label className={lCls}>Nome Fantasia *</label>
                   <input type="text" value={nomeFantasia} onChange={e => handleNomeFantasiaChange(e.target.value)} placeholder="Ex: Pousada Recanto dos Corais" className={getInputCls(isNomeFantasiaInvalid)} />
                   {isNomeFantasiaInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Nome Fantasia é obrigatório (mínimo 2 caracteres)</p>}
                 </div>

@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const { chavePix, gatewayToken, gatewayPublicKey, gatewayEnvironment } = body || {};
+    const { chavePix, gatewayToken, gatewayPublicKey, gatewayEnvironment, gatewayProvider } = body || {};
 
     const patchPayload = {
       atualizado_em: new Date().toISOString()
@@ -49,6 +49,7 @@ export default async function handler(req, res) {
     if (gatewayToken !== undefined) patchPayload.gateway_token = String(gatewayToken).trim();
     if (gatewayPublicKey !== undefined) patchPayload.gateway_public_key = String(gatewayPublicKey).trim();
     if (gatewayEnvironment !== undefined) patchPayload.gateway_environment = String(gatewayEnvironment).trim();
+    if (gatewayProvider !== undefined) patchPayload.gateway_provider = String(gatewayProvider).trim();
 
     try {
       // Atualiza o registro mestre (id 00000000-0000-0000-0000-000000000001)

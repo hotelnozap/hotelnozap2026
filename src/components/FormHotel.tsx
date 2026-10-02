@@ -1484,9 +1484,6 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     Nome Fantasia (Exibição no Zap) *
                   </label>
-                  <span className="text-[10px] text-slate-400">
-                    (Digite <strong className="text-emerald-700 font-bold">hotel01</strong> para autocompletar)
-                  </span>
                 </div>
                 <input 
                   type="text" 
