@@ -171,7 +171,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
 
     pollingRef.current = setInterval(async () => {
       try {
-        const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId, hotelId);
+        const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId, hotelId, valorPlano);
         if (check.approved) {
           if (pollingRef.current) clearInterval(pollingRef.current);
           if (timerRef.current) clearInterval(timerRef.current);
