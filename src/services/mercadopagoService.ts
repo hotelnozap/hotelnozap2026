@@ -56,6 +56,14 @@ export const DEFAULT_MP_CREDENTIALS: MercadoPagoCredentials = {
   chavePixMaster: 'def0e87a-f7d0-4c54-830b-473206cf78c6'
 };
 
+export const getApiBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) return '';
+  }
+  return 'https://app.hotelnozap.com.br';
+};
+
 export const mercadopagoService = {
   // ─────────────────────────────────────────────────────────────────────────
   // 1. REGRA: VERIFICA SE O PLANO É GRATUITO (ISENTO DE COBRANÇA)
@@ -140,7 +148,7 @@ export const mercadopagoService = {
 
       // Sincroniza no Supabase via Serverless API (usando service_role)
       try {
-        await fetch('/api/get-pix-master', {
+        await fetch(`${getApiBaseUrl()}/api/get-pix-master`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -375,7 +383,7 @@ export const mercadopagoService = {
 
     // 1. Tenta API Serverless da Vercel (com service role para leitura pública segura)
     try {
-      const resp = await fetch('/api/get-pix-master');
+      const resp = await fetch(`${getApiBaseUrl()}/api/get-pix-master`);
       if (resp.ok) {
         const data = await resp.json();
         if (data.chavePix) {
@@ -434,7 +442,7 @@ export const mercadopagoService = {
 
     // 1. Tenta criar cobrança oficial via Serverless Function (evita CORS e protege token)
     try {
-      const resp = await fetch('/api/mercadopago-pix?action=create', {
+      const resp = await fetch(`${getApiBaseUrl()}/api/mercadopago-pix?action=create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -494,7 +502,7 @@ export const mercadopagoService = {
       if (hotelId) queryParams.set('hotelId', hotelId);
       if (valor) queryParams.set('valor', String(valor));
 
-      const resp = await fetch(`/api/mercadopago-pix?${queryParams.toString()}`);
+      const resp = await fetch(`${getApiBaseUrl()}/api/mercadopago-pix?${queryParams.toString()}`);
       if (resp.ok) {
         const data = await resp.json();
         if (data?.approved) {
