@@ -90,11 +90,21 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
 
   const handleDeleteConfirm = async () => {
     if (!selectedHotelDelete) return;
+    const hotelName = selectedHotelDelete.name;
+    const hotelId = selectedHotelDelete.id;
     try {
-      await hoteisService.deleteHotel(selectedHotelDelete.id);
-    } catch { /* ignore */ }
-    showToast(`Hotel "${selectedHotelDelete.name}" excluído com sucesso.`);
+      const ok = await hoteisService.deleteHotel(hotelId);
+      if (ok) {
+        setHoteis(prev => prev.filter(h => h.id !== hotelId));
+        showToast(`Hotel "${hotelName}" excluído com sucesso.`);
+      } else {
+        showToast(`Não foi possível excluir o hotel "${hotelName}".`);
+      }
+    } catch {
+      showToast(`Erro ao excluir hotel "${hotelName}".`);
+    }
     setSelectedHotelDelete(null);
+    loadRealData();
   };
 
   // Carregar dados reais de todas as entidades do Supabase

@@ -948,21 +948,46 @@ export const hoteisService = {
 
   async deleteHotel(id: string): Promise<boolean> {
     try {
-      // Limpeza de tabelas dependentes para evitar erro de Foreign Key (integridade referencial)
-      try { await supabase.from('reservas').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('quartos').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('hospedes').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('produtos').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('contas_pagar').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('contas_receber').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('usuarios').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('categorias_quartos').delete().eq('hotel_id', id); } catch {}
-      try { await supabase.from('itens_quartos').delete().eq('hotel_id', id); } catch {}
+      let apiSuccess = false;
 
-      const { error } = await supabase.from('hoteis').delete().eq('id', id);
-      if (error) {
-        console.error('Erro ao deletar hotel no Supabase:', error);
-        return false;
+      // 1. Tentar exclusão completa via Serverless Function (com service_role que apaga do Supabase Auth e tabela usuários)
+      try {
+        const resp = await fetch('/api/delete-hotel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hotelId: id })
+        });
+        if (resp.ok) {
+          const resData = await resp.json();
+          if (resData && resData.success) {
+            apiSuccess = true;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('API /api/delete-hotel inacessível, recorrendo à exclusão direta via Supabase client:', apiErr);
+      }
+
+      // 2. Se a API Serverless não pôde ser executada, realiza a limpeza direta via Supabase Client
+      if (!apiSuccess) {
+        try { await supabase.from('destaques_quarto').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('reservas').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('quartos').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('hospedes').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('produtos').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('contas_pagar').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('contas_receber').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('categorias_quartos').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('itens_quartos').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('cupons_desconto').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('hotel_configuracoes').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('logs_sistema').delete().eq('hotel_id', id); } catch {}
+        try { await supabase.from('usuarios').delete().eq('hotel_id', id); } catch {}
+
+        const { error } = await supabase.from('hoteis').delete().eq('id', id);
+        if (error) {
+          console.error('Erro ao deletar hotel no Supabase:', error);
+          return false;
+        }
       }
 
       if (typeof window !== 'undefined') {
