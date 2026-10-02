@@ -7,6 +7,7 @@ import { getAppLoginUrl } from '../utils/partnerUrl';
 import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotelUrlAvailabilityInSupabase } from '../utils/hotelUrl';
 import { CheckoutPlanoStep } from './CheckoutPlanoStep';
 import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
+import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
 
 interface LpNovoHotelProps {
   onNavigateToLP?: () => void;
@@ -308,6 +309,18 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
     setCnpj(maskCnpj(val));
   };
 
+  // Regra de Segurança: Verificação em tempo real de CNPJ, CPF e E-mail de Acesso
+  const {
+    cnpjCheck,
+    cpfCheck,
+    emailCheck,
+    validateFinalStep
+  } = useHotelSecurityCheck({
+    cnpj,
+    cpf: cpfResponsavel,
+    email: loginEmail
+  });
+
   useEffect(() => {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setErrorMsg('');
@@ -321,6 +334,9 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
       }
       if (!cnpj.trim() || !isValidCnpj(cnpj)) {
         return 'Informe um CNPJ válido e completo para o hotel.';
+      }
+      if (cnpjCheck.exists) {
+        return cnpjCheck.message || 'O CNPJ informado já está cadastrado no sistema.';
       }
       if (!categoria.trim()) {
         return 'Selecione a categoria do hotel.';
@@ -380,11 +396,23 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
       if (cpfResponsavel.trim() && !isValidCpf(cpfResponsavel)) {
         return 'O CPF informado para o responsável é inválido.';
       }
+      if (cpfCheck.exists) {
+        return cpfCheck.message || 'O CPF informado já está cadastrado no sistema.';
+      }
     }
     if (targetStep === 5) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!loginEmail.trim() || !emailRegex.test(loginEmail.trim())) {
         return 'Informe um e-mail de acesso válido para login.';
+      }
+      if (emailCheck.exists) {
+        return emailCheck.message || 'O e-mail de acesso informado já está cadastrado no sistema.';
+      }
+      if (cnpjCheck.exists) {
+        return cnpjCheck.message || 'O CNPJ informado já está cadastrado no sistema.';
+      }
+      if (cpfCheck.exists) {
+        return cpfCheck.message || 'O CPF informado já está cadastrado no sistema.';
       }
       if (!senha || senha.length < 6) {
         return 'A senha de acesso deve ter no mínimo 6 caracteres.';
@@ -426,6 +454,16 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setErrorMsg('');
+
+    // Validação de segurança final rigorosa (bloqueio de duplicidade de CNPJ, CPF e E-mail de Acesso)
+    const secResult = await validateFinalStep();
+    if (!secResult.allowed) {
+      setErrorMsg(secResult.error || 'Não é permitido cadastrar hotel com dados já existentes no sistema.');
+      setIsSubmitting(false);
+      formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
     let hotelCriadoId: string | null = null;
     try {
       const cityUf = cidade && uf ? cidade + ' / ' + uf : cidade || '';
@@ -749,15 +787,39 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 <div>
                   <label className={'flex items-center justify-between ' + lCls}>
                     <span>CNPJ *</span>
-                    {cnpjValidation.isComplete && (
-                      <span className={'text-[11px] font-bold flex items-center gap-0.5 ' + (cnpjValidation.isValid ? 'text-emerald-600' : 'text-red-500')}>
-                        <span className="material-symbols-outlined text-xs">{cnpjValidation.isValid ? 'verified' : 'cancel'}</span>
-                        {cnpjValidation.isValid ? 'CNPJ Valido' : 'CNPJ Invalido'}
-                      </span>
-                    )}
+                    <SecurityFieldBadge
+                      check={cnpjCheck}
+                      isValidFormat={cnpjValidation.isValid}
+                      validLabel="Válido"
+                      emptyText={cnpjValidation.isComplete && !cnpjValidation.isValid ? 'CNPJ Inválido' : undefined}
+                    />
                   </label>
-                  <input type="text" value={cnpj} onChange={e => handleCnpjChange(e.target.value)} placeholder="00.000.000/0001-00" maxLength={18} className={getInputCls(isCnpjInvalid) + ' font-mono ' + (cnpjValidation.isComplete ? cnpjValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
-                  {isCnpjInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um CNPJ válido e completo</p>}
+                  <input
+                    type="text"
+                    value={cnpj}
+                    onChange={e => handleCnpjChange(e.target.value)}
+                    placeholder="00.000.000/0001-00"
+                    maxLength={18}
+                    className={
+                      getInputCls(isCnpjInvalid || cnpjCheck.exists) +
+                      ' font-mono ' +
+                      (cnpjCheck.exists
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : cnpjCheck.checked && cnpjValidation.isValid
+                        ? 'border-emerald-500 focus:border-emerald-500'
+                        : '')
+                    }
+                  />
+                  {cnpjCheck.exists ? (
+                    <p className="text-[11px] text-red-600 mt-1 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      {cnpjCheck.message || 'Este CNPJ já está cadastrado no sistema.'}
+                    </p>
+                  ) : isCnpjInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>Informe um CNPJ válido e completo
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className={lCls}>Categoria *</label>
@@ -1021,10 +1083,39 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                 <div>
                   <label className={'flex items-center justify-between ' + lCls}>
                     <span>CPF (opcional)</span>
-                    {cpfValidation.isComplete && <span className={'text-[11px] font-bold flex items-center gap-0.5 ' + (cpfValidation.isValid ? 'text-emerald-600' : 'text-red-500')}><span className="material-symbols-outlined text-xs">{cpfValidation.isValid ? 'verified' : 'cancel'}</span>{cpfValidation.isValid ? 'Valido' : 'Invalido'}</span>}
+                    <SecurityFieldBadge
+                      check={cpfCheck}
+                      isValidFormat={cpfValidation.isValid}
+                      validLabel="Válido"
+                      emptyText={cpfValidation.isComplete && !cpfValidation.isValid ? 'CPF Inválido' : undefined}
+                    />
                   </label>
-                  <input type="text" value={cpfResponsavel} onChange={e => setCpfResponsavel(maskCpf(e.target.value))} placeholder="000.000.000-00" maxLength={14} className={getInputCls(isCpfRespInvalid) + ' font-mono ' + (cpfValidation.isComplete ? cpfValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
-                  {isCpfRespInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>CPF inválido</p>}
+                  <input
+                    type="text"
+                    value={cpfResponsavel}
+                    onChange={e => setCpfResponsavel(maskCpf(e.target.value))}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className={
+                      getInputCls(isCpfRespInvalid || cpfCheck.exists) +
+                      ' font-mono ' +
+                      (cpfCheck.exists
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : cpfCheck.checked && cpfValidation.isValid
+                        ? 'border-emerald-500 focus:border-emerald-500'
+                        : '')
+                    }
+                  />
+                  {cpfCheck.exists ? (
+                    <p className="text-[11px] text-red-600 mt-1 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      {cpfCheck.message || 'Este CPF já está cadastrado no sistema.'}
+                    </p>
+                  ) : isCpfRespInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>CPF inválido
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className={lCls}>Cargo / Funcao</label>
@@ -1056,12 +1147,39 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
               <p className="text-gray-500 text-sm">Crie seu acesso ao painel de controle do Hotel no Zap.</p>
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className={lCls}>E-mail de Acesso *</label>
-                  <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seu@email.com" className={getInputCls(isLoginEmailInvalid)} />
-                  {isLoginEmailInvalid ? (
-                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um e-mail de acesso válido</p>
+                  <label className={'flex items-center justify-between ' + lCls}>
+                    <span>E-mail de Acesso *</span>
+                    <SecurityFieldBadge
+                      check={emailCheck}
+                      isValidFormat={/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())}
+                      validLabel="Válido"
+                    />
+                  </label>
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={e => setLoginEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className={
+                      getInputCls(isLoginEmailInvalid || emailCheck.exists) +
+                      (emailCheck.exists
+                        ? ' border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : emailCheck.checked && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())
+                        ? ' border-emerald-500 focus:border-emerald-500'
+                        : '')
+                    }
+                  />
+                  {emailCheck.exists ? (
+                    <p className="text-[11px] text-red-600 mt-1 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      {emailCheck.message || 'Este e-mail de acesso já está cadastrado no sistema.'}
+                    </p>
+                  ) : isLoginEmailInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>Informe um e-mail de acesso válido
+                    </p>
                   ) : (
-                    <p className="text-[11px] text-gray-400 mt-1">Sera usado para fazer login no sistema.</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Será usado para fazer login no sistema.</p>
                   )}
                 </div>
                 <div>
