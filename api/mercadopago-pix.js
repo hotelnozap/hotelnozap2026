@@ -181,25 +181,6 @@ export default async function handler(req, res) {
       if (h && (h.status === 'ativo' || h.status === 'Ativo')) {
         return res.status(200).json({ approved: true, status: 'approved', source: 'database_hotel_active' });
       }
-
-      // Verifica se o usuário vinculado já foi cadastrado e está ativo ou já acessou
-      const { data: users } = await supabaseAdmin
-        .from('usuarios')
-        .select('id, status, ultimo_acesso, criado_em')
-        .eq('hotel_id', hotelId)
-        .limit(1);
-
-      if (users && users.length > 0) {
-        const u = users[0];
-        const userHasAccessed = Boolean(u.ultimo_acesso && u.ultimo_acesso !== 'Nunca acessou');
-        const hotelAgeSec = h?.criado_em ? (Date.now() - new Date(h.criado_em).getTime()) / 1000 : 999;
-
-        // Se o usuário já acessou o painel OU a conta foi criada há mais de 15 segundos no checkout
-        if (userHasAccessed || (u.status === 'ativo' && hotelAgeSec > 15)) {
-          await supabaseAdmin.from('hoteis').update({ status: 'ativo' }).eq('id', hotelId);
-          return res.status(200).json({ approved: true, status: 'approved', source: 'user_active_auto_validated' });
-        }
-      }
     } catch (e) {
       console.warn('Erro ao verificar status do hotel no Supabase:', e);
     }

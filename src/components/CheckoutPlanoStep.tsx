@@ -190,7 +190,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     if (isApproved) {
       const redirectTimer = setTimeout(() => {
         window.location.href = 'https://app.hotelnozap.com.br';
-      }, 1000);
+      }, 2500);
       return () => clearTimeout(redirectTimer);
     }
   }, [isApproved]);
@@ -213,10 +213,10 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     } finally {
       setIsApproved(true);
       setIsAtivando(false);
-      // Redirecionamento imediato garantido para https://app.hotelnozap.com.br
+      // Redirecionamento garantido para https://app.hotelnozap.com.br
       setTimeout(() => {
         window.location.href = 'https://app.hotelnozap.com.br';
-      }, 1000);
+      }, 2500);
     }
   };
 
