@@ -444,11 +444,7 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   };
 
   const goToPainelAdmin = () => {
-    if (onNavigateToLogin) {
-      onNavigateToLogin();
-    } else {
-      window.location.href = getAppLoginUrl();
-    }
+    window.location.href = 'https://app.hotelnozap.com.br';
   };
 
   const handleSubmit = async () => {

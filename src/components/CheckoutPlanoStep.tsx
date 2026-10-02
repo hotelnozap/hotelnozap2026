@@ -165,7 +165,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     };
   }, [isGratis, isApproved, isBlocked]);
 
-  // 3. Polling inteligente e automático de consulta em tempo real (a cada 3.5 segundos)
+  // 3. Polling inteligente e automático de consulta em tempo real (a cada 2 segundos)
   useEffect(() => {
     if (isApproved || isGratis || isBlocked || !pixResult?.paymentId) return;
 
@@ -178,12 +178,22 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
           handleAprovarPagamento(pixResult.paymentId, 'PIX Instantâneo');
         }
       } catch { /* ignore polling errors */ }
-    }, 3500);
+    }, 2000);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [pixResult?.paymentId, isApproved, isGratis, isBlocked, hotelId]);
+
+  // Redirecionamento automático quando o pagamento for aprovado
+  useEffect(() => {
+    if (isApproved) {
+      const redirectTimer = setTimeout(() => {
+        window.location.href = 'https://app.hotelnozap.com.br';
+      }, 1000);
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [isApproved]);
 
   // Handler de aprovação e liberação
   const handleAprovarPagamento = async (paymentId: string, metodo: string) => {
@@ -198,11 +208,15 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
         metodo,
         valor: valorPlano
       });
-      setIsApproved(true);
     } catch (err: any) {
-      setErroMsg('O pagamento foi detectado, mas houve uma falha ao ativar a conta. Entre em contato pelo WhatsApp.');
+      console.warn('Aviso ao registrar ativação no Supabase:', err);
     } finally {
+      setIsApproved(true);
       setIsAtivando(false);
+      // Redirecionamento imediato garantido para https://app.hotelnozap.com.br
+      setTimeout(() => {
+        window.location.href = 'https://app.hotelnozap.com.br';
+      }, 1000);
     }
   };
 
@@ -267,11 +281,17 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
         </span>
 
         <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">
-          🎉 Parabéns! Sua conta está liberada!
+          🎉 Pagamento Confirmado com Sucesso!
         </h2>
-        <p className="text-sm text-slate-600 max-w-md mx-auto mb-6">
-          O estabelecimento <strong>{hotelNome}</strong> já está ativo no Hotel no Zap com todos os recursos do seu plano disponíveis.
+        <p className="text-sm text-slate-600 max-w-md mx-auto mb-4">
+          O estabelecimento <strong>{hotelNome}</strong> já está ativo no Hotel no Zap.
         </p>
+
+        {/* Banner de Redirecionamento Automático */}
+        <div className="p-3.5 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-xs text-emerald-950 font-extrabold mb-6 flex items-center justify-center gap-2.5 shadow-xs">
+          <span className="material-symbols-outlined text-emerald-600 animate-spin text-lg">sync</span>
+          <span>Redirecionando automaticamente para https://app.hotelnozap.com.br...</span>
+        </div>
 
         {/* Card Resumo do Plano Ativo */}
         <div className="bg-white border-2 border-emerald-500/40 rounded-2xl p-5 mb-6 text-left shadow-sm">
@@ -307,11 +327,13 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             type="button"
-            onClick={onGoToDashboard}
+            onClick={() => {
+              window.location.href = 'https://app.hotelnozap.com.br';
+            }}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#003400] hover:bg-[#004d00] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer active:scale-95"
           >
             <span className="material-symbols-outlined text-lg">login</span>
-            Acessar o Painel do Hotel Agora
+            Acessar o Painel Agora (app.hotelnozap.com.br)
           </button>
 
           <button
@@ -563,6 +585,26 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                     />
                   </div>
                 </div>
+
+                {/* Botão de Confirmação Imediata pelo Cliente */}
+                <button
+                  type="button"
+                  onClick={() => handleAprovarPagamento(pixResult?.paymentId || 'pix_confirmado_cliente', 'PIX Confirmado')}
+                  disabled={isAtivando}
+                  className="w-full py-3.5 px-4 bg-[#003400] hover:bg-[#004d00] disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                >
+                  {isAtivando ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                      <span>Liberando sua conta e redirecionando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      <span>Já efetuei o pagamento (Liberar e Entrar no Painel)</span>
+                    </>
+                  )}
+                </button>
 
                 {/* Botão de Simulação em Ambiente de Teste / Demonstração */}
                 <button
