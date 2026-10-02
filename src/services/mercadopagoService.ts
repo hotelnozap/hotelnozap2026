@@ -501,6 +501,7 @@ export const mercadopagoService = {
     rejected: boolean;
     errorMessage?: string;
     rawStatus?: string;
+    source?: string;
   }> {
     if (!paymentId) {
       return { approved: false, status: 'unknown', rejected: false, rawStatus: 'unknown' };
@@ -508,8 +509,8 @@ export const mercadopagoService = {
 
     let rawStatusResposta: string | undefined;
     let mensagemErro: string | undefined;
+    const pollingCheckId = Date.now().toString().slice(-6);
 
-    // 1. Consulta em tempo real via Serverless API (com verificação de banco, paymentId e busca de pagamentos recentes)
     try {
       const queryParams = new URLSearchParams();
       queryParams.set('action', 'check');
@@ -517,17 +518,23 @@ export const mercadopagoService = {
       if (hotelId) queryParams.set('hotelId', hotelId);
       if (valor) queryParams.set('valor', String(valor));
 
-      const resp = await fetch(`${getApiBaseUrl()}/api/mercadopago-pix?${queryParams.toString()}`);
+      const url = `${getApiBaseUrl()}/api/mercadopago-pix?${queryParams.toString()}`;
+      const resp = await fetch(url);
       if (resp.ok) {
         const data = await resp.json();
         rawStatusResposta = String(data?.status || data?.state || data?.result || '').toLowerCase();
 
+        // Instrumentation: log a cada tick para diagnóstico H3/H5
+        console.debug(`[MP-CLIENT check#${pollingCheckId}] paymentId=${paymentId} hotelId=${hotelId || 'null'} valor=${valor || 0} resp.http=${resp.status} approved=${!!data?.approved} status=${data?.status || 'null'} source=${data?.source || 'null'} raw=${JSON.stringify(data).substring(0, 180)}`);
+
         if (data?.approved) {
+          console.log(`[MP-CLIENT check#${pollingCheckId}] ✅ APPROVED! source=${data?.source}. Enviando para handleAprovarPagamento.`);
           return {
             approved: true,
             status: 'approved',
             rejected: false,
-            rawStatus: rawStatusResposta || 'approved'
+            rawStatus: rawStatusResposta || 'approved',
+            source: data.source
           };
         }
 
@@ -565,9 +572,11 @@ export const mercadopagoService = {
             };
           }
         }
+      } else {
+        console.warn(`[MP-CLIENT check#${pollingCheckId}] ⚠️ HTTP não-ok ${resp.status} ao checar pagamento. url=${url.substring(0, 100)}`);
       }
-    } catch (e) {
-      console.warn('Erro ao consultar /api/mercadopago-pix check:', e);
+    } catch (e: any) {
+      console.warn(`[MP-CLIENT check#${pollingCheckId}] Exceção consultarPagamentoMaster fetch:`, e?.message || e);
     }
 
     // 2. Se hotelId for informado, verifica status do hotel no Supabase (fonte da verdade: webhook server-side ou admin)

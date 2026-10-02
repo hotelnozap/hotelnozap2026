@@ -176,14 +176,26 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   useEffect(() => {
     if (isApproved || isGratis || isBlocked || isRejected || !pixResult?.paymentId) return;
 
+    let tickCounter = 0;
+    let ultimaRespostaApproved = false;
+    console.log(`[CHECKOUT] Polling 2s INICIADO. paymentId=${pixResult.paymentId} hotelId=${hotelId} valorPlano=${valorPlano} gateway=${(pixResult as any)?.gateway || 'N/D'}`);
+
     pollingRef.current = setInterval(async () => {
+      tickCounter += 1;
       try {
         const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId, hotelId, valorPlano);
-        if (check.approved) {
+        if (tickCounter % 5 === 1 || check.approved || check.rejected) {
+          console.debug(`[CHECKOUT] tick#${tickCounter} check.approved=${check.approved} check.rejected=${check.rejected} check.status=${check.status} rawStatus=${check.rawStatus || 'N/D'} source=${(check as any)?.source || 'N/D'} timeLeft=${timeLeft}s`);
+        }
+
+        if (check.approved && !ultimaRespostaApproved) {
+          ultimaRespostaApproved = true;
+          console.log(`[CHECKOUT] tick#${tickCounter} ✅ PAGAMENTO APROVADO! Limpando timers + handleAprovarPagamento. paymentId=${pixResult.paymentId}`);
           if (pollingRef.current) clearInterval(pollingRef.current);
           if (timerRef.current) clearInterval(timerRef.current);
           handleAprovarPagamento(pixResult.paymentId, 'PIX Instantâneo');
         } else if (check.rejected) {
+          console.warn(`[CHECKOUT] tick#${tickCounter} ❌ PAGAMENTO REJEITADO. reason=${check.errorMessage || check.rawStatus}. paymentId=${pixResult.paymentId}`);
           if (pollingRef.current) clearInterval(pollingRef.current);
           if (timerRef.current) clearInterval(timerRef.current);
           setRejectionReason(check.errorMessage || 'Pagamento não aprovado pela instituição financeira.');
@@ -195,7 +207,11 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
             } as any);
           } catch { /* ignore */ }
         }
-      } catch { /* ignore polling errors */ }
+      } catch (err: any) {
+        if (tickCounter % 10 === 1) {
+          console.warn(`[CHECKOUT] tick#${tickCounter} ⚠️ Exceção no polling. Ignorado. err=${err?.message || err}`);
+        }
+      }
     }, 2000);
 
     return () => {
