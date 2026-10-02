@@ -32,6 +32,8 @@ import {
   checkHotelUrlAvailabilityInSupabase,
   extractHotelSlug
 } from '../utils/hotelUrl';
+import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
+import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
 
 
 export interface FormHotelProps {
@@ -150,19 +152,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const [isUrlAvailable, setIsUrlAvailable] = useState<boolean | null>(hotelToEdit?.link ? true : null);
   const [isCheckingUrl, setIsCheckingUrl] = useState(false);
 
-  const handleNomeFantasiaChange = (val: string) => {
-    setNomeFantasia(val);
-    if (!isLinkManuallyEdited) {
-      if (val.trim()) {
-        const uniqueUrl = generateUniqueHotelUrl(val, existingHoteis, hotelToEdit?.id);
-        setLink(uniqueUrl);
-        setIsUrlAvailable(true);
-      } else {
-        setLink('');
-        setIsUrlAvailable(null);
-      }
-    }
-  };
+
 
   const handleLinkChange = async (val: string) => {
     setIsLinkManuallyEdited(true);
@@ -494,6 +484,20 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   // Seção 4: Login Master
   const isEditing = Boolean(hotelToEdit || isProfileView);
   const [loginEmail, setLoginEmail] = useState(hotelToEdit?.loginEmail || '');
+
+  // Regra de Segurança: Verificação em tempo real de CNPJ, CPF do Responsável e E-mail de Login
+  const {
+    cnpjCheck,
+    cpfCheck,
+    emailCheck,
+    validateFinalStep
+  } = useHotelSecurityCheck({
+    cnpj,
+    cpf: managerCpf,
+    email: loginEmail,
+    excludeHotelId: hotelToEdit?.id || null
+  });
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -585,6 +589,82 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     showToast('Copiado para a área de transferência!');
+  };
+
+  // Modo de Teste Rápido (disparado ao digitar hotel01)
+  const applyTestMockData = () => {
+    const mock = generateMockHotelData();
+    setNomeFantasia(mock.nomeFantasia);
+    setRazaoSocial(mock.razaoSocial);
+    setCnpj(mock.cnpj);
+    if (categoriasList.length > 0) {
+      setCategory(categoriasList[0].name);
+    }
+    const uniqueUrl = generateUniqueHotelUrl(mock.nomeFantasia, existingHoteis, hotelToEdit?.id);
+    setLink(uniqueUrl);
+    setIsUrlAvailable(true);
+
+    const testPlan = findPlanoTesteName(planos);
+    setSelectedPlan(testPlan);
+
+    setCep(mock.cep);
+    setStreet(mock.logradouro);
+    setStreetNumber(mock.numero);
+    setNeighborhood(mock.bairro);
+    setCity(mock.cidade);
+    setUf(mock.uf);
+
+    setPhone(mock.telefone);
+    setWhatsappSocial(mock.whatsapp);
+    setInstagram(mock.instagram);
+    setFacebook(mock.facebook);
+    setTiktok(mock.tiktok);
+
+    setManagerName(mock.nomeResponsavel);
+    setManagerCpf(mock.cpfResponsavel);
+    setManagerEmail(mock.emailResponsavel);
+    setManagerWhatsapp(mock.whatsappResponsavel);
+    setManagerRole(mock.cargoResponsavel);
+
+    setLoginEmail(mock.loginEmail);
+    setPassword(mock.senha);
+    setConfirmPassword(mock.confirmSenha);
+
+    showToast(`🚀 Modo Teste (hotel01): Dados preenchidos com CNPJ válido e ${testPlan} (R$ 1,00) selecionado!`);
+  };
+
+  const handleNomeFantasiaChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setNomeFantasia(val);
+    if (!isLinkManuallyEdited) {
+      if (val.trim()) {
+        const uniqueUrl = generateUniqueHotelUrl(val, existingHoteis, hotelToEdit?.id);
+        setLink(uniqueUrl);
+        setIsUrlAvailable(true);
+      } else {
+        setLink('');
+        setIsUrlAvailable(null);
+      }
+    }
+  };
+
+  const handleRazaoSocialChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setRazaoSocial(val);
+  };
+
+  const handleCnpjChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setCnpj(maskCnpj(val));
   };
 
   useEffect(() => {
@@ -782,6 +862,13 @@ export const FormHotel: React.FC<FormHotelProps> = ({
           showToast('O CNPJ informado é inválido. Por favor, verifique os dígitos.');
           return;
         }
+      }
+
+      // Validação de segurança final rigorosa (bloqueio de duplicidade de CNPJ, CPF e E-mail de Login)
+      const secResult = await validateFinalStep();
+      if (!secResult.allowed) {
+        showToast(`Alerta de Segurança: ${secResult.error || 'Dados já cadastrados no sistema.'}`);
+        return;
       }
     }
 
@@ -1386,16 +1473,21 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                   type="text" 
                   required
                   value={razaoSocial}
-                  onChange={(e) => setRazaoSocial(e.target.value)}
+                  onChange={(e) => handleRazaoSocialChange(e.target.value)}
                   placeholder="Ex: Hotel Master Porto de Galinhas EIRELI" 
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] focus:ring-1 focus:ring-[#003400] bg-slate-50/30"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Nome Fantasia (Exibição no Zap) *
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Nome Fantasia (Exibição no Zap) *
+                  </label>
+                  <span className="text-[10px] text-slate-400">
+                    (Digite <strong className="text-emerald-700 font-bold">hotel01</strong> para autocompletar)
+                  </span>
+                </div>
                 <input 
                   type="text" 
                   required
@@ -1411,47 +1503,54 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     CNPJ *
                   </label>
-                  {cnpjValidation.isComplete && cnpj !== '00.000.000/0001-00' && (
-                    <span className={`text-[11px] font-bold flex items-center gap-1 ${
-                      cnpjValidation.isValid ? 'text-emerald-700' : 'text-rose-600'
-                    }`}>
-                      <span className="material-symbols-outlined text-[13px]">
-                        {cnpjValidation.isValid ? 'verified' : 'cancel'}
-                      </span>
-                      {cnpjValidation.isValid ? 'CNPJ Válido' : 'CNPJ Inválido'}
-                    </span>
-                  )}
+                  <SecurityFieldBadge
+                    check={cnpjCheck}
+                    isValidFormat={cnpjValidation.isValid}
+                    validLabel="Válido"
+                    emptyText={cnpjValidation.isComplete && !cnpjValidation.isValid ? 'CNPJ Inválido' : undefined}
+                  />
                 </div>
                 <div className="relative">
                   <input 
                     type="text" 
                     required
                     value={cnpj}
-                    onChange={(e) => setCnpj(maskCnpj(e.target.value))}
+                    onChange={(e) => handleCnpjChange(e.target.value)}
                     placeholder="00.000.000/0001-00" 
                     maxLength={18}
                     className={`w-full px-3.5 py-2.5 rounded-xl border text-xs md:text-sm focus:outline-none transition-all font-mono ${
-                      cnpjValidation.isComplete && cnpj !== '00.000.000/0001-00'
+                      cnpjCheck.exists
+                        ? 'border-red-500 bg-red-50/30 text-red-950 focus:border-red-600 focus:ring-1 focus:ring-red-400'
+                        : cnpjValidation.isComplete && cnpj !== '00.000.000/0001-00'
                         ? cnpjValidation.isValid
                           ? 'border-emerald-500 bg-emerald-50/20 text-slate-900 focus:border-emerald-600'
                           : 'border-rose-400 bg-rose-50/30 text-rose-950 focus:border-rose-500'
                         : 'border-slate-200 focus:border-[#003400] bg-slate-50/30 text-slate-900'
                     }`}
                   />
-                  {cnpjValidation.isComplete && cnpj !== '00.000.000/0001-00' && (
+                  {cnpjCheck.exists ? (
+                    <span className="absolute right-3.5 top-2.5 material-symbols-outlined text-lg pointer-events-none text-red-500">
+                      cancel
+                    </span>
+                  ) : cnpjValidation.isComplete && cnpj !== '00.000.000/0001-00' ? (
                     <span className={`absolute right-3.5 top-2.5 material-symbols-outlined text-lg pointer-events-none ${
                       cnpjValidation.isValid ? 'text-emerald-600' : 'text-rose-500'
                     }`}>
                       {cnpjValidation.isValid ? 'check_circle' : 'error'}
                     </span>
-                  )}
+                  ) : null}
                 </div>
-                {cnpjValidation.isComplete && !cnpjValidation.isValid && cnpj !== '00.000.000/0001-00' && (
+                {cnpjCheck.exists ? (
+                  <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-0.5 animate-fadeIn">
+                    <span className="material-symbols-outlined text-xs">error</span>
+                    {cnpjCheck.message || 'Este CNPJ já está cadastrado no sistema.'}
+                  </p>
+                ) : cnpjValidation.isComplete && !cnpjValidation.isValid && cnpj !== '00.000.000/0001-00' ? (
                   <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-0.5 animate-fadeIn">
                     <span className="material-symbols-outlined text-xs">warning</span>
                     Este CNPJ é inválido. Verifique os dígitos digitados.
                   </p>
-                )}
+                ) : null}
               </div>
 
               <div className="space-y-1">
@@ -2159,16 +2258,12 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                   CPF do Responsável *
                 </label>
-                {managerCpfValidation.isComplete && (
-                  <span className={`text-[11px] font-bold flex items-center gap-1 ${
-                    managerCpfValidation.isValid ? 'text-emerald-700' : 'text-rose-600'
-                  }`}>
-                    <span className="material-symbols-outlined text-[13px]">
-                      {managerCpfValidation.isValid ? 'verified' : 'cancel'}
-                    </span>
-                    {managerCpfValidation.isValid ? 'CPF Autêntico' : 'CPF Inválido'}
-                  </span>
-                )}
+                <SecurityFieldBadge
+                  check={cpfCheck}
+                  isValidFormat={managerCpfValidation.isValid}
+                  validLabel="Válido"
+                  emptyText={managerCpfValidation.isComplete && !managerCpfValidation.isValid ? 'CPF Inválido' : undefined}
+                />
               </div>
               <div className="relative">
                 <input 
@@ -2178,38 +2273,47 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                   placeholder="000.000.000-00" 
                   maxLength={14}
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-xs md:text-sm focus:outline-none transition-all font-mono ${
-                    managerCpfValidation.isComplete
+                    cpfCheck.exists
+                      ? 'border-red-500 bg-red-50/30 text-red-950 focus:border-red-600 focus:ring-1 focus:ring-red-400'
+                      : managerCpfValidation.isComplete
                       ? managerCpfValidation.isValid
                         ? 'border-emerald-500 bg-emerald-50/20 text-slate-900 focus:border-emerald-600'
                         : 'border-rose-400 bg-rose-50/30 text-rose-950 focus:border-rose-500'
                       : 'border-slate-200 focus:border-[#003400] bg-slate-50/30 text-slate-900'
                   }`}
                 />
-                {managerCpfValidation.isComplete && (
+                {cpfCheck.exists ? (
+                  <span className="absolute right-3.5 top-2.5 material-symbols-outlined text-lg pointer-events-none text-red-500">
+                    cancel
+                  </span>
+                ) : managerCpfValidation.isComplete ? (
                   <span className={`absolute right-3.5 top-2.5 material-symbols-outlined text-lg pointer-events-none ${
                     managerCpfValidation.isValid ? 'text-emerald-600' : 'text-rose-500'
                   }`}>
                     {managerCpfValidation.isValid ? 'check_circle' : 'error'}
                   </span>
-                )}
+                ) : null}
               </div>
-              {managerCpfValidation.isComplete && !managerCpfValidation.isValid && (
+              {cpfCheck.exists ? (
+                <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-0.5 animate-fadeIn">
+                  <span className="material-symbols-outlined text-xs">error</span>
+                  {cpfCheck.message || 'Este CPF já está cadastrado no sistema.'}
+                </p>
+              ) : managerCpfValidation.isComplete && !managerCpfValidation.isValid ? (
                 <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-0.5 animate-fadeIn">
                   <span className="material-symbols-outlined text-xs">warning</span>
                   Este CPF é falso ou inválido. Digite um CPF autêntico da Receita Federal.
                 </p>
-              )}
-              {managerCpfValidation.isComplete && managerCpfValidation.isValid && (
+              ) : managerCpfValidation.isComplete && managerCpfValidation.isValid && !cpfCheck.exists ? (
                 <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1 mt-0.5">
                   <span className="material-symbols-outlined text-xs text-emerald-600">verified</span>
                   CPF validado e autêntico.
                 </p>
-              )}
-              {!managerCpfValidation.isComplete && managerCpf.length > 0 && (
+              ) : !managerCpfValidation.isComplete && managerCpf.length > 0 ? (
                 <p className="text-[10px] text-slate-400 font-medium">
                   {managerCpfValidation.message}
                 </p>
-              )}
+              ) : null}
             </div>
 
             <div className="space-y-1">
@@ -2272,9 +2376,16 @@ export const FormHotel: React.FC<FormHotelProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                E-mail de Login Master *
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  E-mail de Login Master *
+                </label>
+                <SecurityFieldBadge
+                  check={emailCheck}
+                  isValidFormat={/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())}
+                  validLabel="Válido"
+                />
+              </div>
               <input 
                 type="email" 
                 required
@@ -2282,8 +2393,20 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                 onChange={(e) => setLoginEmail(e.target.value)}
                 placeholder="admin@hotelmaster.com.br" 
                 autoComplete="off"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-slate-50/30 font-medium"
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs md:text-sm focus:outline-none bg-slate-50/30 font-medium ${
+                  emailCheck.exists
+                    ? 'border-red-500 bg-red-50/30 text-red-950 focus:border-red-600 focus:ring-1 focus:ring-red-400'
+                    : emailCheck.checked && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())
+                    ? 'border-emerald-500 bg-emerald-50/20 text-slate-900 focus:border-emerald-600'
+                    : 'border-slate-200 focus:border-[#003400] text-slate-900'
+                }`}
               />
+              {emailCheck.exists ? (
+                <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-0.5 animate-fadeIn">
+                  <span className="material-symbols-outlined text-xs">error</span>
+                  {emailCheck.message || 'Este e-mail de login já está cadastrado no sistema.'}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-1">

@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotelUrlAvailabilityInSupabase } from '../utils/hotelUrl';
 import { CheckoutPlanoStep } from './CheckoutPlanoStep';
+import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
+import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
 
 interface LpAssinarProps {
   onNavigateToLP?: () => void;
@@ -120,19 +122,6 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   const [isUrlAvailable, setIsUrlAvailable] = useState<boolean | null>(null);
   const [isCheckingUrl, setIsCheckingUrl] = useState(false);
 
-  const handleNomeFantasiaChange = (val: string) => {
-    setNomeFantasia(val);
-    if (!isUrlManuallyEdited) {
-      if (val.trim()) {
-        const generated = generateUniqueHotelUrl(val, existingHoteis);
-        setUrlHotel(generated);
-        setIsUrlAvailable(true);
-      } else {
-        setUrlHotel('');
-        setIsUrlAvailable(null);
-      }
-    }
-  };
 
   const handleUrlChange = async (val: string) => {
     setIsUrlManuallyEdited(true);
@@ -268,6 +257,112 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
     return `${refCode} — Parceiro Indicador`;
   }, [refCode, partnerInfo]);
 
+  // Modo de Teste Rápido (disparado ao digitar hotel01)
+  const [testNotice, setTestNotice] = useState<string | null>(null);
+
+  const applyTestMockData = () => {
+    const mock = generateMockHotelData();
+    setNomeFantasia(mock.nomeFantasia);
+    setRazaoSocial(mock.razaoSocial);
+    setCnpj(mock.cnpj);
+    if (categoriasList.length > 0) {
+      setCategoria(categoriasList[0].name);
+    }
+    setTelefone(mock.telefone);
+    setWhatsapp(mock.whatsapp);
+    setInstagram(mock.instagram);
+    setFacebook(mock.facebook);
+    setTiktok(mock.tiktok);
+
+    const generated = generateUniqueHotelUrl(mock.nomeFantasia, existingHoteis);
+    setUrlHotel(generated);
+    setIsUrlAvailable(true);
+
+    // Selecionar Plano Teste R$ 1,00
+    const testPlan = findPlanoTesteName(planos);
+    setPlanoSelecionado(testPlan);
+
+    // Endereço
+    setCep(mock.cep);
+    setLogradouro(mock.logradouro);
+    setNumero(mock.numero);
+    setComplemento(mock.complemento);
+    setBairro(mock.bairro);
+    setCidade(mock.cidade);
+    setUf(mock.uf);
+
+    // Responsável
+    setNomeResponsavel(mock.nomeResponsavel);
+    setCpfResponsavel(mock.cpfResponsavel);
+    setEmailResponsavel(mock.emailResponsavel);
+    setWhatsappResponsavel(mock.whatsappResponsavel);
+    setCargoResponsavel(mock.cargoResponsavel);
+
+    // Acesso
+    setLoginEmail(mock.loginEmail);
+    setSenha(mock.senha);
+    setConfirmSenha(mock.confirmSenha);
+    setAceitaTermos(true);
+    setErrorMsg('');
+
+    setTestNotice(`Todos os campos foram preenchidos com CNPJ válido (${mock.cnpj}), CPF válido (${mock.cpfResponsavel}), login (${mock.loginEmail}) e o "${testPlan}" (R$ 1,00) foi selecionado.`);
+  };
+
+  useEffect(() => {
+    if (testNotice && planos.length > 0) {
+      const pTeste = findPlanoTesteName(planos);
+      if (pTeste && planoSelecionado !== pTeste) {
+        setPlanoSelecionado(pTeste);
+      }
+    }
+  }, [testNotice, planos, planoSelecionado]);
+
+  const handleNomeFantasiaChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setNomeFantasia(val);
+    if (!isUrlManuallyEdited) {
+      if (val.trim()) {
+        const generated = generateUniqueHotelUrl(val, existingHoteis);
+        setUrlHotel(generated);
+        setIsUrlAvailable(true);
+      } else {
+        setUrlHotel('');
+        setIsUrlAvailable(null);
+      }
+    }
+  };
+
+  const handleRazaoSocialChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setRazaoSocial(val);
+  };
+
+  const handleCnpjChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setCnpj(maskCnpj(val));
+  };
+
+  // Regra de Segurança: Verificação em tempo real de CNPJ, CPF e E-mail de Acesso
+  const {
+    cnpjCheck,
+    cpfCheck,
+    emailCheck,
+    validateFinalStep
+  } = useHotelSecurityCheck({
+    cnpj,
+    cpf: cpfResponsavel,
+    email: loginEmail
+  });
+
   useEffect(() => {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setErrorMsg('');
@@ -281,6 +376,9 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
       }
       if (!cnpj.trim() || !isValidCnpj(cnpj)) {
         return 'Informe um CNPJ válido e completo para o hotel.';
+      }
+      if (cnpjCheck.exists) {
+        return cnpjCheck.message || 'O CNPJ informado já está cadastrado no sistema.';
       }
       if (!categoria.trim()) {
         return 'Selecione a categoria do hotel.';
@@ -340,11 +438,23 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
       if (cpfResponsavel.trim() && !isValidCpf(cpfResponsavel)) {
         return 'O CPF informado para o responsável é inválido.';
       }
+      if (cpfCheck.exists) {
+        return cpfCheck.message || 'O CPF informado já está cadastrado no sistema.';
+      }
     }
     if (targetStep === 5) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!loginEmail.trim() || !emailRegex.test(loginEmail.trim())) {
         return 'Informe um e-mail de acesso válido para login.';
+      }
+      if (emailCheck.exists) {
+        return emailCheck.message || 'O e-mail de acesso informado já está cadastrado no sistema.';
+      }
+      if (cnpjCheck.exists) {
+        return cnpjCheck.message || 'O CNPJ informado já está cadastrado no sistema.';
+      }
+      if (cpfCheck.exists) {
+        return cpfCheck.message || 'O CPF informado já está cadastrado no sistema.';
       }
       if (!senha || senha.length < 6) {
         return 'A senha de acesso deve ter no mínimo 6 caracteres.';
@@ -386,6 +496,16 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setErrorMsg('');
+
+    // Validação de segurança final rigorosa (bloqueio de duplicidade de CNPJ, CPF e E-mail de Acesso)
+    const secResult = await validateFinalStep();
+    if (!secResult.allowed) {
+      setErrorMsg(secResult.error || 'Não é permitido cadastrar hotel com dados já existentes no sistema.');
+      setIsSubmitting(false);
+      formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
     let hotelCriadoId: string | null = null;
     try {
       const cityUf = cidade && uf ? cidade + ' / ' + uf : cidade || '';
@@ -422,7 +542,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
         loginEmail: loginEmail.trim(),
         status: 'prospecto',
         partnerRef: refCode,
-        notes: 'Cadastro via link de parceiro (/assinar?ref=' + refCode + ') em ' + new Date().toLocaleDateString('pt-BR') + '. Parceiro: ' + refCode,
+        notes: 'Cadastro via link de parceiro (/parceiros/assinar?ref=' + refCode + ') em ' + new Date().toLocaleDateString('pt-BR') + '. Parceiro: ' + refCode,
       } as any);
 
       if (!hotelRes.success) {
@@ -636,10 +756,44 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
             </div>
           )}
 
+          {/* Test Notice Banner */}
+          {testNotice && (
+            <div className="mx-6 mt-4 p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start justify-between gap-3 text-emerald-800 text-xs shadow-sm">
+              <div className="flex items-start gap-2.5">
+                <span className="material-symbols-outlined text-emerald-600 text-lg mt-0.5">smart_toy</span>
+                <div>
+                  <p className="font-bold text-emerald-900 text-sm">Modo de Teste (hotel01) Ativado!</p>
+                  <p className="mt-0.5 text-emerald-700">{testNotice}</p>
+                  <p className="mt-1 text-[11px] text-emerald-600">
+                    Você pode avançar diretamente pelas etapas até o checkout de teste.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTestNotice(null)}
+                className="text-emerald-500 hover:text-emerald-800 text-sm font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* STEP 1 - Dados do Hotel */}
           {step === 1 && (
             <div className="px-6 pt-5 pb-8 space-y-5">
-              <p className="text-gray-500 text-sm">Preencha todas as informacoes da sua propriedade hoteleira.</p>
+              <div className="flex items-center justify-between">
+                <p className="text-gray-500 text-sm">Preencha todas as informacoes da sua propriedade hoteleira.</p>
+                <button
+                  type="button"
+                  onClick={applyTestMockData}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/70 rounded-md border border-emerald-300 transition-colors cursor-pointer"
+                  title="Preencher com dados aleatórios de teste (hotel01)"
+                >
+                  <span className="material-symbols-outlined text-sm">bolt</span>
+                  Preencher Teste (hotel01)
+                </button>
+              </div>
 
               {/* Logo */}
               <div>
@@ -667,26 +821,55 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className={lCls}>Nome Fantasia *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={lCls + ' mb-0'}>Nome Fantasia *</label>
+                    <span className="text-[11px] text-slate-400">
+                      (Digite <strong className="text-emerald-600 font-bold">hotel01</strong> para autocompletar)
+                    </span>
+                  </div>
                   <input type="text" value={nomeFantasia} onChange={e => handleNomeFantasiaChange(e.target.value)} placeholder="Ex: Pousada Recanto dos Corais" className={getInputCls(isNomeFantasiaInvalid)} />
                   {isNomeFantasiaInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Nome Fantasia é obrigatório (mínimo 2 caracteres)</p>}
                 </div>
                 <div>
                   <label className={lCls}>Razao Social</label>
-                  <input type="text" value={razaoSocial} onChange={e => setRazaoSocial(e.target.value)} placeholder="Ex: Recanto dos Corais Ltda" className={iCls} />
+                  <input type="text" value={razaoSocial} onChange={e => handleRazaoSocialChange(e.target.value)} placeholder="Ex: Recanto dos Corais Ltda" className={iCls} />
                 </div>
                 <div>
                   <label className={'flex items-center justify-between ' + lCls}>
                     <span>CNPJ *</span>
-                    {cnpjValidation.isComplete && (
-                      <span className={'text-[11px] font-bold flex items-center gap-0.5 ' + (cnpjValidation.isValid ? 'text-emerald-600' : 'text-red-500')}>
-                        <span className="material-symbols-outlined text-xs">{cnpjValidation.isValid ? 'verified' : 'cancel'}</span>
-                        {cnpjValidation.isValid ? 'CNPJ Valido' : 'CNPJ Invalido'}
-                      </span>
-                    )}
+                    <SecurityFieldBadge
+                      check={cnpjCheck}
+                      isValidFormat={cnpjValidation.isValid}
+                      validLabel="Válido"
+                      emptyText={cnpjValidation.isComplete && !cnpjValidation.isValid ? 'CNPJ Inválido' : undefined}
+                    />
                   </label>
-                  <input type="text" value={cnpj} onChange={e => setCnpj(maskCnpj(e.target.value))} placeholder="00.000.000/0001-00" maxLength={18} className={getInputCls(isCnpjInvalid) + ' font-mono ' + (cnpjValidation.isComplete ? cnpjValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
-                  {isCnpjInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um CNPJ válido e completo</p>}
+                  <input
+                    type="text"
+                    value={cnpj}
+                    onChange={e => handleCnpjChange(e.target.value)}
+                    placeholder="00.000.000/0001-00"
+                    maxLength={18}
+                    className={
+                      getInputCls(isCnpjInvalid || cnpjCheck.exists) +
+                      ' font-mono ' +
+                      (cnpjCheck.exists
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : cnpjCheck.checked && cnpjValidation.isValid
+                        ? 'border-emerald-500 focus:border-emerald-500'
+                        : '')
+                    }
+                  />
+                  {cnpjCheck.exists ? (
+                    <p className="text-[11px] text-red-600 mt-1 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      {cnpjCheck.message || 'Este CNPJ já está cadastrado no sistema.'}
+                    </p>
+                  ) : isCnpjInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>Informe um CNPJ válido e completo
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className={lCls}>Categoria *</label>
@@ -950,10 +1133,39 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
                 <div>
                   <label className={'flex items-center justify-between ' + lCls}>
                     <span>CPF (opcional)</span>
-                    {cpfValidation.isComplete && <span className={'text-[11px] font-bold flex items-center gap-0.5 ' + (cpfValidation.isValid ? 'text-emerald-600' : 'text-red-500')}><span className="material-symbols-outlined text-xs">{cpfValidation.isValid ? 'verified' : 'cancel'}</span>{cpfValidation.isValid ? 'Valido' : 'Invalido'}</span>}
+                    <SecurityFieldBadge
+                      check={cpfCheck}
+                      isValidFormat={cpfValidation.isValid}
+                      validLabel="Válido"
+                      emptyText={cpfValidation.isComplete && !cpfValidation.isValid ? 'CPF Inválido' : undefined}
+                    />
                   </label>
-                  <input type="text" value={cpfResponsavel} onChange={e => setCpfResponsavel(maskCpf(e.target.value))} placeholder="000.000.000-00" maxLength={14} className={getInputCls(isCpfRespInvalid) + ' font-mono ' + (cpfValidation.isComplete ? cpfValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
-                  {isCpfRespInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>CPF inválido</p>}
+                  <input
+                    type="text"
+                    value={cpfResponsavel}
+                    onChange={e => setCpfResponsavel(maskCpf(e.target.value))}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className={
+                      getInputCls(isCpfRespInvalid || cpfCheck.exists) +
+                      ' font-mono ' +
+                      (cpfCheck.exists
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : cpfCheck.checked && cpfValidation.isValid
+                        ? 'border-emerald-500 focus:border-emerald-500'
+                        : '')
+                    }
+                  />
+                  {cpfCheck.exists ? (
+                    <p className="text-[11px] text-red-600 mt-1 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      {cpfCheck.message || 'Este CPF já está cadastrado no sistema.'}
+                    </p>
+                  ) : isCpfRespInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>CPF inválido
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className={lCls}>Cargo / Funcao</label>
@@ -985,12 +1197,39 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
               <p className="text-gray-500 text-sm">Crie seu acesso ao painel de controle do Hotel no Zap.</p>
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className={lCls}>E-mail de Acesso *</label>
-                  <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seu@email.com" className={getInputCls(isLoginEmailInvalid)} />
-                  {isLoginEmailInvalid ? (
-                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um e-mail de acesso válido</p>
+                  <label className={'flex items-center justify-between ' + lCls}>
+                    <span>E-mail de Acesso *</span>
+                    <SecurityFieldBadge
+                      check={emailCheck}
+                      isValidFormat={/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())}
+                      validLabel="Válido"
+                    />
+                  </label>
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={e => setLoginEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className={
+                      getInputCls(isLoginEmailInvalid || emailCheck.exists) +
+                      (emailCheck.exists
+                        ? ' border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : emailCheck.checked && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())
+                        ? ' border-emerald-500 focus:border-emerald-500'
+                        : '')
+                    }
+                  />
+                  {emailCheck.exists ? (
+                    <p className="text-[11px] text-red-600 mt-1 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>
+                      {emailCheck.message || 'Este e-mail de acesso já está cadastrado no sistema.'}
+                    </p>
+                  ) : isLoginEmailInvalid ? (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">error</span>Informe um e-mail de acesso válido
+                    </p>
                   ) : (
-                    <p className="text-[11px] text-gray-400 mt-1">Sera usado para fazer login no sistema.</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Será usado para fazer login no sistema.</p>
                   )}
                 </div>
                 <div>
