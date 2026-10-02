@@ -614,26 +614,54 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   return (
     <div className="min-h-screen bg-gray-50 font-sans" ref={topRef}>
       {/* TOP BAR */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <button onClick={onNavigateToLP} className="flex items-center gap-2.5 cursor-pointer group">
-            <div className="w-9 h-9 rounded-xl bg-[#003400] group-hover:bg-emerald-700 flex items-center justify-center shadow">
-              <span className="material-symbols-outlined text-white text-lg">hotel</span>
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-xs">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Logo & Marca */}
+          <button onClick={onNavigateToLP} className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#003400] group-hover:bg-emerald-700 flex items-center justify-center shadow-xs transition-colors">
+              <span className="material-symbols-outlined text-white text-base sm:text-lg">hotel</span>
             </div>
-            <div className="leading-tight">
-              <p className="text-gray-900 font-black text-sm">Hotel no Zap</p>
-              <p className="text-emerald-600 text-[10px] font-semibold">Sistema SaaS Hoteleiro</p>
+            <div className="leading-tight text-left">
+              <p className="text-gray-900 font-black text-xs sm:text-sm tracking-tight">Hotel no Zap</p>
+              <p className="text-emerald-700 text-[9px] sm:text-[10px] font-bold">Sistema SaaS Hoteleiro</p>
             </div>
           </button>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+
+          {/* Desktop Central Badges (SSL + Etapa) */}
+          <div className="hidden md:flex items-center gap-2 text-xs text-gray-500 whitespace-nowrap">
             <span className="material-symbols-outlined text-emerald-600 text-sm">shield_lock</span>
-            Cadastro seguro SSL
+            <span className="font-medium">Cadastro seguro SSL</span>
             <span className="text-gray-300 mx-1">|</span>
-            <span className="text-emerald-600 font-bold">Etapa {Math.min(step,5)} de 5</span>
+            <span className="text-emerald-700 font-extrabold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+              Etapa {Math.min(step, 5)} de 5
+            </span>
           </div>
-          <button onClick={onNavigateToLogin} className="text-xs text-gray-400 hover:text-gray-800 underline cursor-pointer">
-            Ja tenho conta
-          </button>
+
+          {/* Right Action: Mobile Step + Link de Login */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Mobile Step Badge */}
+            <span className="md:hidden inline-flex items-center gap-1 text-[11px] font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Etapa {Math.min(step, 5)}/5
+            </span>
+
+            {/* Já tenho conta */}
+            <button 
+              onClick={onNavigateToLogin} 
+              className="text-[11px] sm:text-xs font-bold text-slate-600 hover:text-emerald-800 hover:bg-slate-100 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+            >
+              Já tenho conta
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Sub-strip: SSL Seguro */}
+        <div className="md:hidden bg-slate-50 border-t border-slate-100 px-3 py-1 flex items-center justify-between text-[10px] font-medium text-slate-500">
+          <div className="flex items-center gap-1 text-emerald-700 font-semibold">
+            <span className="material-symbols-outlined text-xs text-emerald-600">verified_user</span>
+            <span>Ambiente Seguro SSL</span>
+          </div>
+          <span className="text-slate-400">Ativação Imediata</span>
         </div>
       </div>
 
