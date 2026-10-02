@@ -240,12 +240,18 @@ export const usuariosService = {
       }
 
       // R11: Escopo origem Hotel validações
+      const isPublicSignup = options?.adminMode === false;
       const savedRole = this._currentUserRoleString();
-      const roleScope = this._extractHotelRole(savedRole);
+      const roleScope = isPublicSignup ? 'public' : this._extractHotelRole(savedRole);
       const forcedScopeHotelId = roleScope === 'hotel' ? this._currentScopeHotelId() : null;
 
-      // Regra de Negócio: Todo usuário do tipo gerente tem perfil de acesso Hotel
-      if (usuario.perfil === 'Gerente' || usuario.cargo?.toLowerCase().includes('gerente')) {
+      // Regra de Negócio: Todo usuário do tipo gerente ou cadastrado via onboarding de hotel tem perfil de acesso Hotel
+      if (
+        usuario.perfil === 'Gerente' ||
+        usuario.cargo?.toLowerCase().includes('gerente') ||
+        (isPublicSignup && usuario.perfil === 'Administrador') ||
+        (usuario.hotel_id && usuario.perfil === 'Administrador')
+      ) {
         usuario.perfil = 'Hotel';
       }
 

@@ -442,7 +442,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
           name: nomeResponsavel.trim() || nomeFantasia.trim(),
           email: loginEmail.trim().toLowerCase(),
           cargo: cargoResponsavel || 'Proprietário',
-          perfil: 'Administrador',
+          perfil: 'Hotel',
           phone: whatsappResponsavel.replace(/\D/g, '') || whatsapp.replace(/\D/g, ''),
           status: 'ativo',
           lastAccess: 'Nunca acessou',
