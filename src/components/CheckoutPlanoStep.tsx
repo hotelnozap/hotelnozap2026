@@ -221,13 +221,6 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   };
 
 
-  // Simulação imediata para testes
-  const handleSimularAprovacao = async () => {
-    if (pixResult?.paymentId) {
-      localStorage.setItem(`hotelnozap_pay_approved_${pixResult.paymentId}`, 'true');
-    }
-    await handleAprovarPagamento(pixResult?.paymentId || 'teste_simulado', 'PIX (Simulação Aprovada)');
-  };
 
   // Copiar código PIX
   const handleCopiarPix = () => {
@@ -606,16 +599,6 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                   )}
                 </button>
 
-                {/* Botão de Simulação em Ambiente de Teste / Demonstração */}
-                <button
-                  type="button"
-                  onClick={handleSimularAprovacao}
-                  disabled={isAtivando}
-                  className="w-full py-2 px-3 text-[11px] font-semibold text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-sm">bolt</span>
-                  Simular Aprovação Imediata (Ambiente de Testes)
-                </button>
               </div>
             </>
           )}

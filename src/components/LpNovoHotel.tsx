@@ -702,43 +702,11 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
             </div>
           )}
 
-          {/* Test Notice Banner */}
-          {testNotice && (
-            <div className="mx-6 mt-4 p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start justify-between gap-3 text-emerald-800 text-xs shadow-sm">
-              <div className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-emerald-600 text-lg mt-0.5">smart_toy</span>
-                <div>
-                  <p className="font-bold text-emerald-900 text-sm">Modo de Teste (hotel01) Ativado!</p>
-                  <p className="mt-0.5 text-emerald-700">{testNotice}</p>
-                  <p className="mt-1 text-[11px] text-emerald-600">
-                    Você pode avançar diretamente pelas etapas até o checkout de teste.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTestNotice(null)}
-                className="text-emerald-500 hover:text-emerald-800 text-sm font-bold p-1 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
           {/* STEP 1 - Dados do Hotel */}
           {step === 1 && (
             <div className="px-6 pt-5 pb-8 space-y-5">
               <div className="flex items-center justify-between">
-                <p className="text-gray-500 text-sm">Preencha todas as informacoes da sua propriedade hoteleira.</p>
-                <button
-                  type="button"
-                  onClick={applyTestMockData}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/70 rounded-md border border-emerald-300 transition-colors cursor-pointer"
-                  title="Preencher com dados aleatórios de teste (hotel01)"
-                >
-                  <span className="material-symbols-outlined text-sm">bolt</span>
-                  Preencher Teste (hotel01)
-                </button>
+                <p className="text-gray-500 text-sm">Preencha todas as informações da sua propriedade hoteleira.</p>
               </div>
 
               {/* Logo */}

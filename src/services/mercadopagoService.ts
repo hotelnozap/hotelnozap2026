@@ -528,15 +528,6 @@ export const mercadopagoService = {
       } catch { /* ignore */ }
     }
 
-    // 3. Fallback de simulação local para testes
-    if (paymentId.startsWith('pix_hnz_')) {
-      const isApprovedLocal = typeof window !== 'undefined' && localStorage.getItem(`hotelnozap_pay_approved_${paymentId}`) === 'true';
-      return {
-        approved: Boolean(isApprovedLocal),
-        status: isApprovedLocal ? 'approved' : 'pending'
-      };
-    }
-
     return { approved: false, status: 'pending' };
   },
 
