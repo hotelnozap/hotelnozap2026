@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotelUrlAvailabilityInSupabase } from '../utils/hotelUrl';
 import { CheckoutPlanoStep } from './CheckoutPlanoStep';
+import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
 
 interface LpAssinarProps {
   onNavigateToLP?: () => void;
@@ -120,19 +121,6 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   const [isUrlAvailable, setIsUrlAvailable] = useState<boolean | null>(null);
   const [isCheckingUrl, setIsCheckingUrl] = useState(false);
 
-  const handleNomeFantasiaChange = (val: string) => {
-    setNomeFantasia(val);
-    if (!isUrlManuallyEdited) {
-      if (val.trim()) {
-        const generated = generateUniqueHotelUrl(val, existingHoteis);
-        setUrlHotel(generated);
-        setIsUrlAvailable(true);
-      } else {
-        setUrlHotel('');
-        setIsUrlAvailable(null);
-      }
-    }
-  };
 
   const handleUrlChange = async (val: string) => {
     setIsUrlManuallyEdited(true);
@@ -267,6 +255,100 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
     }
     return `${refCode} — Parceiro Indicador`;
   }, [refCode, partnerInfo]);
+
+  // Modo de Teste Rápido (disparado ao digitar hotel01)
+  const [testNotice, setTestNotice] = useState<string | null>(null);
+
+  const applyTestMockData = () => {
+    const mock = generateMockHotelData();
+    setNomeFantasia(mock.nomeFantasia);
+    setRazaoSocial(mock.razaoSocial);
+    setCnpj(mock.cnpj);
+    if (categoriasList.length > 0) {
+      setCategoria(categoriasList[0].name);
+    }
+    setTelefone(mock.telefone);
+    setWhatsapp(mock.whatsapp);
+    setInstagram(mock.instagram);
+    setFacebook(mock.facebook);
+    setTiktok(mock.tiktok);
+
+    const generated = generateUniqueHotelUrl(mock.nomeFantasia, existingHoteis);
+    setUrlHotel(generated);
+    setIsUrlAvailable(true);
+
+    // Selecionar Plano Teste R$ 1,00
+    const testPlan = findPlanoTesteName(planos);
+    setPlanoSelecionado(testPlan);
+
+    // Endereço
+    setCep(mock.cep);
+    setLogradouro(mock.logradouro);
+    setNumero(mock.numero);
+    setComplemento(mock.complemento);
+    setBairro(mock.bairro);
+    setCidade(mock.cidade);
+    setUf(mock.uf);
+
+    // Responsável
+    setNomeResponsavel(mock.nomeResponsavel);
+    setCpfResponsavel(mock.cpfResponsavel);
+    setEmailResponsavel(mock.emailResponsavel);
+    setWhatsappResponsavel(mock.whatsappResponsavel);
+    setCargoResponsavel(mock.cargoResponsavel);
+
+    // Acesso
+    setLoginEmail(mock.loginEmail);
+    setSenha(mock.senha);
+    setConfirmSenha(mock.confirmSenha);
+    setAceitaTermos(true);
+    setErrorMsg('');
+
+    setTestNotice(`Todos os campos foram preenchidos com CNPJ válido (${mock.cnpj}), CPF válido (${mock.cpfResponsavel}), login (${mock.loginEmail}) e o "${testPlan}" (R$ 1,00) foi selecionado.`);
+  };
+
+  useEffect(() => {
+    if (testNotice && planos.length > 0) {
+      const pTeste = findPlanoTesteName(planos);
+      if (pTeste && planoSelecionado !== pTeste) {
+        setPlanoSelecionado(pTeste);
+      }
+    }
+  }, [testNotice, planos, planoSelecionado]);
+
+  const handleNomeFantasiaChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setNomeFantasia(val);
+    if (!isUrlManuallyEdited) {
+      if (val.trim()) {
+        const generated = generateUniqueHotelUrl(val, existingHoteis);
+        setUrlHotel(generated);
+        setIsUrlAvailable(true);
+      } else {
+        setUrlHotel('');
+        setIsUrlAvailable(null);
+      }
+    }
+  };
+
+  const handleRazaoSocialChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setRazaoSocial(val);
+  };
+
+  const handleCnpjChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setCnpj(maskCnpj(val));
+  };
 
   useEffect(() => {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -636,10 +718,44 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
             </div>
           )}
 
+          {/* Test Notice Banner */}
+          {testNotice && (
+            <div className="mx-6 mt-4 p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start justify-between gap-3 text-emerald-800 text-xs shadow-sm">
+              <div className="flex items-start gap-2.5">
+                <span className="material-symbols-outlined text-emerald-600 text-lg mt-0.5">smart_toy</span>
+                <div>
+                  <p className="font-bold text-emerald-900 text-sm">Modo de Teste (hotel01) Ativado!</p>
+                  <p className="mt-0.5 text-emerald-700">{testNotice}</p>
+                  <p className="mt-1 text-[11px] text-emerald-600">
+                    Você pode avançar diretamente pelas etapas até o checkout de teste.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTestNotice(null)}
+                className="text-emerald-500 hover:text-emerald-800 text-sm font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* STEP 1 - Dados do Hotel */}
           {step === 1 && (
             <div className="px-6 pt-5 pb-8 space-y-5">
-              <p className="text-gray-500 text-sm">Preencha todas as informacoes da sua propriedade hoteleira.</p>
+              <div className="flex items-center justify-between">
+                <p className="text-gray-500 text-sm">Preencha todas as informacoes da sua propriedade hoteleira.</p>
+                <button
+                  type="button"
+                  onClick={applyTestMockData}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100/70 hover:bg-emerald-200/70 rounded-md border border-emerald-300 transition-colors cursor-pointer"
+                  title="Preencher com dados aleatórios de teste (hotel01)"
+                >
+                  <span className="material-symbols-outlined text-sm">bolt</span>
+                  Preencher Teste (hotel01)
+                </button>
+              </div>
 
               {/* Logo */}
               <div>
@@ -667,13 +783,18 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className={lCls}>Nome Fantasia *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={lCls + ' mb-0'}>Nome Fantasia *</label>
+                    <span className="text-[11px] text-slate-400">
+                      (Digite <strong className="text-emerald-600 font-bold">hotel01</strong> para autocompletar)
+                    </span>
+                  </div>
                   <input type="text" value={nomeFantasia} onChange={e => handleNomeFantasiaChange(e.target.value)} placeholder="Ex: Pousada Recanto dos Corais" className={getInputCls(isNomeFantasiaInvalid)} />
                   {isNomeFantasiaInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Nome Fantasia é obrigatório (mínimo 2 caracteres)</p>}
                 </div>
                 <div>
                   <label className={lCls}>Razao Social</label>
-                  <input type="text" value={razaoSocial} onChange={e => setRazaoSocial(e.target.value)} placeholder="Ex: Recanto dos Corais Ltda" className={iCls} />
+                  <input type="text" value={razaoSocial} onChange={e => handleRazaoSocialChange(e.target.value)} placeholder="Ex: Recanto dos Corais Ltda" className={iCls} />
                 </div>
                 <div>
                   <label className={'flex items-center justify-between ' + lCls}>
@@ -685,7 +806,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
                       </span>
                     )}
                   </label>
-                  <input type="text" value={cnpj} onChange={e => setCnpj(maskCnpj(e.target.value))} placeholder="00.000.000/0001-00" maxLength={18} className={getInputCls(isCnpjInvalid) + ' font-mono ' + (cnpjValidation.isComplete ? cnpjValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
+                  <input type="text" value={cnpj} onChange={e => handleCnpjChange(e.target.value)} placeholder="00.000.000/0001-00" maxLength={18} className={getInputCls(isCnpjInvalid) + ' font-mono ' + (cnpjValidation.isComplete ? cnpjValidation.isValid ? 'border-emerald-400' : 'border-red-400' : '')} />
                   {isCnpjInvalid && <p className="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-xs">error</span>Informe um CNPJ válido e completo</p>}
                 </div>
                 <div>

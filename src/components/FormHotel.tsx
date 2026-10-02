@@ -32,6 +32,7 @@ import {
   checkHotelUrlAvailabilityInSupabase,
   extractHotelSlug
 } from '../utils/hotelUrl';
+import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
 
 
 export interface FormHotelProps {
@@ -150,19 +151,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const [isUrlAvailable, setIsUrlAvailable] = useState<boolean | null>(hotelToEdit?.link ? true : null);
   const [isCheckingUrl, setIsCheckingUrl] = useState(false);
 
-  const handleNomeFantasiaChange = (val: string) => {
-    setNomeFantasia(val);
-    if (!isLinkManuallyEdited) {
-      if (val.trim()) {
-        const uniqueUrl = generateUniqueHotelUrl(val, existingHoteis, hotelToEdit?.id);
-        setLink(uniqueUrl);
-        setIsUrlAvailable(true);
-      } else {
-        setLink('');
-        setIsUrlAvailable(null);
-      }
-    }
-  };
+
 
   const handleLinkChange = async (val: string) => {
     setIsLinkManuallyEdited(true);
@@ -585,6 +574,82 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     showToast('Copiado para a área de transferência!');
+  };
+
+  // Modo de Teste Rápido (disparado ao digitar hotel01)
+  const applyTestMockData = () => {
+    const mock = generateMockHotelData();
+    setNomeFantasia(mock.nomeFantasia);
+    setRazaoSocial(mock.razaoSocial);
+    setCnpj(mock.cnpj);
+    if (categoriasList.length > 0) {
+      setCategory(categoriasList[0].name);
+    }
+    const uniqueUrl = generateUniqueHotelUrl(mock.nomeFantasia, existingHoteis, hotelToEdit?.id);
+    setLink(uniqueUrl);
+    setIsUrlAvailable(true);
+
+    const testPlan = findPlanoTesteName(planos);
+    setSelectedPlan(testPlan);
+
+    setCep(mock.cep);
+    setStreet(mock.logradouro);
+    setStreetNumber(mock.numero);
+    setNeighborhood(mock.bairro);
+    setCity(mock.cidade);
+    setUf(mock.uf);
+
+    setPhone(mock.telefone);
+    setWhatsappSocial(mock.whatsapp);
+    setInstagram(mock.instagram);
+    setFacebook(mock.facebook);
+    setTiktok(mock.tiktok);
+
+    setManagerName(mock.nomeResponsavel);
+    setManagerCpf(mock.cpfResponsavel);
+    setManagerEmail(mock.emailResponsavel);
+    setManagerWhatsapp(mock.whatsappResponsavel);
+    setManagerRole(mock.cargoResponsavel);
+
+    setLoginEmail(mock.loginEmail);
+    setPassword(mock.senha);
+    setConfirmPassword(mock.confirmSenha);
+
+    showToast(`🚀 Modo Teste (hotel01): Dados preenchidos com CNPJ válido e ${testPlan} (R$ 1,00) selecionado!`);
+  };
+
+  const handleNomeFantasiaChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setNomeFantasia(val);
+    if (!isLinkManuallyEdited) {
+      if (val.trim()) {
+        const uniqueUrl = generateUniqueHotelUrl(val, existingHoteis, hotelToEdit?.id);
+        setLink(uniqueUrl);
+        setIsUrlAvailable(true);
+      } else {
+        setLink('');
+        setIsUrlAvailable(null);
+      }
+    }
+  };
+
+  const handleRazaoSocialChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setRazaoSocial(val);
+  };
+
+  const handleCnpjChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'hotel01') {
+      applyTestMockData();
+      return;
+    }
+    setCnpj(maskCnpj(val));
   };
 
   useEffect(() => {
@@ -1386,16 +1451,21 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                   type="text" 
                   required
                   value={razaoSocial}
-                  onChange={(e) => setRazaoSocial(e.target.value)}
+                  onChange={(e) => handleRazaoSocialChange(e.target.value)}
                   placeholder="Ex: Hotel Master Porto de Galinhas EIRELI" 
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] focus:ring-1 focus:ring-[#003400] bg-slate-50/30"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Nome Fantasia (Exibição no Zap) *
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Nome Fantasia (Exibição no Zap) *
+                  </label>
+                  <span className="text-[10px] text-slate-400">
+                    (Digite <strong className="text-emerald-700 font-bold">hotel01</strong> para autocompletar)
+                  </span>
+                </div>
                 <input 
                   type="text" 
                   required
@@ -1427,7 +1497,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                     type="text" 
                     required
                     value={cnpj}
-                    onChange={(e) => setCnpj(maskCnpj(e.target.value))}
+                    onChange={(e) => handleCnpjChange(e.target.value)}
                     placeholder="00.000.000/0001-00" 
                     maxLength={18}
                     className={`w-full px-3.5 py-2.5 rounded-xl border text-xs md:text-sm focus:outline-none transition-all font-mono ${
