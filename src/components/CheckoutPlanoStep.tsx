@@ -558,18 +558,21 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                 </div>
               </div>
 
-              {/* Consulta Inteligente em Tempo Real (Sem botão manual) */}
+              {/* Consulta Inteligente e Automática em Tempo Real */}
               <div className="pt-2 space-y-2">
-                <div className="bg-emerald-50/80 border-2 border-emerald-300 rounded-2xl p-4 flex flex-col items-center gap-2 text-center shadow-xs">
+                <div className="bg-emerald-50/90 border-2 border-emerald-400 rounded-2xl p-4 flex flex-col items-center gap-2 text-center shadow-xs">
                   <div className="flex items-center gap-2 text-emerald-950 font-black text-xs sm:text-sm">
-                    <span className="material-symbols-outlined text-emerald-600 animate-spin text-lg">sync</span>
-                    <span>Consultando aprovação em tempo real...</span>
-                    <span className="font-mono bg-emerald-200/90 text-emerald-950 px-2 py-0.5 rounded-lg text-xs font-black tracking-wider shadow-2xs">
+                    <span className="material-symbols-outlined text-emerald-700 animate-spin text-xl">sync</span>
+                    <span>Identificando pagamento automaticamente em tempo real...</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-500">Prazo para compensação:</span>
+                    <span className="font-mono bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-lg text-xs font-black tracking-wider">
                       {formatTime(timeLeft)}
                     </span>
                   </div>
-                  <p className="text-[11px] text-emerald-800 leading-relaxed max-w-sm">
-                    Assim que você pagar no app do seu banco, o sistema reconhece a compensação automaticamente e libera sua conta na hora sem você precisar clicar em nenhum botão!
+                  <p className="text-[11px] text-emerald-900 leading-relaxed max-w-sm mt-0.5">
+                    Assim que você confirmar a transferência no aplicativo do seu banco, o sistema reconhecerá o pagamento de forma 100% automática e redirecionará você para o seu painel!
                   </p>
                   <div className="w-full bg-emerald-200/60 rounded-full h-1.5 overflow-hidden mt-1">
                     <div
@@ -578,27 +581,6 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                     />
                   </div>
                 </div>
-
-                {/* Botão de Confirmação Imediata pelo Cliente */}
-                <button
-                  type="button"
-                  onClick={() => handleAprovarPagamento(pixResult?.paymentId || 'pix_confirmado_cliente', 'PIX Confirmado')}
-                  disabled={isAtivando}
-                  className="w-full py-3.5 px-4 bg-[#003400] hover:bg-[#004d00] disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                >
-                  {isAtivando ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
-                      <span>Liberando sua conta e redirecionando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-base">check_circle</span>
-                      <span>Já efetuei o pagamento (Liberar e Entrar no Painel)</span>
-                    </>
-                  )}
-                </button>
-
               </div>
             </>
           )}

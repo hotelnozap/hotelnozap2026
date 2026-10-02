@@ -44,8 +44,49 @@ export default async function handler(req, res) {
   }
 
   const action = req.query?.action || body?.action || 'check';
-  const masterToken = (body?.token || dbParams?.gateway_token || process.env.MERCADOPAGO_ACCESS_TOKEN || '').trim();
+  let masterToken = (body?.token || dbParams?.gateway_token || process.env.MERCADOPAGO_ACCESS_TOKEN || '').trim();
+  // Ignora tokens de exemplo / dummy mock
+  if (masterToken.includes('9812401928409182') || masterToken === 'APP_USR-...') {
+    masterToken = '';
+  }
   const chavePixMaster = (dbParams?.chave_pix_master || 'def0e87a-f7d0-4c54-830b-473206cf78c6').trim();
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 0. AÇÃO: TESTAR CONEXÃO / ACCESS TOKEN COM MERCADO PAGO
+  // ─────────────────────────────────────────────────────────────────────────
+  if (action === 'test_token') {
+    if (!masterToken || masterToken.length < 15) {
+      return res.status(400).json({
+        success: false,
+        error: 'Access Token do Mercado Pago não configurado ou muito curto.'
+      });
+    }
+
+    try {
+      const testRes = await fetch('https://api.mercadopago.com/v1/users/me', {
+        headers: { 'Authorization': `Bearer ${masterToken}` }
+      });
+
+      if (testRes.ok) {
+        const userData = await testRes.json();
+        return res.status(200).json({
+          success: true,
+          liveMode: userData.live_mode !== false,
+          user: userData.nickname || userData.email || 'Conta Mercado Pago',
+          email: userData.email,
+          message: `Conexão validada com sucesso! Conta: ${userData.nickname || userData.email || 'Mercado Pago'}`
+        });
+      } else {
+        const errData = await testRes.json().catch(() => ({}));
+        return res.status(400).json({
+          success: false,
+          error: errData.message || 'Token inválido ou não autorizado pelo Mercado Pago.'
+        });
+      }
+    } catch (e) {
+      return res.status(500).json({ success: false, error: e.message });
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // 1. AÇÃO: CRIAR PAGAMENTO PIX (VIA MERCADO PAGO SERVER-SIDE)
@@ -57,11 +98,28 @@ export default async function handler(req, res) {
     // Se temos Access Token do Mercado Pago, cria pagamento oficial dinâmico
     if (masterToken && masterToken.length > 15) {
       try {
-        const cleanDoc = (pagadorDoc || '').replace(/\D/g, '') || '00000000000';
-        const docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
-        const nameParts = (pagadorNome || hotelNome || 'Cliente').trim().split(' ');
+        const cleanDoc = (pagadorDoc || '').replace(/\D/g, '');
+        const nameParts = (pagadorNome || hotelNome || 'Cliente Hotel').trim().split(' ');
         const firstName = nameParts[0] || 'Cliente';
         const lastName = nameParts.slice(1).join(' ') || 'Hotel';
+
+        // Validação de e-mail seguro para Mercado Pago
+        const safeEmail = (pagadorEmail && pagadorEmail.includes('@') && !pagadorEmail.includes('teste@'))
+          ? pagadorEmail.trim()
+          : (pagadorEmail && pagadorEmail.includes('@') ? pagadorEmail.trim() : 'contato@hotelnozap.com.br');
+
+        const payerObj = {
+          email: safeEmail,
+          first_name: firstName,
+          last_name: lastName
+        };
+
+        // Só envia identification se for um documento com comprimento válido de CPF ou CNPJ
+        if (cleanDoc.length === 11) {
+          payerObj.identification = { type: 'CPF', number: cleanDoc };
+        } else if (cleanDoc.length === 14) {
+          payerObj.identification = { type: 'CNPJ', number: cleanDoc };
+        }
 
         const idempotencyKey = `hoteis_mp_${hotelId || 'new'}_${Date.now()}`;
         const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
@@ -75,15 +133,7 @@ export default async function handler(req, res) {
             transaction_amount: valorNum,
             description: `Assinatura ${planoNome || 'Plano'} - ${hotelNome || 'Hotel'}`,
             payment_method_id: 'pix',
-            payer: {
-              email: pagadorEmail || 'financeiro@hotelnozap.com.br',
-              first_name: firstName,
-              last_name: lastName,
-              identification: {
-                type: docType,
-                number: cleanDoc
-              }
-            },
+            payer: payerObj,
             external_reference: hotelId || `hotel_${Date.now()}`
           })
         });

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { mercadopagoService, getApiBaseUrl } from '../services/mercadopagoService';
+import { supabase } from '../lib/supabase';
 
 export interface ParametrosSistemaProps {
   onBackToDashboard: () => void;
@@ -85,9 +87,11 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
 
   const [gatewayProvider, setGatewayProvider] = useState<'mercadopago' | 'asaas' | 'stripe'>('mercadopago');
   const [gatewayEnvironment, setGatewayEnvironment] = useState<'production' | 'sandbox'>('production');
-  const [gatewayPixKey, setGatewayPixKey] = useState('financeiro@hotelnozap.com.br');
-  const [gatewayToken, setGatewayToken] = useState('APP_USR-9812401928409182-091219-4829104819284019');
+  const [gatewayPixKey, setGatewayPixKey] = useState('def0e87a-f7d0-4c54-830b-473206cf78c6');
+  const [gatewayToken, setGatewayToken] = useState('');
   const [showGatewayToken, setShowGatewayToken] = useState(false);
+  const [isTestingGateway, setIsTestingGateway] = useState(false);
+  const [gatewayFeedback, setGatewayFeedback] = useState<string | null>(null);
 
   const [googlePlacesKey, setGooglePlacesKey] = useState('AIzaSyBpN5K5Hg9BqIMvHguh3gyUEnbYcqEgDi8');
   const [showGoogleKey, setShowGoogleKey] = useState(false);
@@ -128,7 +132,7 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
     googlePlaces: { status: 'online', latencia: '84ms', mensagem: 'Google Maps Places API operacional' }
   });
 
-  // Carregar parâmetros salvos do localStorage
+  // Carregar parâmetros salvos do localStorage e do Supabase
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PARAMETROS);
@@ -143,7 +147,10 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
         if (p.gatewayProvider) setGatewayProvider(p.gatewayProvider);
         if (p.gatewayEnvironment) setGatewayEnvironment(p.gatewayEnvironment);
         if (p.gatewayPixKey) setGatewayPixKey(p.gatewayPixKey);
-        if (p.gatewayToken) setGatewayToken(p.gatewayToken);
+        // Só restaura gatewayToken se não for o dummy token antigo
+        if (p.gatewayToken && !p.gatewayToken.includes('9812401928409182')) {
+          setGatewayToken(p.gatewayToken);
+        }
         if (p.googlePlacesKey) setGooglePlacesKey(p.googlePlacesKey);
         if (p.templates) setTemplates(p.templates);
         if (p.comissaoPadrao !== undefined) setComissaoPadrao(p.comissaoPadrao);
@@ -164,9 +171,53 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
     } catch (e) {
       console.warn('Erro ao carregar parâmetros do sistema:', e);
     }
+
+    // Carregar parâmetros mestre oficiais diretamente do Supabase via API Serverless Master
+    fetch(`${getApiBaseUrl()}/api/get-pix-master`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success) {
+          if (data.chavePix) setGatewayPixKey(data.chavePix.trim());
+          if (data.token && !data.token.includes('9812401928409182')) {
+            setGatewayToken(data.token.trim());
+          }
+          if (data.environment) setGatewayEnvironment(data.environment);
+          if (data.provider) setGatewayProvider(data.provider);
+        }
+      })
+      .catch(e => console.warn('Aviso ao carregar dados do get-pix-master:', e));
   }, []);
 
-  const handleSalvarParametros = () => {
+  const handleTestGateway = async () => {
+    if (!gatewayToken || gatewayToken.trim().length < 15) {
+      showToast('Preencha um Access Token válido do Mercado Pago (APP_USR-...) para testar.');
+      return;
+    }
+    setIsTestingGateway(true);
+    setGatewayFeedback(null);
+    try {
+      const resp = await fetch(`${getApiBaseUrl()}/api/mercadopago-pix?action=test_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: gatewayToken.trim() })
+      });
+      const data = await resp.json();
+      if (data && data.success) {
+        setGatewayFeedback(`✅ Conexão Ativa: ${data.message} (${data.liveMode ? 'MODO PRODUÇÃO REAL' : 'SANDBOX'})`);
+        showToast('Mercado Pago conectado e autenticado com sucesso!');
+      } else {
+        setGatewayFeedback(`❌ Erro de Autenticação: ${data.error || 'Token inválido ou não autorizado'}`);
+        showToast(`Erro no Mercado Pago: ${data.error || 'Token inválido'}`);
+      }
+    } catch (e: any) {
+      setGatewayFeedback(`❌ Erro de Rede: ${e.message}`);
+      showToast('Erro ao testar conexão com o Mercado Pago.');
+    } finally {
+      setIsTestingGateway(false);
+    }
+  };
+
+  const handleSalvarParametros = async () => {
     const payload = {
       openaiKey,
       openaiModel,
@@ -176,8 +227,8 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
       whatsappWebhook,
       gatewayProvider,
       gatewayEnvironment,
-      gatewayPixKey,
-      gatewayToken,
+      gatewayPixKey: gatewayPixKey.trim(),
+      gatewayToken: gatewayToken.trim(),
       googlePlacesKey,
       templates,
       comissaoPadrao,
@@ -194,6 +245,45 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
 
     localStorage.setItem(STORAGE_KEY_PARAMETROS, JSON.stringify(payload));
     window.dispatchEvent(new CustomEvent('hotelnozap_parametros_atualizados', { detail: payload }));
+
+    // Sincroniza diretamente com Supabase (Master) via Serverless Function
+    try {
+      await fetch(`${getApiBaseUrl()}/api/get-pix-master`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chavePix: gatewayPixKey.trim(),
+          gatewayToken: gatewayToken.trim(),
+          gatewayEnvironment,
+          gatewayProvider
+        })
+      });
+    } catch (e) {
+      console.warn('Erro ao salvar no get-pix-master:', e);
+    }
+
+    // Sincroniza também no serviço mercadopagoService
+    mercadopagoService.saveMasterCredentials({
+      environment: gatewayEnvironment,
+      publicKey: '',
+      accessToken: gatewayToken.trim(),
+      enablePix: true,
+      enableCreditCard: true,
+      enableBoleto: false,
+      maxInstallments: '12',
+      chavePixMaster: gatewayPixKey.trim()
+    });
+
+    // Atualiza tabela parametros_sistema no Supabase
+    try {
+      await supabase.from('parametros_sistema').update({
+        chave_pix_master: gatewayPixKey.trim(),
+        gateway_token: gatewayToken.trim(),
+        gateway_environment: gatewayEnvironment,
+        gateway_provider: gatewayProvider,
+        atualizado_em: new Date().toISOString()
+      }).eq('id', '00000000-0000-0000-0000-000000000001');
+    } catch { /* ignore */ }
 
     // Registrar no log de auditoria
     const novoLog: LogAuditoria = {
@@ -591,15 +681,37 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
             {/* Gateway Pagamento */}
             <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
-                    <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
+                      <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Gateway de Pagamento Master</h3>
+                      <p className="text-xs text-slate-500">Cobrança e compensação automática de planos em tempo real</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">Gateway de Pagamento Master</h3>
-                    <p className="text-xs text-slate-500">Recebimento das assinaturas dos planos de hotéis</p>
-                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTestGateway}
+                    disabled={isTestingGateway || !gatewayToken}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 transition cursor-pointer disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-sm">{isTestingGateway ? 'sync' : 'verified'}</span>
+                    <span>{isTestingGateway ? 'Validando...' : 'Testar Conexão'}</span>
+                  </button>
                 </div>
+
+                {gatewayFeedback && (
+                  <div className={`mt-3 p-3 rounded-xl text-xs font-semibold border ${
+                    gatewayFeedback.startsWith('✅')
+                      ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                      : 'bg-rose-50 text-rose-900 border-rose-200'
+                  }`}>
+                    {gatewayFeedback}
+                  </div>
+                )}
 
                 <div className="space-y-4 mt-4">
                   <div className="grid grid-cols-2 gap-3">
@@ -635,21 +747,32 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Chave PIX Master do SaaS
+                      Chave PIX Master do SaaS (EVP / Chave Aleatória)
                     </label>
                     <input
                       type="text"
                       value={gatewayPixKey}
                       onChange={(e) => setGatewayPixKey(e.target.value)}
-                      placeholder="financeiro@hotelnozap.com.br"
-                      className="w-full py-2 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium"
+                      placeholder="def0e87a-f7d0-4c54-830b-473206cf78c6"
+                      className="w-full py-2 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Access Token do Gateway
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Access Token de Produção Mercado Pago *
+                      </label>
+                      {gatewayToken && gatewayToken.length > 15 ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          <span className="material-symbols-outlined text-xs">check_circle</span> Token Ativo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                          <span className="material-symbols-outlined text-xs">warning</span> Pendente
+                        </span>
+                      )}
+                    </div>
                     <div className="relative flex items-center">
                       <input
                         type={showGatewayToken ? 'text' : 'password'}
@@ -668,6 +791,9 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
                         </span>
                       </button>
                     </div>
+                    <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                      💡 <strong>Obrigatório para identificação automática do PIX:</strong> Copie o <strong>Access Token</strong> de produção no painel do Mercado Pago (<em>Seu Negócio &gt; Configurações &gt; Gestão e Administração &gt; Credenciais de Produção</em>).
+                    </p>
                   </div>
                 </div>
               </div>
