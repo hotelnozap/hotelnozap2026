@@ -38,6 +38,7 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
   const [clientSecret, setClientSecret] = useState('');
   const [showAccessToken, setShowAccessToken] = useState(false);
   const [showClientSecret, setShowClientSecret] = useState(false);
+  const [chavePixMaster, setChavePixMaster] = useState('def0e87a-f7d0-4c54-830b-473206cf78c6');
 
   // Métodos de Pagamento Habilitados
   const [enablePix, setEnablePix] = useState(true);
@@ -76,6 +77,22 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
       setEnableCreditCard(creds.enableCreditCard);
       setEnableBoleto(creds.enableBoleto);
       setMaxInstallments(creds.maxInstallments || '12');
+      if (creds.chavePixMaster) {
+        setChavePixMaster(creds.chavePixMaster);
+      }
+
+      // Sincroniza em tempo real com o banco de dados via API
+      fetch('/api/get-pix-master')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success) {
+            if (data.chavePix) setChavePixMaster(data.chavePix);
+            if (data.publicKey && !creds.publicKey) setPublicKey(data.publicKey);
+            if (data.token && !creds.accessToken) setAccessToken(data.token);
+            if (data.environment) setEnvironment(data.environment);
+          }
+        })
+        .catch(e => console.warn('Aviso ao consultar /api/get-pix-master:', e));
     } else {
       const hId = scope === 'current' ? (currentHotel?.id || '') : scope;
       if (hId) {
@@ -145,6 +162,7 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
       enableCreditCard,
       enableBoleto,
       maxInstallments,
+      chavePixMaster: selectedScope === 'master' ? chavePixMaster.trim() : undefined,
       updatedAt: new Date().toISOString()
     };
 
@@ -446,6 +464,55 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* CAMPO DESTAQUE: CHAVE PIX MASTER (EXCLUSIVO ESCOPO MASTER SAAS) */}
+            {selectedScope === 'master' && (
+              <div className="col-span-1 md:col-span-2 p-4 md:p-5 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-teal-50/40 to-white border-2 border-emerald-500/30 shadow-xs space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <label className="text-xs md:text-sm font-extrabold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-lg text-emerald-700">qr_code_2</span>
+                      Chave PIX Master (Recebimento de Assinaturas & Planos SaaS)
+                    </label>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 self-start sm:self-auto border border-emerald-200">
+                    <span className="material-symbols-outlined text-xs">sync</span>
+                    Sincronizada com Checkout
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={chavePixMaster}
+                    onChange={(e) => setChavePixMaster(e.target.value)}
+                    placeholder="Chave EVP aleatória, CNPJ, E-mail ou Telefone" 
+                    className="w-full pl-3.5 pr-24 py-3 rounded-xl border-2 border-emerald-300 text-xs md:text-sm font-mono font-bold text-emerald-950 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 bg-white shadow-inner"
+                  />
+                  <div className="absolute right-2 top-2 flex items-center gap-1">
+                    {chavePixMaster && (
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(chavePixMaster, 'Chave PIX Master')}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 cursor-pointer flex items-center gap-1 transition-colors"
+                        title="Copiar Chave PIX"
+                      >
+                        <span className="material-symbols-outlined text-sm">content_copy</span>
+                        <span>Copiar</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 text-xs text-emerald-800/80">
+                  <span className="material-symbols-outlined text-sm text-emerald-600 shrink-0 mt-0.5">info</span>
+                  <p>
+                    Esta chave PIX é utilizada no checkout automático de cadastro e assinatura de novos hotéis parceiros. Ao clicar em <strong>Salvar Configurações</strong>, a chave é gravada no banco de dados e aplicada imediatamente para todos os novos pagamentos de planos.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Public Key (Chave Pública)
