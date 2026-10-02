@@ -432,62 +432,31 @@ export const mercadopagoService = {
     const masterCreds = this.getMasterCredentials();
     const token = (configMaster.token || masterCreds.accessToken)?.trim();
 
-    // 1. Se houver token do Mercado Pago, tenta gerar via API oficial
-    if (token && token.length > 15) {
-      try {
-        const cleanDoc = (pagadorDoc || '').replace(/\D/g, '') || '00000000000';
-        const docType = cleanDoc.length > 11 ? 'CNPJ' : 'CPF';
-        const nameParts = (pagadorNome || hotelNome).trim().split(' ');
-        const firstName = nameParts[0] || 'Cliente';
-        const lastName = nameParts.slice(1).join(' ') || 'Hotel';
+    // 1. Tenta criar cobrança oficial via Serverless Function (evita CORS e protege token)
+    try {
+      const resp = await fetch('/api/mercadopago-pix?action=create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hotelId,
+          hotelNome,
+          planoNome,
+          valor,
+          pagadorEmail,
+          pagadorNome,
+          pagadorDoc,
+          token
+        })
+      });
 
-        const idempotencyKey = `mp_pix_${hotelId}_${Date.now()}`;
-        const response = await fetch('https://api.mercadopago.com/v1/payments', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Idempotency-Key': idempotencyKey
-          },
-          body: JSON.stringify({
-            transaction_amount: Number(valor.toFixed(2)),
-            description: `Assinatura ${planoNome} - ${hotelNome}`,
-            payment_method_id: 'pix',
-            payer: {
-              email: pagadorEmail || 'contato@hotelnozap.com.br',
-              first_name: firstName,
-              last_name: lastName,
-              identification: {
-                type: docType,
-                number: cleanDoc
-              }
-            },
-            external_reference: `hotel_${hotelId}`
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const qrCode = data.point_of_interaction?.transaction_data?.qr_code || '';
-          const qrCodeBase64 = data.point_of_interaction?.transaction_data?.qr_code_base64 || '';
-          const ticketUrl = data.point_of_interaction?.transaction_data?.ticket_url;
-
-          return {
-            success: true,
-            paymentId: String(data.id),
-            status: data.status || 'pending',
-            qrCode: qrCode,
-            qrCodeBase64: qrCodeBase64 ? `data:image/png;base64,${qrCodeBase64}` : undefined,
-            fallbackQrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(qrCode)}`,
-            ticketUrl,
-            gateway: 'mercadopago'
-          };
-        } else {
-          console.warn('Mercado Pago API retornou status não-200. Utilizando gerador Pix com Chave Master.');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.success && data.qrCode) {
+          return data;
         }
-      } catch (err) {
-        console.warn('Erro ao conectar na API do Mercado Pago. Acionando fallback PIX:', err);
       }
+    } catch (e) {
+      console.warn('Erro ao chamar /api/mercadopago-pix create:', e);
     }
 
     // 2. Fallback Oficial: Gera Pix Copia e Cola com a Chave Pix Master Correta (def0e87a-f7d0-4c54-830b-473206cf78c6)
@@ -514,10 +483,29 @@ export const mercadopagoService = {
   // ─────────────────────────────────────────────────────────────────────────
   // 8. CONSULTA DE STATUS DE PAGAMENTO EM TEMPO REAL
   // ─────────────────────────────────────────────────────────────────────────
-  async consultarPagamentoMaster(paymentId: string, hotelId?: string): Promise<{ approved: boolean; status: string }> {
+  async consultarPagamentoMaster(paymentId: string, hotelId?: string, valor?: number): Promise<{ approved: boolean; status: string }> {
     if (!paymentId) return { approved: false, status: 'unknown' };
 
-    // 1. Se hotelId for informado, verifica se o hotel já foi ativado no Supabase (ex: via webhook ou admin)
+    // 1. Consulta em tempo real via Serverless API (com verificação de banco, paymentId e busca de pagamentos recentes)
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.set('action', 'check');
+      if (paymentId) queryParams.set('paymentId', paymentId);
+      if (hotelId) queryParams.set('hotelId', hotelId);
+      if (valor) queryParams.set('valor', String(valor));
+
+      const resp = await fetch(`/api/mercadopago-pix?${queryParams.toString()}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.approved) {
+          return { approved: true, status: 'approved' };
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar /api/mercadopago-pix check:', e);
+    }
+
+    // 2. Se hotelId for informado, verifica se o hotel já foi ativado no Supabase (ex: via webhook ou admin)
     if (hotelId) {
       try {
         const { data: h } = await supabase
@@ -532,36 +520,13 @@ export const mercadopagoService = {
       } catch { /* ignore */ }
     }
 
-    // 2. Se for mock/chave local com flag de aprovação manual simulada
+    // 3. Fallback de simulação local para testes
     if (paymentId.startsWith('pix_hnz_')) {
       const isApprovedLocal = typeof window !== 'undefined' && localStorage.getItem(`hotelnozap_pay_approved_${paymentId}`) === 'true';
       return {
         approved: Boolean(isApprovedLocal),
         status: isApprovedLocal ? 'approved' : 'pending'
       };
-    }
-
-    // 3. Consulta API do Mercado Pago
-    const masterCreds = this.getMasterCredentials();
-    const token = masterCreds.accessToken?.trim();
-    if (token) {
-      try {
-        const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const isApproved = data.status === 'approved';
-          return {
-            approved: isApproved,
-            status: data.status || 'pending'
-          };
-        }
-      } catch (e) {
-        console.warn('Erro ao consultar status no Mercado Pago:', e);
-      }
     }
 
     return { approved: false, status: 'pending' };
