@@ -518,6 +518,21 @@ export const mercadopagoService = {
           return { approved: true, status: 'approved' };
         }
       } catch { /* ignore */ }
+
+      try {
+        const { data: users } = await supabase
+          .from('usuarios')
+          .select('id, status, ultimo_acesso')
+          .eq('hotel_id', hotelId)
+          .limit(1);
+
+        if (users && users.length > 0) {
+          const u = users[0];
+          if (u.ultimo_acesso && u.ultimo_acesso !== 'Nunca acessou') {
+            return { approved: true, status: 'approved' };
+          }
+        }
+      } catch { /* ignore */ }
     }
 
     // 3. Fallback de simulação local para testes

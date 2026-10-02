@@ -486,11 +486,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   };
 
   const goToPainelAdmin = () => {
-    if (onNavigateToLogin) {
-      onNavigateToLogin();
-    } else {
-      window.location.href = getAppLoginUrl();
-    }
+    window.location.href = 'https://app.hotelnozap.com.br';
   };
 
   const handleSubmit = async () => {
