@@ -1,6 +1,7 @@
 import { hotelConfigService, HotelConfigData, hoteisService } from './supabaseService';
 import { systemLogsService } from './systemLogsService';
 import { creditosService } from './creditosService';
+import { supabase } from '../lib/supabase';
 
 export interface CriarPixMasterParams {
   hotelId: string;
@@ -343,12 +344,69 @@ export const mercadopagoService = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 6. CRIAÇÃO DE PAGAMENTO PIX MASTER (MERCADO PAGO + FALLBACK)
+  // 6. BUSCA INTELIGENTE DA CHAVE PIX MASTER & CREDENCIAIS
+  // ─────────────────────────────────────────────────────────────────────────
+  async buscarChavePixMaster(): Promise<{ chavePix: string; token?: string; provider?: string }> {
+    const DEFAULT_KEY = 'def0e87a-f7d0-4c54-830b-473206cf78c6';
+
+    // 1. Tenta API Serverless da Vercel (com service role para leitura pública segura)
+    try {
+      const resp = await fetch('/api/get-pix-master');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.chavePix) {
+          return {
+            chavePix: data.chavePix.trim(),
+            token: data.token?.trim(),
+            provider: data.provider
+          };
+        }
+      }
+    } catch { /* ignore */ }
+
+    // 2. Tenta direto no Supabase caso anon tenha permissão
+    try {
+      const { data, error } = await supabase
+        .from('parametros_sistema')
+        .select('chave_pix_master, gateway_token, gateway_provider')
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data?.chave_pix_master) {
+        return {
+          chavePix: data.chave_pix_master.trim(),
+          token: data.gateway_token?.trim(),
+          provider: data.gateway_provider
+        };
+      }
+    } catch { /* ignore */ }
+
+    // 3. Fallback no localStorage (caso admin tenha salvo localmente)
+    try {
+      if (typeof window !== 'undefined') {
+        const paramsStorage = localStorage.getItem(STORAGE_KEY_PARAMETROS);
+        if (paramsStorage) {
+          const parsed = JSON.parse(paramsStorage);
+          if (parsed.chave_pix_master) return { chavePix: parsed.chave_pix_master.trim() };
+          if (parsed.gatewayPixKey) return { chavePix: parsed.gatewayPixKey.trim() };
+        }
+      }
+    } catch { /* ignore */ }
+
+    return { chavePix: DEFAULT_KEY };
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 7. CRIAÇÃO DE PAGAMENTO PIX MASTER (MERCADO PAGO + FALLBACK)
   // ─────────────────────────────────────────────────────────────────────────
   async criarPagamentoPixMaster(params: CriarPixMasterParams): Promise<PixMasterResult> {
     const { hotelId, hotelNome, planoNome, valor, pagadorEmail, pagadorNome, pagadorDoc } = params;
+    
+    // Busca chave PIX e credenciais corretas do sistema
+    const configMaster = await this.buscarChavePixMaster();
+    const chavePix = configMaster.chavePix || 'def0e87a-f7d0-4c54-830b-473206cf78c6';
     const masterCreds = this.getMasterCredentials();
-    const token = masterCreds.accessToken?.trim();
+    const token = (configMaster.token || masterCreds.accessToken)?.trim();
 
     // 1. Se houver token do Mercado Pago, tenta gerar via API oficial
     if (token && token.length > 15) {
@@ -401,24 +459,14 @@ export const mercadopagoService = {
             gateway: 'mercadopago'
           };
         } else {
-          console.warn('Mercado Pago API retornou status não-200. Utilizando gerador Pix padrão.');
+          console.warn('Mercado Pago API retornou status não-200. Utilizando gerador Pix com Chave Master.');
         }
       } catch (err) {
         console.warn('Erro ao conectar na API do Mercado Pago. Acionando fallback PIX:', err);
       }
     }
 
-    // 2. Fallback: Gera Pix Copia e Cola Oficial com Chave Pix Master
-    let chavePix = 'financeiro@hotelnozap.com.br';
-    try {
-      const paramsStorage = localStorage.getItem(STORAGE_KEY_PARAMETROS);
-      if (paramsStorage) {
-        const parsed = JSON.parse(paramsStorage);
-        if (parsed.gatewayPixKey) chavePix = parsed.gatewayPixKey.trim();
-        else if (parsed.chave_pix_master) chavePix = parsed.chave_pix_master.trim();
-      }
-    } catch { /* ignore */ }
-
+    // 2. Fallback Oficial: Gera Pix Copia e Cola com a Chave Pix Master Correta (def0e87a-f7d0-4c54-830b-473206cf78c6)
     const txid = `HNZ${hotelId.replace(/\D/g, '').substring(0, 10)}${Date.now().toString().slice(-6)}`;
     const pixCopiaECola = this.gerarPayloadPixEstatico({
       chavePix,
@@ -440,40 +488,56 @@ export const mercadopagoService = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 7. CONSULTA DE STATUS DE PAGAMENTO
+  // 8. CONSULTA DE STATUS DE PAGAMENTO EM TEMPO REAL
   // ─────────────────────────────────────────────────────────────────────────
-  async consultarPagamentoMaster(paymentId: string): Promise<{ approved: boolean; status: string }> {
+  async consultarPagamentoMaster(paymentId: string, hotelId?: string): Promise<{ approved: boolean; status: string }> {
     if (!paymentId) return { approved: false, status: 'unknown' };
 
-    // Se for mock/chave local com flag de aprovação manual simulada
+    // 1. Se hotelId for informado, verifica se o hotel já foi ativado no Supabase (ex: via webhook ou admin)
+    if (hotelId) {
+      try {
+        const { data: h } = await supabase
+          .from('hoteis')
+          .select('id, status')
+          .eq('id', hotelId)
+          .maybeSingle();
+
+        if (h && (h.status === 'ativo' || (h as any).status === 'Ativo')) {
+          return { approved: true, status: 'approved' };
+        }
+      } catch { /* ignore */ }
+    }
+
+    // 2. Se for mock/chave local com flag de aprovação manual simulada
     if (paymentId.startsWith('pix_hnz_')) {
-      const isApprovedLocal = localStorage.getItem(`hotelnozap_pay_approved_${paymentId}`) === 'true';
+      const isApprovedLocal = typeof window !== 'undefined' && localStorage.getItem(`hotelnozap_pay_approved_${paymentId}`) === 'true';
       return {
-        approved: isApprovedLocal,
+        approved: Boolean(isApprovedLocal),
         status: isApprovedLocal ? 'approved' : 'pending'
       };
     }
 
+    // 3. Consulta API do Mercado Pago
     const masterCreds = this.getMasterCredentials();
     const token = masterCreds.accessToken?.trim();
-    if (!token) return { approved: false, status: 'pending' };
-
-    try {
-      const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+    if (token) {
+      try {
+        const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const isApproved = data.status === 'approved';
+          return {
+            approved: isApproved,
+            status: data.status || 'pending'
+          };
         }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const isApproved = data.status === 'approved';
-        return {
-          approved: isApproved,
-          status: data.status || 'pending'
-        };
+      } catch (e) {
+        console.warn('Erro ao consultar status no Mercado Pago:', e);
       }
-    } catch (e) {
-      console.warn('Erro ao consultar status no Mercado Pago:', e);
     }
 
     return { approved: false, status: 'pending' };

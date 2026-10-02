@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { mercadopagoService, PixMasterResult } from '../services/mercadopagoService';
+import { hoteisService } from '../services/supabaseService';
 
 export interface CheckoutPlanoStepProps {
   hotelId: string;
@@ -38,9 +39,14 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
 
   // Status do Pagamento
   const [isApproved, setIsApproved] = useState(false);
-  const [isVerificando, setIsVerificando] = useState(false);
   const [isAtivando, setIsAtivando] = useState(false);
   const [erroMsg, setErroMsg] = useState<string | null>(null);
+
+  // Timer de 5 minutos (300s) e Bloqueio Automático
+  const [timeLeft, setTimeLeft] = useState(300);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Estados do Cartão
   const [cartaoNumero, setCartaoNumero] = useState('');
@@ -50,7 +56,61 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   const [cartaoParcelas, setCartaoParcelas] = useState('1');
   const [processandoCartao, setProcessandoCartao] = useState(false);
 
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  // Formatar tempo mm:ss
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  // Gerar cobrança PIX
+  const gerarPix = async () => {
+    setGerandoPix(true);
+    setErroMsg(null);
+    try {
+      const res = await mercadopagoService.criarPagamentoPixMaster({
+        hotelId,
+        hotelNome,
+        planoId: plano?.id,
+        planoNome,
+        valor: valorPlano,
+        pagadorEmail: loginEmail,
+        pagadorNome: nomeResponsavel || hotelNome,
+        pagadorDoc: cpfOuCnpj
+      });
+      setPixResult(res);
+    } catch (err) {
+      console.error('Erro ao gerar PIX:', err);
+    } finally {
+      setGerandoPix(false);
+    }
+  };
+
+  // Bloquear cadastro por expiração de tempo (5 minutos)
+  const handleBloquearPorExpiracao = async () => {
+    setIsBlocked(true);
+    try {
+      await hoteisService.updateHotel(hotelId, {
+        status: 'bloqueado',
+        notes: `Cadastro bloqueado automaticamente após expiração do prazo de 5 minutos sem confirmação de pagamento em ${new Date().toLocaleString('pt-BR')}.`
+      } as any);
+    } catch (err) {
+      console.warn('Erro ao atualizar status para bloqueado:', err);
+    }
+  };
+
+  // Desbloquear e tentar novamente (novo PIX + 5 minutos)
+  const handleReiniciarPix = async () => {
+    setIsBlocked(false);
+    setTimeLeft(300);
+    try {
+      await hoteisService.updateHotel(hotelId, {
+        status: 'prospecto',
+        notes: `Cadastro reaberto para nova tentativa de pagamento PIX em ${new Date().toLocaleString('pt-BR')}.`
+      } as any);
+    } catch { /* ignore */ }
+    await gerarPix();
+  };
 
   // 1. Inicialização: Se for grátis, ativa na hora. Se for pago, gera o PIX inicial.
   useEffect(() => {
@@ -75,53 +135,55 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
       return;
     }
 
-    // Gerar cobrança PIX inicial
-    setGerandoPix(true);
-    mercadopagoService.criarPagamentoPixMaster({
-      hotelId,
-      hotelNome,
-      planoId: plano?.id,
-      planoNome,
-      valor: valorPlano,
-      pagadorEmail: loginEmail,
-      pagadorNome: nomeResponsavel || hotelNome,
-      pagadorDoc: cpfOuCnpj
-    }).then(res => {
-      if (isMounted) {
-        setPixResult(res);
-        setGerandoPix(false);
-      }
-    }).catch(err => {
-      if (isMounted) {
-        console.error('Erro ao gerar PIX:', err);
-        setGerandoPix(false);
-      }
-    });
+    gerarPix();
 
     return () => {
       isMounted = false;
       if (pollingRef.current) clearInterval(pollingRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [hotelId, isGratis]);
 
-  // 2. Polling de verificação de pagamento PIX
+  // 2. Cronômetro regressivo de 5 minutos (300 segundos)
   useEffect(() => {
-    if (isApproved || isGratis || !pixResult?.paymentId) return;
+    if (isGratis || isApproved || isBlocked) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          handleBloquearPorExpiracao();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isGratis, isApproved, isBlocked]);
+
+  // 3. Polling inteligente e automático de consulta em tempo real (a cada 3.5 segundos)
+  useEffect(() => {
+    if (isApproved || isGratis || isBlocked || !pixResult?.paymentId) return;
 
     pollingRef.current = setInterval(async () => {
       try {
-        const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
+        const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId, hotelId);
         if (check.approved) {
           if (pollingRef.current) clearInterval(pollingRef.current);
+          if (timerRef.current) clearInterval(timerRef.current);
           handleAprovarPagamento(pixResult.paymentId, 'PIX Instantâneo');
         }
       } catch { /* ignore polling errors */ }
-    }, 5000);
+    }, 3500);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [pixResult?.paymentId, isApproved, isGratis]);
+  }, [pixResult?.paymentId, isApproved, isGratis, isBlocked, hotelId]);
 
   // Handler de aprovação e liberação
   const handleAprovarPagamento = async (paymentId: string, metodo: string) => {
@@ -144,24 +206,6 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     }
   };
 
-  // Botão manual de verificação
-  const handleVerificarManual = async () => {
-    if (!pixResult?.paymentId || isVerificando) return;
-    setIsVerificando(true);
-    setErroMsg(null);
-    try {
-      const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
-      if (check.approved) {
-        await handleAprovarPagamento(pixResult.paymentId, 'PIX Instantâneo');
-      } else {
-        setErroMsg('Ainda não identificamos a compensação do seu PIX. Aguarde alguns instantes após o pagamento no seu banco e tente novamente.');
-      }
-    } catch {
-      setErroMsg('Não foi possível verificar no momento. Caso tenha pago, nossa equipe liberará sua conta.');
-    } finally {
-      setIsVerificando(false);
-    }
-  };
 
   // Simulação imediata para testes
   const handleSimularAprovacao = async () => {
@@ -277,6 +321,61 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
           >
             <span className="material-symbols-outlined text-[#25D366] text-lg">chat</span>
             Falar com Suporte
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TELA DE CADASTRO BLOQUEADO POR EXPIRAÇÃO (5 MINUTOS)
+  // ───────────────────────────────────────────────────────────────────────────
+  if (isBlocked) {
+    return (
+      <div className="py-8 px-4 max-w-xl mx-auto text-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-rose-500/20 ring-8 ring-rose-50">
+          <span className="material-symbols-outlined text-4xl font-bold">lock_clock</span>
+        </div>
+
+        <span className="inline-block px-3.5 py-1 bg-rose-50 text-rose-800 border border-rose-200 text-xs font-black uppercase tracking-wider rounded-full mb-3">
+          Tempo Expirado (5 Minutos) • Cadastro Bloqueado
+        </span>
+
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-2">
+          Prazo de Pagamento Esgotado
+        </h2>
+        <p className="text-sm text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
+          Não identificamos a compensação do seu PIX dentro do prazo de 5 minutos. Por motivos de segurança, o cadastro do hotel <strong>{hotelNome}</strong> foi temporariamente bloqueado para evitar pendências no sistema.
+        </p>
+
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 mb-6 text-left flex items-start gap-3">
+          <span className="material-symbols-outlined text-amber-600 shrink-0 mt-0.5">info</span>
+          <div>
+            <strong className="block font-bold mb-0.5">Já realizou o pagamento no seu banco?</strong>
+            Não se preocupe! Se o valor já foi debitado na sua conta, chame nossa equipe no WhatsApp para validação imediata do seu comprovante. Ou clique abaixo para gerar um novo código PIX e reiniciar o prazo.
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            type="button"
+            onClick={handleReiniciarPix}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#003400] hover:bg-[#004d00] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer active:scale-95"
+          >
+            <span className="material-symbols-outlined text-lg">refresh</span>
+            Gerar Novo Código PIX (Desbloquear)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const msg = `Olá! Fiz o cadastro do hotel ${hotelNome} no Hotel no Zap e efetuei o pagamento, mas o prazo de 5 minutos do PIX expirou. Poderiam verificar a aprovação para mim?`;
+              window.open(`https://wa.me/5566981585014?text=${encodeURIComponent(msg)}`, '_blank');
+            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[#25D366] text-lg">chat</span>
+            Falar com Suporte no WhatsApp
           </button>
         </div>
       </div>
@@ -444,26 +543,26 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                 </div>
               </div>
 
-              {/* Ações de verificação */}
-              <div className="space-y-2 pt-2">
-                <button
-                  type="button"
-                  onClick={handleVerificarManual}
-                  disabled={isVerificando || isAtivando}
-                  className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isVerificando || isAtivando ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
-                      Verificando com Mercado Pago...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-base">verified</span>
-                      Já realizei o pagamento (Verificar Aprovação)
-                    </>
-                  )}
-                </button>
+              {/* Consulta Inteligente em Tempo Real (Sem botão manual) */}
+              <div className="pt-2 space-y-2">
+                <div className="bg-emerald-50/80 border-2 border-emerald-300 rounded-2xl p-4 flex flex-col items-center gap-2 text-center shadow-xs">
+                  <div className="flex items-center gap-2 text-emerald-950 font-black text-xs sm:text-sm">
+                    <span className="material-symbols-outlined text-emerald-600 animate-spin text-lg">sync</span>
+                    <span>Consultando aprovação em tempo real...</span>
+                    <span className="font-mono bg-emerald-200/90 text-emerald-950 px-2 py-0.5 rounded-lg text-xs font-black tracking-wider shadow-2xs">
+                      {formatTime(timeLeft)}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 leading-relaxed max-w-sm">
+                    Assim que você pagar no app do seu banco, o sistema reconhece a compensação automaticamente e libera sua conta na hora sem você precisar clicar em nenhum botão!
+                  </p>
+                  <div className="w-full bg-emerald-200/60 rounded-full h-1.5 overflow-hidden mt-1">
+                    <div
+                      className="bg-emerald-600 h-1.5 rounded-full transition-all duration-1000 ease-linear"
+                      style={{ width: `${(timeLeft / 300) * 100}%` }}
+                    />
+                  </div>
+                </div>
 
                 {/* Botão de Simulação em Ambiente de Teste / Demonstração */}
                 <button
