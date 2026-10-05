@@ -38,7 +38,7 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
   const [clientSecret, setClientSecret] = useState('');
   const [showAccessToken, setShowAccessToken] = useState(false);
   const [showClientSecret, setShowClientSecret] = useState(false);
-  const [chavePixMaster, setChavePixMaster] = useState('def0e87a-f7d0-4c54-830b-473206cf78c6');
+  const [chavePixMaster, setChavePixMaster] = useState('');
 
   // Métodos de Pagamento Habilitados
   const [enablePix, setEnablePix] = useState(true);

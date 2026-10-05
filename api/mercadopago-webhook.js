@@ -17,9 +17,17 @@ export default async function handler(req, res) {
   }
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ia3ZnbHV1bmJua3R6dWx6amZnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Nzg0OTMyOCwiZXhwIjoyMTAzNDI1MzI4fQ.VlbPt6MgzjMJHbUt9nuCWhBNEv_6dmkeZnaVH9zJe3E';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  console.log(`[MP-WEBHOOK] Início method=${req.method} query=${JSON.stringify(req.query || {})} serviceKey_present=${!!serviceKey} serviceKey_length=${serviceKey?.length || 0}`);
+
+  if (!serviceKey) {
+    console.error('[MP-WEBHOOK] ERRO CRÍTICO: SUPABASE_SERVICE_ROLE_KEY ausente em runtime Vercel. Webhook NÃO conseguirá salvar aprovação no DB.');
+    return res.status(500).json({
+      success: false,
+      error: 'SUPABASE_SERVICE_ROLE_KEY não configurada no ambiente do servidor.'
+    });
+  }
 
   const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -39,10 +47,10 @@ export default async function handler(req, res) {
 
   const topic = req.query?.topic || req.query?.type || body?.type || body?.action;
 
-  console.log(`[Webhook Mercado Pago] Recebido evento: topic=${topic}, paymentId=${paymentId}`);
+  console.log(`[MP-WEBHOOK] Evento extraído: topic=${topic || 'null'} paymentId=${paymentId || 'null'} body_keys=${Object.keys(body || {}).join(',')}`);
 
-  // Se não for evento de pagamento ou não tiver ID, confirma recebimento (200 OK) para não re-enviar
   if (!paymentId) {
+    console.warn('[MP-WEBHOOK] Sem paymentId informado. Retornando 200 para não reenviar.');
     return res.status(200).json({ received: true, message: 'Sem paymentId informado' });
   }
 
@@ -56,8 +64,10 @@ export default async function handler(req, res) {
 
     const masterToken = (dbParams?.gateway_token || process.env.MERCADOPAGO_ACCESS_TOKEN || '').trim();
 
+    console.log(`[MP-WEBHOOK] masterToken: length=${masterToken?.length || 0} token_ok=${masterToken?.length > 15} env_MERCADOPAGO_present=${!!process.env.MERCADOPAGO_ACCESS_TOKEN}`);
+
     if (!masterToken || masterToken.length < 15) {
-      console.warn('[Webhook Mercado Pago] Access Token Master não configurado.');
+      console.warn('[MP-WEBHOOK] Access Token Master não configurado (length<15). Não conseguirei confirmar status do pagamento no MP.');
       return res.status(200).json({ received: true, warning: 'Token não configurado' });
     }
 
@@ -75,12 +85,16 @@ export default async function handler(req, res) {
     const mpPayment = await mpRes.json();
     const status = mpPayment.status;
     const hotelId = mpPayment.external_reference;
+    const mpValor = mpPayment.transaction_amount;
 
-    console.log(`[Webhook Mercado Pago] Pagamento ${paymentId}: status=${status}, hotelId=${hotelId}`);
+    console.log(`[MP-WEBHOOK] Pagamento ${paymentId} CONFIRMADO MP: status=${status} valor=${mpValor} external_reference(hotelId)=${hotelId || 'null'} desc=${mpPayment.description || 'N/D'}`);
 
-    // Se o pagamento foi aprovado e temos o hotelId
     if (status === 'approved' && hotelId) {
-      // 1. Atualiza status do hotel para 'ativo'
+      console.log(`[MP-WEBHOOK] STATUS=APPROVED + hotelId EXISTE. EXECUTANDO UPDATE hoteis SET status='ativo' WHERE id=${hotelId} ...`);
+      const { data: beforeData, error: beforeErr } = await supabaseAdmin.from('hoteis').select('id, status').eq('id', hotelId).maybeSingle();
+      if (beforeErr) console.warn('[MP-WEBHOOK] Aviso: não consegui ler status ANTES do update:', beforeErr);
+      else console.log(`[MP-WEBHOOK] Status ANTES do update: ${beforeData?.status || 'não encontrado'}`);
+
       const { error: updateErr } = await supabaseAdmin
         .from('hoteis')
         .update({
@@ -90,20 +104,23 @@ export default async function handler(req, res) {
         .eq('id', hotelId);
 
       if (updateErr) {
-        console.error('[Webhook Mercado Pago] Erro ao atualizar hotel:', updateErr);
+        console.error('[MP-WEBHOOK] ERRO AO ATUALIZAR HOTEL NO SUPABASE:', JSON.stringify(updateErr));
       } else {
-        console.log(`[Webhook Mercado Pago] Hotel ${hotelId} ativado com sucesso após aprovação do PIX!`);
+        console.log(`[MP-WEBHOOK] SUCESSO! Hotel ${hotelId} ATIVADO via Webhook!`);
       }
+    } else {
+      console.warn(`[MP-WEBHOOK] Ação ignorada. status===approved? ${status === 'approved'} | hotelId existe? ${!!hotelId}. Nenhum update executado.`);
     }
 
     return res.status(200).json({
       received: true,
       paymentId,
       status,
+      mpValor,
       hotelId: hotelId || null
     });
   } catch (err) {
-    console.error('[Webhook Mercado Pago] Exceção no webhook handler:', err);
+    console.error('[MP-WEBHOOK] EXCEÇÃO no handler completo:', JSON.stringify({ message: err.message, stack: err.stack?.substring(0, 300) }));
     return res.status(200).json({ received: true, error: err.message });
   }
 }

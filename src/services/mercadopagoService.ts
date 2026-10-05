@@ -53,7 +53,7 @@ export const DEFAULT_MP_CREDENTIALS: MercadoPagoCredentials = {
   enableCreditCard: true,
   enableBoleto: false,
   maxInstallments: '12',
-  chavePixMaster: 'def0e87a-f7d0-4c54-830b-473206cf78c6'
+  chavePixMaster: ''
 };
 
 export const getApiBaseUrl = (): string => {
@@ -379,7 +379,7 @@ export const mercadopagoService = {
   // 6. BUSCA INTELIGENTE DA CHAVE PIX MASTER & CREDENCIAIS
   // ─────────────────────────────────────────────────────────────────────────
   async buscarChavePixMaster(): Promise<{ chavePix: string; token?: string; provider?: string }> {
-    const DEFAULT_KEY = 'def0e87a-f7d0-4c54-830b-473206cf78c6';
+    const DEFAULT_KEY = '';
 
     // 1. Tenta API Serverless da Vercel (com service role para leitura pública segura)
     try {
@@ -436,7 +436,7 @@ export const mercadopagoService = {
     
     // Busca chave PIX e credenciais corretas do sistema
     const configMaster = await this.buscarChavePixMaster();
-    const chavePix = configMaster.chavePix || 'def0e87a-f7d0-4c54-830b-473206cf78c6';
+    const chavePix = configMaster.chavePix || '';
     const masterCreds = this.getMasterCredentials();
     const token = (configMaster.token || masterCreds.accessToken)?.trim();
 
@@ -467,7 +467,7 @@ export const mercadopagoService = {
       console.warn('Erro ao chamar /api/mercadopago-pix create:', e);
     }
 
-    // 2. Fallback Oficial: Gera Pix Copia e Cola com a Chave Pix Master Correta (def0e87a-f7d0-4c54-830b-473206cf78c6)
+    // 2. Fallback Oficial: Gera Pix Copia e Cola com a Chave Pix Master carregada do DB/API
     const txid = `HNZ${hotelId.replace(/\D/g, '').substring(0, 10)}${Date.now().toString().slice(-6)}`;
     const pixCopiaECola = this.gerarPayloadPixEstatico({
       chavePix,
@@ -491,10 +491,26 @@ export const mercadopagoService = {
   // ─────────────────────────────────────────────────────────────────────────
   // 8. CONSULTA DE STATUS DE PAGAMENTO EM TEMPO REAL
   // ─────────────────────────────────────────────────────────────────────────
-  async consultarPagamentoMaster(paymentId: string, hotelId?: string, valor?: number): Promise<{ approved: boolean; status: string }> {
-    if (!paymentId) return { approved: false, status: 'unknown' };
+  async consultarPagamentoMaster(
+    paymentId: string,
+    hotelId?: string,
+    valor?: number
+  ): Promise<{
+    approved: boolean;
+    status: string;
+    rejected: boolean;
+    errorMessage?: string;
+    rawStatus?: string;
+    source?: string;
+  }> {
+    if (!paymentId) {
+      return { approved: false, status: 'unknown', rejected: false, rawStatus: 'unknown' };
+    }
 
-    // 1. Consulta em tempo real via Serverless API (com verificação de banco, paymentId e busca de pagamentos recentes)
+    let rawStatusResposta: string | undefined;
+    let mensagemErro: string | undefined;
+    const pollingCheckId = Date.now().toString().slice(-6);
+
     try {
       const queryParams = new URLSearchParams();
       queryParams.set('action', 'check');
@@ -502,33 +518,112 @@ export const mercadopagoService = {
       if (hotelId) queryParams.set('hotelId', hotelId);
       if (valor) queryParams.set('valor', String(valor));
 
-      const resp = await fetch(`${getApiBaseUrl()}/api/mercadopago-pix?${queryParams.toString()}`);
+      const url = `${getApiBaseUrl()}/api/mercadopago-pix?${queryParams.toString()}`;
+      const resp = await fetch(url);
       if (resp.ok) {
         const data = await resp.json();
+        rawStatusResposta = String(data?.status || data?.state || data?.result || '').toLowerCase();
+
+        // Instrumentation: log a cada tick para diagnóstico H3/H5
+        console.debug(`[MP-CLIENT check#${pollingCheckId}] paymentId=${paymentId} hotelId=${hotelId || 'null'} valor=${valor || 0} resp.http=${resp.status} approved=${!!data?.approved} status=${data?.status || 'null'} source=${data?.source || 'null'} raw=${JSON.stringify(data).substring(0, 180)}`);
+
         if (data?.approved) {
-          return { approved: true, status: 'approved' };
+          console.log(`[MP-CLIENT check#${pollingCheckId}] ✅ APPROVED! source=${data?.source}. Enviando para handleAprovarPagamento.`);
+          return {
+            approved: true,
+            status: 'approved',
+            rejected: false,
+            rawStatus: rawStatusResposta || 'approved',
+            source: data.source
+          };
         }
+
+        if (rawStatusResposta) {
+          const STATUS_REJEICAO = [
+            'rejected', 'recusado', 'recusada', 'rejeitado', 'rejeitada',
+            'cancelled', 'canceled', 'cancelado', 'cancelada',
+            'charged_back', 'chargedback', 'chargeback', 'estornado',
+            'refunded', 'reembolsado', 'reembolsada',
+            'denied', 'negado', 'negada'
+          ];
+          const STATUS_PENDENTE = [
+            'pending', 'pendente', 'in_process', 'inprocess', 'processando',
+            'waiting', 'aguardando', 'authorized', 'autorizado'
+          ];
+
+          if (STATUS_REJEICAO.some(s => rawStatusResposta!.includes(s))) {
+            mensagemErro = data?.message || data?.error || data?.detail ||
+              'Pagamento recusado pela instituição financeira. Tente novamente ou entre em contato com o seu banco.';
+            return {
+              approved: false,
+              status: 'rejected',
+              rejected: true,
+              errorMessage: mensagemErro,
+              rawStatus: rawStatusResposta
+            };
+          }
+
+          if (STATUS_PENDENTE.some(s => rawStatusResposta!.includes(s))) {
+            return {
+              approved: false,
+              status: 'pending',
+              rejected: false,
+              rawStatus: rawStatusResposta
+            };
+          }
+        }
+      } else {
+        console.warn(`[MP-CLIENT check#${pollingCheckId}] ⚠️ HTTP não-ok ${resp.status} ao checar pagamento. url=${url.substring(0, 100)}`);
       }
-    } catch (e) {
-      console.warn('Erro ao consultar /api/mercadopago-pix check:', e);
+    } catch (e: any) {
+      console.warn(`[MP-CLIENT check#${pollingCheckId}] Exceção consultarPagamentoMaster fetch:`, e?.message || e);
     }
 
-    // 2. Se hotelId for informado, verifica se o hotel já foi ativado no Supabase (ex: via webhook ou admin)
+    // 2. Se hotelId for informado, verifica status do hotel no Supabase (fonte da verdade: webhook server-side ou admin)
     if (hotelId) {
       try {
         const { data: h } = await supabase
           .from('hoteis')
-          .select('id, status')
+          .select('id, status, notes')
           .eq('id', hotelId)
           .maybeSingle();
 
-        if (h && (h.status === 'ativo' || (h as any).status === 'Ativo')) {
-          return { approved: true, status: 'approved' };
+        if (h) {
+          const hotelStatus = String(h.status || '').toLowerCase().trim();
+
+          if (hotelStatus === 'ativo' || hotelStatus === 'Ativo'.toLowerCase()) {
+            return {
+              approved: true,
+              status: 'approved',
+              rejected: false,
+              rawStatus: `hotel:${hotelStatus}`
+            };
+          }
+
+          const REJEITADOS_HOTEL = [
+            'bloqueado', 'rejeitado', 'rejeitada', 'cancelado', 'cancelada',
+            'recusado', 'recusada', 'negado', 'inadimplente', 'suspenso'
+          ];
+          if (REJEITADOS_HOTEL.some(s => hotelStatus.includes(s))) {
+            mensagemErro = 'Transação não aprovada. Entre em contato com o seu banco ou tente outro método de pagamento.';
+            return {
+              approved: false,
+              status: 'rejected',
+              rejected: true,
+              errorMessage: mensagemErro,
+              rawStatus: `hotel:${hotelStatus}`
+            };
+          }
         }
       } catch { /* ignore */ }
     }
 
-    return { approved: false, status: 'pending' };
+    return {
+      approved: false,
+      status: 'pending',
+      rejected: false,
+      rawStatus: rawStatusResposta || 'pending'
+    };
   },
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -10,6 +10,9 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# AppDeploy deploy credentials
+.appdeploy
+
 # Logs
 *.log
 npm-debug.log*
@@ -34,3 +37,7 @@ imagens para corre*/
 check_live.js
 populate_live_data.js
 *.original.tsx
+
+# Vercel local project credentials + local project links
+.vercel/
+.vercelignore
