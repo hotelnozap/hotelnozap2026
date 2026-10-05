@@ -73,3 +73,19 @@ isFallbackPixChave = paymentId startsWith pix_hnz_ OR NOT numeric
 - Deploy: Trigger REDEPLOY da Preview branch feature/melhorias-landing-page para aplicar novas vars + novas functions instrumentadas.
 
 ---
+
+## Status Execução
+
+### Commit
+- **Hash:** `838d65c` — `fix(pagamento): detecção automática Pix fallback Copia-e-Cola (pix_chave) + instrumentation H1-H5`
+- **Branch:** `feature/melhorias-landing-page`
+- **Build:** `npm run build` tsc0 — 1710 módulos, exit 0.
+- **Push:** `9c429d7..838d65c` → origin OK, deploy automático GitHub→Vercel disparado.
+
+### Próximos passos (Everaldo)
+1. **VALIDAR VARS AMBIENTE VERCEL:** Abrir Vercel Dashboard → Projeto → Settings → Environment Variables. Confirmar valores de `SUPABASE_SERVICE_ROLE_KEY` (nova rotacionada), `MERCADOPAGO_ACCESS_TOKEN` (produção, length>15), `DEFAULT_PIX_KEY`. Se qualquer uma faltar → adicionar e **Redeploy**.
+2. **TESTAR PIX NOVO:** Abrir URL Preview Deploy → tela checkout de novo hotel → R$ 0,01 ou R$ 1 real → Gerar Pix → pagar → observar (a) DevTools Console ([CHECKOUT], [MP-CLIENT] logs), (b) Vercel Dashboard → Functions → mercadopago-pix → logs [MP-PIX] com MATCH FALLBACK pix_chave ✅ e update hotel ATIVO.
+3. **HOTEL TESTE 05 JÁ PAGO:** Rodar SQL Supabase `UPDATE hoteis SET status='ativo' WHERE nome='Hotel Teste 05' RETURNING id, status;` como ativação manual de já pago enquanto o fix tem o primeiro Pix de confirmação.
+4. **VALIDAR WEBHOOK OFICIAL MP:** Dashboard Mercado Pago → Webhook deliveries. Se últimos 2 eventos Pagamento Aprovado = HTTP 200 → H4 ok. Se for 500 → ver Vercel Functions mercadopago-webhook logs [MP-WEBHOOK] ERRO CRÍTICO service_role ausente.
+
+---

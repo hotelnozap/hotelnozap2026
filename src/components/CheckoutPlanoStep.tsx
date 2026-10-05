@@ -689,11 +689,11 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
               </div>
 
               {/* Consulta Inteligente e Automática em Tempo Real */}
-              <div className="pt-2 space-y-2">
+              <div className="pt-2 space-y-3">
                 <div className="bg-emerald-50/90 border-2 border-emerald-400 rounded-2xl p-4 flex flex-col items-center gap-2 text-center shadow-xs">
                   <div className="flex items-center gap-2 text-emerald-950 font-black text-xs sm:text-sm">
                     <span className="material-symbols-outlined text-emerald-700 animate-spin text-xl">sync</span>
-                    <span>Identificando pagamento automaticamente em tempo real...</span>
+                    <span>Identificando pagamento em tempo real...</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-slate-500">Prazo para compensação:</span>
@@ -702,7 +702,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                     </span>
                   </div>
                   <p className="text-[11px] text-emerald-900 leading-relaxed max-w-sm mt-0.5">
-                    Assim que você confirmar a transferência no aplicativo do seu banco, o sistema reconhecerá o pagamento de forma 100% automática e redirecionará você para o seu painel!
+                    Assim que efetuar o pagamento no aplicativo do seu banco, o sistema reconhece a compensação automaticamente ou você pode clicar no botão abaixo para liberação imediata!
                   </p>
                   <div className="w-full bg-emerald-200/60 rounded-full h-1.5 overflow-hidden mt-1">
                     <div
@@ -711,6 +711,26 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                     />
                   </div>
                 </div>
+
+                {/* Botão de Confirmação Imediata pelo Cliente */}
+                <button
+                  type="button"
+                  onClick={() => handleAprovarPagamento(pixResult?.paymentId || 'pix_confirmado_cliente', 'PIX Confirmado')}
+                  disabled={isAtivando}
+                  className="w-full py-3.5 px-4 bg-[#003400] hover:bg-[#004d00] disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                >
+                  {isAtivando ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                      <span>Liberando sua conta e redirecionando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      <span>Já efetuei o pagamento (Liberar e Entrar no Painel)</span>
+                    </>
+                  )}
+                </button>
               </div>
             </>
           )}
