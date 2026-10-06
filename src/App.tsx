@@ -591,18 +591,50 @@ export const App: React.FC = () => {
           .select('id, nome, email, perfil, status, cargo, hotel_id, url_avatar')
           .ilike('email', authEmail)
           .maybeSingle();
-        let role = (dbUser?.perfil || 'Hotel').trim();
-        if (!role || role.toLowerCase() === 'hotel') {
+
+        // =========================================================================
+        // REGRA DE SEGURANÇA ESTRITA (P0):
+        // Se o usuário não existir na tabela usuarios e não for everaldozs@gmail.com,
+        // revoga a sessão imediatamente.
+        // =========================================================================
+        if (!dbUser && authEmail !== 'everaldozs@gmail.com') {
+          console.warn('Sessão revogada: usuário ausente na tabela usuarios:', authEmail);
           try {
-            const { data: pData } = await supabase
-              .from('parceiros')
-              .select('id')
-              .ilike('email', authEmail)
-              .maybeSingle();
-            if (pData) {
-              role = 'Parceiro';
-            }
+            await supabase.auth.signOut({ scope: 'local' });
           } catch {}
+          localStorage.removeItem('hotelnozap_user_role');
+          localStorage.removeItem('hotelnozap_user_email');
+          localStorage.removeItem('hotelnozap_user_name');
+          localStorage.removeItem('hotelnozap_hotel_atual');
+          localStorage.removeItem('hotelnozap_last_authenticated_at');
+          if (!disposed) {
+            setCurrentUserRole('');
+            setActiveTab('login');
+          }
+          return;
+        }
+
+        let role = '';
+        if (authEmail === 'everaldozs@gmail.com') {
+          role = (dbUser?.perfil || 'Super Admin').trim();
+        } else {
+          role = (dbUser?.perfil || dbUser?.cargo || '').trim();
+          if (role.toLowerCase().includes('gerente')) {
+            role = 'Hotel';
+          }
+        }
+
+        if (!role && authEmail !== 'everaldozs@gmail.com') {
+          try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
+          localStorage.removeItem('hotelnozap_user_role');
+          localStorage.removeItem('hotelnozap_user_email');
+          localStorage.removeItem('hotelnozap_user_name');
+          localStorage.removeItem('hotelnozap_hotel_atual');
+          if (!disposed) {
+            setCurrentUserRole('');
+            setActiveTab('login');
+          }
+          return;
         }
         const name = (dbUser?.nome || authEmail.split('@')[0] || 'Usuário').trim();
         localStorage.setItem('hotelnozap_user_role', role);
@@ -637,6 +669,8 @@ export const App: React.FC = () => {
             setActiveHotel(freshActive);
             localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: hotelData.id, name: freshActive.name }));
           }
+        } else {
+          localStorage.removeItem('hotelnozap_hotel_atual');
         }
       } catch (err) {
         console.warn('Erro ao restaurar dados do usuário:', err);
@@ -767,14 +801,17 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  const isHotelUser = currentUserRole.toLowerCase().includes('hotel') || 
-    (!currentUserRole.toLowerCase().includes('admin') && 
-     !currentUserRole.toLowerCase().includes('super') && 
-     !currentUserRole.toLowerCase().includes('administrador') &&
-     !currentUserRole.toLowerCase().includes('parceiro') &&
-     !currentUserRole.toLowerCase().includes('franqueado') &&
-     !currentUserRole.toLowerCase().includes('camareira') &&
-     !currentUserRole.toLowerCase().includes('hospede'));
+  const userRoleClean = (currentUserRole || '').toLowerCase();
+  const isHotelUser = Boolean(currentUserRole) && (
+    userRoleClean.includes('hotel') || 
+    (!userRoleClean.includes('admin') && 
+     !userRoleClean.includes('super') && 
+     !userRoleClean.includes('administrador') && 
+     !userRoleClean.includes('parceiro') && 
+     !userRoleClean.includes('franqueado') && 
+     !userRoleClean.includes('camareira') && 
+     !userRoleClean.includes('hospede'))
+  );
 
 
 

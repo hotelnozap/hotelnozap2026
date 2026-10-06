@@ -450,12 +450,12 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       const refId = `parceiro_${cleanDoc}_${Date.now()}`;
       setPartnerCheckoutId(refId);
 
-      // Cria a cobrança PIX oficial no Mercado Pago com valor padrão de teste de R$ 1,00 solicitado
+      // Cria a cobrança PIX oficial no Mercado Pago com o valor da licença de R$ 197,00
       const res = await mercadopagoService.criarPagamentoPixMaster({
         hotelId: refId,
         hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
-        planoNome: 'Licença Anual Franqueado (Teste R$ 1,00)',
-        valor: 1.00, // R$ 1,00 para validação imediata em ambiente de teste
+        planoNome: 'Licença Anual Franqueado Hotel no Zap',
+        valor: 197.00,
         pagadorEmail: email.trim().toLowerCase(),
         pagadorNome: nome.trim(),
         pagadorDoc: cleanDoc
@@ -517,7 +517,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         const statusRes = await mercadopagoService.consultarPagamentoMaster(
           pixResult.paymentId,
           partnerCheckoutId,
-          1.00
+          197.00
         );
         if (statusRes.approved || statusRes.status === 'approved') {
           if (pollingRef.current) clearInterval(pollingRef.current);
@@ -551,7 +551,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         const checkRes = await mercadopagoService.consultarPagamentoMaster(
           pixResult.paymentId,
           partnerCheckoutId,
-          1.00
+          197.00
         );
         if (!checkRes.approved && checkRes.status !== 'approved') {
           setMsgVerificacao({
@@ -815,7 +815,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       const res = await mercadopagoService.consultarPagamentoMaster(
         pixResult.paymentId,
         partnerCheckoutId,
-        1.00
+        197.00
       );
 
       if (res.approved || res.status === 'approved') {
@@ -1012,18 +1012,9 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
                 <form onSubmit={handleAvancarParaLogin} className="flex flex-col gap-4 text-left">
                   
-                  {/* Seção 1: Dados Pessoais com Botão de Teste Rápido */}
+                  {/* Seção 1: Dados Pessoais */}
                   <div className="flex items-center justify-between pb-1">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">1. Dados Pessoais</span>
-                    <button
-                      type="button"
-                      onClick={applyTestMockPartnerData}
-                      title="Preencher automaticamente com dados de teste válidos (Código: parceiro01)"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs"
-                    >
-                      <span className="material-symbols-outlined text-sm text-amber-600">bolt</span>
-                      <span>Preenchimento Rápido (parceiro01)</span>
-                    </button>
                   </div>
 
                   {/* Nome Completo */}
@@ -1032,7 +1023,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Carlos Eduardo de Oliveira (ou digite parceiro01)"
+                      placeholder="Ex: Carlos Eduardo de Oliveira"
                       value={nome}
                       onChange={(e) => handleNomeChange(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
@@ -1249,15 +1240,6 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                       <p className="text-xs text-slate-500">Defina suas credenciais oficiais para entrar no Painel de Franqueado.</p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={applyTestMockPartnerData}
-                    title="Preencher automaticamente com dados de teste válidos (Código: parceiro01)"
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs"
-                  >
-                    <span className="material-symbols-outlined text-sm text-amber-600">bolt</span>
-                    <span>Preenchimento Rápido (parceiro01)</span>
-                  </button>
                 </div>
 
                 {quickFillNotice && (
@@ -1282,7 +1264,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     <input
                       type="email"
                       required
-                      placeholder="seuemail@exemplo.com (ou digite parceiro01)"
+                      placeholder="seuemail@exemplo.com"
                       value={email}
                       onChange={(e) => handleEmailChange(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
@@ -1450,16 +1432,12 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         </>
                       ) : (
                         <>
-                          <span>Continuar para Pagamento • R$ 1,00 (Modo Teste)</span>
+                          <span>Continuar para Pagamento • R$ 197,00</span>
                           <span className="material-symbols-outlined text-xl">arrow_forward</span>
                         </>
                       )}
                     </button>
                   </div>
-                  <span className="text-[11px] text-center text-slate-500 font-medium">
-                    🧪 <strong>Modo Teste Ativo:</strong> Cobrança via PIX configurada em R$ 1,00 para validação imediata (Valor oficial R$ 197,00/ano).
-                  </span>
-
                 </form>
               </div>
             )}
@@ -1518,10 +1496,8 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-xs text-slate-500 font-medium">Abra o app do seu banco e escaneie o código acima, ou use o Pix Copia e Cola:</span>
                       <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-2xl font-black text-[#003400]">R$ 1,00</span>
-                        <span className="text-xs text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                          🧪 Valor de Teste (Oficial: R$ 197,00)
-                        </span>
+                        <span className="text-2xl font-black text-[#003400]">R$ 197,00</span>
+                        <span className="text-xs text-slate-500 font-semibold">/ ano</span>
                       </div>
                     </div>
 
@@ -1702,15 +1678,6 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                 <span className="text-[11px] text-emerald-700 font-bold mt-0.5">
                   ✓ Pagamento anual único (sem mensalidades fixas)
                 </span>
-
-                {/* Box de Notificação do Modo Teste */}
-                <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
-                  <span className="material-symbols-outlined text-amber-600 text-base shrink-0 mt-0.5">science</span>
-                  <div className="leading-tight">
-                    <strong className="block text-amber-950 mb-0.5">Cobrança de Teste Ativa: R$ 1,00</strong>
-                    O PIX será emitido no valor simbólico de <strong>R$ 1,00</strong> para que você possa efetuar o pagamento e testar a liberação imediata.
-                  </div>
-                </div>
               </div>
 
               {/* Lista dos Benefícios Inclusos */}

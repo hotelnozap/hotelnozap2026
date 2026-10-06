@@ -40,6 +40,8 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   // Status do Pagamento
   const [isApproved, setIsApproved] = useState(false);
   const [isAtivando, setIsAtivando] = useState(false);
+  const [isVerificando, setIsVerificando] = useState(false);
+  const [msgVerificacao, setMsgVerificacao] = useState<{ tipo: 'sucesso' | 'pendente' | 'erro'; texto: string } | null>(null);
   const [erroMsg, setErroMsg] = useState<string | null>(null);
 
   // Status de Rejeição de Pagamento (detectado em tempo real)
@@ -260,6 +262,56 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
         try { window.location.replace(TARGET_URL); } catch { window.location.href = TARGET_URL; }
       }, 2500);
       setTimeout(() => { window.location.href = TARGET_URL; }, 4500);
+    }
+  };
+
+  // Verificação manual imediata com o Mercado Pago (proteção contra liberação indevida)
+  const handleVerificarManualmente = async () => {
+    if (isVerificando || isAtivando || isApproved) return;
+    if (!pixResult?.paymentId) {
+      setMsgVerificacao({
+        tipo: 'pendente',
+        texto: 'Aguardando geração do QR Code PIX para consulta.'
+      });
+      return;
+    }
+
+    setIsVerificando(true);
+    setMsgVerificacao(null);
+
+    try {
+      const res = await mercadopagoService.consultarPagamentoMaster(
+        pixResult.paymentId,
+        hotelId,
+        valorPlano
+      );
+
+      if (res.approved || res.status === 'approved') {
+        setMsgVerificacao({
+          tipo: 'sucesso',
+          texto: 'Pagamento aprovado com sucesso! Liberando acesso à plataforma...'
+        });
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        if (timerRef.current) clearInterval(timerRef.current);
+        await handleAprovarPagamento(pixResult.paymentId, 'PIX Instantâneo');
+      } else if (res.rejected || res.status === 'rejected' || res.status === 'cancelled') {
+        setMsgVerificacao({
+          tipo: 'erro',
+          texto: 'O Mercado Pago informou que este pagamento foi cancelado ou recusado pela instituição financeira.'
+        });
+      } else {
+        setMsgVerificacao({
+          tipo: 'pendente',
+          texto: 'Pagamento ainda não identificado no Mercado Pago. Conclua no aplicativo do seu banco e tente novamente em instantes.'
+        });
+      }
+    } catch (err) {
+      setMsgVerificacao({
+        tipo: 'erro',
+        texto: 'Não foi possível validar o pagamento com o Mercado Pago no momento. Tente novamente em alguns segundos.'
+      });
+    } finally {
+      setIsVerificando(false);
     }
   };
 
@@ -636,23 +688,31 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                 Aguardando Pagamento do PIX
               </div>
 
-              {/* QR Code Imagem */}
+              {/* QR Code Imagem com proteção contra erro */}
               <div className="w-56 h-56 mx-auto bg-white p-3 border-2 border-slate-200 rounded-2xl shadow-inner flex items-center justify-center mb-4">
-                {pixResult?.qrCodeBase64 ? (
-                  <img
-                    src={pixResult.qrCodeBase64}
-                    alt="QR Code PIX Mercado Pago"
-                    className="w-full h-full object-contain"
-                  />
-                ) : pixResult?.fallbackQrUrl ? (
-                  <img
-                    src={pixResult.fallbackQrUrl}
-                    alt="QR Code PIX"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <span className="material-symbols-outlined text-5xl text-slate-300">qr_code_2</span>
-                )}
+                {(() => {
+                  const base64Src = pixResult?.qrCodeBase64
+                    ? (pixResult.qrCodeBase64.startsWith('data:')
+                        ? pixResult.qrCodeBase64
+                        : `data:image/png;base64,${pixResult.qrCodeBase64}`)
+                    : null;
+                  const fallbackUrl = pixResult?.qrCode
+                    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pixResult.qrCode)}`
+                    : (pixResult?.fallbackQrUrl || '');
+
+                  return (
+                    <img
+                      src={base64Src || fallbackUrl}
+                      alt="QR Code PIX Mercado Pago"
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        if (fallbackUrl && e.currentTarget.src !== fallbackUrl) {
+                          e.currentTarget.src = fallbackUrl;
+                        }
+                      }}
+                    />
+                  );
+                })()}
               </div>
 
               <p className="text-xs text-slate-500 mb-4 max-w-xs mx-auto">
@@ -702,7 +762,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                     </span>
                   </div>
                   <p className="text-[11px] text-emerald-900 leading-relaxed max-w-sm mt-0.5">
-                    Assim que efetuar o pagamento no aplicativo do seu banco, o sistema reconhece a compensação automaticamente ou você pode clicar no botão abaixo para liberação imediata!
+                    Assim que você pagar no seu banco, a liberação ocorre automaticamente. Se preferir, clique no botão abaixo para verificar na hora.
                   </p>
                   <div className="w-full bg-emerald-200/60 rounded-full h-1.5 overflow-hidden mt-1">
                     <div
@@ -712,25 +772,41 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
                   </div>
                 </div>
 
-                {/* Botão de Confirmação Imediata pelo Cliente */}
+                {/* Botão de Verificação Imediata pelo Cliente */}
                 <button
                   type="button"
-                  onClick={() => handleAprovarPagamento(pixResult?.paymentId || 'pix_confirmado_cliente', 'PIX Confirmado')}
-                  disabled={isAtivando}
+                  onClick={handleVerificarManualmente}
+                  disabled={isVerificando || isAtivando}
                   className="w-full py-3.5 px-4 bg-[#003400] hover:bg-[#004d00] disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                 >
-                  {isAtivando ? (
+                  {isVerificando || isAtivando ? (
                     <>
                       <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
-                      <span>Liberando sua conta e redirecionando...</span>
+                      <span>Verificando pagamento no Mercado Pago...</span>
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-base">check_circle</span>
-                      <span>Já efetuei o pagamento (Liberar e Entrar no Painel)</span>
+                      <span className="material-symbols-outlined text-base">verified</span>
+                      <span>Já Efetuei o Pagamento (Verificar Agora)</span>
                     </>
                   )}
                 </button>
+
+                {/* Feedback Visual da Consulta Manual */}
+                {msgVerificacao && (
+                  <div className={`p-3.5 w-full rounded-xl border text-xs font-semibold flex items-start gap-2.5 text-left transition-all ${
+                    msgVerificacao.tipo === 'sucesso' 
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900' 
+                      : msgVerificacao.tipo === 'erro'
+                        ? 'bg-rose-50 border-rose-300 text-rose-900'
+                        : 'bg-amber-50 border-amber-300 text-amber-900'
+                  }`}>
+                    <span className="material-symbols-outlined text-base shrink-0 mt-0.5">
+                      {msgVerificacao.tipo === 'sucesso' ? 'check_circle' : msgVerificacao.tipo === 'erro' ? 'error' : 'schedule'}
+                    </span>
+                    <span className="leading-relaxed">{msgVerificacao.texto}</span>
+                  </div>
+                )}
               </div>
             </>
           )}

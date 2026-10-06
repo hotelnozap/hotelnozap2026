@@ -427,6 +427,31 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         console.warn('Erro ao consultar tabela usuarios:', dbErr);
       }
 
+      // =========================================================================
+      // REGRA DE SEGURANÇA ESTRITA (P0):
+      // A tabela `usuarios` determina OBRIGATORIAMENTE o acesso ao sistema.
+      // Se o usuário não tiver dados na tabela `usuarios`, o acesso é NEGADO,
+      // mesmo que ele exista no Supabase Auth.
+      // Exceção única autorizada: o administrador everaldozs@gmail.com.
+      // =========================================================================
+      if (!dbUser && cleanEmail !== 'everaldozs@gmail.com') {
+        console.warn('ACESSO NEGADO: Usuário autenticado no Auth mas inexistente na tabela usuarios:', cleanEmail);
+        try {
+          await supabase.auth.signOut({ scope: 'local' });
+        } catch { /* ignore */ }
+        try {
+          localStorage.removeItem('hotelnozap_user_role');
+          localStorage.removeItem('hotelnozap_user_email');
+          localStorage.removeItem('hotelnozap_user_name');
+          localStorage.removeItem('hotelnozap_hotel_atual');
+          localStorage.removeItem('hotelnozap_last_authenticated_at');
+        } catch { /* ignore */ }
+
+        setErrorMessage('Acesso não autorizado. Seu usuário não possui cadastro na tabela de usuários do sistema. Entre em contato com a administração.');
+        setLoading(false);
+        return;
+      }
+
       const usouFallbackMaster = false;
 
       // 5. Valida status do usuário (inativo/bloqueado → bloqueia login)
@@ -450,40 +475,28 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         return;
       }
 
-      // 6. DETERMINA ROLE E NOME — PRIORIDADE ABSOLUTA É O BANCO DE DADOS
-      //    Nunca mais hardcode 'Super Admin' por causa do e-mail.
-      //    A role vem do (a) perfil DB (b) user_metadata Auth (c) fallback master.
+      // 6. DETERMINA ROLE E NOME — PRIORIDADE ABSOLUTA É A TABELA USUARIOS
       let role: string = '';
-      if (usouFallbackMaster) {
-        role = 'Super Admin';
+      if (usouFallbackMaster || cleanEmail === 'everaldozs@gmail.com') {
+        role = (dbUser?.perfil || 'Super Admin').trim();
       } else {
-        role = (dbUser?.perfil || dbUser?.cargo || authUser?.user_metadata?.perfil || '').trim();
+        role = (dbUser?.perfil || dbUser?.cargo || '').trim();
         // Todo usuário do tipo gerente tem que ser o perfil de acesso Hotel
         if (role.toLowerCase().includes('gerente')) {
           role = 'Hotel';
         }
-        // Se for realmente o admin master Everaldo e DB tem perfil vazio, assume Super Admin
-        // MAS SÓ se o email bater e o usuário já existir na Auth com este email
-        if (!role && cleanEmail === 'everaldozs@gmail.com') {
-          role = 'Super Admin';
-        }
-        // Identifica se o usuário pertence à tabela de parceiros/franqueados
-        if (!role || role.toLowerCase() === 'hotel') {
-          try {
-            const { data: parceiroData } = await supabase
-              .from('parceiros')
-              .select('id, nome, status')
-              .ilike('email', cleanEmail)
-              .maybeSingle();
-            if (parceiroData) {
-              role = 'Parceiro';
-            }
-          } catch (pErr) {
-            console.warn('Erro ao verificar parceiro:', pErr);
-          }
-        }
+        // Se não possui perfil configurado no banco, negar acesso
         if (!role) {
-          role = 'Hotel';
+          try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* ignore */ }
+          try {
+            localStorage.removeItem('hotelnozap_user_role');
+            localStorage.removeItem('hotelnozap_user_email');
+            localStorage.removeItem('hotelnozap_user_name');
+            localStorage.removeItem('hotelnozap_hotel_atual');
+          } catch { /* ignore */ }
+          setErrorMessage('Acesso não autorizado. Seu cadastro não possui perfil de acesso definido na tabela de usuários.');
+          setLoading(false);
+          return;
         }
       }
 
