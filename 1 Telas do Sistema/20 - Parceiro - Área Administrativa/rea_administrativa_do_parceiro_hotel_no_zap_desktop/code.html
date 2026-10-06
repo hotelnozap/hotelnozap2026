@@ -1,0 +1,719 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-secondary-container": "#0c714d",
+          "on-primary-fixed-variant": "#205118",
+          "tertiary-fixed": "#e2e2e2",
+          "surface-variant": "#d3e3ff",
+          "surface": "#f8f9ff",
+          "on-tertiary": "#ffffff",
+          "inverse-on-surface": "#ebf1ff",
+          "on-background": "#0b1c30",
+          "on-secondary-fixed": "#002113",
+          "gradient-start": "#003400",
+          "error-base": "#ba1a1a",
+          "primary-fixed": "#b9f2a7",
+          "on-secondary-fixed-variant": "#005236",
+          "primary-container": "#003400",
+          "secondary-fixed-dim": "#81d8ad",
+          "inverse-surface": "#213146",
+          "surface-tint": "#386a2e",
+          "surface-container-highest": "#d3e3ff",
+          "on-tertiary-fixed-variant": "#474747",
+          "on-surface": "#0b1c30",
+          "inverse-primary": "#9dd58d",
+          "error-container": "#ffdad6",
+          "on-error": "#ffffff",
+          "surface-bright": "#f8f9ff",
+          "error": "#ba1a1a",
+          "border-focused": "#003400",
+          "on-tertiary-fixed": "#1b1b1b",
+          "outline-variant": "#c1c9ba",
+          "on-secondary": "#ffffff",
+          "tertiary": "#171717",
+          "surface-container": "#e6eeff",
+          "on-tertiary-container": "#929292",
+          "secondary": "#006c49",
+          "accent-mint": "#6cf8bb",
+          "secondary-fixed": "#9df4c8",
+          "on-primary-fixed": "#002200",
+          "on-primary-container": "#6ba05d",
+          "primary": "#001c00",
+          "primary-fixed-dim": "#9dd58d",
+          "outline": "#72796d",
+          "on-error-container": "#93000a",
+          "tertiary-fixed-dim": "#c6c6c6",
+          "on-primary": "#ffffff",
+          "gradient-end": "#000000",
+          "tertiary-container": "#2b2b2b",
+          "surface-tint-active": "rgba(108, 248, 187, 0.15)",
+          "border-subtle": "#c6c6cd",
+          "on-surface-variant": "#42493e",
+          "surface-container-lowest": "#ffffff",
+          "surface-card": "#ffffff",
+          "background": "#f8f9ff",
+          "surface-container-low": "#eff4ff",
+          "surface-dim": "#cbdbf6",
+          "surface-page": "#f8f9ff",
+          "secondary-container": "#9af2c5",
+          "surface-container-high": "#dde9ff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-xs": "0.25rem",
+          "margin-mobile": "1rem",
+          "space-sm": "0.5rem",
+          "gutter": "1.5rem",
+          "space-md": "1rem",
+          "space-xl": "2rem",
+          "gutter-mobile": "1rem",
+          "space-lg": "1.5rem",
+          "margin": "2rem"
+        },
+        "fontFamily": {
+          "body-lg": ["Inter"],
+          "headline-lg": ["Inter"],
+          "body-md": ["Inter"],
+          "label-sm": ["Inter"],
+          "headline-lg-mobile": ["Inter"],
+          "body-sm": ["Inter"],
+          "headline-sm": ["Inter"],
+          "label-md": ["Inter"],
+          "headline-md": ["Inter"],
+          "label-lg": ["Inter"]
+        },
+        "fontSize": {
+          "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+          "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+          "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+          "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+          "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+          "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+          "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+          "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+          "label-lg": ["14px", {"lineHeight": "20px", "fontWeight": "600"}]
+        }
+      }
+    }
+  }</script></head><body class="bg-surface font-body-md text-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-gradient-start to-gradient-end z-50 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.35)]"><div class="flex flex-col"><div class="px-space-lg pt-space-lg pb-space-md flex flex-col gap-space-xs"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-accent-mint flex items-center justify-center"><span class="material-symbols-outlined text-primary text-[22px]">hotel</span></div><span class="font-headline-sm text-headline-sm text-on-primary tracking-tight">Hotel no Zap</span></div><span class="font-label-sm text-label-sm uppercase text-accent-mint tracking-wider pl-1">Portal do Parceiro</span></div><nav class="flex flex-col gap-space-xs px-space-md mt-space-md" data-active-classes="bg-surface-tint-active text-accent-mint font-semibold"><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-colors bg-surface-tint-active text-accent-mint font-semibold" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-label-lg text-label-lg">Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tertiary-fixed hover:bg-surface-tint-active hover:text-accent-mint transition-colors" data-path="minhas-indicacoes" href="#"><span class="material-symbols-outlined text-[20px]">group_add</span><span class="font-label-lg text-label-lg">Minhas Indicações</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tertiary-fixed hover:bg-surface-tint-active hover:text-accent-mint transition-colors" data-path="extrato-financeiro" href="#"><span class="material-symbols-outlined text-[20px]">payments</span><span class="font-label-lg text-label-lg">Extrato Financeiro</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tertiary-fixed hover:bg-surface-tint-active hover:text-accent-mint transition-colors" data-path="meus-links-materiais" href="#"><span class="material-symbols-outlined text-[20px]">folder_shared</span><span class="font-label-lg text-label-lg">Meus Links &amp; Materiais</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-tertiary-fixed hover:bg-surface-tint-active hover:text-accent-mint transition-colors" data-path="configuracoes" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-label-lg text-label-lg">Configurações</span></a></nav></div><div class="p-space-md m-space-md rounded-xl bg-tertiary-container/60 flex flex-col gap-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-surface-tint-active flex items-center justify-center"><span class="material-symbols-outlined text-accent-mint text-[18px]">store</span></div><div class="flex flex-col min-w-0 flex-1"><span class="font-label-md text-label-md text-on-primary truncate">Franquia Nordeste Sul</span><span class="font-body-sm text-body-sm text-on-tertiary-container truncate">Unidade Salvador #104</span></div></div><a class="flex items-center justify-center gap-space-xs py-space-xs px-space-sm rounded-lg text-on-primary hover:bg-error/20 hover:text-error-container transition-colors" data-path="login" href="#"><span class="material-symbols-outlined text-[18px]">logout</span><span class="font-label-md text-label-md">Sair</span></a></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-secondary text-[20px]">waving_hand</span><div class="flex items-center gap-space-xs"><span class="font-label-lg text-label-lg text-on-surface">Olá, Carlos Eduardo</span><span class="text-outline">•</span><span class="font-body-md text-body-md text-on-surface-variant">Franqueado</span></div></div><div class="flex items-center gap-space-lg"><div class="hidden lg:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">schedule</span><span class="">Terça-feira, 24 de Outubro • 14:35</span></div><button class="relative p-space-xs rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"></span></button><div class="relative group"><button class="flex items-center gap-space-xs p-space-xs rounded-full hover:bg-surface-container-high transition-colors" type="button"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span></button><div class="absolute right-0 top-full mt-space-xs w-48 bg-surface-card rounded-xl shadow-[0_12px_28px_-4px_rgba(0,52,0,0.12)] p-space-xs hidden group-hover:flex group-focus-within:flex flex-col z-50"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface hover:bg-surface-container-low hover:text-on-surface transition-colors font-label-md text-label-md" data-path="configuracoes" href="#"><span class="material-symbols-outlined text-[18px]">account_circle</span>Meu Perfil</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-error hover:bg-error-container hover:text-on-error-container transition-colors font-label-md text-label-md" data-path="login" href="#"><span class="material-symbols-outlined text-[18px]">logout</span>Sair</a></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full px-space-lg py-space-xl gap-space-xl">
+<!-- Topo Executivo & Ações de Conversão -->
+<section class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-lg bg-surface-card rounded-xl p-space-xl shadow-sm relative overflow-hidden"><div class="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-accent-mint/10 pointer-events-none blur-3xl"></div>
+<div class="flex flex-col gap-space-md relative z-10 w-full">
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-md">
+    <div class="flex flex-col gap-space-xs">
+      <div class="flex items-center gap-space-xs">
+        <span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+          <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+          Operação Ativa
+        </span>
+        <span class="text-outline-variant font-label-sm text-label-sm">•</span>
+        <span class="text-on-surface-variant font-label-md text-label-md">ID Parceiro: #BR-8821</span>
+      </div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+        Visão Geral da Franquia
+      </h1>
+      <p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-space-xs">
+        <span class="material-symbols-outlined text-[18px] text-secondary">location_on</span>
+        Polo Serra Gaúcha • 80 hotéis gerando comissões ativas em tempo real
+      </p>
+    </div>
+    <div class="flex items-center shrink-0">
+      <button class="flex items-center justify-center gap-1.5 bg-primary hover:bg-gradient-start active:scale-[0.98] transition-all text-on-primary px-space-md py-2.5 rounded-lg shadow-md font-label-lg text-label-lg whitespace-nowrap shrink-0">
+        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+        <span class="whitespace-nowrap">Nova Indicação de Hotel</span>
+      </button>
+    </div>
+  </div>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-container-low rounded-lg p-space-md border border-border-subtle/30">
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-space-sm min-w-0">
+      <span class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider font-semibold whitespace-nowrap">Link de Indicação da Franquia:</span>
+      <span class="font-label-md text-label-md text-on-surface font-semibold truncate">https://hotelnozap.com/p/serra88</span>
+    </div>
+    <button class="flex items-center justify-center gap-1 bg-[#FDB116] hover:bg-[#e29d0f] active:scale-[0.98] transition-all text-on-surface px-space-md py-1.5 rounded shadow-sm font-label-md text-label-md shrink-0" id="copy-btn" onclick="navigator.clipboard.writeText('https://hotelnozap.com/p/serra88'); document.getElementById('copy-feedback').innerText = 'Copiado!'; setTimeout(() =&gt; document.getElementById('copy-feedback').innerText = 'Copiar', 2000);">
+      <span class="material-symbols-outlined text-[16px]">content_copy</span>
+      <span id="copy-feedback" class="">Copiar Link</span>
+    </button>
+  </div>
+</div></section>
+<!-- Métricas e KPIs Financeiros -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-space-md">
+<!-- Card 1: Ganhos do Mês -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-accent-mint"></div>
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">Ganhos do Mês Atual</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="font-headline-lg text-headline-lg text-on-surface">R$ 7.880,00</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-secondary font-semibold">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="">+14.2%</span>
+<span class="text-on-surface-variant font-normal font-body-sm text-body-sm">vs mês anterior</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg pb-space-sm flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">qr_code_2</span>
+<span class="">Previsto repasse dia 05 via PIX</span>
+</div>
+</div>
+<!-- Card 2: Ganhos da Semana -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col justify-between group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">Ganhos da Semana</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="font-headline-lg text-headline-lg text-on-surface">R$ 1.970,00</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-secondary font-semibold">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span class="">4 novos ativados</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg pb-space-sm flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">cycle</span>
+<span class="">Ciclo fechando no domingo</span>
+</div>
+</div>
+<!-- Card 3: Vitalício Pago -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col justify-between group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">Total Vitalício Pago</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-secondary-fixed-variant">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="font-headline-lg text-headline-lg text-on-surface">R$ 68.950,00</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
+<span class="">100% repassado sem pendências</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg pb-space-sm flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">workspace_premium</span>
+<span class="">Parceiro Nível Platinum</span>
+</div>
+</div>
+<!-- Card 4: Hotéis Ativos -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col justify-between group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">Hotéis Ativos</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">hotel</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="font-headline-lg text-headline-lg text-on-surface">80 <span class="font-body-md text-body-md text-on-surface-variant font-normal">hotéis</span></div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-secondary-container font-semibold">
+<span class="">R$ 98,50 líquido/hotel/mês</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg pb-space-sm flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">autorenew</span>
+<span class="">Receita Mensal Recorrente</span>
+</div>
+</div>
+<!-- Card 5: Em Teste / Trial -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col justify-between group hover:shadow-md transition-shadow"><div class="flex items-center justify-between mb-space-sm">
+  <span class="font-label-md text-label-md text-on-surface-variant">Hotéis Cancelados</span>
+  <div class="w-8 h-8 rounded-lg bg-error-container flex items-center justify-center text-error">
+    <span class="material-symbols-outlined text-[18px]">person_remove</span>
+  </div>
+</div>
+<div class="flex flex-col gap-space-xs">
+  <div class="font-headline-lg text-headline-lg text-on-surface">2 <span class="font-body-md text-body-md text-on-surface-variant font-normal">hotéis</span></div>
+  <div class="flex items-center gap-1 font-label-sm text-label-sm text-error font-semibold">
+    <span class="material-symbols-outlined text-[16px]">trending_down</span>
+    <span class="">1.6% churn acumulado</span>
+  </div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg pb-space-sm flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+  <span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+  <span class="">Baixo impacto na carteira</span>
+</div></div>
+<!-- Card 6: Taxa de Retenção -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm flex flex-col justify-between group hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">Taxa de Retenção</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">shield</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="font-headline-lg text-headline-lg text-on-surface">98.4%</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-secondary font-semibold">
+<span class="material-symbols-outlined text-[16px]">thumb_up</span>
+<span class="">Churn residual (1.6%)</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low -mx-space-lg -mb-space-lg px-space-lg pb-space-sm flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">star</span>
+<span class="">Alta satisfação com a IA</span>
+</div>
+</div>
+</section>
+<!-- Seção Gráficos Analíticos -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- Gráfico 1: Evolução dos Ganhos Recorrentes (Últimos 6 Meses) -->
+<div class="lg:col-span-7 bg-surface-card rounded-xl p-space-xl shadow-sm flex flex-col justify-between">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-lg">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Evolução dos Ganhos Recorrentes</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Faturamento líquido de comissão (R$ 98,50/hotel) últimos 6 meses</p>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container px-space-sm py-1 rounded-lg font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="">Comissão Mensal</span>
+<span class="ml-2 w-2.5 h-2.5 rounded-full bg-accent-mint"></span>
+<span class="">Projeção Carteira</span>
+</div>
+</div>
+<!-- Gráfico SVG Responsivo Interativo -->
+<div class="w-full h-64 flex flex-col justify-end">
+<svg class="w-full h-full overflow-visible" fill="none" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
+<!-- Linhas de grade horizontais -->
+<line stroke="#e6eeff" stroke-dasharray="4 4" stroke-width="1" x1="30" x2="520" y1="30" y2="30"></line>
+<line stroke="#e6eeff" stroke-dasharray="4 4" stroke-width="1" x1="30" x2="520" y1="80" y2="80"></line>
+<line stroke="#e6eeff" stroke-dasharray="4 4" stroke-width="1" x1="30" x2="520" y1="130" y2="130"></line>
+<line stroke="#e6eeff" stroke-width="1" x1="30" x2="520" y1="180" y2="180"></line>
+<!-- Labels Y -->
+<text fill="#72796d" font-family="Inter" font-size="10" text-anchor="end" x="22" y="34">R$ 8k</text>
+<text fill="#72796d" font-family="Inter" font-size="10" text-anchor="end" x="22" y="84">R$ 6k</text>
+<text fill="#72796d" font-family="Inter" font-size="10" text-anchor="end" x="22" y="134">R$ 4k</text>
+<text fill="#72796d" font-family="Inter" font-size="10" text-anchor="end" x="22" y="184">R$ 0</text>
+<!-- Barra Maio: R$ 4.137 (42 hotéis) -->
+<rect class="hover:fill-opacity-100 transition-all cursor-pointer" fill="#006c49" fill-opacity="0.85" height="68" rx="4" width="34" x="58" y="112">
+<title>Maio: R$ 4.137,00 (42 hotéis)</title>
+</rect>
+<text fill="#42493e" font-family="Inter" font-size="11" text-anchor="middle" x="75" y="200">Mai</text>
+<!-- Barra Junho: R$ 4.925 (50 hotéis) -->
+<rect class="hover:fill-opacity-100 transition-all cursor-pointer" fill="#006c49" fill-opacity="0.85" height="82" rx="4" width="34" x="138" y="98">
+<title>Junho: R$ 4.925,00 (50 hotéis)</title>
+</rect>
+<text fill="#42493e" font-family="Inter" font-size="11" text-anchor="middle" x="155" y="200">Jun</text>
+<!-- Barra Julho: R$ 5.713 (58 hotéis) -->
+<rect class="hover:fill-opacity-100 transition-all cursor-pointer" fill="#006c49" fill-opacity="0.85" height="98" rx="4" width="34" x="218" y="82">
+<title>Julho: R$ 5.713,00 (58 hotéis)</title>
+</rect>
+<text fill="#42493e" font-family="Inter" font-size="11" text-anchor="middle" x="235" y="200">Jul</text>
+<!-- Barra Agosto: R$ 6.501 (66 hotéis) -->
+<rect class="hover:fill-opacity-100 transition-all cursor-pointer" fill="#006c49" fill-opacity="0.85" height="113" rx="4" width="34" x="298" y="67">
+<title>Agosto: R$ 6.501,00 (66 hotéis)</title>
+</rect>
+<text fill="#42493e" font-family="Inter" font-size="11" text-anchor="middle" x="315" y="200">Ago</text>
+<!-- Barra Setembro: R$ 7.092 (72 hotéis) -->
+<rect class="hover:fill-opacity-100 transition-all cursor-pointer" fill="#006c49" fill-opacity="0.85" height="125" rx="4" width="34" x="378" y="55">
+<title>Setembro: R$ 7.092,00 (72 hotéis)</title>
+</rect>
+<text fill="#42493e" font-family="Inter" font-size="11" text-anchor="middle" x="395" y="200">Set</text>
+<!-- Barra Outubro Atual: R$ 7.880 (80 hotéis) -->
+<rect class="hover:fill-[#0c714d] transition-all cursor-pointer" fill="#003400" height="140" rx="4" width="34" x="458" y="40">
+<title>Outubro (Atual): R$ 7.880,00 (80 hotéis)</title>
+</rect>
+<text fill="#001c00" font-family="Inter" font-size="11" font-weight="bold" text-anchor="middle" x="475" y="200">Out (Atual)</text>
+<!-- Linha de tendência de projeção futura -->
+<path d="M 75 112 L 155 98 L 235 82 L 315 67 L 395 55 L 475 40" stroke="#6cf8bb" stroke-linecap="round" stroke-width="3"></path>
+<circle cx="75" cy="112" fill="#003400" r="3.5" stroke="#6cf8bb" stroke-width="2"></circle>
+<circle cx="155" cy="98" fill="#003400" r="3.5" stroke="#6cf8bb" stroke-width="2"></circle>
+<circle cx="235" cy="82" fill="#003400" r="3.5" stroke="#6cf8bb" stroke-width="2"></circle>
+<circle cx="315" cy="67" fill="#003400" r="3.5" stroke="#6cf8bb" stroke-width="2"></circle>
+<circle cx="395" cy="55" fill="#003400" r="3.5" stroke="#6cf8bb" stroke-width="2"></circle>
+<circle cx="475" cy="40" fill="#6cf8bb" r="4.5" stroke="#003400" stroke-width="2"></circle>
+</svg>
+</div>
+<div class="mt-space-md pt-space-sm flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center gap-1 text-secondary font-medium">
+<span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+          Crescimento acumulado de +90.4% no semestre
+        </span>
+<span class="">Ticket médio: R$ 197 / hotel / mês</span>
+</div>
+</div>
+<!-- Gráfico 2: Funil de Conversão & Status das Indicações -->
+<div class="lg:col-span-5 bg-surface-card rounded-xl p-space-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Funil de Conversão</h2>
+<span class="font-label-sm text-label-sm px-space-sm py-0.5 rounded bg-surface-container text-on-surface-variant font-semibold">124 Indicações Totais</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-lg">Taxas de avanço do pipeline comercial da franquia</p>
+<!-- Barras de Estágios do Funil -->
+<div class="flex flex-col gap-space-md">
+<!-- Estágio 1: Ativos Pagantes -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center font-label-md text-label-md">
+<span class="text-on-surface font-semibold flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+                Ativos Pagantes (RMR)
+              </span>
+<span class="text-on-surface font-bold">80 hotéis <span class="text-on-surface-variant font-normal">(64.5%)</span></span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 64.5%"></div>
+</div>
+</div>
+<!-- Estágio 2: Em Trial 30 Dias -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center font-label-md text-label-md">
+<span class="text-on-surface font-semibold flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-[#1E40AF]"></span>
+                Em Teste Grátis (Trial 30d)
+              </span>
+<span class="text-on-surface font-bold">12 hotéis <span class="text-on-surface-variant font-normal">(9.7%)</span></span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#1E40AF] rounded-full" style="width: 9.7%"></div>
+</div>
+</div>
+<!-- Estágio 3: Em Demonstração / Onboarding -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center font-label-md text-label-md">
+<span class="text-on-surface font-semibold flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-[#D97706]"></span>
+                Em Demonstração / Piloto
+              </span>
+<span class="text-on-surface font-bold">18 hotéis <span class="text-on-surface-variant font-normal">(14.5%)</span></span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#D97706] rounded-full" style="width: 14.5%"></div>
+</div>
+</div>
+<!-- Estágio 4: Em Negociação / Lead Frio -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center font-label-md text-label-md">
+<span class="text-on-surface font-semibold flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+                Em Negociação Comercial
+              </span>
+<span class="text-on-surface font-bold">14 hotéis <span class="text-on-surface-variant font-normal">(11.3%)</span></span>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-outline rounded-full" style="width: 11.3%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Mini KPI de Apoio -->
+<div class="mt-space-lg p-space-md rounded-xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-tint-active flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Conversão Trial → Ativo: 88.2%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">A cada 10 testes, quase 9 viram clientes pagantes</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[22px]">verified</span>
+</div>
+</div>
+</section>
+<!-- Seção de Tabela: Últimos Hotéis Indicados & Status de Repasse -->
+<section class="bg-surface-card rounded-xl shadow-sm flex flex-col overflow-hidden">
+<div class="p-space-xl flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Últimos Hotéis Indicados &amp; Status de Repasse</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Acompanhe as ativações, ciclo do trial e recebimento da sua comissão de 50%</p>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="pl-9 pr-space-md py-space-xs bg-surface rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-secondary w-56 sm:w-64 transition-all" placeholder="Buscar por hotel ou cidade..." type="text">
+</div>
+<button class="flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+<span class="">Filtros</span>
+</button>
+</div>
+</div>
+<!-- Tabela Responsiva com Scroll Horizontal Suave -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+<th class="py-space-md px-space-lg font-semibold">Hotel / Pousada</th>
+<th class="py-space-md px-space-md font-semibold">Localização</th>
+<th class="py-space-md px-space-md font-semibold">Plano Assinado</th>
+<th class="py-space-md px-space-md font-semibold">Ativação</th>
+<th class="py-space-md px-space-md font-semibold">Status do Repasse</th>
+<th class="py-space-md px-space-md font-semibold">Sua Comissão</th>
+<th class="py-space-md px-space-lg font-semibold text-right">Ações Rápidas</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container font-body-md text-body-md text-on-surface">
+<!-- Linha 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-tint-active flex items-center justify-center text-secondary shrink-0 font-bold font-label-md text-label-md">
+                  VT
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-on-surface">Hotel Villa Toscana</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">WhatsApp Integrado • 32 aptos</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-body-md text-body-md text-on-surface">Gramado, RS</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-md text-label-md font-semibold text-on-surface">R$ 197,00<span class="font-normal text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-md font-body-sm text-body-sm text-on-surface-variant">
+              18/10/2023
+            </td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Ativo - Repasse Liberado
+              </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-lg text-label-lg font-bold text-secondary">R$ 98,50<span class="font-normal font-body-sm text-body-sm text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="inline-flex items-center gap-space-xs">
+<button class="p-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="p-space-xs text-secondary hover:bg-surface-tint-active rounded-lg transition-colors" title="Contatar Gestor">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Linha 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center text-[#1E40AF] shrink-0 font-bold font-label-md text-label-md">
+                  VV
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-on-surface">Pousada Vale Verde</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">WhatsApp Integrado • 14 chalés</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-body-md text-body-md text-on-surface">Canela, RS</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-md text-label-md font-semibold text-on-surface">R$ 197,00<span class="font-normal text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-md font-body-sm text-body-sm text-on-surface-variant">
+              12/10/2023
+            </td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-surface-container-highest text-[#1E40AF] font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#1E40AF]"></span>
+                Trial 30 Dias (Dia 18/30)
+              </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-lg text-label-lg font-bold text-on-surface-variant">R$ 98,50<span class="font-normal font-body-sm text-body-sm text-on-surface-variant"> (Previsto)</span></span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="inline-flex items-center gap-space-xs">
+<button class="p-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="p-space-xs text-secondary hover:bg-surface-tint-active rounded-lg transition-colors" title="Contatar Gestor">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Linha 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-tint-active flex items-center justify-center text-secondary shrink-0 font-bold font-label-md text-label-md">
+                  GM
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-on-surface">Grand Master Hotel</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">WhatsApp Multi-atendimento • 88 aptos</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-body-md text-body-md text-on-surface">Bento Gonçalves, RS</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-md text-label-md font-semibold text-on-surface">R$ 197,00<span class="font-normal text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-md font-body-sm text-body-sm text-on-surface-variant">
+              05/10/2023
+            </td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Ativo - Repasse Liberado
+              </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-lg text-label-lg font-bold text-secondary">R$ 98,50<span class="font-normal font-body-sm text-body-sm text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="inline-flex items-center gap-space-xs">
+<button class="p-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="p-space-xs text-secondary hover:bg-surface-tint-active rounded-lg transition-colors" title="Contatar Gestor">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Linha 4 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-[#FEF3C7] flex items-center justify-center text-[#B45309] shrink-0 font-bold font-label-md text-label-md">
+                  CS
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-on-surface">Chalés da Serra</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Aguardando envio de QR Code</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-body-md text-body-md text-on-surface">Nova Petrópolis, RS</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-md text-label-md font-semibold text-on-surface">R$ 197,00<span class="font-normal text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-md font-body-sm text-body-sm text-on-surface-variant">
+              22/10/2023
+            </td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+                Pendente Onboarding
+              </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-lg text-label-lg font-bold text-on-surface-variant">R$ 98,50<span class="font-normal font-body-sm text-body-sm text-on-surface-variant"> (Aguardando)</span></span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="inline-flex items-center gap-space-xs">
+<button class="p-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="p-space-xs text-[#B45309] hover:bg-[#FEF3C7] rounded-lg transition-colors" title="Contatar Gestor">
+<span class="material-symbols-outlined text-[20px]">contact_phone</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Linha 5 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-tint-active flex items-center justify-center text-secondary shrink-0 font-bold font-label-md text-label-md">
+                  RP
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-on-surface">Pousada Recanto dos Pinhais</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">WhatsApp Integrado • 20 aptos</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-body-md text-body-md text-on-surface">Gramado, RS</span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-md text-label-md font-semibold text-on-surface">R$ 197,00<span class="font-normal text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-md font-body-sm text-body-sm text-on-surface-variant">
+              28/09/2023
+            </td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Ativo - Repasse Liberado
+              </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-lg text-label-lg font-bold text-secondary">R$ 98,50<span class="font-normal font-body-sm text-body-sm text-on-surface-variant">/mês</span></span>
+</td>
+<td class="py-space-md px-space-lg text-right">
+<div class="inline-flex items-center gap-space-xs">
+<button class="p-space-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" title="Ver Detalhes">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="p-space-xs text-secondary hover:bg-surface-tint-active rounded-lg transition-colors" title="Contatar Gestor">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Paginação e Resumo da Tabela -->
+<div class="px-space-xl py-space-md bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-md font-body-sm text-body-sm text-on-surface-variant">
+<span class="">Mostrando <strong>5</strong> de <strong>80</strong> hotéis na sua carteira</span>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-md py-1 rounded bg-surface text-outline cursor-not-allowed font-label-sm text-label-sm" disabled="">Anterior</button>
+<button class="px-space-md py-1 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold">1</button>
+<button class="px-space-md py-1 rounded bg-surface hover:bg-surface-container text-on-surface font-label-sm text-label-sm">2</button>
+<button class="px-space-md py-1 rounded bg-surface hover:bg-surface-container text-on-surface font-label-sm text-label-sm">3</button>
+<span class="px-1 text-outline">...</span>
+<button class="px-space-md py-1 rounded bg-surface hover:bg-surface-container text-on-surface font-label-sm text-label-sm">16</button>
+<button class="px-space-md py-1 rounded bg-surface hover:bg-surface-container text-on-surface font-label-sm text-label-sm">Próximo</button>
+</div>
+</div>
+</section>
+<!-- Banner Informativo de Suporte da Matriz -->
+<section class="bg-gradient-to-r from-gradient-start via-primary to-gradient-end text-on-primary rounded-xl p-space-xl shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg">
+<div class="flex items-start gap-space-md relative z-10 max-w-3xl">
+<div class="w-12 h-12 rounded-xl bg-accent-mint/20 border-0 flex items-center justify-center text-accent-mint shrink-0 mt-1">
+<span class="material-symbols-outlined text-[26px]">support_agent</span>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-accent-mint font-semibold">Matriz Hotel no Zap</span>
+<span class="text-tertiary-fixed font-label-sm text-label-sm">•</span>
+<span class="text-tertiary-fixed font-body-sm text-body-sm">Retaguarda Tecnológica 24/7</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-primary">
+          Suporte Operacional &amp; Treinamento Contínuo
+        </h3>
+<p class="font-body-md text-body-md text-tertiary-fixed leading-relaxed">
+          A matriz cuida de 100% da infraestrutura de servidores, atualização das IAs no WhatsApp e atendimento técnico de 1º e 2º nível para os seus hotéis. Você foca exclusivamente em expandir sua carteira regional e rentabilizar sua franquia.
+        </p>
+</div>
+</div>
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-space-md shrink-0 relative z-10 w-full md:w-auto">
+<a class="flex items-center justify-center gap-space-xs bg-surface-card hover:bg-surface-container text-on-surface px-space-lg py-space-md rounded-lg font-label-lg text-label-lg shadow-sm transition-all w-full sm:w-auto" href="mailto:hotelnozap@gmail.com">
+<span class="material-symbols-outlined text-[20px] text-secondary">mail</span>
+<span class="">hotelnozap@gmail.com</span>
+</a>
+<a class="flex items-center justify-center gap-space-xs bg-accent-mint text-primary hover:bg-[#85fdcb] px-space-lg py-space-md rounded-lg font-label-lg text-label-lg font-semibold shadow-sm transition-all w-full sm:w-auto" href="https://wa.me/" target="_blank">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+<span class="">WhatsApp Matriz</span>
+</a>
+</div>
+</section>
+</div></main></div>
+
+</body></html>

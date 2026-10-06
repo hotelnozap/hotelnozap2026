@@ -467,6 +467,21 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         if (!role && cleanEmail === 'everaldozs@gmail.com') {
           role = 'Super Admin';
         }
+        // Identifica se o usuário pertence à tabela de parceiros/franqueados
+        if (!role || role.toLowerCase() === 'hotel') {
+          try {
+            const { data: parceiroData } = await supabase
+              .from('parceiros')
+              .select('id, nome, status')
+              .ilike('email', cleanEmail)
+              .maybeSingle();
+            if (parceiroData) {
+              role = 'Parceiro';
+            }
+          } catch (pErr) {
+            console.warn('Erro ao verificar parceiro:', pErr);
+          }
+        }
         if (!role) {
           role = 'Hotel';
         }

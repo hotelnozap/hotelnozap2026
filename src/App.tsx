@@ -78,6 +78,7 @@ import { LogsSistema } from './components/LogsSistema';
 import { NotificacoesPushAdmin } from './components/NotificacoesPushAdmin';
 import { LandingPageParceiros } from './components/LandingPageParceiros';
 import { CheckoutParceiro } from './components/CheckoutParceiro';
+import { PortalParceiro } from './components/PortalParceiro';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 
@@ -201,6 +202,7 @@ export const App: React.FC = () => {
           const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
           if (savedRole && savedEmail) {
             const roleLower = savedRole.toLowerCase();
+            if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) return 'portal-parceiro';
             if (roleLower.includes('camareira') || roleLower.includes('governanca')) return 'camareira';
             const isAdm = roleLower.includes('admin') || roleLower.includes('super');
             return isAdm ? 'admin-dashboard' : 'dashboard';
@@ -220,6 +222,9 @@ export const App: React.FC = () => {
         const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
         if (savedRole && savedEmail) {
           const roleLower = savedRole.toLowerCase();
+          if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
+            return 'portal-parceiro';
+          }
           if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
             window.history.replaceState({}, '', '/minhaconta');
             return 'minhaconta';
@@ -239,6 +244,7 @@ export const App: React.FC = () => {
       const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
       if (savedRole && savedEmail) {
         const roleLower = savedRole.toLowerCase();
+        if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) return 'portal-parceiro';
         if (roleLower.includes('camareira') || roleLower.includes('governanca')) return 'camareira';
         const isAdm = roleLower.includes('admin') || roleLower.includes('super');
         return isAdm ? 'admin-dashboard' : 'dashboard';
@@ -290,7 +296,9 @@ export const App: React.FC = () => {
       } else if (parts[0] === 'paineladmin') {
         const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
         const roleLower = savedRole.toLowerCase();
-        if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
+        if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
+          setActiveTab('portal-parceiro');
+        } else if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
           window.history.replaceState({}, '', '/minhaconta');
           setActiveTab('minhaconta');
         } else {
@@ -315,7 +323,9 @@ export const App: React.FC = () => {
           const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
           if (savedRole && savedEmail) {
             const roleLower = savedRole.toLowerCase();
-            if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
+            if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
+              setActiveTab('portal-parceiro');
+            } else if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
               setActiveTab('camareira');
             } else {
               const isAdm = roleLower.includes('admin') || roleLower.includes('super');
@@ -391,6 +401,9 @@ export const App: React.FC = () => {
         break;
       case 'checkout-parceiro':
         document.title = 'Checkout Oficial - Franquia Hotel no Zap';
+        break;
+      case 'portal-parceiro':
+        document.title = 'Portal do Parceiro - Hotel no Zap';
         break;
       case 'lp-novo-hotel':
         document.title = 'Cadastre seu Hotel';
@@ -578,7 +591,19 @@ export const App: React.FC = () => {
           .select('id, nome, email, perfil, status, cargo, hotel_id, url_avatar')
           .ilike('email', authEmail)
           .maybeSingle();
-        const role = (dbUser?.perfil || 'Hotel').trim();
+        let role = (dbUser?.perfil || 'Hotel').trim();
+        if (!role || role.toLowerCase() === 'hotel') {
+          try {
+            const { data: pData } = await supabase
+              .from('parceiros')
+              .select('id')
+              .ilike('email', authEmail)
+              .maybeSingle();
+            if (pData) {
+              role = 'Parceiro';
+            }
+          } catch {}
+        }
         const name = (dbUser?.nome || authEmail.split('@')[0] || 'Usuário').trim();
         localStorage.setItem('hotelnozap_user_role', role);
         localStorage.setItem('hotelnozap_user_email', authEmail);
@@ -654,6 +679,11 @@ export const App: React.FC = () => {
         setActiveTab('minhaconta');
         return;
       }
+      if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
+        if (isPublicOrHotelRoute) return;
+        setActiveTab('portal-parceiro');
+        return;
+      }
       if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
         if (isPublicOrHotelRoute) return;
         window.history.replaceState({}, '', '/camareira');
@@ -696,7 +726,7 @@ export const App: React.FC = () => {
               if (isAppDomain() && (prev === 'catalogo-hoteis' || !prev)) {
                 return 'login';
               }
-              return (prev === 'login' || prev === 'landingpage' || prev === 'landingpage-parceiros' || prev === 'checkout-parceiro' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login';
+              return (prev === 'login' || prev === 'landingpage' || prev === 'landingpage-parceiros' || prev === 'portal-parceiro' || prev === 'checkout-parceiro' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login';
             });
           }
         }
@@ -738,7 +768,13 @@ export const App: React.FC = () => {
   }, []);
 
   const isHotelUser = currentUserRole.toLowerCase().includes('hotel') || 
-    (!currentUserRole.toLowerCase().includes('admin') && !currentUserRole.toLowerCase().includes('super') && !currentUserRole.toLowerCase().includes('administrador'));
+    (!currentUserRole.toLowerCase().includes('admin') && 
+     !currentUserRole.toLowerCase().includes('super') && 
+     !currentUserRole.toLowerCase().includes('administrador') &&
+     !currentUserRole.toLowerCase().includes('parceiro') &&
+     !currentUserRole.toLowerCase().includes('franqueado') &&
+     !currentUserRole.toLowerCase().includes('camareira') &&
+     !currentUserRole.toLowerCase().includes('hospede'));
 
 
 
@@ -1097,8 +1133,7 @@ export const App: React.FC = () => {
           if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('dashboard');
+            setActiveTab('portal-parceiro');
           }
         }}
       />
@@ -1109,7 +1144,7 @@ export const App: React.FC = () => {
   const isParceirosLandingRoute = activeTab === 'landingpage-parceiros' ||
     (isParceirosDomain() && pathParts[0] !== 'assinar' && pathParts[0] !== 'checkout') ||
     (pathParts[0] === 'parceiros' && pathParts[1] !== 'assinar' && pathParts[1] !== 'checkout') ||
-    pathParts[0] === 'parceiro' ||
+    (pathParts[0] === 'parceiro' && pathParts[1] !== 'checkout') ||
     pathParts[0] === 'franquia';
 
   if (isParceirosLandingRoute) {
@@ -1332,6 +1367,10 @@ export const App: React.FC = () => {
             setCurrentUserRole(userData.role);
           }
           const roleLower = (userData?.role || '').toLowerCase();
+          if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
+            setActiveTab('portal-parceiro');
+            return;
+          }
           if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
             window.history.pushState({}, '', '/minhaconta');
             setActiveTab('minhaconta');
@@ -1416,6 +1455,71 @@ export const App: React.FC = () => {
           setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard');
         } : undefined}
         onLogout={() => handleLogout()}
+      />
+    );
+  }
+
+  // ── Portal do Franqueado / Parceiro (Acesso pelo Login Padrão de Acordo com Perfil) ──
+  const isParceiroUser = roleLower.includes('parceiro') || roleLower.includes('franqueado');
+  const isParceiroAuthorized = isParceiroUser || isAdminUser;
+
+  const isParceiroRoute = activeTab === 'portal-parceiro';
+
+  if (isParceiroRoute) {
+    if (!isParceiroAuthorized) {
+      const userLogged = Boolean(localStorage.getItem('hotelnozap_user_email'));
+      return (
+        <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4">
+          <div className="bg-slate-800 p-6 sm:p-8 rounded-2xl max-w-md w-full text-center border border-slate-700 space-y-4 shadow-2xl animate-in fade-in">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto">
+              <span className="material-symbols-outlined text-3xl">lock</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white">Acesso Restrito ao Franqueado</h2>
+              <p className="text-xs text-emerald-300 font-semibold mt-1">Área Exclusiva para Franqueados e Parceiros</p>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {userLogged 
+                ? 'Seu perfil atual não possui autorização de Franqueado/Parceiro. Acesse com uma conta de parceiro credenciado.' 
+                : 'Esta área é exclusiva para parceiros credenciados Hotel no Zap. Por favor, realize o login com sua conta.'}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              {userLogged && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(isCamareiraUser ? 'camareira' : (isHotelUser ? 'dashboard' : 'admin-dashboard'));
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors"
+                >
+                  Meu Painel
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  await handleLogout();
+                  setActiveTab('login');
+                }}
+                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors shadow-sm"
+              >
+                {userLogged ? 'Trocar de Conta' : 'Fazer Login'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <PortalParceiro
+        onLogout={async () => {
+          await handleLogout();
+          setActiveTab('login');
+        }}
+        onNavigateHome={() => {
+          setActiveTab('catalogo-hoteis');
+        }}
       />
     );
   }
