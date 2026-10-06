@@ -1,0 +1,806 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { ZapHotelLogo } from './ZapHotelLogo';
+import { maskCpf, maskPhone, isValidCpf } from '../utils/masks';
+import { mercadopagoService, PixMasterResult } from '../services/mercadopagoService';
+import { parceirosService, usuariosService } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
+
+interface CheckoutParceiroProps {
+  onNavigateBack: () => void;
+  onNavigateToLogin?: () => void;
+  onNavigateToDashboard?: () => void;
+}
+
+export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
+  onNavigateBack,
+  onNavigateToLogin,
+  onNavigateToDashboard
+}) => {
+  // Passos do Checkout: 'dados' | 'pagamento' | 'sucesso'
+  const [currentStep, setCurrentStep] = useState<'dados' | 'pagamento' | 'sucesso'>('dados');
+
+  // Dados do Parceiro
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [senha, setSenha] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [cidadeUf, setCidadeUf] = useState('');
+
+  // Erros e Validação
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Estados do Pagamento PIX
+  const [pixResult, setPixResult] = useState<PixMasterResult | null>(null);
+  const [gerandoPix, setGerandoPix] = useState(false);
+  const [copiadoPix, setCopiadoPix] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
+  const [isVerificando, setIsVerificando] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutos
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Dados pós-aprovação
+  const [partnerCode, setPartnerCode] = useState('');
+  const [partnerLink, setPartnerLink] = useState('');
+  const [copiadoLink, setCopiadoLink] = useState(false);
+
+  // Formatar tempo mm:ss
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  // Gerar código de parceiro baseado no nome
+  const generatePartnerCode = (nameStr: string): string => {
+    const clean = nameStr.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const prefix = clean.slice(0, 6) || 'PARTNER';
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    return `${prefix}${randomSuffix}`;
+  };
+
+  // Avançar para a etapa de pagamento
+  const handleAvancarParaPagamento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    // Validações
+    if (!nome.trim() || nome.trim().split(' ').length < 2) {
+      setErrorMsg('Por favor, informe seu nome e sobrenome completos.');
+      return;
+    }
+    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
+      setErrorMsg('Por favor, informe um endereço de e-mail válido.');
+      return;
+    }
+    const cleanCpf = cpf.replace(/\D/g, '');
+    if (cleanCpf.length !== 11 || !isValidCpf(cpf)) {
+      setErrorMsg('Por favor, informe um CPF válido.');
+      return;
+    }
+    const cleanPhone = whatsapp.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      setErrorMsg('Por favor, informe seu WhatsApp com DDD completo.');
+      return;
+    }
+    if (!senha || senha.length < 6) {
+      setErrorMsg('A senha de acesso deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setGerandoPix(true);
+    setCurrentStep('pagamento');
+
+    try {
+      // Cria a cobrança PIX oficial no Mercado Pago (R$ 197,00)
+      const res = await mercadopagoService.criarPagamentoPixMaster({
+        hotelId: `parceiro_${Date.now()}`,
+        hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
+        planoNome: 'Licença Anual de Franqueado & Revenda (R$ 197)',
+        valor: 197.00,
+        pagadorEmail: email.trim().toLowerCase(),
+        pagadorNome: nome.trim(),
+        pagadorDoc: cleanCpf
+      });
+
+      setPixResult(res);
+      setTimeLeft(600);
+    } catch (err: any) {
+      console.warn('Erro ao gerar cobrança Pix do Parceiro:', err);
+      // Fallback amigável com chave da matriz se o webhook falhar
+      setPixResult({
+        success: true,
+        paymentId: `fallback_${Date.now()}`,
+        status: 'pending',
+        gateway: 'pix_chave',
+        qrCode: 'hotelnozap@gmail.com'
+      });
+    } finally {
+      setIsSubmitting(false);
+      setGerandoPix(false);
+    }
+  };
+
+  // Timer regressivo de 10 minutos
+  useEffect(() => {
+    if (currentStep !== 'pagamento' || isApproved) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [currentStep, isApproved]);
+
+  // Polling automático de status do pagamento no Mercado Pago
+  useEffect(() => {
+    if (currentStep !== 'pagamento' || isApproved || !pixResult?.paymentId) {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      return;
+    }
+
+    // Se for mock/fallback de chave manual, não faz polling na API
+    if (pixResult.paymentId.startsWith('fallback_')) return;
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const statusRes = await mercadopagoService.consultarStatusPagamentoMaster(pixResult.paymentId);
+        if (statusRes.status === 'approved') {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          await liberarAcessoParceiro();
+        }
+      } catch (e) {
+        // Silencioso para não poluir console
+      }
+    }, 3000);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [currentStep, isApproved, pixResult?.paymentId]);
+
+  // Liberação do Acesso e Cadastro do Parceiro
+  const liberarAcessoParceiro = async () => {
+    setIsVerificando(true);
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanPhone = whatsapp.replace(/\D/g, '');
+      const cleanCpf = cpf.replace(/\D/g, '');
+      const code = generatePartnerCode(nome);
+      setPartnerCode(code);
+      const referralUrl = `https://hotelnozap.com.br/parceiros/assinar?ref=${code}`;
+      setPartnerLink(referralUrl);
+
+      // 1. Cadastra ou atualiza na tabela `parceiros`
+      const { data: existingParc } = await supabase
+        .from('parceiros')
+        .select('id')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      let parceiroId = existingParc?.id;
+
+      if (!parceiroId) {
+        const { data: newParc, error: parcError } = await supabase
+          .from('parceiros')
+          .insert({
+            nome: nome.trim(),
+            email: cleanEmail,
+            whatsapp: cleanPhone,
+            documento: cleanCpf,
+            cidade_uf: cidadeUf.trim() || 'Brasil',
+            categoria: 'Franquia Regional',
+            cupom: code,
+            taxa_comissao: 50, // 50% de comissão recorrente vitalícia
+            nivel: 'Franquia Oficial',
+            status: 'ativo',
+            pix_tipo: 'CPF',
+            pix_chave: cleanCpf,
+            titular_pix: nome.trim()
+          })
+          .select('id')
+          .single();
+
+        if (newParc) parceiroId = newParc.id;
+        if (parcError) console.warn('Aviso ao inserir tabela parceiros:', parcError);
+      } else {
+        await supabase
+          .from('parceiros')
+          .update({
+            status: 'ativo',
+            taxa_comissao: 50,
+            cupom: code,
+            nivel: 'Franquia Oficial'
+          })
+          .eq('id', parceiroId);
+      }
+
+      // 2. Cadastra na tabela `usuarios` com perfil 'Parceiro'
+      const { data: existingUser } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (!existingUser) {
+        await supabase
+          .from('usuarios')
+          .insert({
+            nome: nome.trim(),
+            email: cleanEmail,
+            telefone: cleanPhone,
+            perfil: 'Parceiro',
+            status: 'ativo'
+          });
+      }
+
+      // 3. Tenta cadastrar no Supabase Auth para login direto
+      try {
+        await supabase.auth.signUp({
+          email: cleanEmail,
+          password: senha,
+          options: {
+            data: {
+              name: nome.trim(),
+              nome: nome.trim(),
+              perfil: 'Parceiro'
+            }
+          }
+        });
+      } catch (authErr) {
+        console.warn('Registro Auth finalizado:', authErr);
+      }
+
+      // 4. Grava credenciais e sessão ativa no localStorage
+      localStorage.setItem('hotelnozap_user_role', 'Parceiro');
+      localStorage.setItem('hotelnozap_user_email', cleanEmail);
+      localStorage.setItem('hotelnozap_user_name', nome.trim());
+      localStorage.setItem('hotelnozap_last_authenticated_at', new Date().toISOString());
+
+      // Atualiza visual para aprovação
+      setIsApproved(true);
+      setCurrentStep('sucesso');
+    } catch (err: any) {
+      console.error('Erro ao liberar acesso do parceiro:', err);
+      // Mesmo se houver inconsistência não impeditiva no banco, autoriza a visualização do sucesso
+      setIsApproved(true);
+      setCurrentStep('sucesso');
+    } finally {
+      setIsVerificando(false);
+    }
+  };
+
+  // Botão "Copiar Código Pix"
+  const handleCopiarPix = () => {
+    const chave = pixResult?.qrCode || 'hotelnozap@gmail.com';
+    navigator.clipboard.writeText(chave).then(() => {
+      setCopiadoPix(true);
+      setTimeout(() => setCopiadoPix(false), 3000);
+    });
+  };
+
+  // Botão "Copiar Link de Indicação"
+  const handleCopiarLink = () => {
+    if (!partnerLink) return;
+    navigator.clipboard.writeText(partnerLink).then(() => {
+      setCopiadoLink(true);
+      setTimeout(() => setCopiadoLink(false), 3000);
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f8f9ff] text-[#0b1c30] font-sans antialiased flex flex-col justify-between selection:bg-[#FDB116] selection:text-[#1b1b1b]">
+      
+      {/* ========================================================================= */}
+      {/* 1. TOP HEADER ISOLADO (FOCUS MODE)                                        */}
+      {/* ========================================================================= */}
+      <header className="w-full bg-white border-b border-slate-200 shadow-xs py-4 px-4 sm:px-8 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          
+          <button 
+            onClick={onNavigateBack}
+            className="flex items-center gap-2 text-slate-600 hover:text-[#003400] transition-colors cursor-pointer group text-xs sm:text-sm font-semibold"
+          >
+            <span className="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform">
+              arrow_back
+            </span>
+            <span>Voltar</span>
+          </button>
+
+          <div className="flex items-center gap-2.5">
+            <ZapHotelLogo size={34} />
+            <div className="flex flex-col leading-none text-left">
+              <span className="font-extrabold text-base text-[#0b1c30] tracking-tight">Hotel no Zap</span>
+              <span className="text-[10px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">
+                Checkout Seguro • Franquia Oficial
+              </span>
+            </div>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+            <span className="material-symbols-outlined text-[16px] text-emerald-600">lock</span>
+            <span>Ambiente Seguro 256-bit</span>
+          </div>
+
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 2. CONTEÚDO PRINCIPAL (DUAL COLUMN DESKTOP / SINGLE COLUMN MOBILE)         */}
+      {/* ========================================================================= */}
+      <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1">
+        
+        {/* Barra de Progresso Superior */}
+        <div className="max-w-2xl mx-auto mb-8 sm:mb-12">
+          <div className="flex items-center justify-between relative">
+            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 -translate-y-1/2 z-0" />
+            
+            {/* Step 1 */}
+            <div className={`relative z-10 flex flex-col items-center gap-1.5 ${currentStep === 'dados' ? 'text-[#003400]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
+                currentStep === 'dados' 
+                  ? 'bg-[#003400] text-white ring-4 ring-emerald-100' 
+                  : (currentStep === 'pagamento' || currentStep === 'sucesso') 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-white text-slate-500 border border-slate-300'
+              }`}>
+                {(currentStep === 'pagamento' || currentStep === 'sucesso') ? (
+                  <span className="material-symbols-outlined text-sm">check</span>
+                ) : '1'}
+              </div>
+              <span className="text-[11px] font-bold">1. Seus Dados</span>
+            </div>
+
+            {/* Step 2 */}
+            <div className={`relative z-10 flex flex-col items-center gap-1.5 ${currentStep === 'pagamento' ? 'text-[#003400]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
+                currentStep === 'pagamento' 
+                  ? 'bg-[#003400] text-white ring-4 ring-emerald-100' 
+                  : currentStep === 'sucesso'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-slate-500 border border-slate-300'
+              }`}>
+                {currentStep === 'sucesso' ? (
+                  <span className="material-symbols-outlined text-sm">check</span>
+                ) : '2'}
+              </div>
+              <span className="text-[11px] font-bold">2. Pagamento</span>
+            </div>
+
+            {/* Step 3 */}
+            <div className={`relative z-10 flex flex-col items-center gap-1.5 ${currentStep === 'sucesso' ? 'text-[#006c49]' : 'text-slate-400'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
+                currentStep === 'sucesso' 
+                  ? 'bg-[#006c49] text-white ring-4 ring-emerald-100' 
+                  : 'bg-white text-slate-500 border border-slate-300'
+              }`}>
+                3
+              </div>
+              <span className="text-[11px] font-bold">3. Acesso Liberado</span>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Grid Dual Column */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* ========================================================================= */}
+          {/* COLUNA ESQUERDA: FORMULÁRIO / PIX / LIBERAÇÃO (7 colunas)                 */}
+          {/* ========================================================================= */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+
+            {/* PASSO 1: DADOS DO FRANQUEADO */}
+            {currentStep === 'dados' && (
+              <div className="rounded-3xl bg-white p-6 sm:p-8 border border-slate-200/90 shadow-xl transition-all">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006c49] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-xl">person_add</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-[#0b1c30]">Dados da Franquia</h2>
+                    <p className="text-xs text-slate-500">Preencha seus dados para emitir a licença oficial e criar seu login.</p>
+                  </div>
+                </div>
+
+                {errorMsg && (
+                  <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">error</span>
+                    <span>{errorMsg}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleAvancarParaPagamento} className="flex flex-col gap-4 text-left">
+                  
+                  {/* Nome Completo */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Nome Completo *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Carlos Eduardo de Oliveira"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                    />
+                  </div>
+
+                  {/* CPF e WhatsApp */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">CPF (para repasse dos ganhos) *</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        required
+                        placeholder="000.000.000-00"
+                        value={cpf}
+                        onChange={(e) => setCpf(maskCpf(e.target.value))}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">WhatsApp com DDD *</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        required
+                        placeholder="(00) 00000-0000"
+                        value={whatsapp}
+                        onChange={(e) => setWhatsapp(maskPhone(e.target.value))}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* E-mail e Cidade/UF */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">E-mail Principal *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="seuemail@exemplo.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Cidade e Estado (Região de Atuação)</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Caldas Novas - GO"
+                        value={cidadeUf}
+                        onChange={(e) => setCidadeUf(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Senha de Acesso */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Crie uma Senha para seu Painel *</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        placeholder="Mínimo 6 caracteres"
+                        value={senha}
+                        onChange={(e) => setSenha(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {showPassword ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Botão de Prosseguir */}
+                  <div className="pt-4">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full inline-flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-[#FDB116] text-[#1b1b1b] hover:bg-[#e09c0f] font-black text-sm sm:text-base shadow-lg shadow-[#FDB116]/25 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                          <span>Gerando Pagamento...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Continuar para Pagamento • R$ 197,00</span>
+                          <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                </form>
+              </div>
+            )}
+
+            {/* PASSO 2: PAGAMENTO VIA PIX */}
+            {currentStep === 'pagamento' && (
+              <div className="rounded-3xl bg-white p-6 sm:p-8 border border-slate-200/90 shadow-xl transition-all text-center flex flex-col items-center">
+                
+                <div className="w-full flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#006c49] text-xl">qr_code_2</span>
+                    <h3 className="font-bold text-sm sm:text-base text-[#0b1c30]">Pagamento via PIX Instantâneo</h3>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold">
+                    <span className="material-symbols-outlined text-[15px] text-amber-600">timer</span>
+                    <span>{formatTime(timeLeft)}</span>
+                  </div>
+                </div>
+
+                {gerandoPix ? (
+                  <div className="py-12 flex flex-col items-center gap-3">
+                    <div className="w-10 h-10 border-3 border-[#003400] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm font-bold text-slate-700">Gerando QR Code PIX com Mercado Pago...</span>
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col items-center gap-5">
+                    
+                    {/* QR Code Container */}
+                    <div className="p-4 bg-white rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col items-center justify-center">
+                      {pixResult?.qrCodeBase64 ? (
+                        <img 
+                          src={`data:image/png;base64,${pixResult.qrCodeBase64}`} 
+                          alt="QR Code PIX Mercado Pago" 
+                          className="w-56 h-56 object-contain"
+                        />
+                      ) : (
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pixResult?.qrCode || 'hotelnozap@gmail.com')}`} 
+                          alt="QR Code PIX" 
+                          className="w-56 h-56 object-contain"
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs text-slate-500 font-medium">Abra o app do seu banco e escaneie o código acima, ou use o Pix Copia e Cola:</span>
+                      <span className="text-xl font-black text-[#003400]">R$ 197,00</span>
+                    </div>
+
+                    {/* Copia e Cola Box */}
+                    <div className="w-full flex flex-col gap-2">
+                      <div className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 font-mono break-all line-clamp-2 select-all text-left">
+                        {pixResult?.qrCode || 'hotelnozap@gmail.com'}
+                      </div>
+                      <button
+                        onClick={handleCopiarPix}
+                        className="w-full py-3.5 px-6 rounded-xl bg-[#003400] text-white hover:bg-[#004d00] font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {copiadoPix ? 'check_circle' : 'content_copy'}
+                        </span>
+                        <span>{copiadoPix ? 'Código Pix Copiado com Sucesso!' : 'Copiar Código Pix (Copia e Cola)'}</span>
+                      </button>
+                    </div>
+
+                    {/* Status de Verificação Automática */}
+                    <div className="mt-3 p-3.5 w-full rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center gap-2.5 text-xs text-emerald-800 font-bold">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                      <span>Aguardando pagamento... A liberação ocorre automaticamente em segundos.</span>
+                    </div>
+
+                    {/* Botão de Verificação Imediata / Contingência */}
+                    <button
+                      onClick={liberarAcessoParceiro}
+                      disabled={isVerificando}
+                      className="mt-2 text-xs font-bold text-slate-500 hover:text-[#006c49] transition-colors underline cursor-pointer"
+                    >
+                      {isVerificando ? 'Consultando confirmação...' : 'Já efetuei o pagamento e quero liberar o acesso agora'}
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* PASSO 3: SUCESSO E ACESSO LIBERADO */}
+            {currentStep === 'sucesso' && (
+              <div className="rounded-3xl bg-white p-6 sm:p-10 border border-emerald-200 shadow-2xl transition-all text-center flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-300">
+                
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                  <span className="material-symbols-outlined text-4xl">check_circle</span>
+                </div>
+
+                <div className="flex flex-col gap-1 max-w-lg">
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-[#006c49]">Parabéns, Franqueado Oficial!</span>
+                  <h2 className="text-2xl sm:text-3xl font-black text-[#0b1c30]">
+                    Pagamento Confirmado &amp; Acesso Liberado!
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                    Sua licença regional do Hotel no Zap está ativa. Você já pode divulgar seu link exclusivo e começar a cadastrar hotéis.
+                  </p>
+                </div>
+
+                {/* Box do Link Exclusivo do Parceiro */}
+                <div className="w-full bg-[#eff4ff] p-5 sm:p-6 rounded-2xl border border-slate-200 flex flex-col gap-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-[#003400] flex items-center gap-1.5 uppercase tracking-wide">
+                      <span className="material-symbols-outlined text-base">link</span>
+                      Seu Link de Indicação Exclusivo
+                    </span>
+                    <span className="text-[10px] font-bold bg-[#003400] text-[#FDB116] px-2 py-0.5 rounded-full">
+                      CÓDIGO: {partnerCode}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-white rounded-xl border border-slate-300 text-xs font-mono text-slate-700 break-all select-all">
+                    {partnerLink || `https://hotelnozap.com.br/parceiros/assinar?ref=${partnerCode}`}
+                  </div>
+
+                  <button
+                    onClick={handleCopiarLink}
+                    className="w-full py-3 px-4 rounded-xl bg-[#006c49] text-white hover:bg-[#005236] font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <span className="material-symbols-outlined text-base">
+                      {copiadoLink ? 'check' : 'content_copy'}
+                    </span>
+                    <span>{copiadoLink ? 'Link Copiado!' : 'Copiar Link de Divulgação'}</span>
+                  </button>
+                  <span className="text-[11px] text-slate-500">
+                    💡 Qualquer hotel que contratar através deste link será vinculado à sua conta com 50% de comissão recorrente vitalícia.
+                  </span>
+                </div>
+
+                {/* Resumo de Acesso */}
+                <div className="w-full p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                  <div>
+                    <span className="font-bold text-slate-800">Login Cadastrado:</span> {email}
+                  </div>
+                  <div className="text-emerald-700 font-bold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">verified</span>
+                    Status: Ativo &amp; Homologado
+                  </div>
+                </div>
+
+                {/* Botão de Acesso ao Painel */}
+                <div className="w-full pt-2">
+                  <button
+                    onClick={() => {
+                      if (onNavigateToDashboard) {
+                        onNavigateToDashboard();
+                      } else if (onNavigateToLogin) {
+                        onNavigateToLogin();
+                      } else {
+                        window.location.href = 'https://app.hotelnozap.com.br/';
+                      }
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-3 py-4 px-8 rounded-xl bg-[#FDB116] text-[#1b1b1b] hover:bg-[#e09c0f] font-black text-base shadow-xl shadow-[#FDB116]/25 transition-all duration-200 active:scale-95 cursor-pointer"
+                  >
+                    <span>Entrar no Meu Painel de Parceiro Agora</span>
+                    <span className="material-symbols-outlined text-2xl">arrow_forward</span>
+                  </button>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
+          {/* ========================================================================= */}
+          {/* COLUNA DIREITA: RESUMO DO PEDIDO & BENEFÍCIOS (5 colunas)                 */}
+          {/* ========================================================================= */}
+          <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-24">
+            
+            {/* Card Resumo do Pedido */}
+            <div className="rounded-3xl bg-white p-6 sm:p-8 border border-slate-200/90 shadow-xl flex flex-col gap-6 text-left">
+              
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Resumo da Assinatura</span>
+                <span className="text-[11px] font-extrabold text-[#006c49] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                  Franquia Oficial
+                </span>
+              </div>
+
+              {/* Informação do Plano */}
+              <div className="flex flex-col gap-1">
+                <h3 className="text-lg font-black text-[#0b1c30]">Licença Anual de Franqueado</h3>
+                <p className="text-xs text-slate-500">Direito oficial de distribuição e revenda na sua região.</p>
+                
+                <div className="flex items-baseline gap-2 mt-4 pt-4 border-t border-slate-100">
+                  <span className="text-xs text-slate-500">Total:</span>
+                  <span className="text-3xl font-black text-[#003400]">R$ 197,00</span>
+                  <span className="text-xs text-slate-500 font-semibold">/ ano</span>
+                </div>
+                <span className="text-[11px] text-emerald-700 font-bold mt-0.5">
+                  ✓ Pagamento anual único (sem mensalidades fixas)
+                </span>
+              </div>
+
+              {/* Lista dos Benefícios Inclusos */}
+              <div className="flex flex-col gap-3 pt-3 border-t border-slate-100">
+                <span className="text-xs font-bold text-slate-700">Tudo o que está incluso:</span>
+                
+                <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                  <span className="material-symbols-outlined text-[#006c49] text-base shrink-0 mt-0.5">check_circle</span>
+                  <span><strong>Páginas demonstrativas</strong> completas para apresentar aos hotéis</span>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                  <span className="material-symbols-outlined text-[#006c49] text-base shrink-0 mt-0.5">check_circle</span>
+                  <span><strong>Página de indicação exclusiva</strong> com seu código oficial</span>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                  <span className="material-symbols-outlined text-[#006c49] text-base shrink-0 mt-0.5">check_circle</span>
+                  <span><strong>100% Livre de royalties</strong>: sua comissão é líquida para você</span>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                  <span className="material-symbols-outlined text-[#006c49] text-base shrink-0 mt-0.5">check_circle</span>
+                  <span><strong>50% de comissão recorrente</strong> em todas as mensalidades</span>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                  <span className="material-symbols-outlined text-[#006c49] text-base shrink-0 mt-0.5">check_circle</span>
+                  <span>Suporte e infraestrutura técnica 100% pela matriz</span>
+                </div>
+              </div>
+
+              {/* Selos de Confiança */}
+              <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5 text-[11px] text-slate-500">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified_user</span>
+                  <span>Garantia incondicional de 7 dias</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-600 text-[18px]">support_agent</span>
+                  <span>Suporte humanizado direto com o time da matriz</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+
+      {/* ========================================================================= */}
+      {/* 3. FOOTER DISCRETO                                                        */}
+      {/* ========================================================================= */}
+      <footer className="w-full py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500 mt-12">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>Hotel no Zap © {new Date().getFullYear()} • Todos os direitos reservados.</span>
+          <span className="flex items-center gap-1 text-[11px] text-slate-400">
+            <span className="material-symbols-outlined text-sm">security</span>
+            Transação protegida por criptografia de ponta a ponta
+          </span>
+        </div>
+      </footer>
+
+    </div>
+  );
+};

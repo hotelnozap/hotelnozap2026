@@ -77,6 +77,7 @@ import { ListagemStatusQuartos } from './components/ListagemStatusQuartos';
 import { LogsSistema } from './components/LogsSistema';
 import { NotificacoesPushAdmin } from './components/NotificacoesPushAdmin';
 import { LandingPageParceiros } from './components/LandingPageParceiros';
+import { CheckoutParceiro } from './components/CheckoutParceiro';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 
@@ -169,6 +170,7 @@ export const App: React.FC = () => {
       if (parts[0] === 'camareira') return 'camareira';
       if (parts[0] === 'lpnovohotel' || (parts[0] === 'lp' && parts[1] === 'lpnovohotel')) return 'lp-novo-hotel';
       if (parts[0] === 'lp' || parts[0] === 'landingpage') return 'landingpage';
+      if (parts[0] === 'checkout' || (parts[0] === 'parceiros' && parts[1] === 'checkout') || (parts[0] === 'parceiro' && parts[1] === 'checkout')) return 'checkout-parceiro';
       if (parts[0] === 'parceiros' && parts[1] !== 'assinar') return 'landingpage-parceiros';
       if (parts[0] === 'parceiro' || parts[0] === 'franquia') return 'landingpage-parceiros';
       if (parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar')) {
@@ -274,6 +276,8 @@ export const App: React.FC = () => {
         setActiveTab('lp-novo-hotel');
       } else if (parts[0] === 'lp' || parts[0] === 'landingpage') {
         setActiveTab('landingpage');
+      } else if (parts[0] === 'checkout' || (parts[0] === 'parceiros' && parts[1] === 'checkout') || (parts[0] === 'parceiro' && parts[1] === 'checkout')) {
+        setActiveTab('checkout-parceiro');
       } else if (parts[0] === 'parceiros' && parts[1] !== 'assinar') {
         setActiveTab('landingpage-parceiros');
       } else if (parts[0] === 'parceiro' || parts[0] === 'franquia') {
@@ -384,6 +388,9 @@ export const App: React.FC = () => {
         break;
       case 'landingpage-parceiros':
         document.title = 'Hotel no Zap - Franquia e Licenciamento';
+        break;
+      case 'checkout-parceiro':
+        document.title = 'Checkout Oficial - Franquia Hotel no Zap';
         break;
       case 'lp-novo-hotel':
         document.title = 'Cadastre seu Hotel';
@@ -689,7 +696,7 @@ export const App: React.FC = () => {
               if (isAppDomain() && (prev === 'catalogo-hoteis' || !prev)) {
                 return 'login';
               }
-              return (prev === 'login' || prev === 'landingpage' || prev === 'landingpage-parceiros' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login';
+              return (prev === 'login' || prev === 'landingpage' || prev === 'landingpage-parceiros' || prev === 'checkout-parceiro' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login';
             });
           }
         }
@@ -1061,10 +1068,47 @@ export const App: React.FC = () => {
     );
   }
 
+  // ── Rota: Checkout de Franquia/Parceiro — R$ 197/ano ──
+  const isParceirosCheckoutRoute = activeTab === 'checkout-parceiro' ||
+    pathParts[0] === 'checkout' ||
+    (pathParts[0] === 'parceiros' && pathParts[1] === 'checkout') ||
+    (pathParts[0] === 'parceiro' && pathParts[1] === 'checkout');
+
+  if (isParceirosCheckoutRoute) {
+    return (
+      <CheckoutParceiro
+        onNavigateBack={() => {
+          if (isParceirosDomain()) {
+            window.history.pushState({}, '', '/');
+          } else {
+            window.history.pushState({}, '', '/parceiros');
+          }
+          setActiveTab('landingpage-parceiros');
+        }}
+        onNavigateToLogin={() => {
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
+        }}
+        onNavigateToDashboard={() => {
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('dashboard');
+          }
+        }}
+      />
+    );
+  }
+
   // ── Rota: /parceiros ou subdomínio parceiros.hotelnozap.com.br — Landing Page de Franqueados/Parceiros ──
   const isParceirosLandingRoute = activeTab === 'landingpage-parceiros' ||
-    (isParceirosDomain() && pathParts[0] !== 'assinar') ||
-    (pathParts[0] === 'parceiros' && pathParts[1] !== 'assinar') ||
+    (isParceirosDomain() && pathParts[0] !== 'assinar' && pathParts[0] !== 'checkout') ||
+    (pathParts[0] === 'parceiros' && pathParts[1] !== 'assinar' && pathParts[1] !== 'checkout') ||
     pathParts[0] === 'parceiro' ||
     pathParts[0] === 'franquia';
 
@@ -1086,6 +1130,14 @@ export const App: React.FC = () => {
             window.history.pushState({}, '', '/');
             setActiveTab('catalogo-hoteis');
           }
+        }}
+        onNavigateToCheckout={() => {
+          if (isParceirosDomain()) {
+            window.history.pushState({}, '', '/checkout');
+          } else {
+            window.history.pushState({}, '', '/parceiros/checkout');
+          }
+          setActiveTab('checkout-parceiro');
         }}
       />
     );

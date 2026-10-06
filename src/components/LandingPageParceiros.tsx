@@ -4,11 +4,13 @@ import { ZapHotelLogo } from './ZapHotelLogo';
 interface LandingPageParceirosProps {
   onNavigateToLogin?: () => void;
   onNavigateToHome?: () => void;
+  onNavigateToCheckout?: () => void;
 }
 
 export const LandingPageParceiros: React.FC<LandingPageParceirosProps> = ({
   onNavigateToLogin,
-  onNavigateToHome
+  onNavigateToHome,
+  onNavigateToCheckout
 }) => {
   // Simulador de Carteira Regional
   const [hotels, setHotels] = useState<number>(50);
@@ -25,7 +27,9 @@ export const LandingPageParceiros: React.FC<LandingPageParceirosProps> = ({
 
   const handlePartnerBtnClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Botão sem link por enquanto (conforme solicitado pelo usuário)
+    if (onNavigateToCheckout) {
+      onNavigateToCheckout();
+    }
   };
 
   const faqs = [
