@@ -159,8 +159,8 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
     pollingRef.current = setInterval(async () => {
       try {
-        const statusRes = await mercadopagoService.consultarStatusPagamentoMaster(pixResult.paymentId);
-        if (statusRes.status === 'approved') {
+        const statusRes = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
+        if (statusRes.approved || statusRes.status === 'approved') {
           if (pollingRef.current) clearInterval(pollingRef.current);
           await liberarAcessoParceiro();
         }
