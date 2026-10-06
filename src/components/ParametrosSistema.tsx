@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { mercadopagoService, getApiBaseUrl } from '../services/mercadopagoService';
+import { trackingService, extractGoogleVerificationCode } from '../services/trackingService';
 import { supabase } from '../lib/supabase';
 
 export interface ParametrosSistemaProps {
   onBackToDashboard: () => void;
+  initialTab?: 'integracoes' | 'templates' | 'regras' | 'retencao' | 'diagnostico' | 'marketing';
+  userRole?: string;
 }
 
 interface LogAuditoria {
@@ -58,9 +61,29 @@ const SEED_LOGS: LogAuditoria[] = [
   }
 ];
 
-export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDashboard }) => {
+export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ 
+  onBackToDashboard,
+  initialTab = 'integracoes',
+  userRole
+}) => {
   // Aba ativa
-  const [activeTab, setActiveTab] = useState<'integracoes' | 'templates' | 'regras' | 'retencao' | 'diagnostico'>('integracoes');
+  const [activeTab, setActiveTab] = useState<'integracoes' | 'templates' | 'regras' | 'retencao' | 'diagnostico' | 'marketing'>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  // Verificação estrita de Administrador
+  const userRoleClean = (userRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
+  const userEmail = (localStorage.getItem('hotelnozap_user_email') || '').toLowerCase();
+  const isAdmin = Boolean(
+    userRoleClean.includes('admin') ||
+    userRoleClean.includes('super') ||
+    userRoleClean.includes('administrador') ||
+    userEmail === 'everaldozs@gmail.com'
+  );
 
   // Feedback Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -132,6 +155,16 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
     googlePlaces: { status: 'online', latencia: '84ms', mensagem: 'Google Maps Places API operacional' }
   });
 
+  // 6. Marketing, Rastreamento & Segurança Web (Exclusivo Administrador)
+  const [metaPixelId, setMetaPixelId] = useState('');
+  const [googleMetaTag, setGoogleMetaTag] = useState('');
+  const [googleAnalyticsId, setGoogleAnalyticsId] = useState('');
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState('');
+  const [recaptchaSecretKey, setRecaptchaSecretKey] = useState('');
+  const [showRecaptchaSecret, setShowRecaptchaSecret] = useState(false);
+  const [isTestingTracking, setIsTestingTracking] = useState(false);
+  const [trackingFeedback, setTrackingFeedback] = useState<string | null>(null);
+
   // Carregar parâmetros salvos do localStorage e do Supabase
   useEffect(() => {
     try {
@@ -162,7 +195,21 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
         if (p.retencaoMensagens) setRetencaoMensagens(p.retencaoMensagens);
         if (p.retencaoLogs) setRetencaoLogs(p.retencaoLogs);
         if (p.backupDiario !== undefined) setBackupDiario(p.backupDiario);
+        if (p.metaPixelId) setMetaPixelId(p.metaPixelId);
+        if (p.pixelId && !p.metaPixelId) setMetaPixelId(p.pixelId);
+        if (p.googleMetaTag) setGoogleMetaTag(p.googleMetaTag);
+        if (p.googleAnalyticsId) setGoogleAnalyticsId(p.googleAnalyticsId);
+        if (p.recaptchaSiteKey) setRecaptchaSiteKey(p.recaptchaSiteKey);
+        if (p.recaptchaSecretKey) setRecaptchaSecretKey(p.recaptchaSecretKey);
       }
+
+      // Sincroniza com trackingService
+      const trackingConf = trackingService.getConfig();
+      if (trackingConf.metaPixelId) setMetaPixelId(trackingConf.metaPixelId);
+      if (trackingConf.googleMetaTag) setGoogleMetaTag(trackingConf.googleMetaTag);
+      if (trackingConf.googleAnalyticsId) setGoogleAnalyticsId(trackingConf.googleAnalyticsId);
+      if (trackingConf.recaptchaSiteKey) setRecaptchaSiteKey(trackingConf.recaptchaSiteKey);
+      if (trackingConf.recaptchaSecretKey) setRecaptchaSecretKey(trackingConf.recaptchaSecretKey);
 
       const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
       if (savedLogs) {
@@ -183,6 +230,11 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
           }
           if (data.environment) setGatewayEnvironment(data.environment);
           if (data.provider) setGatewayProvider(data.provider);
+          if (data.metaPixelId) setMetaPixelId(data.metaPixelId);
+          if (data.googleMetaTag) setGoogleMetaTag(data.googleMetaTag);
+          if (data.googleAnalyticsId) setGoogleAnalyticsId(data.googleAnalyticsId);
+          if (data.recaptchaSiteKey) setRecaptchaSiteKey(data.recaptchaSiteKey);
+          if (data.recaptchaSecretKey) setRecaptchaSecretKey(data.recaptchaSecretKey);
         }
       })
       .catch(e => console.warn('Aviso ao carregar dados do get-pix-master:', e));
@@ -217,7 +269,42 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
     }
   };
 
+  const handleTestTracking = () => {
+    setIsTestingTracking(true);
+    setTrackingFeedback(null);
+    setTimeout(() => {
+      setIsTestingTracking(false);
+      const pixelActive = Boolean(typeof window !== 'undefined' && window.fbq && metaPixelId);
+      const gaActive = Boolean(typeof window !== 'undefined' && window.gtag && googleAnalyticsId);
+      const metaTagElem = typeof document !== 'undefined' ? document.querySelector('meta[name="google-site-verification"]') : null;
+      const recaptchaElem = typeof document !== 'undefined' ? document.getElementById('hotelnozap-recaptcha-script') : null;
+
+      const items: string[] = [];
+      if (metaPixelId) {
+        items.push(pixelActive ? 'Meta Pixel: Ativo (fbq pronto)' : 'Meta Pixel: Injetado no DOM');
+      }
+      if (googleAnalyticsId) {
+        items.push(gaActive ? 'Google Analytics: Ativo (gtag configurado)' : 'Google Analytics: Tag inserida');
+      }
+      if (googleMetaTag) {
+        items.push(metaTagElem ? 'Google Metatag: Presente no <head>' : 'Google Metatag: Tag sincronizada');
+      }
+      if (recaptchaSiteKey) {
+        items.push(recaptchaElem ? 'reCAPTCHA: Script carregado' : 'reCAPTCHA: Chave do Site pronta');
+      }
+
+      if (items.length === 0) {
+        setTrackingFeedback('ℹ️ Nenhuma credencial de rastreamento configurada até o momento.');
+      } else {
+        setTrackingFeedback(`Status: ${items.join(' | ')}`);
+        showToast('Diagnóstico das tags de marketing e rastreamento concluído com sucesso!');
+      }
+    }, 600);
+  };
+
   const handleSalvarParametros = async () => {
+    const cleanGoogleMetaTag = extractGoogleVerificationCode(googleMetaTag);
+
     const payload = {
       openaiKey,
       openaiModel,
@@ -240,11 +327,26 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
       retencaoMensagens,
       retencaoLogs,
       backupDiario,
+      metaPixelId: metaPixelId.trim(),
+      pixelId: metaPixelId.trim(),
+      googleMetaTag: cleanGoogleMetaTag,
+      googleAnalyticsId: googleAnalyticsId.trim(),
+      recaptchaSiteKey: recaptchaSiteKey.trim(),
+      recaptchaSecretKey: recaptchaSecretKey.trim(),
       atualizadoEm: new Date().toISOString()
     };
 
     localStorage.setItem(STORAGE_KEY_PARAMETROS, JSON.stringify(payload));
     window.dispatchEvent(new CustomEvent('hotelnozap_parametros_atualizados', { detail: payload }));
+
+    // Atualiza trackingService para injetar imediatamente
+    trackingService.saveConfig({
+      metaPixelId: metaPixelId.trim(),
+      googleMetaTag: cleanGoogleMetaTag,
+      googleAnalyticsId: googleAnalyticsId.trim(),
+      recaptchaSiteKey: recaptchaSiteKey.trim(),
+      recaptchaSecretKey: recaptchaSecretKey.trim()
+    });
 
     // Sincroniza diretamente com Supabase (Master) via Serverless Function
     try {
@@ -255,7 +357,12 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
           chavePix: gatewayPixKey.trim(),
           gatewayToken: gatewayToken.trim(),
           gatewayEnvironment,
-          gatewayProvider
+          gatewayProvider,
+          metaPixelId: metaPixelId.trim(),
+          googleMetaTag: cleanGoogleMetaTag,
+          googleAnalyticsId: googleAnalyticsId.trim(),
+          recaptchaSiteKey: recaptchaSiteKey.trim(),
+          recaptchaSecretKey: recaptchaSecretKey.trim()
         })
       });
     } catch (e) {
@@ -281,6 +388,11 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
         gateway_token: gatewayToken.trim(),
         gateway_environment: gatewayEnvironment,
         gateway_provider: gatewayProvider,
+        meta_pixel_id: metaPixelId.trim(),
+        google_meta_tag: cleanGoogleMetaTag,
+        google_analytics_id: googleAnalyticsId.trim(),
+        recaptcha_site_key: recaptchaSiteKey.trim(),
+        recaptcha_secret_key: recaptchaSecretKey.trim(),
         atualizado_em: new Date().toISOString()
       }).eq('id', '00000000-0000-0000-0000-000000000001');
     } catch { /* ignore */ }
@@ -290,7 +402,7 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
       id: `log-${Date.now()}`,
       data: new Date().toLocaleString('pt-BR'),
       usuario: localStorage.getItem('hotelnozap_user_email') || 'master@hotelnozap.com.br',
-      acao: 'Salvar alterações nos Parâmetros Globais do Sistema',
+      acao: 'Salvar alterações nos Parâmetros Globais do Sistema (incluindo Tags Web)',
       modulo: 'Parâmetros do Sistema',
       ip: '177.136.241.12',
       status: 'sucesso'
@@ -508,6 +620,24 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
           <span className="material-symbols-outlined text-base">speed</span>
           <span>Diagnóstico & Conectividade</span>
         </button>
+
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('marketing')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+              activeTab === 'marketing'
+                ? 'border-emerald-700 text-emerald-800 bg-emerald-50/50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">campaign</span>
+            <span>Pixel, Meta Tags & Analytics</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
+              Admin
+            </span>
+          </button>
+        )}
       </div>
 
       {/* CONTEÚDO DAS ABAS */}
@@ -1351,6 +1481,354 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({ onBackToDa
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* ABA 6: MARKETING, RASTREAMENTO & SEGURANÇA WEB (ADMIN)   */}
+      {/* ======================================================== */}
+      {activeTab === 'marketing' && !isAdmin && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center max-w-2xl mx-auto my-12">
+          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+            <span className="material-symbols-outlined text-3xl">lock</span>
+          </div>
+          <h3 className="text-xl font-extrabold text-amber-900">Acesso Restrito a Administradores</h3>
+          <p className="text-sm text-amber-700 mt-2 leading-relaxed">
+            O gerenciamento de credenciais de marketing e rastreamento (Meta Pixel, Google Metatags, Google Analytics e reCAPTCHA) é exclusivo para usuários com perfil de Administrador do sistema.
+          </p>
+          <button
+            type="button"
+            onClick={() => setActiveTab('integracoes')}
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">arrow_back</span>
+            <span>Voltar para Integrações</span>
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'marketing' && isAdmin && (
+        <div className="space-y-6">
+          {/* Banner de Apresentação */}
+          <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 rounded-2xl p-6 text-white border border-emerald-900/60 shadow-lg relative overflow-hidden">
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">verified_user</span>
+                    EXCLUSIVO ADMINISTRADOR
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    INJEÇÃO DINÂMICA ATIVA
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-emerald-400 text-2xl sm:text-3xl">campaign</span>
+                  Marketing, Rastreamento & Segurança Web
+                </h2>
+                <p className="text-xs sm:text-sm text-white/80 mt-1 max-w-3xl leading-relaxed">
+                  Gerencie centralizadamente o Pixel da Meta (Facebook/Instagram), tag de verificação do Google, métricas de audiência do Google Analytics 4 (GA4) e proteção anti-bot Google reCAPTCHA. As tags são aplicadas e injetadas automaticamente em todas as Landing Pages e páginas de checkout.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleTestTracking}
+                  disabled={isTestingTracking}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold border border-white/20 transition cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">{isTestingTracking ? 'sync' : 'network_check'}</span>
+                  <span>{isTestingTracking ? 'Inspecionando...' : 'Inspecionar Tags Ativas'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSalvarParametros}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md transition cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">save</span>
+                  <span>Salvar Credenciais</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Feedback do Diagnóstico */}
+            {trackingFeedback && (
+              <div className="mt-4 pt-4 border-t border-white/10 text-xs text-emerald-200 flex items-center gap-2 bg-black/20 px-3.5 py-2.5 rounded-xl font-mono">
+                <span className="material-symbols-outlined text-sm text-emerald-400">info</span>
+                <span>{trackingFeedback}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Grid com os 4 cards de ferramentas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* CARD 1: META PIXEL (FACEBOOK / INSTAGRAM) */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
+                      <span className="material-symbols-outlined text-2xl">ads_click</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Meta Pixel (Facebook Ads)</h3>
+                      <p className="text-xs text-slate-500">Rastreamento de campanhas e conversões no Facebook e Instagram</p>
+                    </div>
+                  </div>
+                  {metaPixelId ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>Ativo</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                      Não configurado
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Meta Pixel ID (Identificador Numérico)
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-slate-400 material-symbols-outlined text-lg pointer-events-none">
+                        tag
+                      </span>
+                      <input
+                        type="text"
+                        value={metaPixelId}
+                        onChange={(e) => setMetaPixelId(e.target.value.replace(/\D/g, ''))}
+                        placeholder="Ex: 123456789012345"
+                        className="w-full py-2.5 pl-10 pr-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    💡 O código de rastreamento é injetado no cabeçalho do sistema e dispara eventos automáticos de <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] text-slate-800">PageView</code> nas Landing Pages e páginas de checkout.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Gerenciador de Eventos da Meta</span>
+                <span className="font-mono text-slate-600">{metaPixelId ? `ID: ${metaPixelId}` : 'Aguardando ID'}</span>
+              </div>
+            </div>
+
+            {/* CARD 2: GOOGLE SITE VERIFICATION (METATAG) */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100">
+                      <span className="material-symbols-outlined text-2xl">domain_verification</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Metatag do Google</h3>
+                      <p className="text-xs text-slate-500">Google Search Console • Verificação de Propriedade do Domínio</p>
+                    </div>
+                  </div>
+                  {googleMetaTag ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>Configurado</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                      Não configurado
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Código ou Tag HTML de Verificação
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-slate-400 material-symbols-outlined text-lg pointer-events-none">
+                        code
+                      </span>
+                      <input
+                        type="text"
+                        value={googleMetaTag}
+                        onChange={(e) => setGoogleMetaTag(e.target.value)}
+                        placeholder='Ex: &lt;meta name="google-site-verification" content="..." /&gt; ou código'
+                        className="w-full py-2.5 pl-10 pr-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-red-600/20 focus:border-red-600"
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    💡 Você pode colar a tag completa fornecida pelo Search Console ou apenas o valor do código. O sistema extrai e limpa automaticamente para injetar no cabeçalho <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] text-slate-800">&lt;head&gt;</code>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Google Search Console</span>
+                <span className="font-mono text-slate-600 truncate max-w-[200px]">
+                  {googleMetaTag ? extractGoogleVerificationCode(googleMetaTag) : 'Aguardando tag'}
+                </span>
+              </div>
+            </div>
+
+            {/* CARD 3: GOOGLE ANALYTICS 4 (GA4) */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-100">
+                      <span className="material-symbols-outlined text-2xl">monitoring</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Google Analytics 4 (GA4)</h3>
+                      <p className="text-xs text-slate-500">Métricas de tráfego, audiência em tempo real e comportamento</p>
+                    </div>
+                  </div>
+                  {googleAnalyticsId ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>Ativo</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                      Não configurado
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      ID de Medição do Google Analytics (Measurement ID)
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-slate-400 material-symbols-outlined text-lg pointer-events-none">
+                        analytics
+                      </span>
+                      <input
+                        type="text"
+                        value={googleAnalyticsId}
+                        onChange={(e) => setGoogleAnalyticsId(e.target.value.trim().toUpperCase())}
+                        placeholder="Ex: G-XXXXXXXXXX"
+                        className="w-full py-2.5 pl-10 pr-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600"
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    💡 O ID de medição inicia com <strong>G-</strong>. Ele inicializa a biblioteca oficial <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] text-slate-800">gtag.js</code> e monitora as visitas e sessões de usuários no site.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Google Tag Manager / GA4</span>
+                <span className="font-mono text-slate-600">{googleAnalyticsId || 'Aguardando G-XXXXXXXXXX'}</span>
+              </div>
+            </div>
+
+            {/* CARD 4: GOOGLE RECAPTCHA (V2 / V3) */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
+                      <span className="material-symbols-outlined text-2xl">shield</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Google reCAPTCHA</h3>
+                      <p className="text-xs text-slate-500">Proteção anti-fraude e bloqueio de robôs nos formulários e checkouts</p>
+                    </div>
+                  </div>
+                  {recaptchaSiteKey ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>Protegido</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 shrink-0">
+                      Não configurado
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Chave do Site (Site Key - Pública)
+                    </label>
+                    <input
+                      type="text"
+                      value={recaptchaSiteKey}
+                      onChange={(e) => setRecaptchaSiteKey(e.target.value.trim())}
+                      placeholder="Ex: 6Ld... (Chave pública do site)"
+                      className="w-full py-2.5 px-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Chave Secreta (Secret Key - Privada)
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showRecaptchaSecret ? 'text' : 'password'}
+                        value={recaptchaSecretKey}
+                        onChange={(e) => setRecaptchaSecretKey(e.target.value.trim())}
+                        placeholder="Ex: 6Ld... (Chave secreta para validação)"
+                        className="w-full py-2.5 pl-3.5 pr-10 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRecaptchaSecret(!showRecaptchaSecret)}
+                        className="absolute right-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title={showRecaptchaSecret ? 'Ocultar chave' : 'Exibir chave'}
+                      >
+                        <span className="material-symbols-outlined text-base">
+                          {showRecaptchaSecret ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Google reCAPTCHA v2 / v3</span>
+                <span className="font-mono text-slate-600">{recaptchaSiteKey ? 'Chave configurada' : 'Aguardando chaves'}</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Botão de Rodapé para Salvar */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100 shrink-0">
+                <span className="material-symbols-outlined text-2xl">verified</span>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Persistência Automática e Segura</h4>
+                <p className="text-xs text-slate-500">Ao salvar, as credenciais são atualizadas no banco de dados e injetadas em tempo real.</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSalvarParametros}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#003400] hover:bg-[#002600] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-base text-emerald-300">save</span>
+              <span>Salvar Todas as Configurações</span>
+            </button>
           </div>
         </div>
       )}

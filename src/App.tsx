@@ -67,6 +67,7 @@ import { LandingPage } from './components/LandingPage';
 import { PaginaEmConstrucao } from './components/PaginaEmConstrucao';
 import ReceitaRepasses from './components/ReceitaRepasses';
 import { ParametrosSistema } from './components/ParametrosSistema';
+import { trackingService } from './services/trackingService';
 import LpNovoHotel from './components/LpNovoHotel';
 import LpAssinar from './components/LpAssinar';
 import PainelCamareira from './components/PainelCamareira';
@@ -425,6 +426,15 @@ export const App: React.FC = () => {
   const [isProdutosSubmenuOpen, setIsProdutosSubmenuOpen] = useState(false);
   const [isConfigSubmenuOpen, setIsConfigSubmenuOpen] = useState(false);
   const [isAdminConfigSubmenuOpen, setIsAdminConfigSubmenuOpen] = useState(false);
+  const [adminParametrosTab, setAdminParametrosTab] = useState<'integracoes' | 'templates' | 'regras' | 'retencao' | 'diagnostico' | 'marketing'>('integracoes');
+
+  // Inicialização de tags de rastreamento (Meta Pixel, Google Metatags, GA4, reCAPTCHA)
+  useEffect(() => {
+    const cleanupTracking = trackingService.initTracking();
+    return () => {
+      cleanupTracking();
+    };
+  }, []);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [partnerToEdit, setPartnerToEdit] = useState<Partner | null>(null);
   const [preselectedPartner, setPreselectedPartner] = useState<Partner | null>(null);
@@ -2026,9 +2036,9 @@ export const App: React.FC = () => {
                       <div className="ml-4 pl-3 border-l border-white/10 flex flex-col gap-1 py-1">
                         <button
                           type="button"
-                          onClick={() => { setActiveTab('admin-config'); setIsMobileMenuOpen(false); }}
+                          onClick={() => { setAdminParametrosTab('integracoes'); setActiveTab('admin-config'); setIsMobileMenuOpen(false); }}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
-                            activeTab === 'admin-config'
+                            activeTab === 'admin-config' && adminParametrosTab !== 'marketing'
                               ? 'bg-emerald-500/20 text-emerald-300 font-bold'
                               : 'text-white/80 hover:bg-white/10 hover:text-white'
                           }`}
@@ -2048,6 +2058,19 @@ export const App: React.FC = () => {
                         >
                           <span className="material-symbols-outlined text-base">payments</span>
                           <span>Mercado Pago</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { setAdminParametrosTab('marketing'); setActiveTab('admin-config'); setIsMobileMenuOpen(false); }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                            activeTab === 'admin-config' && adminParametrosTab === 'marketing'
+                              ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-base">campaign</span>
+                          <span>Pixel, Meta Tags & Analytics</span>
                         </button>
                       </div>
                     )}
@@ -2481,9 +2504,9 @@ export const App: React.FC = () => {
                   <div className="ml-4 pl-3 border-l border-white/10 flex flex-col gap-1 py-1">
                     <button
                       type="button"
-                      onClick={() => setActiveTab('admin-config')}
+                      onClick={() => { setAdminParametrosTab('integracoes'); setActiveTab('admin-config'); }}
                       className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
-                        activeTab === 'admin-config'
+                        activeTab === 'admin-config' && adminParametrosTab !== 'marketing'
                           ? 'bg-emerald-500/20 text-emerald-300 font-bold'
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
@@ -2503,6 +2526,19 @@ export const App: React.FC = () => {
                     >
                       <span className="material-symbols-outlined text-base">payments</span>
                       <span>Mercado Pago</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setAdminParametrosTab('marketing'); setActiveTab('admin-config'); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                        activeTab === 'admin-config' && adminParametrosTab === 'marketing'
+                          ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-base">campaign</span>
+                      <span>Pixel, Meta Tags & Analytics</span>
                     </button>
                   </div>
                 )}
@@ -3376,6 +3412,8 @@ export const App: React.FC = () => {
           {activeTab === 'admin-config' && !isHotelUser && (
             <ParametrosSistema
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
+              initialTab={adminParametrosTab}
+              userRole={currentUserRole}
             />
           )}
           {activeTab === 'logs-sistema' && !isHotelUser && (

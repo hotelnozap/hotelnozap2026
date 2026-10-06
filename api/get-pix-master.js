@@ -40,7 +40,18 @@ export default async function handler(req, res) {
       }
     }
 
-    const { chavePix, gatewayToken, gatewayPublicKey, gatewayEnvironment, gatewayProvider } = body || {};
+    const { 
+      chavePix, 
+      gatewayToken, 
+      gatewayPublicKey, 
+      gatewayEnvironment, 
+      gatewayProvider,
+      metaPixelId,
+      googleMetaTag,
+      googleAnalyticsId,
+      recaptchaSiteKey,
+      recaptchaSecretKey
+    } = body || {};
 
     const patchPayload = {
       atualizado_em: new Date().toISOString()
@@ -50,10 +61,15 @@ export default async function handler(req, res) {
     if (gatewayPublicKey !== undefined) patchPayload.gateway_public_key = String(gatewayPublicKey).trim();
     if (gatewayEnvironment !== undefined) patchPayload.gateway_environment = String(gatewayEnvironment).trim();
     if (gatewayProvider !== undefined) patchPayload.gateway_provider = String(gatewayProvider).trim();
+    if (metaPixelId !== undefined) patchPayload.meta_pixel_id = String(metaPixelId).trim();
+    if (googleMetaTag !== undefined) patchPayload.google_meta_tag = String(googleMetaTag).trim();
+    if (googleAnalyticsId !== undefined) patchPayload.google_analytics_id = String(googleAnalyticsId).trim();
+    if (recaptchaSiteKey !== undefined) patchPayload.recaptcha_site_key = String(recaptchaSiteKey).trim();
+    if (recaptchaSecretKey !== undefined) patchPayload.recaptcha_secret_key = String(recaptchaSecretKey).trim();
 
     try {
       // Atualiza o registro mestre (id 00000000-0000-0000-0000-000000000001)
-      const patchRes = await fetch(`${supabaseUrl}/rest/v1/parametros_sistema?id=eq.00000000-0000-0000-0000-000000000001`, {
+      let patchRes = await fetch(`${supabaseUrl}/rest/v1/parametros_sistema?id=eq.00000000-0000-0000-0000-000000000001`, {
         method: 'PATCH',
         headers: {
           'apikey': serviceKey,
@@ -63,6 +79,29 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify(patchPayload)
       });
+
+      // Se falhar por colunas ainda não existentes, tenta fallback salvando colunas base
+      if (!patchRes.ok) {
+        const fallbackPayload = {
+          atualizado_em: new Date().toISOString()
+        };
+        if (chavePix !== undefined) fallbackPayload.chave_pix_master = String(chavePix).trim();
+        if (gatewayToken !== undefined) fallbackPayload.gateway_token = String(gatewayToken).trim();
+        if (gatewayPublicKey !== undefined) fallbackPayload.gateway_public_key = String(gatewayPublicKey).trim();
+        if (gatewayEnvironment !== undefined) fallbackPayload.gateway_environment = String(gatewayEnvironment).trim();
+        if (gatewayProvider !== undefined) fallbackPayload.gateway_provider = String(gatewayProvider).trim();
+
+        patchRes = await fetch(`${supabaseUrl}/rest/v1/parametros_sistema?id=eq.00000000-0000-0000-0000-000000000001`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': serviceKey,
+            'Authorization': `Bearer ${serviceKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(fallbackPayload)
+        });
+      }
 
       if (patchRes.ok) {
         const updated = await patchRes.json();
@@ -82,7 +121,7 @@ export default async function handler(req, res) {
 
   // 2. CONSULTAR CHAVE PIX MASTER E CREDENCIAIS (GET)
   try {
-    const response = await fetch(`${supabaseUrl}/rest/v1/parametros_sistema?select=chave_pix_master,gateway_provider,gateway_token,gateway_public_key,gateway_environment&limit=1`, {
+    const response = await fetch(`${supabaseUrl}/rest/v1/parametros_sistema?select=*&limit=1`, {
       headers: {
         'apikey': serviceKey,
         'Authorization': `Bearer ${serviceKey}`
@@ -101,6 +140,11 @@ export default async function handler(req, res) {
           publicKey: item.gateway_public_key || '',
           environment: item.gateway_environment || 'production',
           provider: item.gateway_provider || 'mercadopago',
+          metaPixelId: item.meta_pixel_id || '',
+          googleMetaTag: item.google_meta_tag || '',
+          googleAnalyticsId: item.google_analytics_id || '',
+          recaptchaSiteKey: item.recaptcha_site_key || '',
+          recaptchaSecretKey: item.recaptcha_secret_key || '',
           source: 'database'
         });
       }
