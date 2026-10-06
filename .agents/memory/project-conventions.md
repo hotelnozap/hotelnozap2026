@@ -7,9 +7,8 @@ updated: 2026-09-23
 # Project Conventions
 
 ## Git Workflow & Deploy
-- Always create a new dedicated branch for major code changes.
-- Branch name format should follow: `feature/[task-slug]` or `fix/[bug-slug]`.
-- **REGRA MANDATÓRIA DE DEPLOY:** NUNCA fazer `git push` ou deploy (para o GitHub / Vercel) automaticamente. Só é para fazer deploy quando o usuário solicitar expressamente.
+- Commitar e subir sempre diretamente na branch `master` (Produção), para que a Vercel gere deploy oficial em **Production** e atualize imediatamente os domínios oficiais (`hotelnozap.com.br` e `app.hotelnozap.com.br`).
+- Não usar branches de feature/preview para deploys, a menos que o usuário solicite explicitamente uma branch separada.
 
 ## Supported AI platforms (AG Kit)
 - AG Kit **only supports Gemini CLI and Google Antigravity**.
