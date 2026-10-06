@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ZapHotelLogo } from './ZapHotelLogo';
-import { maskCpf, maskPhone, isValidCpf, maskCep } from '../utils/masks';
+import { maskCpf, maskCnpj, maskCpfCnpj, maskPhone, isValidCpf, isValidCnpj, maskCep } from '../utils/masks';
 import { fetchAddressByCep } from '../utils/viacep';
 import { mercadopagoService, PixMasterResult } from '../services/mercadopagoService';
 import { parceirosService, usuariosService } from '../services/supabaseService';
@@ -25,6 +25,14 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+
+  // Verificação de Unicidade de Documento (CPF / CNPJ)
+  const [verificandoDoc, setVerificandoDoc] = useState(false);
+  const [docCheckStatus, setDocCheckStatus] = useState<{ checked: boolean; exists: boolean; message: string }>({
+    checked: false,
+    exists: false,
+    message: ''
+  });
 
   // Dados de Endereço do Parceiro (Integração ViaCEP)
   const [cep, setCep] = useState('');
@@ -188,6 +196,87 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     setTimeout(() => setQuickFillNotice(null), 6000);
   };
 
+  // Validador de duplicidade de documento (CPF ou CNPJ) no banco de dados Supabase
+  const verificarDocumentoExistente = async (docStr: string) => {
+    const clean = docStr.replace(/\D/g, '');
+    if (!clean) {
+      return { exists: false, valid: false, message: '' };
+    }
+
+    if (clean.length === 11) {
+      if (!isValidCpf(clean)) {
+        return { exists: false, valid: false, message: 'CPF inválido.' };
+      }
+    } else if (clean.length === 14) {
+      if (!isValidCnpj(clean)) {
+        return { exists: false, valid: false, message: 'CNPJ inválido.' };
+      }
+    } else {
+      return { exists: false, valid: false, message: 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).' };
+    }
+
+    const masked = clean.length === 11 ? maskCpf(clean) : maskCnpj(clean);
+
+    try {
+      // 1. Verifica duplicidade na tabela parceiros
+      const { data: pData } = await supabase
+        .from('parceiros')
+        .select('id, nome, documento')
+        .or(`documento.eq.${clean},documento.eq.${masked}`)
+        .limit(1);
+
+      if (pData && pData.length > 0) {
+        return {
+          exists: true,
+          valid: true,
+          message: `Este ${clean.length === 11 ? 'CPF' : 'CNPJ'} já está cadastrado no sistema (Parceiro: ${pData[0].nome || 'Cadastrado'}). Não é permitido criar dois cadastros com o mesmo documento.`
+        };
+      }
+
+      // 2. Verifica duplicidade na tabela usuarios
+      const { data: uData } = await supabase
+        .from('usuarios')
+        .select('id, nome, cpf')
+        .or(`cpf.eq.${clean},cpf.eq.${masked}`)
+        .limit(1);
+
+      if (uData && uData.length > 0) {
+        return {
+          exists: true,
+          valid: true,
+          message: `Este ${clean.length === 11 ? 'CPF' : 'CNPJ'} já possui cadastro de usuário no sistema (${uData[0].nome || 'Cadastrado'}). Não é permitido duplicar o documento.`
+        };
+      }
+
+      return {
+        exists: false,
+        valid: true,
+        message: `${clean.length === 11 ? 'CPF' : 'CNPJ'} disponível para cadastro.`
+      };
+    } catch (err) {
+      console.warn('Erro ao verificar duplicidade de documento no banco:', err);
+      return { exists: false, valid: true, message: '' };
+    }
+  };
+
+  const checkDocUniquenessAsync = async (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    if (clean.length !== 11 && clean.length !== 14) {
+      setDocCheckStatus({ checked: false, exists: false, message: '' });
+      return;
+    }
+
+    setVerificandoDoc(true);
+    const res = await verificarDocumentoExistente(val);
+    setVerificandoDoc(false);
+    setDocCheckStatus({ checked: true, exists: res.exists, message: res.message });
+    if (res.exists) {
+      setErrorMsg(res.message);
+    } else if (errorMsg && (errorMsg.includes('CPF') || errorMsg.includes('CNPJ') || errorMsg.includes('documento'))) {
+      setErrorMsg(null);
+    }
+  };
+
   const handleNomeChange = (val: string) => {
     if (val.trim().toLowerCase() === 'parceiro01') {
       applyTestMockPartnerData();
@@ -201,7 +290,13 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       applyTestMockPartnerData();
       return;
     }
-    setCpf(maskCpf(val));
+    const masked = maskCpfCnpj(val);
+    setCpf(masked);
+    setDocCheckStatus({ checked: false, exists: false, message: '' });
+    const clean = masked.replace(/\D/g, '');
+    if (clean.length === 11 || clean.length === 14) {
+      checkDocUniquenessAsync(masked);
+    }
   };
 
   const handleWhatsappChange = (val: string) => {
@@ -229,7 +324,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   };
 
   // Etapa 1: Avançar dos Dados Pessoais & Endereço para a Etapa de Login
-  const handleAvancarParaLogin = (e: React.FormEvent) => {
+  const handleAvancarParaLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -238,11 +333,31 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       setErrorMsg('Por favor, informe seu nome e sobrenome completos.');
       return;
     }
-    const cleanCpf = cpf.replace(/\D/g, '');
-    if (cleanCpf.length !== 11 || !isValidCpf(cpf)) {
+    const cleanDoc = cpf.replace(/\D/g, '');
+    if (cleanDoc.length !== 11 && cleanDoc.length !== 14) {
+      setErrorMsg('Por favor, informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.');
+      return;
+    }
+    if (cleanDoc.length === 11 && !isValidCpf(cpf)) {
       setErrorMsg('Por favor, informe um CPF válido.');
       return;
     }
+    if (cleanDoc.length === 14 && !isValidCnpj(cpf)) {
+      setErrorMsg('Por favor, informe um CNPJ válido.');
+      return;
+    }
+
+    // Regra de Integridade: Impedir duplicidade de CPF ou CNPJ no cadastro
+    setVerificandoDoc(true);
+    const docCheck = await verificarDocumentoExistente(cpf);
+    setVerificandoDoc(false);
+    setDocCheckStatus({ checked: true, exists: docCheck.exists, message: docCheck.message });
+
+    if (docCheck.exists) {
+      setErrorMsg(docCheck.message);
+      return;
+    }
+
     const cleanPhone = whatsapp.replace(/\D/g, '');
     if (cleanPhone.length < 10) {
       setErrorMsg('Por favor, informe seu WhatsApp com DDD completo.');
@@ -299,14 +414,40 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       return;
     }
 
+    // Verificação estrita de duplicidade de CPF ou CNPJ antes de avançar para pagamento
+    setVerificandoDoc(true);
+    const docCheck = await verificarDocumentoExistente(cpf);
+    setVerificandoDoc(false);
+
+    if (docCheck.exists) {
+      setErrorMsg(docCheck.message);
+      setDocCheckStatus({ checked: true, exists: true, message: docCheck.message });
+      setCurrentStep('dados');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Verificação de e-mail já existente
+    const cleanEmail = email.trim().toLowerCase();
+    const { data: existingParc } = await supabase
+      .from('parceiros')
+      .select('id, nome, email')
+      .ilike('email', cleanEmail)
+      .limit(1);
+
+    if (existingParc && existingParc.length > 0) {
+      setErrorMsg('Este e-mail já está cadastrado para outro parceiro. Faça login para acessar sua conta ou informe outro e-mail.');
+      return;
+    }
+
     setIsSubmitting(true);
     setGerandoPix(true);
     setCurrentStep('pagamento');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
-      const cleanCpf = cpf.replace(/\D/g, '');
-      const refId = `parceiro_${cleanCpf}_${Date.now()}`;
+      const cleanDoc = cpf.replace(/\D/g, '');
+      const refId = `parceiro_${cleanDoc}_${Date.now()}`;
       setPartnerCheckoutId(refId);
 
       // Cria a cobrança PIX oficial no Mercado Pago com valor padrão de teste de R$ 1,00 solicitado
@@ -317,7 +458,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         valor: 1.00, // R$ 1,00 para validação imediata em ambiente de teste
         pagadorEmail: email.trim().toLowerCase(),
         pagadorNome: nome.trim(),
-        pagadorDoc: cleanCpf
+        pagadorDoc: cleanDoc
       });
 
       setPixResult(res);
@@ -448,179 +589,189 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       let parceiroId: string | null = null;
 
       // =========================================================================
-      // CASCATA ETAPA 1: CRIAÇÃO NO SUPABASE AUTH
+      // CASCATA ETAPA 1: CRIAÇÃO VIA API SERVERLESS (SERVICE ROLE ADMIN)
+      // Cria no Supabase Auth + tabela `usuarios` (perfil: 'Parceiro') + `parceiros`
       // =========================================================================
+      let ativadoComSucesso = false;
       try {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: cleanEmail,
-          password: senha,
-          options: {
-            data: {
-              name: nome.trim(),
-              nome: nome.trim(),
-              perfil: 'Parceiro',
-              whatsapp: cleanPhone,
-              cpf: cleanCpf
-            }
-          }
+        const responseApi = await fetch('/api/ativar-parceiro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: nome.trim(),
+            email: cleanEmail,
+            whatsapp: cleanPhone,
+            cpf: cleanCpf,
+            cep: cleanCep,
+            logradouro: logradouro.trim(),
+            numero: numero.trim(),
+            complemento: complemento.trim(),
+            bairro: bairro.trim(),
+            cidade: cidade.trim(),
+            uf: uf.trim().toUpperCase(),
+            senha: senha,
+            cupom: code
+          })
         });
 
-        if (authData?.user?.id) {
-          authUserId = authData.user.id;
-        } else if (authError) {
-          console.warn('Supabase Auth SignUp aviso:', authError.message);
-          // Caso a conta já exista no Auth, tenta autenticar para recuperar o authUserId
-          const { data: authSignIn } = await supabase.auth.signInWithPassword({
-            email: cleanEmail,
-            password: senha
-          }).catch(() => ({ data: null }));
-          if (authSignIn?.user?.id) {
-            authUserId = authSignIn.user.id;
+        if (responseApi.ok) {
+          const apiJson = await responseApi.json();
+          if (apiJson.success) {
+            ativadoComSucesso = true;
+            authUserId = apiJson.authUserId || null;
+            usuarioId = apiJson.usuarioId || null;
+            parceiroId = apiJson.parceiroId || null;
+            if (apiJson.cupom) {
+              setPartnerCode(apiJson.cupom);
+              setPartnerLink(`https://hotelnozap.com.br/parceiros/assinar?ref=${apiJson.cupom}`);
+            }
           }
         }
-      } catch (authErr) {
-        console.warn('Exceção ao criar credenciais no Supabase Auth:', authErr);
+      } catch (apiErr) {
+        console.warn('API /api/ativar-parceiro offline ou indisponível, acionando fallback direto Supabase:', apiErr);
       }
 
       // =========================================================================
-      // CASCATA ETAPA 2: CRIAÇÃO NA TABELA `usuarios`
+      // CASCATA ETAPA 2: FALLBACK DIRETO VIA CLIENTE SUPABASE (CASO A API FALHE)
       // =========================================================================
-      const { data: existingUser } = await supabase
-        .from('usuarios')
-        .select('id, auth_user_id')
-        .eq('email', cleanEmail)
-        .maybeSingle();
+      if (!ativadoComSucesso) {
+        // 2.1 Supabase Auth
+        try {
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: cleanEmail,
+            password: senha,
+            options: {
+              data: {
+                name: nome.trim(),
+                nome: nome.trim(),
+                perfil: 'Parceiro',
+                whatsapp: cleanPhone,
+                cpf: cleanCpf
+              }
+            }
+          });
 
-      const userPayload: any = {
-        nome: nome.trim(),
-        email: cleanEmail,
-        telefone: cleanPhone,
-        perfil: 'Parceiro',
-        cargo: 'Parceiro Franqueado',
-        status: 'ativo',
-        auth_user_id: authUserId || existingUser?.auth_user_id || null,
-        cep: cleanCep,
-        street: logradouro.trim(),
-        neighborhood: bairro.trim(),
-        city: cidade.trim(),
-        uf: uf.trim().toUpperCase()
-      };
+          if (authData?.user?.id) {
+            authUserId = authData.user.id;
+          } else if (authError) {
+            console.warn('Supabase Auth SignUp aviso:', authError.message);
+            const { data: authSignIn } = await supabase.auth.signInWithPassword({
+              email: cleanEmail,
+              password: senha
+            }).catch(() => ({ data: null }));
+            if (authSignIn?.user?.id) {
+              authUserId = authSignIn.user.id;
+            }
+          }
+        } catch (authErr) {
+          console.warn('Exceção ao criar credenciais no Supabase Auth:', authErr);
+        }
 
-      if (!existingUser?.id) {
-        let insertUserRes = await supabase
+        // 2.2 Tabela `usuarios` (perfil 'Parceiro' e colunas correspondentes ao schema)
+        const { data: existingUser } = await supabase
           .from('usuarios')
-          .insert(userPayload)
-          .select('id')
-          .single();
+          .select('id, auth_user_id')
+          .eq('email', cleanEmail)
+          .maybeSingle();
 
-        if (insertUserRes.error) {
-          // Fallback caso colunas adicionais não estejam migradas
-          delete userPayload.cargo;
-          delete userPayload.cep;
-          delete userPayload.street;
-          delete userPayload.neighborhood;
-          delete userPayload.city;
-          delete userPayload.uf;
-          insertUserRes = await supabase
+        const userPayload: any = {
+          nome: nome.trim(),
+          email: cleanEmail,
+          telefone: cleanPhone || '11999999999',
+          cpf: cleanCpf,
+          perfil: 'Parceiro',
+          cargo: 'Parceiro Franqueado',
+          status: 'ativo',
+          auth_user_id: authUserId || existingUser?.auth_user_id || null,
+          cep: cleanCep,
+          logradouro: logradouro.trim(),
+          numero: numero.trim(),
+          bairro: bairro.trim(),
+          cidade: cidade.trim(),
+          uf: uf.trim().toUpperCase()
+        };
+
+        if (!existingUser?.id) {
+          const insertUserRes = await supabase
             .from('usuarios')
             .insert(userPayload)
             .select('id')
             .single();
+
+          if (insertUserRes.error) {
+            console.error('Erro ao inserir em usuarios via fallback:', insertUserRes.error);
+          } else {
+            usuarioId = insertUserRes.data?.id || null;
+          }
+        } else {
+          usuarioId = existingUser.id;
+          await supabase
+            .from('usuarios')
+            .update(userPayload)
+            .eq('id', usuarioId);
         }
 
-        usuarioId = insertUserRes.data?.id || null;
-      } else {
-        usuarioId = existingUser.id;
-        await supabase
-          .from('usuarios')
-          .update({
-            nome: nome.trim(),
-            telefone: cleanPhone,
-            perfil: 'Parceiro',
-            status: 'ativo',
-            auth_user_id: authUserId || existingUser.auth_user_id || null
-          })
-          .eq('id', usuarioId);
-      }
-
-      // =========================================================================
-      // CASCATA ETAPA 3: CRIAÇÃO NA TABELA `parceiros` COM RELACIONAMENTO
-      // =========================================================================
-      const { data: existingParc } = await supabase
-        .from('parceiros')
-        .select('id')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      parceiroId = existingParc?.id || null;
-
-      const partnerPayload: any = {
-        nome: nome.trim(),
-        email: cleanEmail,
-        whatsapp: cleanPhone,
-        documento: cleanCpf,
-        cidade_uf: `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`,
-        categoria: 'Franquia Regional',
-        cupom: code,
-        taxa_comissao: 50, // 50% de comissão recorrente vitalícia
-        nivel: 'Franquia Oficial',
-        status: 'ativo',
-        pix_tipo: 'CPF',
-        pix_chave: cleanCpf,
-        titular_pix: nome.trim(),
-        usuario_id: usuarioId,
-        auth_user_id: authUserId,
-        endereco: enderecoCompleto,
-        bairro: bairro.trim(),
-        cep: cleanCep,
-        numero: numero.trim()
-      };
-
-      if (!parceiroId) {
-        let insertParcRes = await supabase
+        // 2.3 Tabela `parceiros` com nome_contato, categoria, cidade_uf e chaves corretas
+        const { data: existingParc } = await supabase
           .from('parceiros')
-          .insert(partnerPayload)
           .select('id')
-          .single();
+          .eq('email', cleanEmail)
+          .maybeSingle();
 
-        if (insertParcRes.error) {
-          // Fallback caso colunas adicionais não existam na tabela parceiros
-          delete partnerPayload.endereco;
-          delete partnerPayload.bairro;
-          delete partnerPayload.cep;
-          delete partnerPayload.numero;
-          delete partnerPayload.usuario_id;
-          delete partnerPayload.auth_user_id;
-          partnerPayload.cidade_uf = `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`;
-          insertParcRes = await supabase
+        parceiroId = existingParc?.id || null;
+
+        const partnerPayload: any = {
+          nome: nome.trim(),
+          nome_contato: nome.trim(),
+          email: cleanEmail,
+          whatsapp: cleanPhone || '11999999999',
+          documento: cleanCpf,
+          categoria: 'Franquia Regional',
+          cidade_uf: `${cidade.trim() || 'São Paulo'} / ${uf.trim().toUpperCase() || 'SP'}`,
+          cidade: cidade.trim(),
+          uf: uf.trim().toUpperCase(),
+          cep: cleanCep,
+          logradouro: logradouro.trim(),
+          numero: numero.trim(),
+          bairro: bairro.trim(),
+          cupom: code,
+          taxa_comissao: 50,
+          status: 'ativo',
+          pix_tipo: cleanCpf.length === 14 ? 'CNPJ' : 'CPF',
+          pix_chave: cleanCpf,
+          titular_pix: nome.trim(),
+          usuario_id: usuarioId,
+          auth_user_id: authUserId
+        };
+
+        if (!parceiroId) {
+          const insertParcRes = await supabase
             .from('parceiros')
             .insert(partnerPayload)
             .select('id')
             .single();
-        }
 
-        if (insertParcRes.data) parceiroId = insertParcRes.data.id;
-      } else {
-        await supabase
-          .from('parceiros')
-          .update({
-            status: 'ativo',
-            taxa_comissao: 50,
-            cupom: code,
-            nivel: 'Franquia Oficial',
-            usuario_id: usuarioId,
-            auth_user_id: authUserId,
-            cidade_uf: `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`
-          })
-          .eq('id', parceiroId);
+          if (insertParcRes.error) {
+            console.error('Erro ao inserir em parceiros via fallback:', insertParcRes.error);
+          } else if (insertParcRes.data) {
+            parceiroId = insertParcRes.data.id;
+          }
+        } else {
+          await supabase
+            .from('parceiros')
+            .update(partnerPayload)
+            .eq('id', parceiroId);
+        }
       }
 
       // =========================================================================
-      // CASCATA ETAPA 4: GRAVAR SESSÃO LOCAL PARA ACESSO IMEDIATO
+      // CASCATA ETAPA 3: GRAVAR SESSÃO LOCAL PARA ACESSO IMEDIATO
       // =========================================================================
       localStorage.setItem('hotelnozap_user_role', 'Parceiro');
+      localStorage.setItem('hotelnozap_user_cargo', 'Parceiro Franqueado');
       localStorage.setItem('hotelnozap_user_email', cleanEmail);
       localStorage.setItem('hotelnozap_user_name', nome.trim());
+      if (usuarioId) localStorage.setItem('hotelnozap_user_id', usuarioId);
       localStorage.setItem('hotelnozap_last_authenticated_at', new Date().toISOString());
 
       setIsApproved(true);
@@ -888,19 +1039,46 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     />
                   </div>
 
-                  {/* CPF e WhatsApp */}
+                  {/* CPF ou CNPJ e WhatsApp */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">CPF (para repasse dos ganhos) *</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                        <span>CPF ou CNPJ (para repasse) *</span>
+                        {verificandoDoc && (
+                          <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1 animate-pulse">
+                            <span className="w-2.5 h-2.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                            Verificando...
+                          </span>
+                        )}
+                      </label>
                       <input
                         type="text"
                         inputMode="numeric"
                         required
-                        placeholder="000.000.000-00"
+                        placeholder="000.000.000-00 ou CNPJ"
                         value={cpf}
                         onChange={(e) => handleCpfChange(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                        onBlur={() => checkDocUniquenessAsync(cpf)}
+                        className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+                          docCheckStatus.checked && docCheckStatus.exists
+                            ? 'border-rose-400 bg-rose-50/40 text-rose-900 focus:ring-rose-500'
+                            : docCheckStatus.checked && !docCheckStatus.exists
+                            ? 'border-emerald-400 bg-emerald-50/20 text-slate-900 focus:ring-emerald-600'
+                            : 'border-slate-300 bg-white text-slate-900 focus:ring-[#003400]'
+                        }`}
                       />
+                      {docCheckStatus.checked && docCheckStatus.exists && (
+                        <p className="mt-1.5 text-xs text-rose-600 font-semibold flex items-start gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 mt-1" />
+                          <span>{docCheckStatus.message}</span>
+                        </p>
+                      )}
+                      {docCheckStatus.checked && !docCheckStatus.exists && (
+                        <p className="mt-1.5 text-xs text-emerald-700 font-medium flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span>{docCheckStatus.message}</span>
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">WhatsApp com DDD *</label>
