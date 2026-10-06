@@ -40,7 +40,10 @@ import {
   Download,
   FileText,
   Lock,
-  ArrowUpRight
+  ArrowUpRight,
+  Key,
+  Shield,
+  EyeOff
 } from 'lucide-react';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { supabase } from '../lib/supabase';
@@ -399,6 +402,78 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
       alert('Erro ao cadastrar indicação: ' + (err.message || 'Tente novamente'));
     } finally {
       setSalvandoLead(false);
+    }
+  };
+
+  // Submenu Configurações: 'dados' (Dados da Franquia & PIX) | 'acesso' (Alteração de Senha)
+  const [subTabConfig, setSubTabConfig] = useState<'dados' | 'acesso'>('dados');
+
+  // Estados do formulário de Alteração de Senha
+  const [senhaNova, setSenhaNova] = useState('');
+  const [senhaConfirmar, setSenhaConfirmar] = useState('');
+  const [mostrarSenhaNova, setMostrarSenhaNova] = useState(false);
+  const [mostrarSenhaConfirmar, setMostrarSenhaConfirmar] = useState(false);
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+  const [msgSenha, setMsgSenha] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
+
+  const handleAlterarSenha = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMsgSenha(null);
+
+    const novaLimpa = senhaNova.trim();
+    const confLimpa = senhaConfirmar.trim();
+
+    if (!novaLimpa) {
+      setMsgSenha({ tipo: 'erro', texto: 'Por favor, digite a nova senha.' });
+      return;
+    }
+
+    if (novaLimpa.length < 6) {
+      setMsgSenha({ tipo: 'erro', texto: 'A nova senha deve ter no mínimo 6 caracteres.' });
+      return;
+    }
+
+    if (novaLimpa !== confLimpa) {
+      setMsgSenha({ tipo: 'erro', texto: 'A confirmação de senha não coincide com a nova senha digitada.' });
+      return;
+    }
+
+    setSalvandoSenha(true);
+    try {
+      // 1. Atualiza no Supabase Auth caso o usuário esteja autenticado
+      try {
+        const { error: authErr } = await supabase.auth.updateUser({ password: novaLimpa });
+        if (authErr) {
+          console.warn('Aviso auth updateUser:', authErr.message);
+        }
+      } catch (authCatch) {
+        console.warn('Exceção auth updateUser:', authCatch);
+      }
+
+      // 2. Atualiza na tabela usuarios onde email ou id corresponda ao parceiro
+      const email = partnerProfile.email?.toLowerCase().trim();
+      const storedId = localStorage.getItem('hotelnozap_user_id') || '';
+
+      if (email) {
+        await supabase
+          .from('usuarios')
+          .update({ password: novaLimpa })
+          .ilike('email', email);
+      } else if (storedId) {
+        await supabase
+          .from('usuarios')
+          .update({ password: novaLimpa })
+          .eq('id', storedId);
+      }
+
+      setMsgSenha({ tipo: 'sucesso', texto: 'Senha alterada com sucesso! Utilize sua nova senha nos próximos acessos.' });
+      setSenhaNova('');
+      setSenhaConfirmar('');
+    } catch (err: any) {
+      console.error('Erro ao alterar senha do parceiro:', err);
+      setMsgSenha({ tipo: 'erro', texto: 'Erro ao alterar senha: ' + (err.message || 'Tente novamente.') });
+    } finally {
+      setSalvandoSenha(false);
     }
   };
 
@@ -1701,7 +1776,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
           )}
 
           {/* ===================================================================== */}
-          {/* ABA: CONFIGURAÇÕES DA FRANQUIA                                        */}
+          {/* ABA: CONFIGURAÇÕES DA FRANQUIA & SUBMENU ACESSO (SENHA)               */}
           {/* ===================================================================== */}
           {activeTab === 'configuracoes' && (
             <div className="space-y-6 max-w-2xl">
@@ -1710,132 +1785,268 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                   Configurações da Franquia
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Mantenha seus dados e chave de repasse PIX sempre atualizados no banco de dados.
+                  Mantenha seus dados, chave de repasse PIX e credenciais de acesso sempre atualizados.
                 </p>
-              </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Titular</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={partnerProfile.nome}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600 font-bold"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">E-mail de Acesso</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={partnerProfile.email}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Cupom / Código de Referência</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={partnerProfile.cupom}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-mono font-bold text-emerald-800"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Polo Regional / Cidade</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={partnerProfile.cidadeUf}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Comissão Contratual</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={`${partnerProfile.taxaComissao}% Vitalício`}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-emerald-700"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp de Contato da Unidade</label>
-                  <input
-                    type="text"
-                    value={partnerProfile.whatsapp}
-                    onChange={(e) => setPartnerProfile({ ...partnerProfile, whatsapp: maskPhone(e.target.value) })}
-                    placeholder="(00) 00000-0000"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Tipo da Chave PIX</label>
-                    <select
-                      value={partnerProfile.pixTipo}
-                      onChange={(e) => setPartnerProfile({ ...partnerProfile, pixTipo: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
-                    >
-                      <option value="CPF">CPF</option>
-                      <option value="CNPJ">CNPJ</option>
-                      <option value="EMAIL">E-mail</option>
-                      <option value="TELEFONE">Telefone</option>
-                      <option value="ALEATORIA">Chave Aleatória</option>
-                    </select>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Chave PIX para Recebimento</label>
-                    <input
-                      type="text"
-                      value={partnerProfile.pixChave}
-                      onChange={(e) => setPartnerProfile({ ...partnerProfile, pixChave: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
-                      placeholder="Insira sua chave PIX..."
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Titular da Conta PIX</label>
-                  <input
-                    type="text"
-                    value={partnerProfile.titularPix}
-                    onChange={(e) => setPartnerProfile({ ...partnerProfile, titularPix: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
-                    placeholder="Nome completo do titular..."
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    As transferências das comissões são processadas diretamente para esta chave todo dia 05.
-                  </p>
-                </div>
-
-                <div className="pt-3">
+                {/* Submenus: Dados da Franquia & Acesso (Alterar Senha) */}
+                <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-100">
                   <button
-                    onClick={handleSalvarConfiguracoes}
-                    disabled={salvandoConfig}
-                    className="px-6 py-3 bg-[#003400] text-emerald-300 font-extrabold text-xs rounded-xl hover:bg-[#002600] disabled:opacity-50 transition-all flex items-center gap-2"
+                    onClick={() => { setSubTabConfig('dados'); setMsgSenha(null); }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      subTabConfig === 'dados'
+                        ? 'bg-[#003400] text-emerald-300 shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
                   >
-                    {salvandoConfig ? (
-                      <span>Salvando no banco...</span>
-                    ) : (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Salvar Alterações</span>
-                      </>
-                    )}
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>Dados da Franquia & PIX</span>
+                  </button>
+
+                  <button
+                    onClick={() => { setSubTabConfig('acesso'); setMsgSenha(null); }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      subTabConfig === 'acesso'
+                        ? 'bg-[#003400] text-emerald-300 shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    <span>Acesso & Senha</span>
                   </button>
                 </div>
               </div>
+
+              {/* SUBMENU 1: DADOS DA FRANQUIA & PIX */}
+              {subTabConfig === 'dados' && (
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Titular</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={partnerProfile.nome}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600 font-bold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">E-mail de Acesso</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={partnerProfile.email}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Cupom / Código de Referência</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={partnerProfile.cupom}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-mono font-bold text-emerald-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Polo Regional / Cidade</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={partnerProfile.cidadeUf}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Comissão Contratual</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={`${partnerProfile.taxaComissao}% Vitalício`}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-emerald-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp de Contato da Unidade</label>
+                    <input
+                      type="text"
+                      value={partnerProfile.whatsapp}
+                      onChange={(e) => setPartnerProfile({ ...partnerProfile, whatsapp: maskPhone(e.target.value) })}
+                      placeholder="(00) 00000-0000"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Tipo da Chave PIX</label>
+                      <select
+                        value={partnerProfile.pixTipo}
+                        onChange={(e) => setPartnerProfile({ ...partnerProfile, pixTipo: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                      >
+                        <option value="CPF">CPF</option>
+                        <option value="CNPJ">CNPJ</option>
+                        <option value="EMAIL">E-mail</option>
+                        <option value="TELEFONE">Telefone</option>
+                        <option value="ALEATORIA">Chave Aleatória</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Chave PIX para Recebimento</label>
+                      <input
+                        type="text"
+                        value={partnerProfile.pixChave}
+                        onChange={(e) => setPartnerProfile({ ...partnerProfile, pixChave: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                        placeholder="Insira sua chave PIX..."
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Titular da Conta PIX</label>
+                    <input
+                      type="text"
+                      value={partnerProfile.titularPix}
+                      onChange={(e) => setPartnerProfile({ ...partnerProfile, titularPix: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                      placeholder="Nome completo do titular..."
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      As transferências das comissões são processadas diretamente para esta chave todo dia 05.
+                    </p>
+                  </div>
+
+                  <div className="pt-3">
+                    <button
+                      onClick={handleSalvarConfiguracoes}
+                      disabled={salvandoConfig}
+                      className="px-6 py-3 bg-[#003400] text-emerald-300 font-extrabold text-xs rounded-xl hover:bg-[#002600] disabled:opacity-50 transition-all flex items-center gap-2"
+                    >
+                      {salvandoConfig ? (
+                        <span>Salvando no banco...</span>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-400" />
+                          <span>Salvar Alterações</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* SUBMENU 2: ACESSO & ALTERAÇÃO DE SENHA */}
+              {subTabConfig === 'acesso' && (
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+                  <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-emerald-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">Segurança & Alteração de Senha</h3>
+                      <p className="text-xs text-slate-500">
+                        Altere sua senha de acesso ao portal do parceiro.
+                      </p>
+                    </div>
+                  </div>
+
+                  {msgSenha && (
+                    <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                      msgSenha.tipo === 'sucesso'
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    }`}>
+                      {msgSenha.tipo === 'sucesso' ? (
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      )}
+                      <span>{msgSenha.texto}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleAlterarSenha} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">E-mail da Conta</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={partnerProfile.email}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-600"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-1 block">O e-mail de login do parceiro é fixo.</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Nova Senha *</label>
+                      <div className="relative">
+                        <input
+                          type={mostrarSenhaNova ? 'text' : 'password'}
+                          required
+                          value={senhaNova}
+                          onChange={(e) => setSenhaNova(e.target.value)}
+                          placeholder="Mínimo de 6 caracteres"
+                          className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setMostrarSenhaNova(!mostrarSenhaNova)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          tabIndex={-1}
+                        >
+                          {mostrarSenhaNova ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Confirmar Nova Senha *</label>
+                      <div className="relative">
+                        <input
+                          type={mostrarSenhaConfirmar ? 'text' : 'password'}
+                          required
+                          value={senhaConfirmar}
+                          onChange={(e) => setSenhaConfirmar(e.target.value)}
+                          placeholder="Repita a nova senha"
+                          className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setMostrarSenhaConfirmar(!mostrarSenhaConfirmar)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          tabIndex={-1}
+                        >
+                          {mostrarSenhaConfirmar ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={salvandoSenha}
+                        className="px-6 py-3 bg-[#003400] text-emerald-300 font-extrabold text-xs rounded-xl hover:bg-[#002600] disabled:opacity-50 transition-all flex items-center gap-2"
+                      >
+                        {salvandoSenha ? (
+                          <span>Atualizando senha...</span>
+                        ) : (
+                          <>
+                            <Key className="w-4 h-4 text-emerald-400" />
+                            <span>Atualizar Senha de Acesso</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           )}
 
