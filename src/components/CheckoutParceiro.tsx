@@ -53,6 +53,10 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   const [copiadoPix, setCopiadoPix] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [isVerificando, setIsVerificando] = useState(false);
+  const [msgVerificacao, setMsgVerificacao] = useState<{
+    tipo: 'pendente' | 'erro' | 'sucesso';
+    texto: string;
+  } | null>(null);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutos
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -302,7 +306,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         const statusRes = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
         if (statusRes.approved || statusRes.status === 'approved') {
           if (pollingRef.current) clearInterval(pollingRef.current);
-          await liberarAcessoParceiro();
+          await liberarAcessoParceiro(true);
         }
       } catch (e) {
         // Silencioso para não poluir console
@@ -315,7 +319,39 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   }, [currentStep, isApproved, pixResult?.paymentId]);
 
   // Liberação do Acesso e Cadastro do Parceiro em cascata: Auth -> Usuários -> Parceiros
-  const liberarAcessoParceiro = async () => {
+  // SEGURANÇA MÁXIMA: Exige confirmação prévia do gateway ou consulta em tempo real antes de prosseguir
+  const liberarAcessoParceiro = async (confirmadoPorGateway: boolean = false) => {
+    // Trava de segurança: se chamado sem a confirmação prévia, valida direto no Mercado Pago
+    if (!confirmadoPorGateway) {
+      if (!pixResult?.paymentId || pixResult.paymentId.startsWith('fallback_')) {
+        setMsgVerificacao({
+          tipo: 'pendente',
+          texto: 'Aguardando compensação bancária do PIX. O acesso só será liberado após a confirmação do pagamento.'
+        });
+        return;
+      }
+
+      setIsVerificando(true);
+      try {
+        const checkRes = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
+        if (!checkRes.approved && checkRes.status !== 'approved') {
+          setMsgVerificacao({
+            tipo: 'pendente',
+            texto: 'Pagamento ainda não confirmado no Mercado Pago. O acesso só será liberado após o pagamento efetivo.'
+          });
+          setIsVerificando(false);
+          return;
+        }
+      } catch (err) {
+        setMsgVerificacao({
+          tipo: 'erro',
+          texto: 'Não foi possível validar o pagamento com o Mercado Pago. Tente novamente em alguns segundos.'
+        });
+        setIsVerificando(false);
+        return;
+      }
+    }
+
     setIsVerificando(true);
     try {
       const cleanEmail = email.trim().toLowerCase();
@@ -513,9 +549,66 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       setCurrentStep('sucesso');
     } catch (err: any) {
       console.error('Erro na cascata de criação do parceiro:', err);
-      // Mantém a visualização do sucesso em caso de inconsistência secundária
-      setIsApproved(true);
-      setCurrentStep('sucesso');
+      setErrorMsg('Ocorreu uma falha ao cadastrar seu acesso: ' + (err.message || 'Tente novamente.'));
+      setMsgVerificacao({
+        tipo: 'erro',
+        texto: 'Ocorreu um erro ao ativar sua conta. Por favor, tente novamente ou contate o suporte.'
+      });
+      setIsApproved(false);
+    } finally {
+      setIsVerificando(false);
+    }
+  };
+
+  // Consulta manual disparada pelo botão de contingência
+  const handleVerificarPagamentoManual = async () => {
+    if (isVerificando) return;
+    setMsgVerificacao(null);
+
+    if (!pixResult?.paymentId) {
+      setMsgVerificacao({
+        tipo: 'pendente',
+        texto: 'Cobrança não identificada. Por favor, retorne e gere o código Pix novamente.'
+      });
+      return;
+    }
+
+    if (pixResult.paymentId.startsWith('fallback_')) {
+      setMsgVerificacao({
+        tipo: 'pendente',
+        texto: 'Aguardando compensação bancária do PIX. Se você acabou de efetuar a transferência, aguarde alguns instantes e tente novamente.'
+      });
+      return;
+    }
+
+    setIsVerificando(true);
+    try {
+      const res = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
+
+      if (res.approved || res.status === 'approved') {
+        setMsgVerificacao({
+          tipo: 'sucesso',
+          texto: 'Pagamento aprovado com sucesso! Liberando acesso à plataforma...'
+        });
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        await liberarAcessoParceiro(true);
+      } else if (res.rejected || res.status === 'rejected' || res.status === 'cancelled') {
+        setMsgVerificacao({
+          tipo: 'erro',
+          texto: 'O Mercado Pago informou que este pagamento foi cancelado ou recusado. Por favor, gere uma nova cobrança PIX.'
+        });
+      } else {
+        setMsgVerificacao({
+          tipo: 'pendente',
+          texto: `Pagamento ainda não aprovado (status: ${res.status || 'pendente'}). Se você já pagou no app do seu banco, aguarde alguns segundos até a compensação bancária e clique novamente.`
+        });
+      }
+    } catch (e: any) {
+      console.warn('Erro ao consultar Mercado Pago manualmente:', e);
+      setMsgVerificacao({
+        tipo: 'erro',
+        texto: 'Não foi possível consultar o status do pagamento no momento. Tente novamente em alguns segundos.'
+      });
     } finally {
       setIsVerificando(false);
     }
@@ -1149,13 +1242,42 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                       <span>Aguardando pagamento... A liberação ocorre automaticamente em segundos.</span>
                     </div>
 
-                    {/* Botão de Verificação Imediata / Contingência */}
+                    {/* Feedback Visual da Consulta Manual */}
+                    {msgVerificacao && (
+                      <div className={`mt-3 p-3.5 w-full rounded-xl border text-xs font-semibold flex items-start gap-2.5 text-left transition-all ${
+                        msgVerificacao.tipo === 'sucesso'
+                          ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                          : msgVerificacao.tipo === 'erro'
+                          ? 'bg-rose-50 border-rose-300 text-rose-800'
+                          : 'bg-amber-50 border-amber-300 text-amber-900'
+                      }`}>
+                        <span className="material-symbols-outlined text-lg shrink-0 mt-0.5">
+                          {msgVerificacao.tipo === 'sucesso' ? 'check_circle' : msgVerificacao.tipo === 'erro' ? 'error' : 'hourglass_top'}
+                        </span>
+                        <div className="flex-1">
+                          <p className="font-bold">
+                            {msgVerificacao.tipo === 'sucesso' ? 'Pagamento Aprovado!' : msgVerificacao.tipo === 'erro' ? 'Atenção' : 'Aguardando Compensação'}
+                          </p>
+                          <p className="text-[11px] mt-0.5 leading-relaxed">{msgVerificacao.texto}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Botão de Verificação Manual com Validação Estrita */}
                     <button
-                      onClick={liberarAcessoParceiro}
+                      type="button"
+                      onClick={handleVerificarPagamentoManual}
                       disabled={isVerificando}
-                      className="mt-2 text-xs font-bold text-slate-500 hover:text-[#006c49] transition-colors underline cursor-pointer"
+                      className="mt-3 inline-flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-[#006c49] transition-colors underline cursor-pointer disabled:opacity-60"
                     >
-                      {isVerificando ? 'Consultando confirmação...' : 'Já efetuei o pagamento e quero liberar o acesso agora'}
+                      {isVerificando ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-[#006c49] border-t-transparent rounded-full animate-spin" />
+                          <span>Consultando confirmação no Mercado Pago...</span>
+                        </>
+                      ) : (
+                        <span>Já efetuei o pagamento e quero consultar confirmação agora</span>
+                      )}
                     </button>
 
                   </div>
