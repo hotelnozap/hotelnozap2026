@@ -14,10 +14,16 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
+
+  const action = req.query?.action || body?.action || 'check';
   const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  console.log(`[MP-PIX] Início requisição action=${req.query?.action || body?.action || 'check'} method=${req.method} serviceKey_present=${!!serviceKey} serviceKey_length=${serviceKey?.length || 0}`);
+  console.log(`[MP-PIX] Início requisição action=${action} method=${req.method} serviceKey_present=${!!serviceKey} serviceKey_length=${serviceKey?.length || 0}`);
 
   if (!serviceKey) {
     console.error('[MP-PIX] ERRO CRÍTICO: SUPABASE_SERVICE_ROLE_KEY ausente em runtime Vercel');
@@ -46,12 +52,6 @@ export default async function handler(req, res) {
     }
   }
 
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { body = {}; }
-  }
-
-  const action = req.query?.action || body?.action || 'check';
   let masterToken = (body?.token || dbParams?.gateway_token || process.env.MERCADOPAGO_ACCESS_TOKEN || '').trim();
   if (masterToken.includes('9812401928409182') || masterToken === 'APP_USR-...') {
     masterToken = '';

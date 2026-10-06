@@ -57,6 +57,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     tipo: 'pendente' | 'erro' | 'sucesso';
     texto: string;
   } | null>(null);
+  const [partnerCheckoutId, setPartnerCheckoutId] = useState('');
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutos
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -239,9 +240,12 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
     try {
       const cleanCpf = cpf.replace(/\D/g, '');
+      const refId = `parceiro_${cleanCpf}_${Date.now()}`;
+      setPartnerCheckoutId(refId);
+
       // Cria a cobrança PIX oficial no Mercado Pago com valor padrão de teste de R$ 1,00 solicitado
       const res = await mercadopagoService.criarPagamentoPixMaster({
-        hotelId: `parceiro_${Date.now()}`,
+        hotelId: refId,
         hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
         planoNome: 'Licença Anual Franqueado (Teste R$ 1,00)',
         valor: 1.00, // R$ 1,00 para validação imediata em ambiente de teste
@@ -303,7 +307,11 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
     pollingRef.current = setInterval(async () => {
       try {
-        const statusRes = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
+        const statusRes = await mercadopagoService.consultarPagamentoMaster(
+          pixResult.paymentId,
+          partnerCheckoutId,
+          1.00
+        );
         if (statusRes.approved || statusRes.status === 'approved') {
           if (pollingRef.current) clearInterval(pollingRef.current);
           await liberarAcessoParceiro(true);
@@ -316,7 +324,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [currentStep, isApproved, pixResult?.paymentId]);
+  }, [currentStep, isApproved, pixResult?.paymentId, partnerCheckoutId]);
 
   // Liberação do Acesso e Cadastro do Parceiro em cascata: Auth -> Usuários -> Parceiros
   // SEGURANÇA MÁXIMA: Exige confirmação prévia do gateway ou consulta em tempo real antes de prosseguir
@@ -333,7 +341,11 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
       setIsVerificando(true);
       try {
-        const checkRes = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
+        const checkRes = await mercadopagoService.consultarPagamentoMaster(
+          pixResult.paymentId,
+          partnerCheckoutId,
+          1.00
+        );
         if (!checkRes.approved && checkRes.status !== 'approved') {
           setMsgVerificacao({
             tipo: 'pendente',
@@ -583,7 +595,11 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
     setIsVerificando(true);
     try {
-      const res = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId);
+      const res = await mercadopagoService.consultarPagamentoMaster(
+        pixResult.paymentId,
+        partnerCheckoutId,
+        1.00
+      );
 
       if (res.approved || res.status === 'approved') {
         setMsgVerificacao({
