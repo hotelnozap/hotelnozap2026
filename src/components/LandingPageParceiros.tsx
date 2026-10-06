@@ -791,34 +791,185 @@ export const LandingPageParceiros: React.FC<LandingPageParceirosProps> = ({
       {/* ========================================================================= */}
       {/* 9. CAPTURA / CANDIDATURA OFICIAL                                         */}
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* 9. CAPTURA / CANDIDATURA OFICIAL & PACOTE DE BENEFÍCIOS                   */}
+      {/* ========================================================================= */}
       <section id="candidatura" className="w-full bg-[#f8f9ff] py-16 sm:py-24 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-4xl mx-auto rounded-3xl bg-white p-8 sm:p-12 lg:p-16 shadow-xl border border-slate-200 text-center flex flex-col items-center gap-5">
+        <div className="max-w-4xl mx-auto rounded-3xl bg-white shadow-2xl border border-slate-200/90 overflow-hidden">
           
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold uppercase tracking-wider">
-            <span className="material-symbols-outlined text-[18px]">verified</span>
-            <span>Franquia Oficial &amp; Revenda Regional</span>
+          {/* Header Superior com Gradiente Suave */}
+          <div className="bg-gradient-to-br from-[#003400] via-[#004d00] to-[#006c49] p-8 sm:p-12 text-white text-center relative overflow-hidden">
+            {/* Elementos Decorativos de Fundo */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-60 h-60 bg-[#FDB116]/10 rounded-full blur-2xl -ml-20 -mb-20 pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col items-center gap-4">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-md text-[#FDB116] text-[11px] font-extrabold uppercase tracking-widest border border-white/10 shadow-sm">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+                <span>Franquia Oficial &amp; Revenda Regional</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight max-w-2xl text-white">
+                Pronto para Construir sua Carteira Recorrente na Hotelaria?
+              </h2>
+
+              <p className="text-xs sm:text-sm md:text-base text-emerald-100/90 max-w-xl leading-relaxed">
+                Junte-se à rede oficial do Hotel no Zap e tenha seu próprio negócio escalável de tecnologia com suporte integral da nossa matriz.
+              </p>
+
+              {/* Bloco de Preço em Destaque */}
+              <div className="mt-4 pt-4 border-t border-white/15 w-full max-w-lg flex flex-col items-center">
+                <span className="text-[11px] uppercase tracking-wider font-bold text-white/80">
+                  Taxa Única de Licenciamento &amp; Acesso Anual
+                </span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-sm sm:text-base font-semibold text-white/70">R$</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl font-black text-[#FDB116] tracking-tight">197,00</span>
+                  <span className="text-xs sm:text-sm font-semibold text-emerald-100">/ ano</span>
+                </div>
+                <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[11px] font-bold text-emerald-200">
+                  <span className="material-symbols-outlined text-[15px]">savings</span>
+                  <span>Pagamento anual único • Retorno garantido a partir de apenas 2 hotéis</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl md:text-4xl text-[#0b1c30] font-black tracking-tight max-w-2xl">
-            Pronto para Construir sua Carteira Recorrente na Hotelaria?
-          </h2>
+          {/* Corpo do Card: Grade de Benefícios Exclusivos */}
+          <div className="p-6 sm:p-10 lg:p-12 bg-white flex flex-col gap-8">
+            <div>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-6 pb-3 border-b border-slate-100">
+                <h3 className="text-base sm:text-lg font-black text-[#0b1c30] flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006c49] text-[22px]">workspace_premium</span>
+                  Benefícios Inclusos na Sua Franquia
+                </h3>
+                <span className="text-[11px] font-extrabold text-[#006c49] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                  Ativação Imediata
+                </span>
+              </div>
 
-          <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed">
-            Junte-se à rede oficial do Hotel no Zap e garanta 50% de repasse vitalício mensal por cada hotel ativado na sua região.
-          </p>
+              {/* Grid 2x2 com os 4 benefícios principais destacados */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                
+                {/* Benefício 1: Páginas Demonstrativas */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#eff4ff]/60 border border-slate-200/80 hover:border-emerald-300 transition-all flex items-start gap-4 group">
+                  <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-[24px]">devices</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <h4 className="font-bold text-sm sm:text-base text-[#0b1c30] group-hover:text-[#006c49] transition-colors">
+                      Páginas Demonstrativas Prontas
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Ambiente completo de demonstração do sistema e do atendimento via WhatsApp para você apresentar a donos e gerentes de hotéis com total credibilidade.
+                    </p>
+                  </div>
+                </div>
 
-          <div className="pt-2 flex flex-col items-center gap-3 w-full max-w-md">
-            <button
-              onClick={handlePartnerBtnClick}
-              className="w-full inline-flex items-center justify-center gap-3 py-4 px-8 rounded-xl bg-[#FDB116] text-[#1b1b1b] hover:bg-[#e09c0f] text-sm sm:text-base font-bold shadow-lg shadow-[#FDB116]/20 transition-all duration-200 active:scale-95 cursor-pointer"
-            >
-              <span>Quero ser Franqueado</span>
-              <span className="material-symbols-outlined text-[22px]">arrow_forward</span>
-            </button>
-            <span className="text-xs text-slate-500 flex items-center gap-1.5 pt-1">
-              <span className="material-symbols-outlined text-[#006c49] text-[16px]">verified_user</span>
-              Taxa anual única sem royalties abusivos • Vagas limitadas por polo turístico
-            </span>
+                {/* Benefício 2: Página de Indicação Exclusiva */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#eff4ff]/60 border border-slate-200/80 hover:border-emerald-300 transition-all flex items-start gap-4 group">
+                  <div className="w-11 h-11 rounded-xl bg-[#003400] text-[#FDB116] flex items-center justify-center shrink-0 shadow-md shadow-[#003400]/20 group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-[24px]">link</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <h4 className="font-bold text-sm sm:text-base text-[#0b1c30] group-hover:text-[#006c49] transition-colors">
+                      Página de Indicação Exclusiva
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Link e URL personalizada com o seu código de parceiro oficial. Cada cliente que contrata pelo seu link é automaticamente vinculado e comissionado a você.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefício 3: Pagamento Anual */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#eff4ff]/60 border border-slate-200/80 hover:border-emerald-300 transition-all flex items-start gap-4 group">
+                  <div className="w-11 h-11 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-[24px]">event_repeat</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <h4 className="font-bold text-sm sm:text-base text-[#0b1c30] group-hover:text-[#006c49] transition-colors">
+                      Pagamento Anual (R$ 197,00)
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Sem surpresas no bolso: você paga apenas a taxa anual simbólica de R$ 197,00. Nenhuma mensalidade fixa de franquia é cobrada durante o ano todo.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefício 4: Sem Royalties */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#eff4ff]/60 border border-slate-200/80 hover:border-emerald-300 transition-all flex items-start gap-4 group">
+                  <div className="w-11 h-11 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-[24px]">percent</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <h4 className="font-bold text-sm sm:text-base text-[#0b1c30] group-hover:text-[#006c49] transition-colors">
+                      100% Livre de Royalties
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Zero cobranças sobre o seu faturamento. Os 50% de comissão recorrente vitalícia dos seus hotéis pertencem integralmente a você, sem nenhum desconto.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Lista Complementar de Vantagens */}
+              <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs text-slate-700">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006c49] text-[18px]">check_circle</span>
+                  <span>50% de repasse vitalício mensal</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006c49] text-[18px]">check_circle</span>
+                  <span>Matriz cuida do suporte &amp; servidores</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006c49] text-[18px]">check_circle</span>
+                  <span>Automação com IA no WhatsApp</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006c49] text-[18px]">check_circle</span>
+                  <span>Painel financeiro com extrato em tempo real</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006c49] text-[18px]">check_circle</span>
+                  <span>Pagamentos automáticos via PIX todo dia 05</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#006c49] text-[18px]">check_circle</span>
+                  <span>Material comercial &amp; manuais prontos</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Ação e Botão de Candidatura */}
+            <div className="pt-2 flex flex-col items-center gap-3 w-full">
+              <button
+                onClick={handlePartnerBtnClick}
+                className="w-full max-w-lg inline-flex items-center justify-center gap-3 py-4.5 px-8 rounded-xl bg-[#FDB116] text-[#1b1b1b] hover:bg-[#e09c0f] text-base sm:text-lg font-black shadow-xl shadow-[#FDB116]/25 transition-all duration-200 active:scale-95 cursor-pointer"
+              >
+                <span>Quero ser Franqueado • R$ 197,00/ano</span>
+                <span className="material-symbols-outlined text-[24px]">arrow_forward</span>
+              </button>
+              
+              <div className="flex items-center flex-wrap justify-center gap-4 text-xs text-slate-500 pt-1">
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#006c49] text-[16px]">lock</span>
+                  Pagamento Seguro
+                </span>
+                <span className="hidden sm:inline text-slate-300">•</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#006c49] text-[16px]">bolt</span>
+                  Acesso Imediato ao Painel
+                </span>
+                <span className="hidden sm:inline text-slate-300">•</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#006c49] text-[16px]">shield_person</span>
+                  Sem Royalties ou Mensalidades Ocultas
+                </span>
+              </div>
+            </div>
+
           </div>
 
         </div>
