@@ -18,6 +18,18 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/lp",
+      "destination": "https://lp.hotelnozap.com.br",
+      "permanent": false
+    },
+    {
+      "source": "/lp/:path*",
+      "destination": "https://lp.hotelnozap.com.br/:path*",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/).*)",

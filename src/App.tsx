@@ -113,6 +113,12 @@ const isAppDomain = (): boolean => {
   return host === 'app.hotelnozap.com.br' || host.startsWith('app.');
 };
 
+const isLpDomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname.toLowerCase();
+  return host === 'lp.hotelnozap.com.br' || host.startsWith('lp.');
+};
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
@@ -123,14 +129,27 @@ export const App: React.FC = () => {
         return 'assinar';
       }
       const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+
+      // Redirecionamento client-side: /lp no domínio principal redireciona para lp.hotelnozap.com.br
+      if (typeof window !== 'undefined') {
+        const host = window.location.hostname.toLowerCase();
+        const isMainDomain = host === 'hotelnozap.com.br' || host === 'www.hotelnozap.com.br';
+        if (isMainDomain && parts[0] === 'lp') {
+          const rest = parts.slice(1).join('/');
+          const targetUrl = `https://lp.hotelnozap.com.br${rest ? '/' + rest : ''}${window.location.search}${window.location.hash}`;
+          window.location.replace(targetUrl);
+          return 'landingpage';
+        }
+      }
+
       if (parts[0] === 'privacidade') return 'privacidade';
       if (parts[0] === 'termos') return 'termos';
       if (parts[0] === 'empresa' || parts[0] === 'informacoes-empresa') return 'informacoes-empresa';
       if (parts[0] === 'quem-somos' || parts[0] === 'quemsomos') return 'quem-somos';
       if (parts[0] === 'fale-conosco' || parts[0] === 'faleconosco' || parts[0] === 'contato') return 'fale-conosco';
       if (parts[0] === 'camareira') return 'camareira';
-      if (parts[0] === 'lp' && parts[1] === 'lpnovohotel') return 'lp-novo-hotel';
-      if (parts[0] === 'lp') return 'landingpage';
+      if (parts[0] === 'lpnovohotel' || (parts[0] === 'lp' && parts[1] === 'lpnovohotel')) return 'lp-novo-hotel';
+      if (parts[0] === 'lp' || parts[0] === 'landingpage') return 'landingpage';
       if (parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar')) {
         if (typeof window !== 'undefined' && window.location.pathname === '/assinar') {
           window.history.replaceState({}, '', `/parceiros/assinar${window.location.search}${window.location.hash}`);
@@ -146,8 +165,11 @@ export const App: React.FC = () => {
         }
         return (savedRole && savedEmail) ? 'perfil' : 'minhaconta';
       }
-      // Rota raiz /: Se for o subdomínio app.hotelnozap.com.br, direciona diretamente para o Login/Painel Admin
+      // Rota raiz /:
       if (parts.length === 0) {
+        if (isLpDomain()) {
+          return 'landingpage';
+        }
         if (isAppDomain()) {
           const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
           const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
@@ -899,8 +921,15 @@ export const App: React.FC = () => {
     return (
       <LpAssinar
         onNavigateToLP={() => {
-          window.history.pushState({}, '', '/lp');
-          setActiveTab('landingpage');
+          if (isLpDomain()) {
+            window.history.pushState({}, '', '/');
+            setActiveTab('landingpage');
+          } else if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://lp.hotelnozap.com.br';
+          } else {
+            window.history.pushState({}, '', '/lp');
+            setActiveTab('landingpage');
+          }
         }}
         onNavigateToLogin={() => {
           if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
@@ -935,15 +964,20 @@ export const App: React.FC = () => {
     return <PaginaInstitucional tipo="fale-conosco" />;
   }
 
-  // ── Rota: /lp/lpnovohotel — Formulário de Cadastro de Hotel (Standalone) ──
+  // ── Rota: /lpnovohotel ou /lp/lpnovohotel — Formulário de Cadastro de Hotel (Standalone) ──
   const isLpNovoHotelRoute = activeTab === 'lp-novo-hotel' ||
+    pathParts[0] === 'lpnovohotel' ||
     (pathParts[0] === 'lp' && pathParts[1] === 'lpnovohotel');
 
   if (isLpNovoHotelRoute) {
     return (
       <LpNovoHotel
         onNavigateToLP={() => {
-          window.history.pushState({}, '', '/lp');
+          if (isLpDomain()) {
+            window.history.pushState({}, '', '/');
+          } else {
+            window.history.pushState({}, '', '/lp');
+          }
           setActiveTab('landingpage');
         }}
         onNavigateToLogin={() => {
@@ -959,6 +993,7 @@ export const App: React.FC = () => {
   }
 
   const isLandingPageRoute = activeTab === 'landingpage' ||
+    (isLpDomain() && (pathParts.length === 0 || pathParts[0] === 'lp' || pathParts[0] === 'landingpage')) ||
     (pathParts[0] === 'lp' && pathParts[1] !== 'lpnovohotel');
 
   if (isLandingPageRoute) {
@@ -981,7 +1016,11 @@ export const App: React.FC = () => {
           }
         }}
         onNavigateToNovoHotel={() => {
-          window.history.pushState({}, '', '/lp/lpnovohotel');
+          if (isLpDomain()) {
+            window.history.pushState({}, '', '/lpnovohotel');
+          } else {
+            window.history.pushState({}, '', '/lp/lpnovohotel');
+          }
           setActiveTab('lp-novo-hotel');
         }}
       />
