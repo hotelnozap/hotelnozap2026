@@ -5,6 +5,7 @@ import { fetchAddressByCep } from '../utils/viacep';
 import { mercadopagoService, PixMasterResult } from '../services/mercadopagoService';
 import { parceirosService, usuariosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
+import { generateValidCpf } from '../utils/mockHotelData';
 
 interface CheckoutParceiroProps {
   onNavigateBack: () => void;
@@ -160,6 +161,71 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     const prefix = clean.slice(0, 6) || 'PARTNER';
     const randomSuffix = Math.floor(100 + Math.random() * 900);
     return `${prefix}${randomSuffix}`;
+  };
+
+  // Notificação de preenchimento rápido de teste
+  const [quickFillNotice, setQuickFillNotice] = useState<string | null>(null);
+
+  // Modo de Preenchimento Rápido (disparado ao digitar parceiro01 ou clicar no botão)
+  const applyTestMockPartnerData = () => {
+    const randNum = Math.floor(100 + Math.random() * 900);
+    const validCpf = generateValidCpf();
+    setNome(`Carlos Eduardo Parceiro ${randNum}`);
+    setCpf(validCpf);
+    setWhatsapp('(11) 98765-4321');
+    setCep('01310-100');
+    setLogradouro('Avenida Paulista');
+    setNumero(String(1000 + randNum));
+    setComplemento('Sala 502');
+    setBairro('Bela Vista');
+    setCidade('São Paulo');
+    setUf('SP');
+    setEmail(`parceiro.teste${randNum}@hotelnozap.com.br`);
+    setSenha('Parceiro@2026!');
+    setConfirmarSenha('Parceiro@2026!');
+    setErrorMsg(null);
+    setQuickFillNotice(`🚀 Modo Teste (parceiro01): Dados preenchidos com CPF válido (${validCpf}), endereço completo e senha forte!`);
+    setTimeout(() => setQuickFillNotice(null), 6000);
+  };
+
+  const handleNomeChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'parceiro01') {
+      applyTestMockPartnerData();
+      return;
+    }
+    setNome(val);
+  };
+
+  const handleCpfChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'parceiro01') {
+      applyTestMockPartnerData();
+      return;
+    }
+    setCpf(maskCpf(val));
+  };
+
+  const handleWhatsappChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'parceiro01') {
+      applyTestMockPartnerData();
+      return;
+    }
+    setWhatsapp(maskPhone(val));
+  };
+
+  const handleEmailChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'parceiro01') {
+      applyTestMockPartnerData();
+      return;
+    }
+    setEmail(val);
+  };
+
+  const handleSenhaChange = (val: string) => {
+    if (val.trim().toLowerCase() === 'parceiro01') {
+      applyTestMockPartnerData();
+      return;
+    }
+    setSenha(val);
   };
 
   // Etapa 1: Avançar dos Dados Pessoais & Endereço para a Etapa de Login
@@ -779,6 +845,13 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                   </div>
                 </div>
 
+                {quickFillNotice && (
+                  <div className="mb-4 p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+                    <span className="material-symbols-outlined text-base text-amber-600">check_circle</span>
+                    <span>{quickFillNotice}</span>
+                  </div>
+                )}
+
                 {errorMsg && (
                   <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">error</span>
@@ -788,9 +861,18 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
                 <form onSubmit={handleAvancarParaLogin} className="flex flex-col gap-4 text-left">
                   
-                  {/* Seção 1: Dados Pessoais */}
-                  <div className="pb-1">
+                  {/* Seção 1: Dados Pessoais com Botão de Teste Rápido */}
+                  <div className="flex items-center justify-between pb-1">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">1. Dados Pessoais</span>
+                    <button
+                      type="button"
+                      onClick={applyTestMockPartnerData}
+                      title="Preencher automaticamente com dados de teste válidos (Código: parceiro01)"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs"
+                    >
+                      <span className="material-symbols-outlined text-sm text-amber-600">bolt</span>
+                      <span>Preenchimento Rápido (parceiro01)</span>
+                    </button>
                   </div>
 
                   {/* Nome Completo */}
@@ -799,9 +881,9 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Carlos Eduardo de Oliveira"
+                      placeholder="Ex: Carlos Eduardo de Oliveira (ou digite parceiro01)"
                       value={nome}
-                      onChange={(e) => setNome(e.target.value)}
+                      onChange={(e) => handleNomeChange(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
                     />
                   </div>
@@ -816,7 +898,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         required
                         placeholder="000.000.000-00"
                         value={cpf}
-                        onChange={(e) => setCpf(maskCpf(e.target.value))}
+                        onChange={(e) => handleCpfChange(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
                       />
                     </div>
@@ -828,7 +910,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         required
                         placeholder="(00) 00000-0000"
                         value={whatsapp}
-                        onChange={(e) => setWhatsapp(maskPhone(e.target.value))}
+                        onChange={(e) => handleWhatsappChange(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
                       />
                     </div>
@@ -979,15 +1061,33 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
             {/* PASSO 2: CRIAR ACESSO & SENHA SEGURA */}
             {currentStep === 'login' && (
               <div className="rounded-3xl bg-white p-6 sm:p-8 border border-slate-200/90 shadow-xl transition-all">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006c49] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl">key</span>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006c49] flex items-center justify-center">
+                      <span className="material-symbols-outlined text-xl">key</span>
+                    </div>
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-bold text-[#0b1c30]">Criação de Acesso &amp; Login</h2>
+                      <p className="text-xs text-slate-500">Defina suas credenciais oficiais para entrar no Painel de Franqueado.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-[#0b1c30]">Criação de Acesso &amp; Login</h2>
-                    <p className="text-xs text-slate-500">Defina suas credenciais oficiais para entrar no Painel de Franqueado.</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={applyTestMockPartnerData}
+                    title="Preencher automaticamente com dados de teste válidos (Código: parceiro01)"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-2xs"
+                  >
+                    <span className="material-symbols-outlined text-sm text-amber-600">bolt</span>
+                    <span>Preenchimento Rápido (parceiro01)</span>
+                  </button>
                 </div>
+
+                {quickFillNotice && (
+                  <div className="mb-4 p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+                    <span className="material-symbols-outlined text-base text-amber-600">check_circle</span>
+                    <span>{quickFillNotice}</span>
+                  </div>
+                )}
 
                 {errorMsg && (
                   <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
@@ -1004,9 +1104,9 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     <input
                       type="email"
                       required
-                      placeholder="seuemail@exemplo.com"
+                      placeholder="seuemail@exemplo.com (ou digite parceiro01)"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => handleEmailChange(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
                     />
                     <span className="text-[11px] text-slate-400 mt-1 block">Este será o seu login oficial de acesso ao sistema do Hotel no Zap.</span>
@@ -1035,7 +1135,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         required
                         placeholder="Crie sua senha segura"
                         value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
+                        onChange={(e) => handleSenhaChange(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-12"
                       />
                       <button
@@ -1210,20 +1310,31 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                   <div className="w-full flex flex-col items-center gap-5">
                     
                     {/* QR Code Container */}
-                    <div className="p-4 bg-white rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col items-center justify-center">
-                      {pixResult?.qrCodeBase64 ? (
-                        <img 
-                          src={`data:image/png;base64,${pixResult.qrCodeBase64}`} 
-                          alt="QR Code PIX Mercado Pago" 
-                          className="w-56 h-56 object-contain"
-                        />
-                      ) : (
-                        <img 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pixResult?.qrCode || 'hotelnozap@gmail.com')}`} 
-                          alt="QR Code PIX" 
-                          className="w-56 h-56 object-contain"
-                        />
-                      )}
+                    <div className="p-4 bg-white rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col items-center justify-center min-w-[224px] min-h-[224px]">
+                      {(() => {
+                        const base64Src = pixResult?.qrCodeBase64
+                          ? (pixResult.qrCodeBase64.startsWith('data:')
+                              ? pixResult.qrCodeBase64
+                              : `data:image/png;base64,${pixResult.qrCodeBase64}`)
+                          : null;
+                        const fallbackUrl = pixResult?.qrCode
+                          ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pixResult.qrCode)}`
+                          : (pixResult?.fallbackQrUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=hotelnozap%40gmail.com');
+
+                        return (
+                          <img 
+                            src={base64Src || fallbackUrl} 
+                            alt="QR Code PIX Mercado Pago" 
+                            className="w-56 h-56 object-contain"
+                            onError={(e) => {
+                              // Se a imagem falhar, carrega imediatamente o fallback da URL do gerador
+                              if (e.currentTarget.src !== fallbackUrl) {
+                                e.currentTarget.src = fallbackUrl;
+                              }
+                            }}
+                          />
+                        );
+                      })()}
                     </div>
 
                     <div className="flex flex-col items-center gap-1">
