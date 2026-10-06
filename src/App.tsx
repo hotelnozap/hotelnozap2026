@@ -76,6 +76,7 @@ import { PaginaInstitucional } from './components/PaginaInstitucional';
 import { ListagemStatusQuartos } from './components/ListagemStatusQuartos';
 import { LogsSistema } from './components/LogsSistema';
 import { NotificacoesPushAdmin } from './components/NotificacoesPushAdmin';
+import { LandingPageParceiros } from './components/LandingPageParceiros';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 
@@ -83,6 +84,10 @@ const checkIsAssinarUrl = (pathname: string, search: string, hash: string): bool
   const parts = (pathname || '').toLowerCase().replace(/\\/g, '/').split('/').filter(Boolean);
   const hashClean = (hash || '').toLowerCase().replace(/^#\/?/, '');
   const hashParts = hashClean.split('?')[0].split('/').filter(Boolean);
+
+  // A rota /parceiros pura é a Landing Page institucional de Franqueados (não o checkout)
+  if (parts[0] === 'parceiros' && parts.length === 1) return false;
+  if (hashParts[0] === 'parceiros' && hashParts.length === 1) return false;
   
   const isAssinarPath = 
     parts[0] === 'assinar' || 
@@ -95,12 +100,12 @@ const checkIsAssinarUrl = (pathname: string, search: string, hash: string): bool
   try {
     const sParams = new URLSearchParams(search || '');
     const hasSearchRef = sParams.has('ref') || sParams.has('cupom') || sParams.has('coupon');
-    if (hasSearchRef && (parts.length === 0 || parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar'))) return true;
+    if (hasSearchRef && (parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar'))) return true;
 
     if (hash && hash.includes('?')) {
       const hParams = new URLSearchParams(hash.split('?')[1]);
       const hasHashRef = hParams.has('ref') || hParams.has('cupom') || hParams.has('coupon');
-      if (hasHashRef && (parts.length === 0 || parts[0] === 'assinar' || (hashParts[0] === 'parceiros' && hashParts[1] === 'assinar'))) return true;
+      if (hasHashRef && (hashParts[0] === 'assinar' || (hashParts[0] === 'parceiros' && hashParts[1] === 'assinar'))) return true;
     }
   } catch { /* ignore */ }
 
@@ -117,6 +122,12 @@ const isLpDomain = (): boolean => {
   if (typeof window === 'undefined') return false;
   const host = window.location.hostname.toLowerCase();
   return host === 'lp.hotelnozap.com.br' || host.startsWith('lp.');
+};
+
+const isParceirosDomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname.toLowerCase();
+  return host === 'parceiros.hotelnozap.com.br' || host.startsWith('parceiros.');
 };
 
 export const App: React.FC = () => {
@@ -140,6 +151,14 @@ export const App: React.FC = () => {
           window.location.replace(targetUrl);
           return 'landingpage';
         }
+
+        // Redirecionamento client-side: /parceiros puro no domínio principal redireciona para parceiros.hotelnozap.com.br
+        if (isMainDomain && parts[0] === 'parceiros' && parts[1] !== 'assinar') {
+          const rest = parts.slice(1).join('/');
+          const targetUrl = `https://parceiros.hotelnozap.com.br${rest ? '/' + rest : ''}${window.location.search}${window.location.hash}`;
+          window.location.replace(targetUrl);
+          return 'landingpage-parceiros';
+        }
       }
 
       if (parts[0] === 'privacidade') return 'privacidade';
@@ -150,6 +169,8 @@ export const App: React.FC = () => {
       if (parts[0] === 'camareira') return 'camareira';
       if (parts[0] === 'lpnovohotel' || (parts[0] === 'lp' && parts[1] === 'lpnovohotel')) return 'lp-novo-hotel';
       if (parts[0] === 'lp' || parts[0] === 'landingpage') return 'landingpage';
+      if (parts[0] === 'parceiros' && parts[1] !== 'assinar') return 'landingpage-parceiros';
+      if (parts[0] === 'parceiro' || parts[0] === 'franquia') return 'landingpage-parceiros';
       if (parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar')) {
         if (typeof window !== 'undefined' && window.location.pathname === '/assinar') {
           window.history.replaceState({}, '', `/parceiros/assinar${window.location.search}${window.location.hash}`);
@@ -167,6 +188,9 @@ export const App: React.FC = () => {
       }
       // Rota raiz /:
       if (parts.length === 0) {
+        if (isParceirosDomain()) {
+          return 'landingpage-parceiros';
+        }
         if (isLpDomain()) {
           return 'landingpage';
         }
@@ -1022,6 +1046,36 @@ export const App: React.FC = () => {
             window.history.pushState({}, '', '/lp/lpnovohotel');
           }
           setActiveTab('lp-novo-hotel');
+        }}
+      />
+    );
+  }
+
+  // ── Rota: /parceiros ou subdomínio parceiros.hotelnozap.com.br — Landing Page de Franqueados/Parceiros ──
+  const isParceirosLandingRoute = activeTab === 'landingpage-parceiros' ||
+    (isParceirosDomain() && (pathParts.length === 0 || pathParts[0] === 'parceiros')) ||
+    (pathParts[0] === 'parceiros' && pathParts[1] !== 'assinar') ||
+    pathParts[0] === 'parceiro' ||
+    pathParts[0] === 'franquia';
+
+  if (isParceirosLandingRoute) {
+    return (
+      <LandingPageParceiros
+        onNavigateToLogin={() => {
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
+        }}
+        onNavigateToHome={() => {
+          if (isParceirosDomain()) {
+            window.location.href = 'https://hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/');
+            setActiveTab('catalogo-hoteis');
+          }
         }}
       />
     );

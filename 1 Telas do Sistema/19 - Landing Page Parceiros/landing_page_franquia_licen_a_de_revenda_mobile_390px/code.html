@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Hotel no Zap - Motor de Reservas Diretas &amp; PMS no WhatsApp</title>
+<!-- Google Fonts: Inter & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              forest: '#003400',
+              forestDark: '#001a00',
+              emerald: '#10B981',
+              emeraldDeep: '#006c49',
+              gold: '#FDB116',
+              goldHover: '#e59f10',
+              darkSlate: '#0b1c30',
+              bodyGray: '#45464d',
+              bgIce: '#f8f9ff',
+              cardBg: '#ffffff'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(11, 28, 48, 0.06)',
+            'card': '0 8px 30px rgba(0, 0, 0, 0.04)',
+            'gold-glow': '0 4px 20px rgba(253, 177, 22, 0.35)',
+            'forest-glow': '0 6px 24px rgba(0, 52, 0, 0.25)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-utilities">
+    /* Fix mobile container to strictly simulate standard 390px iPhone width */
+    body {
+      background-color: #e5e7eb;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mobile-frame {
+      width: 100%;
+      max-width: 390px;
+      min-height: 100vh;
+      background-color: #f8f9ff;
+      overflow-x: hidden;
+      position: relative;
+      box-shadow: 0 0 40px rgba(0,0,0,0.15);
+    }
+    /* Hide scrollbar for tabs/carousels */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<meta content="web_standard" name="shell-type"/></head>
+<body>
+<div class="mobile-frame flex flex-col justify-start">
+<!-- BEGIN: MainHeader -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center justify-between shadow-sm" data-purpose="mobile-header">
+<div class="flex items-center gap-2">
+<!-- Logo HZ Hotel no Zap -->
+<div class="w-8 h-8 rounded-lg bg-brand-forest flex items-center justify-center text-brand-gold font-display font-extrabold text-xs shadow-sm">
+        HZ
+      </div>
+<div class="flex flex-col">
+<span class="font-display font-bold text-xs tracking-tight text-brand-darkSlate leading-tight">HOTEL NO ZAP</span>
+<span class="text-[9px] tracking-wider uppercase text-brand-emeraldDeep font-semibold">PMS &amp; Direct Booking</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-2">
+<a class="text-xs font-semibold text-brand-darkSlate hover:text-brand-forest transition-colors px-2 py-1" href="#planos">
+        Entrar
+      </a>
+<a class="bg-brand-gold hover:bg-brand-goldHover text-brand-darkSlate font-display font-bold text-xs px-3 py-1.5 rounded-full transition-all shadow-gold-glow flex items-center gap-1" href="#planos">
+<span>Testar 30 Dias</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</header>
+<!-- END: MainHeader -->
+<main class="flex-1 w-full flex flex-col"><div class="flex flex-col w-full text-on-surface">
+<!-- 1. Topo / Header Mobile (Franquia Regional Focus) -->
+<section class="w-full bg-gradient-to-b from-primary-container to-gradient-end text-on-primary px-margin-mobile py-space-md shadow-md flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-card/10 flex items-center justify-center text-accent-mint">
+<span class="material-symbols-outlined text-headline-sm">domain</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-primary tracking-tight leading-none">Hotel no Zap</span>
+<span class="font-label-sm text-label-sm text-accent-mint uppercase tracking-widest mt-0.5">Franquia Regional</span>
+</div>
+</div>
+<a class="bg-surface-card text-on-surface px-space-md py-space-xs rounded-xl font-label-md text-label-md shadow-sm hover:opacity-95 transition-opacity flex items-center gap-1" href="#candidatura">
+<span>Quero ser Franqueado</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</section>
+<!-- 2. Hero Section Mobile -->
+<section class="w-full bg-gradient-to-b from-gradient-end via-primary-container to-surface px-margin-mobile pt-space-lg pb-space-xl flex flex-col gap-space-md">
+<!-- Badges -->
+<div class="flex flex-wrap gap-space-xs">
+<span class="inline-flex items-center gap-1 bg-surface-card/10 text-on-primary font-label-sm text-label-sm px-space-sm py-1 rounded-full backdrop-blur-sm">
+<span class="material-symbols-outlined text-body-sm text-accent-mint" style="font-variation-settings: 'FILL' 1;">verified</span>
+        Franquia Digital B2B • Taxa Anual Sem Royalties
+      </span>
+<span class="inline-flex items-center gap-1 bg-secondary text-on-secondary font-label-sm text-label-sm px-space-sm py-1 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-body-sm">trending_up</span>
+        ROI com Apenas 2 Hotéis
+      </span>
+</div>
+<!-- Título Impactante -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-primary leading-tight">
+      Construa um império de receita recorrente com a Franquia Hotel no Zap na sua região.
+    </h1>
+<!-- Subtítulo de Negócio Transparente -->
+<p class="font-body-md text-body-md text-surface-container-high leading-relaxed">
+      O hoteleiro investe apenas <strong class="text-on-primary font-label-lg">R$ 197/mês</strong> no sistema e você recebe <strong class="text-accent-mint font-label-lg">R$ 98,50 líquido todo mês por hotel ativo</strong>. Uma comissão vitalícia de 50% direto na sua conta bancária via PIX todo dia 05.
+    </p>
+<!-- Card Divisão Clara de Papéis -->
+<div class="w-full bg-surface-card/10 rounded-xl p-space-md text-on-primary shadow-sm flex flex-col gap-space-sm backdrop-blur-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-accent-mint text-headline-sm">handshake</span>
+<span class="font-label-lg text-label-lg text-on-primary">Divisão 100% Equilibrada</span>
+</div>
+<p class="font-body-sm text-body-sm text-surface-container-high">
+        A matriz <strong class="text-on-primary">Hotel no Zap</strong> assume 100% de desenvolvimento, IA no WhatsApp, servidores em nuvem e suporte técnico direto ao hoteleiro. Seu único foco é prospectar estabelecimentos na sua região e orientar o onboarding inicial.
+      </p>
+</div>
+<!-- 3 Mini Cards em Destaque -->
+<div class="grid grid-cols-1 gap-space-xs">
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-headline-sm">money_off</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface">Sem Royalties Mensais</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Taxa de franquia cobrada estritamente de forma anual.</span>
+</div>
+</div>
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
+<span class="material-symbols-outlined text-headline-sm">payments</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface">R$ 98,50 Líquido / Mês</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">50% de repasse recorrente vitalício por cada hotel ativo.</span>
+</div>
+</div>
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-headline-sm">rocket_launch</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface">ROI com 2 Hotéis</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Do 3º hotel em diante, todo o faturamento é 100% lucro líquido.</span>
+</div>
+</div>
+</div>
+<!-- CTA Hero Primário -->
+<a class="w-full bg-surface-card hover:bg-surface-container text-primary-container font-headline-sm text-headline-sm py-space-md rounded-xl text-center shadow-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-space-xs mt-space-xs" href="#candidatura">
+<span>Quero me Candidatar à Franquia</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</a>
+<!-- Mockup Mobile: Extrato Real do Franqueado -->
+<div class="w-full bg-surface-card rounded-xl p-space-md shadow-lg flex flex-col gap-space-md mt-space-sm text-on-surface">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface uppercase tracking-wider">Extrato Real do Franqueado</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-container px-space-xs py-0.5 rounded">PIX Agendado</span>
+</div>
+<!-- Foto Executiva de Hospitalidade -->
+<div class="w-full h-36 rounded-lg overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="Close up photography of an executive hospitality consultant conducting an onboarding software demo with a boutique hotel manager in a stylish contemporary resort lobby in Brazil, natural warm golden morning lighting, ultra crisp resolution" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFuN5l-9Rh5rdpGow3ii7UmrtTWM8lou8yMrXVhPKc4LeaXYNrKb_JyelKdDgRk-VI61RFWdpXhStvV-02WkTE0rDzv6tCejZFFcjMACj_FrputkiUrL_QALWk9Irq9z4at_hpdHi76CrqPG_EQxuPZm0_aTHgkxps6wayc1KU-3Zj5X367ImF0TbW1ZuR6OqCcCfdk0_KSMV-_agQxZdMZrDdKkDuwKrjNkBMBtq6n5-oz6cZI9X9"/>
+<div class="absolute inset-0 bg-gradient-to-t from-gradient-end/70 via-transparent to-transparent flex items-end p-space-sm">
+<span class="font-label-sm text-label-sm text-on-primary">Região Metropolitana &amp; Litoral</span>
+</div>
+</div>
+<!-- Resumo de Comissões -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Repasse Mensal Atual (100 hotéis na carteira)</span>
+<div class="flex items-baseline justify-between">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold">R$ 9.850,00</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">/mês líquido</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Comissão recorrente creditada todo dia 05</span>
+</div>
+<!-- Checklists Rápidas -->
+<ul class="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface">
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-body-md" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Zero dor de cabeça operacional ou com servidores</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-body-md" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Taxa de franquia única anual sem surpresas</span>
+</li>
+<li class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-body-md" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Hoteleiro fidelizado graças ao aumento de reservas</span>
+</li>
+</ul>
+</div>
+</section>
+<!-- 3. Banner de Posicionamento e Filtro -->
+<section class="w-full bg-surface-container-high px-margin-mobile py-space-lg flex flex-col gap-space-sm text-on-surface">
+<div class="flex items-center gap-space-xs text-secondary">
+<span class="material-symbols-outlined text-headline-sm">policy</span>
+<span class="font-label-lg text-label-lg uppercase tracking-wide">100% Transparente</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary leading-snug">
+      Franquia Anual sem Royalties &amp; Operacional Centralizado.
+    </h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+      Esqueça modelos burocráticos com taxas de marketing e cobranças semanais. Na Franquia Hotel no Zap você adquire sua Licença de Revenda anual e fica livre de royalties mensais. Cada novo hotel vira receita pura no seu bolso.
+    </p>
+<div>
+<a class="inline-flex items-center gap-space-xs font-label-lg text-label-lg text-secondary underline font-semibold pt-space-xs" href="#candidatura">
+        Quero me Credenciar na Minha Cidade
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+</div>
+</section>
+<!-- 4. Seção Dores vs Soluções na Hotelaria -->
+<section class="w-full bg-surface px-margin-mobile py-space-xl flex flex-col gap-space-lg">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-secondary font-semibold uppercase tracking-wider">Facilidade Extrema de Venda</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+        O software que se paga com apenas 2 diárias recuperadas.
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Vender o Hotel no Zap é simples porque resolve as três maiores hemorragias financeiras dos proprietários de pousadas e hotéis.
+      </p>
+</div>
+<!-- Card ROI Destacado -->
+<div class="w-full bg-secondary-container text-on-secondary-container p-space-md rounded-xl shadow-sm flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-headline-md shrink-0 text-on-secondary-container">savings</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm">Retorno com apenas 2 Hotéis Indicados</span>
+<span class="font-body-sm text-body-sm mt-0.5">
+          Com 2 hotéis ativos no plano de R$ 197/mês, os seus R$ 197,00 mensais de repasse já liquidam todo o custo de aquisição da sua Franquia Regional.
+        </span>
+</div>
+</div>
+<!-- 3 Dores Críticas e Soluções -->
+<div class="flex flex-col gap-space-md">
+<!-- Dor 1 -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-error bg-error-container px-space-xs py-0.5 rounded font-semibold">Dor Crítica 01</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Taxas Abusivas</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">20% a 25% de comissão para as OTAs</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Pousadas perdem milhares de reais repassando comissões pesadas para portais terceirizados como Booking e Decolar por falta de canal direto.
+        </p>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-start gap-space-xs mt-1">
+<span class="material-symbols-outlined text-secondary text-body-lg shrink-0">check_circle</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">
+<strong>Solução Hotel no Zap:</strong> Motor de reservas diretas no próprio WhatsApp do hóspede, com 0% de comissões por reserva.
+          </span>
+</div>
+</div>
+<!-- Dor 2 -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-error bg-error-container px-space-xs py-0.5 rounded font-semibold">Dor Crítica 02</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Atendimento Lento</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Demora fatal no WhatsApp</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          O viajante pede cotação de madrugada ou aos finais de semana e o atendente demora 2 horas para responder. A reserva é perdida na hora.
+        </p>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-start gap-space-xs mt-1">
+<span class="material-symbols-outlined text-secondary text-body-lg shrink-0">check_circle</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">
+<strong>Solução Hotel no Zap:</strong> IA hoteleira que envia fotos, disponibilidade e chave PIX em apenas 5 segundos, 24 horas por dia.
+          </span>
+</div>
+</div>
+<!-- Dor 3 -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-error bg-error-container px-space-xs py-0.5 rounded font-semibold">Dor Crítica 03</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Controle Precário</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Overbooking e desorganização interna</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Cadernos de papel e planilhas desatualizadas geram duplicidade de reservas, quartos sem arrumação e estresse com hóspedes no balcão.
+        </p>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-start gap-space-xs mt-1">
+<span class="material-symbols-outlined text-secondary text-body-lg shrink-0">check_circle</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">
+<strong>Solução Hotel no Zap:</strong> PMS simples com mapa de quartos visual e checklist em tempo real para equipe de limpeza e recepção.
+          </span>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Calculadora Interativa de Faturamento da Franquia -->
+<section class="w-full bg-gradient-to-b from-primary-container to-gradient-end text-on-primary px-margin-mobile py-space-xl flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-accent-mint uppercase tracking-wider font-semibold">Simulador de Carteira Regional</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-primary">
+        Quanto você quer faturar todos os meses com sua Franquia Hotel no Zap?
+      </h2>
+<p class="font-body-md text-body-md text-surface-container-high">
+        Selecione a quantidade de hotéis ativos sob sua gestão regional e veja seu repasse garantido todo dia 05 via PIX.
+      </p>
+</div>
+<!-- Botões Rápidos de Quantidade -->
+<div class="flex items-center justify-between gap-space-xs overflow-x-auto py-space-xs">
+<button class="calc-btn px-space-sm py-space-xs rounded-lg font-label-md text-label-md bg-surface-card/10 text-on-primary border-none cursor-pointer focus:outline-none" onclick="setHotels(10)" type="button">10</button>
+<button class="calc-btn px-space-sm py-space-xs rounded-lg font-label-md text-label-md bg-surface-card/10 text-on-primary border-none cursor-pointer focus:outline-none" onclick="setHotels(30)" type="button">30</button>
+<button class="calc-btn px-space-sm py-space-xs rounded-lg font-label-md text-label-md bg-secondary text-on-secondary font-bold border-none cursor-pointer focus:outline-none" onclick="setHotels(50)" type="button">50</button>
+<button class="calc-btn px-space-sm py-space-xs rounded-lg font-label-md text-label-md bg-surface-card/10 text-on-primary border-none cursor-pointer focus:outline-none" onclick="setHotels(100)" type="button">100</button>
+<button class="calc-btn px-space-sm py-space-xs rounded-lg font-label-md text-label-md bg-surface-card/10 text-on-primary border-none cursor-pointer focus:outline-none" onclick="setHotels(200)" type="button">200</button>
+</div>
+<!-- Display Resultado da Simulação -->
+<div class="bg-surface-card rounded-xl p-space-md text-on-surface shadow-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Hotéis Ativos Selecionados:</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold" id="selectedCountText">50 estabelecimentos</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Seu Repasse Mensal Vitalício Líquido:</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-secondary font-extrabold" id="monthlyIncomeText">R$ 4.925,00</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/ mês</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span>Projeção Anual:</span>
+<span class="font-label-lg text-label-lg text-primary font-bold" id="annualIncomeText">R$ 59.100,00 / ano</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-space-xs text-secondary font-medium">
+<span class="material-symbols-outlined text-body-md">lock</span>
+<span>Retorno garantido com apenas 2 hotéis ativos.</span>
+</div>
+<p>
+          O setor hoteleiro tem um dos menores cancelamentos do mercado de SaaS (churn inferior a 3% ao ano), pois o sistema roda como o coração das reservas diárias.
+        </p>
+</div>
+<a class="w-full bg-primary-container text-on-primary font-label-lg text-label-lg py-space-md rounded-lg text-center shadow-md hover:bg-primary transition-colors flex items-center justify-center gap-space-xs" href="#candidatura">
+<span>Construir Minha Carteira Regional</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</section>
+<!-- 6. Perfil do Franqueado ("Quem Buscamos" vs "Quem NÃO Deve se Candidatar") -->
+<section class="w-full bg-surface px-margin-mobile py-space-xl flex flex-col gap-space-lg">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-secondary font-semibold uppercase tracking-wider">Critérios de Seleção</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+        Perfil do Franqueado Regional
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        A Franquia Hotel no Zap protege a reputação do software em cada polo turístico do Brasil. Verifique se o seu perfil corresponde à nossa operação.
+      </p>
+</div>
+<!-- Quem Estamos Buscando -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-secondary">
+<span class="material-symbols-outlined text-headline-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Quem Estamos Buscando</h3>
+</div>
+<ul class="flex flex-col gap-space-sm font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-body-md mt-0.5">done</span>
+<span>Profissionais comerciais, representantes e empreendedores com boa articulação com donos de pousadas e hotéis.</span>
+</li>
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-body-md mt-0.5">done</span>
+<span>Agências de turismo, marketing digital ou consultores hoteleiros que querem plugar receita recorrente em sua cartela.</span>
+</li>
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-body-md mt-0.5">done</span>
+<span>Visão de construção de longo prazo: dispostos a fazer visitas presenciais ou reuniões online consultivas.</span>
+</li>
+</ul>
+</div>
+<!-- Quem NÃO Deve se Candidatar -->
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-error">
+<span class="material-symbols-outlined text-headline-sm" style="font-variation-settings: 'FILL' 1;">cancel</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Quem NÃO Deve se Candidatar</h3>
+</div>
+<ul class="flex flex-col gap-space-sm font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-error text-body-md mt-0.5">close</span>
+<span>Pessoas em busca de "fórmulas mágicas" de dinheiro fácil pela internet sem prospecção ativa.</span>
+</li>
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-error text-body-md mt-0.5">close</span>
+<span>Profissionais que têm receio de conversar com empresários ou conduzir treinamentos iniciais simples.</span>
+</li>
+<li class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-error text-body-md mt-0.5">close</span>
+<span>Quem não tem compromisso de acompanhar a implantação inicial dos clientes homologados.</span>
+</li>
+</ul>
+</div>
+</section>
+<!-- 7. Estrutura Entregue pela Matriz -->
+<section class="w-full bg-surface-container-high px-margin-mobile py-space-xl flex flex-col gap-space-lg">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-secondary font-semibold uppercase tracking-wider">Suporte Completo</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+        A infraestrutura entregue pela matriz Hotel no Zap
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Você não precisa criar nada do zero. Receba todo o ferramental operacional e executivo pronto para rodar.
+      </p>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Item 1 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
+<span class="material-symbols-outlined text-headline-sm">link</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Link Exclusivo de Rastreio Preciso</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Cada lead e hotel cadastrado fica permanentemente vinculado ao seu CNPJ de Franqueado no banco de dados da matriz.
+          </span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-headline-sm">analytics</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Painel Executivo em Tempo Real</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Acompanhe ativações, histórico de faturas pagas e o extrato detalhado do PIX a receber em seu celular.
+          </span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-headline-sm">campaign</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Material Comercial Pronto e Validado</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Apresentações institucionais em PDF, roteiros de abordagem em áudio e modelos de propostas prontas para fechamento.
+          </span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0">
+<span class="material-symbols-outlined text-headline-sm">school</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Treinamento em Vendas Hoteleiras</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Capacitação imersiva sobre o ecossistema de reservas diretas, PMS, canais de distribuição e como destravar reuniões com diretores.
+          </span>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-headline-sm">group</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Acesso Direto aos Fundadores</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Linha prioritária direta no WhatsApp com os criadores da tecnologia para estruturar negociações estratégicas de grandes redes.
+          </span>
+</div>
+</div>
+<!-- Item 6 -->
+<div class="bg-surface-card rounded-lg p-space-md shadow-sm flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-headline-sm">support_agent</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Suporte Técnico 100% Matriz</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Toda a manutenção de IA, WhatsApp Cloud API, banco de dados e bugs fica sob responsabilidade dos nossos engenheiros.
+          </span>
+</div>
+</div>
+</div>
+</section>
+<!-- 8. Banner de Conexão & Escalabilidade -->
+<section class="w-full relative overflow-hidden py-space-xl px-margin-mobile flex flex-col justify-end text-on-primary">
+<!-- Imagem de Fundo de Resort Elegante -->
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Breathtaking architectural view of a luxury tropical eco-resort swimming pool at sunset with palm trees and modern suites in northeastern Brazil, dramatic dusk lighting, cinematic hospitality visual" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDwhx-rMDmtNP4Fp054f40xBMsnPvjBhABXIKJ87i-7vnnvVO4puoKAzwkIFUJ9rb6osWJvgX9xFd2tbDXg19suV2FJvzageu8iIIWcM2FEl8qo8tkRqGuX8OSz1yZ2I1-NLc8RXs0P-HFeCzUo3Dtm0NVVzqTeYvx3HkduhqVF5DZrG9gpE07PE3MvbpjoYKjBuu192wDjM-B_0uermHrNPDUzPgDQpp99APNMr3tnC7m6S1mefx4w')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-gradient-end via-primary-container/85 to-transparent"></div>
+<div class="relative z-10 flex flex-col gap-space-sm pt-space-xl">
+<span class="font-label-sm text-label-sm text-accent-mint uppercase tracking-widest font-semibold">Mercado Inexplorado</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-primary leading-tight">
+        Seu papel é conectar o mercado. A tecnologia do Hotel no Zap entrega o valor.
+      </h2>
+<p class="font-body-md text-body-md text-surface-container-high">
+        Existem mais de 35 mil meios de hospedagem no Brasil reféns das comissões das agências online. Torne-se a referência tecnológica de hospedagem na sua microrregião.
+      </p>
+</div>
+</section>
+<!-- 9. Perguntas Frequentes (FAQ Acordeão) -->
+<section class="w-full bg-surface px-margin-mobile py-space-xl flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-secondary font-semibold uppercase tracking-wider">Esclarecimento de Dúvidas</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+        Perguntas Frequentes sobre a Franquia
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Transparência absoluta antes da sua candidatura regional.
+      </p>
+</div>
+<div class="flex flex-col gap-space-xs">
+<!-- FAQ 1 -->
+<div class="bg-surface-card rounded-lg overflow-hidden shadow-sm">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface font-headline-sm text-headline-sm gap-space-sm" onclick="toggleFaq('faq-ans-1', 'faq-ico-1')" type="button">
+<span>Como funciona a Taxa de Franquia? Há royalties mensais?</span>
+<span class="material-symbols-outlined text-secondary transition-transform" id="faq-ico-1">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-ans-1">
+          A Taxa de Franquia é estritamente <strong>ANUAL</strong>. Não cobramos royalties mensais, taxas de fundo de propaganda ou custos ocultos. Uma vez ativa a sua licença, todo o faturamento dos seus hotéis rende comissão direta para você.
+        </div>
+</div>
+<!-- FAQ 2 -->
+<div class="bg-surface-card rounded-lg overflow-hidden shadow-sm">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface font-headline-sm text-headline-sm gap-space-sm" onclick="toggleFaq('faq-ans-2', 'faq-ico-2')" type="button">
+<span>Em quanto tempo consigo o Retorno do Investimento (ROI)?</span>
+<span class="material-symbols-outlined text-secondary transition-transform" id="faq-ico-2">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-ans-2">
+          Com apenas <strong>2 hotéis ativos</strong> no plano mais básico (R$ 197/mês), a sua receita de repasse mensal já cobre o equivalente ao valor investido na taxa anual da licença. Do 3º hotel em diante, todo o repasse mensal é 100% lucro líquido.
+        </div>
+</div>
+<!-- FAQ 3 -->
+<div class="bg-surface-card rounded-lg overflow-hidden shadow-sm">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface font-headline-sm text-headline-sm gap-space-sm" onclick="toggleFaq('faq-ans-3', 'faq-ico-3')" type="button">
+<span>Quem cuida de servidores, IA e suporte técnico aos hotéis?</span>
+<span class="material-symbols-outlined text-secondary transition-transform" id="faq-ico-3">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-ans-3">
+          A matriz do <strong>Hotel no Zap</strong> assume 100% das obrigações de engenharia, estabilidade de servidores na nuvem, desenvolvimento e atendimento de suporte técnico aos hoteleiros. Você não precisa contratar técnicos nem programadores.
+        </div>
+</div>
+<!-- FAQ 4 -->
+<div class="bg-surface-card rounded-lg overflow-hidden shadow-sm">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface font-headline-sm text-headline-sm gap-space-sm" onclick="toggleFaq('faq-ans-4', 'faq-ico-4')" type="button">
+<span>Qual é o trabalho e responsabilidade do Franqueado?</span>
+<span class="material-symbols-outlined text-secondary transition-transform" id="faq-ico-4">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-ans-4">
+          Seu papel é estritamente relacional e comercial: mapear pousadas e hotéis da sua região, apresentar o Hotel no Zap utilizando nossos materiais comerciais e conduzir o treinamento inicial da equipe do hoteleiro após a contratação.
+        </div>
+</div>
+<!-- FAQ 5 -->
+<div class="bg-surface-card rounded-lg overflow-hidden shadow-sm">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface font-headline-sm text-headline-sm gap-space-sm" onclick="toggleFaq('faq-ans-5', 'faq-ico-5')" type="button">
+<span>Como e quando recebo meus repasses de comissão?</span>
+<span class="material-symbols-outlined text-secondary transition-transform" id="faq-ico-5">expand_more</span>
+</button>
+<div class="px-space-md pb-space-md font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-ans-5">
+          Os repasses de <strong>50% líquido (R$ 98,50 por hotel ativo no plano base)</strong> são depositados pontualmente todo dia 05 do mês diretamente na sua conta corrente via transferência PIX, com extrato em tempo real no painel executivo.
+        </div>
+</div>
+</div>
+</section>
+<!-- 10. CTA Final de Candidatura -->
+<section class="w-full bg-gradient-to-b from-surface to-surface-container-high px-margin-mobile py-space-xl flex flex-col gap-space-md" id="candidatura">
+<div class="w-full bg-surface-card rounded-xl p-space-lg shadow-xl flex flex-col gap-space-md text-center text-on-surface">
+<div class="w-12 h-12 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center mx-auto">
+<span class="material-symbols-outlined text-headline-lg">verified</span>
+</div>
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider">Candidatura Oficial de Franqueado</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+          Pronto para Construir sua Carteira Recorrente na Hotelaria?
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Junte-se à rede oficial do <strong>Hotel no Zap</strong> e garanta 50% de repasse vitalício mensal por cada hotel ativado na sua região.
+        </p>
+</div>
+<!-- Detalhes Finais de Credenciamento -->
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col gap-space-xs text-left">
+<div class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface font-semibold">
+<span class="material-symbols-outlined text-secondary text-headline-sm">check</span>
+<span>Taxa anual única sem cobrança de royalties</span>
+</div>
+<div class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface font-semibold">
+<span class="material-symbols-outlined text-secondary text-headline-sm">check</span>
+<span>ROI superado com apenas 2 clientes</span>
+</div>
+<div class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface font-semibold">
+<span class="material-symbols-outlined text-secondary text-headline-sm">check</span>
+<span>Exclusividade por microrregião e polo turístico</span>
+</div>
+</div>
+<!-- Botão Quero Ser Franqueado -->
+<a class="w-full bg-surface-card hover:bg-surface-container text-on-surface font-headline-sm text-headline-sm py-space-md rounded-xl text-center shadow-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-space-xs" href="mailto:hotelnozap@gmail.com?subject=Candidatura%20de%20Franquia%20Regional%20-%20Hotel%20no%20Zap&amp;body=Ol%C3%A1%2C%20tenho%20interesse%20em%20me%20tornar%20um%20Franqueado%20Regional%20do%20Hotel%20no%20Zap.%20Minha%20regi%C3%A3o%20%C3%A9%3A">
+<span class="material-symbols-outlined">badge</span>
+<span>Quero ser Franqueado</span>
+</a>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+        Processo seletivo simplificado. Retorno da equipe de expansão em até 24h úteis.
+      </span>
+</div>
+</section>
+<!-- 11. Rodapé Mobile Completo -->
+<footer class="w-full bg-gradient-end text-surface-container-high px-margin-mobile py-space-xl flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-card/10 flex items-center justify-center text-accent-mint">
+<span class="material-symbols-outlined text-headline-sm">domain</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-primary">Hotel no Zap</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline-variant mt-1 leading-relaxed">
+        Plataforma líder em automação de reservas diretas no WhatsApp e PMS para a hotelaria independente do Brasil.
+      </p>
+</div>
+<!-- Canal Oficial de Contato -->
+<div class="bg-surface-card/5 p-space-md rounded-lg flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-accent-mint uppercase font-semibold">Contato Direto da Matriz</span>
+<a class="font-label-lg text-label-lg text-on-primary hover:text-accent-mint transition-colors flex items-center gap-space-xs" href="mailto:hotelnozap@gmail.com">
+<span class="material-symbols-outlined text-body-md">mail</span>
+        hotelnozap@gmail.com
+      </a>
+<span class="font-body-sm text-body-sm text-outline-variant">Central de Expansão &amp; Licenciamento</span>
+</div>
+<!-- Botão Rápido Rodapé -->
+<a class="w-full bg-secondary text-on-secondary font-label-lg text-label-lg py-space-sm rounded-lg text-center flex items-center justify-center gap-space-xs" href="#candidatura">
+<span>Seja um Franqueado</span>
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+</a>
+<!-- Selo de Segurança e Legal -->
+<div class="flex items-center justify-between pt-space-xs text-outline-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-secondary">lock</span>
+<span>Ambiente Seguro SSL 256-bit</span>
+</div>
+<span>LGPD em Conformidade</span>
+</div>
+<div class="pt-space-xs text-center font-body-sm text-body-sm text-outline-variant">
+      © 2026 Hotel no Zap Tecnologia Hoteleira Ltda.<br/>
+      Todos os direitos reservados • Franquia Regional Oficial
+    </div>
+</footer>
+</div>
+<script>
+  function setHotels(count) {
+    const netPerHotel = 98.50;
+    const monthlyTotal = count * netPerHotel;
+    const annualTotal = monthlyTotal * 12;
+
+    const countText = document.getElementById('selectedCountText');
+    const monthlyText = document.getElementById('monthlyIncomeText');
+    const annualText = document.getElementById('annualIncomeText');
+
+    if (countText && monthlyText && annualText) {
+      countText.textContent = `${count} estabelecimentos`;
+      monthlyText.textContent = `R$ ${monthlyTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      annualText.textContent = `R$ ${annualTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ano`;
+    }
+
+    // Toggle button active classes
+    const buttons = document.querySelectorAll('.calc-btn');
+    buttons.forEach(btn => {
+      if (btn.textContent.trim() === String(count)) {
+        btn.className = "calc-btn px-space-sm py-space-xs rounded-lg font-label-md text-label-md bg-secondary text-on-secondary font-bold border-none cursor-pointer focus:outline-none";
+      } else {
+        btn.className = "calc-btn px-space-sm py-space-xs rounded-lg font-label-md text-label-md bg-surface-card/10 text-on-primary border-none cursor-pointer focus:outline-none";
+      }
+    });
+  }
+
+  function toggleFaq(answerId, iconId) {
+    const answer = document.getElementById(answerId);
+    const icon = document.getElementById(iconId);
+    if (!answer || !icon) return;
+
+    if (answer.classList.contains('hidden')) {
+      answer.classList.remove('hidden');
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      answer.classList.add('hidden');
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
+</script></main>
+<!-- BEGIN: MainFooter -->
+<footer class="bg-black text-gray-400 text-xs py-8 px-4 border-t border-white/10" data-purpose="mobile-footer">
+<div class="flex flex-col gap-6">
+<!-- Brand & Mission -->
+<div>
+<div class="flex items-center gap-2 mb-2">
+<div class="w-7 h-7 rounded-lg bg-emerald-700 flex items-center justify-center text-brand-gold font-display font-bold text-xs">
+            HZ
+          </div>
+<span class="font-display font-bold text-sm text-white tracking-tight">HOTEL NO ZAP</span>
+</div>
+<p class="text-[11px] text-gray-400 leading-relaxed">
+          A inteligência que seu hotel precisa no canal que seu hóspede usa. Gestão operacional completa e motor de reservas diretas sem comissões.
+        </p>
+</div>
+<!-- Quick Links Grid -->
+<div class="grid grid-cols-2 gap-4 text-[11px]">
+<div>
+<h4 class="font-bold text-white uppercase text-[10px] tracking-wider mb-2">Produto</h4>
+<ul class="space-y-1.5 text-gray-400">
+<li><a class="hover:text-white" href="#">Mapa de Quartos (PMS)</a></li>
+<li><a class="hover:text-white" href="#">Motor no WhatsApp</a></li>
+<li><a class="hover:text-white" href="#">Controle Financeiro</a></li>
+<li><a class="hover:text-white" href="#">Tabela de Planos</a></li>
+<li><a class="hover:text-white" href="#">Calculadora de Economia</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-white uppercase text-[10px] tracking-wider mb-2">Empresa</h4>
+<ul class="space-y-1.5 text-gray-400">
+<li><a class="hover:text-white" href="#">Sobre Nós</a></li>
+<li><a class="hover:text-white" href="#">Blog do Hoteleiro</a></li>
+<li><a class="hover:text-white" href="#">Programa de Parceiros &amp; Afiliados</a></li>
+<li><a class="hover:text-white" href="#">Termos de Uso</a></li>
+<li><a class="hover:text-white" href="#">Política de Privacidade</a></li>
+</ul>
+</div>
+</div>
+<!-- Live Service Status Badge -->
+<div class="bg-white/5 p-3 rounded-xl border border-white/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span class="text-[10px] text-gray-300 font-medium">Todos os serviços operacionais</span>
+</div>
+<span class="text-[9px] text-gray-400">Central: 08h às 20h</span>
+</div>
+<!-- Copyright -->
+<div class="pt-4 border-t border-white/10 flex flex-col gap-2 text-[10px] text-gray-400">
+<p>© 2026 Hotel no Zap Tecnologia Hoteleira Ltda.<br/>Todos os direitos reservados • Em conformidade com a LGPD.</p>
+<p class="text-[9px] text-gray-400">Desenvolvido para revolucionar a hotelaria independente no Brasil.</p>
+</div>
+</div>
+</footer>
+<!-- END: MainFooter -->
+</div>
+<!-- BEGIN: InteractivityScripts -->
+<script data-purpose="economy-calculator-script">
+  // Calculator logic matching mobile inputs
+  const roomSlider = document.getElementById('roomSlider');
+  const rateSlider = document.getElementById('rateSlider');
+  const roomValText = document.getElementById('roomValText');
+  const rateValText = document.getElementById('rateValText');
+  const calculatedEconomy = document.getElementById('calculatedEconomy');
+
+  function calculateSavings() {
+    const rooms = parseInt(roomSlider.value, 10);
+    const dailyRate = parseInt(rateSlider.value, 10);
+    
+    // Update labels
+    roomValText.textContent = `${rooms} quartos`;
+    rateValText.textContent = `R$ ${dailyRate}`;
+
+    // Calculation: 30 days * rooms * occupancy rate (approx 60%) * daily rate * OTA fee (approx 20%)
+    const estimatedMonthlyRevenue = rooms * dailyRate * 30 * 0.60;
+    const otaCommissionsSaved = estimatedMonthlyRevenue * 0.20;
+
+    calculatedEconomy.innerHTML = `R$ ${otaCommissionsSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="text-xs text-white font-normal">/mês</span>`;
+  }
+
+  roomSlider.addEventListener('input', calculateSavings);
+  rateSlider.addEventListener('input', calculateSavings);
+</script>
+<script data-purpose="pricing-toggle-script">
+  // Toggle between monthly and annual plans with 20% off
+  const toggleMonthly = document.getElementById('toggleMonthly');
+  const toggleAnnual = document.getElementById('toggleAnnual');
+  const starterPrice = document.getElementById('starterPrice');
+  const proPrice = document.getElementById('proPrice');
+  const entPrice = document.getElementById('entPrice');
+
+  let isAnnual = false;
+
+  toggleMonthly.addEventListener('click', () => {
+    if (isAnnual) {
+      isAnnual = false;
+      toggleMonthly.className = "px-3 py-1.5 rounded-lg bg-white shadow-xs text-brand-darkSlate font-bold";
+      toggleAnnual.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:text-brand-darkSlate flex items-center gap-1 font-medium";
+      starterPrice.textContent = 'R$ 149';
+      proPrice.textContent = 'R$ 299';
+      entPrice.textContent = 'R$ 590';
+    }
+  });
+
+  toggleAnnual.addEventListener('click', () => {
+    if (!isAnnual) {
+      isAnnual = true;
+      toggleAnnual.className = "px-3 py-1.5 rounded-lg bg-white shadow-xs text-brand-darkSlate font-bold flex items-center gap-1";
+      toggleMonthly.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:text-brand-darkSlate font-medium";
+      // 20% discount applied to monthly equivalent
+      starterPrice.textContent = 'R$ 119';
+      proPrice.textContent = 'R$ 239';
+      entPrice.textContent = 'R$ 472';
+    }
+  });
+</script>
+<!-- END: InteractivityScripts -->
+</body></html>

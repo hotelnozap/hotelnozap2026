@@ -28,6 +28,11 @@
       "source": "/lp/:path*",
       "destination": "https://lp.hotelnozap.com.br/:path*",
       "permanent": false
+    },
+    {
+      "source": "/parceiros",
+      "destination": "https://parceiros.hotelnozap.com.br",
+      "permanent": false
     }
   ],
   "rewrites": [
