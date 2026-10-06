@@ -272,8 +272,12 @@ export const App: React.FC = () => {
         setActiveTab('camareira');
       } else if (parts[0] === 'lp' && parts[1] === 'lpnovohotel') {
         setActiveTab('lp-novo-hotel');
-      } else if (parts[0] === 'lp') {
+      } else if (parts[0] === 'lp' || parts[0] === 'landingpage') {
         setActiveTab('landingpage');
+      } else if (parts[0] === 'parceiros' && parts[1] !== 'assinar') {
+        setActiveTab('landingpage-parceiros');
+      } else if (parts[0] === 'parceiro' || parts[0] === 'franquia') {
+        setActiveTab('landingpage-parceiros');
       } else if (parts[0] === 'assinar' || (parts[0] === 'parceiros' && parts[1] === 'assinar')) {
         if (typeof window !== 'undefined' && window.location.pathname === '/assinar') {
           window.history.replaceState({}, '', `/parceiros/assinar${window.location.search}${window.location.hash}`);
@@ -298,8 +302,11 @@ export const App: React.FC = () => {
           setActiveTab((savedRole && savedEmail) ? 'perfil' : 'minhaconta');
         }
       } else if (parts.length === 0) {
-        // Rota raiz /: Se for o subdomínio app.hotelnozap.com.br, direciona ao Login / Painel
-        if (isAppDomain()) {
+        if (isParceirosDomain()) {
+          setActiveTab('landingpage-parceiros');
+        } else if (isLpDomain()) {
+          setActiveTab('landingpage');
+        } else if (isAppDomain()) {
           const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
           const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
           if (savedRole && savedEmail) {
@@ -374,6 +381,9 @@ export const App: React.FC = () => {
         break;
       case 'landingpage':
         document.title = 'Hotel no Zap - Sistema de Gestão Hoteleira';
+        break;
+      case 'landingpage-parceiros':
+        document.title = 'Hotel no Zap - Franquia e Licenciamento';
         break;
       case 'lp-novo-hotel':
         document.title = 'Cadastre seu Hotel';
@@ -679,7 +689,7 @@ export const App: React.FC = () => {
               if (isAppDomain() && (prev === 'catalogo-hoteis' || !prev)) {
                 return 'login';
               }
-              return (prev === 'login' || prev === 'landingpage' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login';
+              return (prev === 'login' || prev === 'landingpage' || prev === 'landingpage-parceiros' || prev === 'assinar' || prev === 'lp-novo-hotel' || prev === 'minhaconta' || prev === 'catalogo-hoteis' || prev === 'pagina-hotel' || prev === 'detalhes-quarto') ? prev : 'login';
             });
           }
         }
@@ -1017,7 +1027,7 @@ export const App: React.FC = () => {
   }
 
   const isLandingPageRoute = activeTab === 'landingpage' ||
-    (isLpDomain() && (pathParts.length === 0 || pathParts[0] === 'lp' || pathParts[0] === 'landingpage')) ||
+    (isLpDomain() && pathParts[0] !== 'lpnovohotel') ||
     (pathParts[0] === 'lp' && pathParts[1] !== 'lpnovohotel');
 
   if (isLandingPageRoute) {
@@ -1053,7 +1063,7 @@ export const App: React.FC = () => {
 
   // ── Rota: /parceiros ou subdomínio parceiros.hotelnozap.com.br — Landing Page de Franqueados/Parceiros ──
   const isParceirosLandingRoute = activeTab === 'landingpage-parceiros' ||
-    (isParceirosDomain() && (pathParts.length === 0 || pathParts[0] === 'parceiros')) ||
+    (isParceirosDomain() && pathParts[0] !== 'assinar') ||
     (pathParts[0] === 'parceiros' && pathParts[1] !== 'assinar') ||
     pathParts[0] === 'parceiro' ||
     pathParts[0] === 'franquia';
@@ -1160,7 +1170,7 @@ export const App: React.FC = () => {
     );
   }
 
-  if (activeTab === 'catalogo-hoteis' || (!isAppDomain() && (pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1)))) {
+  if (activeTab === 'catalogo-hoteis' || (!isAppDomain() && !isLpDomain() && !isParceirosDomain() && (pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1)))) {
     return (
       <CatalogoHoteis 
         onNavigateToLogin={() => {
