@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { currentHotelService, hotelConfigService } from '../services/supabaseService';
+import { formatHotelUrl } from '../utils/hotelUrl';
 
 export interface ConfiguracoesHotelProps {
-  initialTab?: 'horarios' | 'regras' | 'lgpd' | 'mercadopago';
+  initialTab?: 'horarios' | 'regras' | 'lgpd' | 'mercadopago' | 'metatags';
   onBackToDashboard?: () => void;
 }
 
@@ -50,6 +51,11 @@ export interface HotelConfigData {
   mpEnableCreditCard: boolean;
   mpEnableBoleto: boolean;
   mpMaxInstallments: string;
+
+  // 5. Meta Tags & Compartilhamento Social (WhatsApp, Facebook, Google)
+  metaTitulo?: string;
+  metaDescricao?: string;
+  metaImagem?: string;
 }
 
 export const DEFAULT_CONFIG: HotelConfigData = {
@@ -91,7 +97,11 @@ export const DEFAULT_CONFIG: HotelConfigData = {
   mpEnablePix: true,
   mpEnableCreditCard: true,
   mpEnableBoleto: false,
-  mpMaxInstallments: '12'
+  mpMaxInstallments: '12',
+
+  metaTitulo: '',
+  metaDescricao: '',
+  metaImagem: ''
 };
 
 export const loadHotelConfigFromStorage = (hotelId?: string): HotelConfigData => {
@@ -173,10 +183,11 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
   initialTab = 'horarios',
   onBackToDashboard
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'horarios' | 'regras' | 'lgpd' | 'mercadopago'>(initialTab);
+  const [activeSubTab, setActiveSubTab] = useState<'horarios' | 'regras' | 'lgpd' | 'mercadopago' | 'metatags'>(initialTab);
   const [config, setConfig] = useState<HotelConfigData>(DEFAULT_CONFIG);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copiadoLink, setCopiadoLink] = useState(false);
 
   // Mercado Pago secrets visibility
   const [showAccessToken, setShowAccessToken] = useState(false);
@@ -352,6 +363,19 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
         >
           <span className="material-symbols-outlined text-lg">payments</span>
           <span>Mercado Pago & Checkout</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('metatags')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+            activeSubTab === 'metatags'
+              ? 'bg-[#006c49] text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <span className="material-symbols-outlined text-lg">campaign</span>
+          <span>Meta Tags WhatsApp (CTA)</span>
         </button>
       </div>
 
@@ -1092,6 +1116,269 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
             </div>
           </div>
         )}
+
+        {/* ── ABA 5: METATAGS & WHATSAPP (CTA) ── */}
+        {activeSubTab === 'metatags' && (() => {
+          const nomeHotel = currentHotel?.name || 'Seu Hotel';
+          const cidadeUf = currentHotel?.cityUf ? ` (${currentHotel.cityUf})` : '';
+          const rawSlug = currentHotel?.link ? currentHotel.link.replace(/^https?:\/\/[^\/]+/i, '').replace(/^\/?(hoteis|hotel)\/?/i, '').split('?')[0] : '';
+          const hotelSlug = rawSlug || (nomeHotel ? nomeHotel.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') : 'nomedohotel');
+          const hotelCanonicalUrl = formatHotelUrl(hotelSlug);
+
+          const defaultTitle = `🏨 ${nomeHotel} - Reserve Direto com Confirmação Imediata`;
+          const defaultDesc = `👉 Veja fotos das acomodações, consulte diárias e garanta sua reserva no ${nomeHotel}${cidadeUf} com confirmação instantânea pelo WhatsApp. Clique e reserve agora!`;
+          const defaultImg = currentHotel?.imageUrl || 'https://hotelnozap.com.br/og-image.png';
+
+          const currentTitle = config.metaTitulo || defaultTitle;
+          const currentDesc = config.metaDescricao || defaultDesc;
+          const currentImg = config.metaImagem || defaultImg;
+
+          const handleCopyLink = () => {
+            navigator.clipboard.writeText(hotelCanonicalUrl);
+            setCopiadoLink(true);
+            showToast('Link do hotel copiado para a área de transferência!');
+            setTimeout(() => setCopiadoLink(false), 3000);
+          };
+
+          const handleShareWhatsApp = () => {
+            const shareText = `${currentTitle}\n\n${currentDesc}\n\n👉 Acesse agora para simular datas e reservar:\n${hotelCanonicalUrl}`;
+            const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+            window.open(shareUrl, '_blank');
+          };
+
+          const handleResetToDefaultCTA = () => {
+            updateField('metaTitulo', '');
+            updateField('metaDescricao', '');
+            updateField('metaImagem', '');
+            showToast('CTA de alta conversão restaurada para a fórmula padrão recomendada!');
+          };
+
+          return (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              {/* Banner Informativo */}
+              <div className="bg-gradient-to-r from-emerald-900 via-[#003400] to-emerald-950 rounded-2xl p-6 text-white border border-emerald-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">campaign</span>
+                      ALTA CONVERSÃO NO WHATSAPP
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white/90">
+                      OPEN GRAPH DINÂMICO
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                    Meta Tags & CTA do Link do Hotel
+                  </h2>
+                  <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-2xl leading-relaxed">
+                    Personalize o card visual que aparece automaticamente quando você ou seus clientes colam o link do hotel no WhatsApp, Instagram e Facebook. Uma chamada para ação (CTA) persuasiva aumenta drasticamente a taxa de cliques e reservas diretas.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-slate-800 hover:bg-slate-100 font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base text-emerald-700">
+                      {copiadoLink ? 'check' : 'content_copy'}
+                    </span>
+                    <span>{copiadoLink ? 'Copiado!' : 'Copiar Link Oficial'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShareWhatsApp}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base">chat</span>
+                    <span>Testar no WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid: Preview ao Vivo + Formulário de Edição */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                {/* COLUNA ESQUERDA (PREVIEW AO VIVO IDÊNTICO AO WHATSAPP) */}
+                <div className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs flex flex-col gap-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-lg">preview</span>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">Prévia no WhatsApp</h3>
+                        <p className="text-[11px] text-slate-500">Visualização exata de como seus hóspedes veem o link</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                      Ao Vivo
+                    </span>
+                  </div>
+
+                  {/* Cenário de Chat WhatsApp simulado */}
+                  <div className="bg-[#efeae2] p-4 rounded-xl border border-slate-300/70 flex flex-col gap-2">
+                    <div className="text-[10px] text-slate-500 text-center font-medium">Hoje</div>
+
+                    {/* Balão de Mensagem do WhatsApp */}
+                    <div className="self-end max-w-sm bg-[#d9fdd3] text-slate-900 rounded-2xl rounded-tr-xs p-2.5 shadow-xs border border-emerald-200/50 flex flex-col gap-2">
+                      {/* Card do Preview Open Graph */}
+                      <div className="bg-white/90 rounded-xl overflow-hidden border border-slate-200 shadow-2xs flex flex-col">
+                        <div className="w-full h-36 sm:h-40 bg-slate-200 overflow-hidden relative">
+                          <img
+                            src={currentImg}
+                            alt={currentTitle}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80';
+                            }}
+                          />
+                          <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-mono">
+                            Preview
+                          </span>
+                        </div>
+
+                        <div className="p-3 flex flex-col gap-1">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-2">
+                            {currentTitle}
+                          </h4>
+                          <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-3">
+                            {currentDesc}
+                          </p>
+                          <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
+                            hotelnozap.com.br
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Link textual abaixo do card */}
+                      <div className="text-xs text-emerald-800 underline font-mono break-all px-1">
+                        {hotelCanonicalUrl}
+                      </div>
+
+                      <div className="self-end text-[9px] text-slate-500 flex items-center gap-1">
+                        <span>12:00</span>
+                        <span className="material-symbols-outlined text-[13px] text-sky-600">done_all</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    💡 <strong>Dica de Especialista:</strong> Ao enviar o link em conversas de atendimento no WhatsApp, aguarde 2 segundos para que o aplicativo gere o card acima antes de enviar a mensagem!
+                  </p>
+                </div>
+
+                {/* COLUNA DIREITA (CAMPOS DE EDIÇÃO & CTA) */}
+                <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs flex flex-col gap-5">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Personalizar Chamada & Meta Tags</h3>
+                      <p className="text-xs text-slate-500">Deixe em branco para usar a fórmula automática de alta conversão</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleResetToDefaultCTA}
+                      className="inline-flex items-center gap-1.5 text-xs text-emerald-700 hover:text-emerald-900 font-semibold cursor-pointer"
+                      title="Voltar para a CTA padrão recomendada"
+                    >
+                      <span className="material-symbols-outlined text-sm">restart_alt</span>
+                      <span>Restaurar Padrão</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    {/* Campo 1: Título da Meta Tag */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Título do Card (og:title)
+                        </label>
+                        <span className="text-[11px] text-slate-400">
+                          {(config.metaTitulo || defaultTitle).length} caracteres (Ideal: 40 a 60)
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={config.metaTitulo || ''}
+                        onChange={(e) => updateField('metaTitulo', e.target.value)}
+                        placeholder={defaultTitle}
+                        className="w-full py-2.5 px-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Aparece em negrito no topo do link. Recomenda-se incluir o nome do hotel e benefício imediato.
+                      </p>
+                    </div>
+
+                    {/* Campo 2: Descrição / CTA de Conversão */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Descrição / CTA de Alta Conversão (og:description)
+                        </label>
+                        <span className="text-[11px] text-slate-400">
+                          {(config.metaDescricao || defaultDesc).length} caracteres (Ideal: 110 a 160)
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={config.metaDescricao || ''}
+                        onChange={(e) => updateField('metaDescricao', e.target.value)}
+                        placeholder={defaultDesc}
+                        className="w-full py-2.5 px-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition resize-none"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Texto de convite direto que estimula o hóspede a clicar para ver fotos e diárias.
+                      </p>
+                    </div>
+
+                    {/* Campo 3: Imagem do Card */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        URL da Foto de Destaque da Meta Tag (og:image)
+                      </label>
+                      <input
+                        type="url"
+                        value={config.metaImagem || ''}
+                        onChange={(e) => updateField('metaImagem', e.target.value)}
+                        placeholder={defaultImg}
+                        className="w-full py-2.5 px-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-mono focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        URL pública da foto principal (fachada ou melhor suíte). Proporção ideal: 1200x630px.
+                      </p>
+                    </div>
+
+                    {/* Link Oficial Formatado */}
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Link Público Oficial
+                        </span>
+                        <span className="text-xs font-mono font-bold text-slate-800 break-all">
+                          {hotelCanonicalUrl}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCopyLink}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006c49] font-bold text-xs border border-emerald-200 transition cursor-pointer self-start sm:self-auto shrink-0"
+                      >
+                        <span className="material-symbols-outlined text-sm">
+                          {copiadoLink ? 'check' : 'content_copy'}
+                        </span>
+                        <span>{copiadoLink ? 'Copiado!' : 'Copiar'}</span>
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
 
         {/* BOTÃO SALVAR FIXO NO MOBILE / RODAPÉ */}
         <div className="flex justify-end pt-4 border-t border-slate-200">

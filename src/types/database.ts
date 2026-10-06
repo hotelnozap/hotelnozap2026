@@ -39,6 +39,9 @@ export interface Database {
           status: string;
           url_imagem: string | null;
           agente_ia: string | null;
+          meta_titulo?: string | null;
+          meta_descricao?: string | null;
+          meta_imagem?: string | null;
         }
         Insert: Omit<Database['public']['Tables']['hoteis']['Row'], 'id' | 'criado_em'> & {
           id?: string;
@@ -314,4 +317,9 @@ export interface HotelConfigData {
   mpEnableCreditCard: boolean;
   mpEnableBoleto: boolean;
   mpMaxInstallments: string;
+
+  // 5. Meta Tags & Compartilhamento Social (WhatsApp, Facebook, Google)
+  metaTitulo?: string;
+  metaDescricao?: string;
+  metaImagem?: string;
 }

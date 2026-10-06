@@ -33,6 +33,10 @@ export interface PublicHotel {
   notes?: string;
   plan?: string;
   isImportedFromGoogle?: boolean;
+  cityUf?: string;
+  metaTitulo?: string;
+  metaDescricao?: string;
+  metaImagem?: string;
 }
 
 export interface CityGroup {

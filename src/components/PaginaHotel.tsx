@@ -137,10 +137,46 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
   const [leadSuccess, setLeadSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-    if (currentHotel?.name) {
-      document.title = `${currentHotel.name} - Reservas`;
-    }
-  }, [currentHotel?.name]);
+    if (!currentHotel?.name) return;
+
+    const nome = currentHotel.name;
+    const cidadeUf = (currentHotel.city && currentHotel.uf) ? ` (${currentHotel.city}/${currentHotel.uf})` : (currentHotel.city ? ` (${currentHotel.city})` : '');
+    const img = (currentHotel as any).metaImagem || currentHotel.imageUrl || 'https://hotelnozap.com.br/og-image.png';
+
+    const customTitle = (currentHotel as any).metaTitulo;
+    const customDesc = (currentHotel as any).metaDescricao;
+
+    const title = customTitle || `🏨 ${nome} - Reserve Direto com Confirmação Imediata`;
+    const description = customDesc || `👉 Veja fotos das acomodações, consulte diárias e garanta sua reserva no ${nome}${cidadeUf} com confirmação instantânea pelo WhatsApp. Clique e reserve agora!`;
+    const url = typeof window !== 'undefined' ? window.location.href : 'https://hotelnozap.com.br/';
+
+    document.title = title;
+
+    const setMeta = (attr: string, key: string, value: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', value);
+    };
+
+    setMeta('name', 'description', description);
+    setMeta('property', 'og:title', title);
+    setMeta('property', 'og:description', description);
+    setMeta('property', 'og:image', img);
+    setMeta('property', 'og:image:secure_url', img);
+    setMeta('property', 'og:url', url);
+    setMeta('property', 'og:site_name', `${nome} • Hotel no Zap`);
+    setMeta('name', 'twitter:title', title);
+    setMeta('name', 'twitter:description', description);
+    setMeta('name', 'twitter:image', img);
+
+    return () => {
+      document.title = 'Hotel no Zap - Guia de Hotéis, Pousadas e Reservas';
+    };
+  }, [currentHotel]);
 
   const menorDiaria = React.useMemo(() => {
     if (quartosList && quartosList.length > 0) {

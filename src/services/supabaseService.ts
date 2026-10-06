@@ -6479,7 +6479,10 @@ export const DEFAULT_HOTEL_CONFIG: HotelConfigData = {
   mpEnablePix: true,
   mpEnableCreditCard: true,
   mpEnableBoleto: false,
-  mpMaxInstallments: '12'
+  mpMaxInstallments: '12',
+  metaTitulo: '',
+  metaDescricao: '',
+  metaImagem: ''
 };
 
 export const extractConfigFromObservacoes = (observacoes?: string | null): HotelConfigData | null => {
@@ -6541,6 +6544,9 @@ export const hotelConfigService = {
       mpEnableCreditCard: row.mp_enable_credit_card !== false,
       mpEnableBoleto: row.mp_enable_boleto === true,
       mpMaxInstallments: row.mp_max_installments || '12',
+      metaTitulo: row.meta_titulo || '',
+      metaDescricao: row.meta_descricao || '',
+      metaImagem: row.meta_imagem || ''
     };
   },
 
@@ -6572,7 +6578,7 @@ export const hotelConfigService = {
       dpo_email: config.dpoEmail,
       dpo_telefone: config.dpoTelefone,
       exigir_consentimento_checkin: config.exigirConsentimentoCheckin,
-      prazo_retencao_anos: config.prazoRetencaoAnos,
+      prazoRetencaoAnos: config.prazoRetencaoAnos,
       enviar_aviso_privacidade_whatsapp: config.enviarAvisoPrivacidadeWhatsapp,
       politica_privacidade_texto: config.politicaPrivacidadeTexto,
       mp_environment: config.mpEnvironment,
@@ -6584,6 +6590,9 @@ export const hotelConfigService = {
       mp_enable_credit_card: config.mpEnableCreditCard,
       mp_enable_boleto: config.mpEnableBoleto,
       mp_max_installments: config.mpMaxInstallments,
+      meta_titulo: config.metaTitulo || '',
+      meta_descricao: config.metaDescricao || '',
+      meta_imagem: config.metaImagem || '',
       atualizado_em: new Date().toISOString()
     };
   },
@@ -6698,13 +6707,25 @@ export const hotelConfigService = {
           .maybeSingle();
 
         const updatedObs = embedConfigInObservacoes(hotelRow?.observacoes, config);
+        const updatePayload: any = { 
+          observacoes: updatedObs,
+          meta_titulo: config.metaTitulo || '',
+          meta_descricao: config.metaDescricao || '',
+          meta_imagem: config.metaImagem || ''
+        };
+
         const { error: hotelErr } = await supabase
           .from('hoteis')
-          .update({ observacoes: updatedObs })
+          .update(updatePayload)
           .eq('id', hId);
 
         if (hotelErr) {
           console.warn('Aviso ao sincronizar na tabela hoteis:', hotelErr);
+          // Se as colunas não existirem ainda, tenta atualizar apenas observacoes
+          await supabase
+            .from('hoteis')
+            .update({ observacoes: updatedObs })
+            .eq('id', hId);
         } else {
           console.info('Configuração persistida com sucesso na tabela hoteis!');
         }
