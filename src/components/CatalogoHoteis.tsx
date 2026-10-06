@@ -818,13 +818,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
         <div className="hidden md:flex h-20 w-full max-w-7xl mx-auto px-8 items-center justify-between gap-4">
 
           {/* 1. LOGO HOTEL NO ZAP */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <ZapHotelLogo size={40} />
+          <a href="/" className="flex items-center gap-2.5 shrink-0 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+            <ZapHotelLogo size={40} className="group-hover:scale-105 transition-transform" />
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-lg text-slate-900 tracking-tight">Hotel no Zap</span>
               <span className="text-[10px] text-[#006c49] font-bold uppercase tracking-wider">Hospitalidade Digital</span>
             </div>
-          </div>
+          </a>
 
           {/* 2. SEARCH PILL CENTRAL (DESKTOP) */}
           <div className="flex items-center rounded-full border border-slate-300 shadow-sm hover:shadow-md transition-all divide-x divide-slate-200 bg-white py-1.5 px-2 relative">
@@ -974,13 +974,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           </div>
 
           {/* 1. LOGO, NOME E SLOGAN CENTRALIZADOS */}
-          <div className="flex flex-col items-center justify-center text-center w-full">
+          <a href="/" className="flex flex-col items-center justify-center text-center w-full group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
             <div className="flex items-center justify-center gap-2">
-              <ZapHotelLogo size={34} />
+              <ZapHotelLogo size={34} className="group-hover:scale-105 transition-transform" />
               <span className="font-extrabold text-base text-slate-900 tracking-tight">Hotel no Zap</span>
             </div>
             <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
-          </div>
+          </a>
 
           {/* 2. BARRA DE PESQUISA ABAIXO DA LOGO */}
           <div className="mt-2.5 w-full">
@@ -1457,13 +1457,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
       <footer className="w-full bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs">
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="flex items-center gap-3">
-              <ZapHotelLogo size={32} />
+            <a href="/" className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+              <ZapHotelLogo size={32} className="group-hover:scale-105 transition-transform" />
               <div>
                 <span className="font-bold text-white block">Hotel no Zap © 2026</span>
                 <span className="text-slate-500">Rede Inteligente de Pousadas e Hotéis</span>
               </div>
-            </div>
+            </a>
 
             {/* Ícones das Redes Sociais do Hotel no Zap */}
             <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4">

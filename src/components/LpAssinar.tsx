@@ -656,7 +656,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-xs">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Marca */}
-          <button onClick={onNavigateToLP} className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group shrink-0">
+          <a href="/" className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group shrink-0" title="Ir para a página inicial">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#003400] group-hover:bg-emerald-700 flex items-center justify-center shadow-xs transition-colors">
               <span className="material-symbols-outlined text-white text-base sm:text-lg">hotel</span>
             </div>
@@ -664,7 +664,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
               <p className="text-gray-900 font-black text-xs sm:text-sm tracking-tight">Hotel no Zap</p>
               <p className="text-emerald-700 text-[9px] sm:text-[10px] font-bold">Sistema SaaS Hoteleiro</p>
             </div>
-          </button>
+          </a>
 
           {/* Desktop Central Badges (SSL + Etapa + Ref) */}
           <div className="hidden md:flex items-center gap-2 text-xs text-gray-500 whitespace-nowrap">

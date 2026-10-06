@@ -584,15 +584,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
         {/* Topo: Marca e Identidade */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3.5">
-            <div className="w-13 h-13 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg p-2.5">
+          <a href="/" className="flex items-center gap-3.5 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+            <div className="w-13 h-13 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg p-2.5 group-hover:scale-105 transition-transform">
               <span className="material-symbols-outlined text-emerald-400 text-3xl">hotel</span>
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-wider text-white">HOTEL NO ZAP</h1>
               <p className="text-xs text-emerald-400 font-semibold tracking-wider">HOSPITALIDADE DIGITAL</p>
             </div>
-          </div>
+          </a>
         </div>
 
         {/* Meio: Destaques & Proposta de Valor */}
@@ -666,13 +666,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
             {/* Header Mobile: Logo Centralizada no topo conforme solicitado */}
             <div className="flex flex-col items-center justify-center text-center mb-6 lg:hidden">
-              <div className="flex items-center justify-center gap-2.5">
-                <ZapHotelLogo size={42} />
+              <a href="/" className="flex items-center justify-center gap-2.5 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+                <ZapHotelLogo size={42} className="group-hover:scale-105 transition-transform" />
                 <div className="flex flex-col text-left leading-none">
                   <span className="font-extrabold text-xl text-slate-900 tracking-tight">Hotel no Zap</span>
                   <span className="text-[10px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
                 </div>
-              </div>
+              </a>
             </div>
 
             <div className="mb-8">

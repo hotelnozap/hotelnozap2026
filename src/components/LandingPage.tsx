@@ -569,7 +569,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#e2e8f0] transition-all">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between gap-4">
           {/* LOGO OFICIAL */}
-          <a href="/lp" className="flex items-center shrink-0 group py-1">
+          <a href="/" className="flex items-center shrink-0 group py-1" title="Ir para a página inicial">
             <img
               src="/logo.png"
               alt="Hotel no Zap - Hospitalidade Digital"
@@ -1880,13 +1880,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 mb-12">
             <div className="lg:col-span-2">
               <div className="mb-5">
-                <div className="inline-block bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm">
+                <a href="/" className="inline-block bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm hover:opacity-90 transition-opacity" title="Ir para a página inicial">
                   <img
                     src="/logo.png"
                     alt="Hotel no Zap - Hospitalidade Digital"
                     className="h-10 sm:h-12 md:h-14 w-auto object-contain"
                   />
-                </div>
+                </a>
               </div>
               <p className="text-xs sm:text-sm text-white/60 leading-relaxed mb-6 max-w-sm">
                 A inteligência que seu hotel precisa no canal que seu hóspede usa. Gestão operacional completa e motor de reservas diretas sem comissões.

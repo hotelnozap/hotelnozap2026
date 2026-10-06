@@ -1233,15 +1233,15 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
               <span className="hidden sm:inline">Voltar ao Hotel</span>
             </button>
 
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.href = '/hoteis'}>
-              <div className="w-9 h-9 rounded-xl bg-[#006c49] flex items-center justify-center text-white shadow-xs">
+            <a href="/" className="flex items-center gap-2 cursor-pointer group hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+              <div className="w-9 h-9 rounded-xl bg-[#006c49] group-hover:scale-105 flex items-center justify-center text-white shadow-xs transition-transform">
                 <span className="material-symbols-outlined text-[20px]">hotel</span>
               </div>
               <div className="flex flex-col leading-none">
                 <span className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">Hotel no Zap</span>
                 <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider">Hospitalidade Digital</span>
               </div>
-            </div>
+            </a>
           </div>
 
           {/* Nav */}
@@ -2189,13 +2189,13 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       <footer className="w-full bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-16 pb-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs">
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="flex items-center gap-3">
-              <ZapHotelLogo size={32} />
+            <a href="/" className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+              <ZapHotelLogo size={32} className="group-hover:scale-105 transition-transform" />
               <div>
                 <span className="font-bold text-white block">Hotel no Zap © 2026</span>
                 <span className="text-slate-500">Rede Inteligente de Pousadas e Hotéis</span>
               </div>
-            </div>
+            </a>
 
             {/* Ícones das Redes Sociais do Hotel no Zap */}
             <div className="flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4">
