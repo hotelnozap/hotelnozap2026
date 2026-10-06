@@ -93,8 +93,8 @@
       </svg>
     </div>
     <h1>Você está offline</h1>
-    <p>Verifique sua conexão com a internet. O Hotel no Zap voltará a sincronizar automaticamente assim que você se reconectar.</p>
-    <button class="btn" onclick="window.location.reload()">Tentar Novamente</button>
+    <p>Verifique sua conexão com a internet ou clique abaixo para recarregar o Hotel no Zap.</p>
+    <button class="btn" onclick="if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(function(regs) { for(var r of regs) { r.unregister(); } window.location.href = window.location.pathname + '?nocache=' + Date.now(); }); } else { window.location.reload(); }">Tentar Novamente</button>
   </div>
 </body>
 </html>

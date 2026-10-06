@@ -1,5 +1,5 @@
 // Service Worker para Hotel no Zap PWA (PWABuilder Certified)
-const CACHE_NAME = 'hotelnozap-pwa-v2';
+const CACHE_NAME = 'hotelnozap-pwa-v5';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -47,7 +47,7 @@ self.addEventListener('activate', (event) => {
 
 // Estratégia de Fetch inteligente:
 // 1. APIs e rotas dinâmicas do Supabase / Evolution API: sempre Network-Only
-// 2. Navegação de páginas (HTML): Network-First com fallback de Cache e tela Offline
+// 2. Navegação de páginas (HTML): Network-First com fallback prioritário para index.html (SPA)
 // 3. Arquivos estáticos (CSS, JS, Imagens, Fontes): Cache-First / Stale-While-Revalidate
 self.addEventListener('fetch', (event) => {
   const request = event.request;
@@ -62,7 +62,8 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('painelevolution') ||
     url.pathname.startsWith('/rest/') ||
-    url.pathname.startsWith('/auth/')
+    url.pathname.startsWith('/auth/') ||
+    url.pathname.startsWith('/api/')
   ) {
     return;
   }
@@ -75,18 +76,34 @@ self.addEventListener('fetch', (event) => {
           if (response && response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+            return response;
+          }
+          // Se a rota de navegação falhar no servidor, tenta carregar o index.html da SPA
+          if (response && (response.status === 404 || response.status >= 500)) {
+            return caches.match('/index.html').then((cachedIndex) => cachedIndex || response);
           }
           return response;
         })
         .catch(async () => {
           const cache = await caches.open(CACHE_NAME);
+          // 1. Em SPA, SEMPRE prioriza o index.html da aplicação para carregar rotas React (ex: /lp)
+          const cachedIndex = await cache.match('/index.html');
+          if (cachedIndex) return cachedIndex;
+
+          const cachedRoot = await cache.match('/');
+          if (cachedRoot) return cachedRoot;
+
           const cachedResponse = await cache.match(request);
           if (cachedResponse) return cachedResponse;
 
+          // 2. Se nem o index.html estiver em cache, exibe tela de offline
           const offlineFallback = await cache.match(OFFLINE_URL);
           if (offlineFallback) return offlineFallback;
 
-          return cache.match('/index.html');
+          return new Response('Sem conexão com a internet', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+          });
         })
     );
     return;

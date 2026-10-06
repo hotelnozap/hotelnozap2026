@@ -93,6 +93,7 @@
           window.addEventListener('load', function() {
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
               .then(function(reg) {
+                try { reg.update(); } catch(e) {}
                 console.log('[PWA] Service Worker registrado. Escopo:', reg.scope);
               })
               .catch(function(err) {
@@ -100,7 +101,7 @@
               });
           });
           if (document.readyState === 'complete') {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) { try { reg.update(); } catch(e) {} });
           }
         }
       }
