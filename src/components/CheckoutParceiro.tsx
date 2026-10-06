@@ -17,16 +17,13 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   onNavigateToLogin,
   onNavigateToDashboard
 }) => {
-  // Passos do Checkout: 'dados' | 'pagamento' | 'sucesso'
-  const [currentStep, setCurrentStep] = useState<'dados' | 'pagamento' | 'sucesso'>('dados');
+  // Passos do Checkout: 'dados' | 'login' | 'pagamento' | 'sucesso'
+  const [currentStep, setCurrentStep] = useState<'dados' | 'login' | 'pagamento' | 'sucesso'>('dados');
 
   // Dados Pessoais do Parceiro
   const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
   const [cpf, setCpf] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [senha, setSenha] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   // Dados de Endereço do Parceiro (Integração ViaCEP)
   const [cep, setCep] = useState('');
@@ -38,6 +35,13 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   const [uf, setUf] = useState('');
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
+
+  // Dados de Acesso / Login do Parceiro
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Erros e Validação
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -64,6 +68,53 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     const s = secs % 60;
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
+
+  // Análise de Força da Senha em Tempo Real
+  const passwordAnalysis = React.useMemo(() => {
+    const hasMinLength = senha.length >= 8;
+    const hasUppercase = /[A-Z]/.test(senha);
+    const hasLowercase = /[a-z]/.test(senha);
+    const hasNumber = /[0-9]/.test(senha);
+    const hasSpecial = /[^A-Za-z0-9]/.test(senha);
+
+    const checks = [hasMinLength, hasUppercase, hasLowercase, hasNumber, hasSpecial];
+    const score = checks.filter(Boolean).length;
+
+    let label: 'Fraca' | 'Média' | 'Forte' = 'Fraca';
+    let color = 'text-rose-600';
+    let bgColor = 'bg-rose-500';
+
+    if (!senha) {
+      label = 'Fraca';
+      color = 'text-slate-400';
+      bgColor = 'bg-slate-200';
+    } else if (score <= 2) {
+      label = 'Fraca';
+      color = 'text-rose-600';
+      bgColor = 'bg-rose-500';
+    } else if (score <= 4) {
+      label = 'Média';
+      color = 'text-amber-500';
+      bgColor = 'bg-amber-500';
+    } else {
+      label = 'Forte';
+      color = 'text-emerald-600';
+      bgColor = 'bg-emerald-500';
+    }
+
+    return {
+      score,
+      label,
+      color,
+      bgColor,
+      hasMinLength,
+      hasUppercase,
+      hasLowercase,
+      hasNumber,
+      hasSpecial,
+      isValid: score === 5
+    };
+  }, [senha]);
 
   // Integração com ViaCEP
   const handleSearchCep = async (rawCep: string) => {
@@ -106,18 +157,14 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     return `${prefix}${randomSuffix}`;
   };
 
-  // Avançar para a etapa de pagamento
-  const handleAvancarParaPagamento = async (e: React.FormEvent) => {
+  // Etapa 1: Avançar dos Dados Pessoais & Endereço para a Etapa de Login
+  const handleAvancarParaLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
     // Validações de dados pessoais
     if (!nome.trim() || nome.trim().split(' ').length < 2) {
       setErrorMsg('Por favor, informe seu nome e sobrenome completos.');
-      return;
-    }
-    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
-      setErrorMsg('Por favor, informe um endereço de e-mail válido.');
       return;
     }
     const cleanCpf = cpf.replace(/\D/g, '');
@@ -128,10 +175,6 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     const cleanPhone = whatsapp.replace(/\D/g, '');
     if (cleanPhone.length < 10) {
       setErrorMsg('Por favor, informe seu WhatsApp com DDD completo.');
-      return;
-    }
-    if (!senha || senha.length < 6) {
-      setErrorMsg('A senha de acesso deve ter pelo menos 6 caracteres.');
       return;
     }
 
@@ -158,11 +201,40 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       return;
     }
 
+    // Avança para o Passo 2: Login e Senha
+    setCurrentStep('login');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Etapa 2: Avançar do Login/Senha para a Etapa de Pagamento (PIX)
+  const handleAvancarParaPagamento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    // Validações de E-mail
+    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
+      setErrorMsg('Por favor, informe um endereço de e-mail válido para seu acesso.');
+      return;
+    }
+
+    // Validações de Senha Segura
+    if (!passwordAnalysis.isValid) {
+      setErrorMsg('A senha precisa cumprir todos os requisitos de segurança (mínimo 8 caracteres, com maiúsculas, minúsculas, números e caracteres especiais).');
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErrorMsg('A confirmação de senha não confere com a senha digitada.');
+      return;
+    }
+
     setIsSubmitting(true);
     setGerandoPix(true);
     setCurrentStep('pagamento');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
+      const cleanCpf = cpf.replace(/\D/g, '');
       // Cria a cobrança PIX oficial no Mercado Pago com valor padrão de teste de R$ 1,00 solicitado
       const res = await mercadopagoService.criarPagamentoPixMaster({
         hotelId: `parceiro_${Date.now()}`,
@@ -242,30 +314,131 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     };
   }, [currentStep, isApproved, pixResult?.paymentId]);
 
-  // Liberação do Acesso e Cadastro do Parceiro
+  // Liberação do Acesso e Cadastro do Parceiro em cascata: Auth -> Usuários -> Parceiros
   const liberarAcessoParceiro = async () => {
     setIsVerificando(true);
     try {
       const cleanEmail = email.trim().toLowerCase();
       const cleanPhone = whatsapp.replace(/\D/g, '');
       const cleanCpf = cpf.replace(/\D/g, '');
+      const cleanCep = cep.replace(/\D/g, '');
+      const enderecoCompleto = `${logradouro.trim()}, ${numero.trim()}${complemento.trim() ? ` (${complemento.trim()})` : ''} - ${bairro.trim()}`;
+      const localidadeFormatada = `${cidade.trim()} - ${uf.trim().toUpperCase()}`;
       const code = generatePartnerCode(nome);
       setPartnerCode(code);
       const referralUrl = `https://hotelnozap.com.br/parceiros/assinar?ref=${code}`;
       setPartnerLink(referralUrl);
 
-      // 1. Cadastra ou atualiza na tabela `parceiros`
+      let authUserId: string | null = null;
+      let usuarioId: string | null = null;
+      let parceiroId: string | null = null;
+
+      // =========================================================================
+      // CASCATA ETAPA 1: CRIAÇÃO NO SUPABASE AUTH
+      // =========================================================================
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: senha,
+          options: {
+            data: {
+              name: nome.trim(),
+              nome: nome.trim(),
+              perfil: 'Parceiro',
+              whatsapp: cleanPhone,
+              cpf: cleanCpf
+            }
+          }
+        });
+
+        if (authData?.user?.id) {
+          authUserId = authData.user.id;
+        } else if (authError) {
+          console.warn('Supabase Auth SignUp aviso:', authError.message);
+          // Caso a conta já exista no Auth, tenta autenticar para recuperar o authUserId
+          const { data: authSignIn } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password: senha
+          }).catch(() => ({ data: null }));
+          if (authSignIn?.user?.id) {
+            authUserId = authSignIn.user.id;
+          }
+        }
+      } catch (authErr) {
+        console.warn('Exceção ao criar credenciais no Supabase Auth:', authErr);
+      }
+
+      // =========================================================================
+      // CASCATA ETAPA 2: CRIAÇÃO NA TABELA `usuarios`
+      // =========================================================================
+      const { data: existingUser } = await supabase
+        .from('usuarios')
+        .select('id, auth_user_id')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      const userPayload: any = {
+        nome: nome.trim(),
+        email: cleanEmail,
+        telefone: cleanPhone,
+        perfil: 'Parceiro',
+        cargo: 'Parceiro Franqueado',
+        status: 'ativo',
+        auth_user_id: authUserId || existingUser?.auth_user_id || null,
+        cep: cleanCep,
+        street: logradouro.trim(),
+        neighborhood: bairro.trim(),
+        city: cidade.trim(),
+        uf: uf.trim().toUpperCase()
+      };
+
+      if (!existingUser?.id) {
+        let insertUserRes = await supabase
+          .from('usuarios')
+          .insert(userPayload)
+          .select('id')
+          .single();
+
+        if (insertUserRes.error) {
+          // Fallback caso colunas adicionais não estejam migradas
+          delete userPayload.cargo;
+          delete userPayload.cep;
+          delete userPayload.street;
+          delete userPayload.neighborhood;
+          delete userPayload.city;
+          delete userPayload.uf;
+          insertUserRes = await supabase
+            .from('usuarios')
+            .insert(userPayload)
+            .select('id')
+            .single();
+        }
+
+        usuarioId = insertUserRes.data?.id || null;
+      } else {
+        usuarioId = existingUser.id;
+        await supabase
+          .from('usuarios')
+          .update({
+            nome: nome.trim(),
+            telefone: cleanPhone,
+            perfil: 'Parceiro',
+            status: 'ativo',
+            auth_user_id: authUserId || existingUser.auth_user_id || null
+          })
+          .eq('id', usuarioId);
+      }
+
+      // =========================================================================
+      // CASCATA ETAPA 3: CRIAÇÃO NA TABELA `parceiros` COM RELACIONAMENTO
+      // =========================================================================
       const { data: existingParc } = await supabase
         .from('parceiros')
         .select('id')
         .eq('email', cleanEmail)
         .maybeSingle();
 
-      let parceiroId = existingParc?.id;
-
-      const cleanCep = cep.replace(/\D/g, '');
-      const enderecoCompleto = `${logradouro.trim()}, ${numero.trim()}${complemento.trim() ? ` (${complemento.trim()})` : ''} - ${bairro.trim()}`;
-      const localidadeFormatada = `${cidade.trim()} - ${uf.trim().toUpperCase()}`;
+      parceiroId = existingParc?.id || null;
 
       const partnerPayload: any = {
         nome: nome.trim(),
@@ -281,6 +454,8 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         pix_tipo: 'CPF',
         pix_chave: cleanCpf,
         titular_pix: nome.trim(),
+        usuario_id: usuarioId,
+        auth_user_id: authUserId,
         endereco: enderecoCompleto,
         bairro: bairro.trim(),
         cep: cleanCep,
@@ -288,27 +463,29 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       };
 
       if (!parceiroId) {
-        let insertRes = await supabase
+        let insertParcRes = await supabase
           .from('parceiros')
           .insert(partnerPayload)
           .select('id')
           .single();
 
-        if (insertRes.error) {
-          // Se alguma coluna nova não existir na tabela parceiros, retenta com o formato padrão
+        if (insertParcRes.error) {
+          // Fallback caso colunas adicionais não existam na tabela parceiros
           delete partnerPayload.endereco;
           delete partnerPayload.bairro;
           delete partnerPayload.cep;
           delete partnerPayload.numero;
+          delete partnerPayload.usuario_id;
+          delete partnerPayload.auth_user_id;
           partnerPayload.cidade_uf = `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`;
-          insertRes = await supabase
+          insertParcRes = await supabase
             .from('parceiros')
             .insert(partnerPayload)
             .select('id')
             .single();
         }
 
-        if (insertRes.data) parceiroId = insertRes.data.id;
+        if (insertParcRes.data) parceiroId = insertParcRes.data.id;
       } else {
         await supabase
           .from('parceiros')
@@ -317,72 +494,26 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
             taxa_comissao: 50,
             cupom: code,
             nivel: 'Franquia Oficial',
+            usuario_id: usuarioId,
+            auth_user_id: authUserId,
             cidade_uf: `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`
           })
           .eq('id', parceiroId);
       }
 
-      // 2. Cadastra na tabela `usuarios` com perfil 'Parceiro'
-      const { data: existingUser } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (!existingUser) {
-        const userPayload: any = {
-          nome: nome.trim(),
-          email: cleanEmail,
-          telefone: cleanPhone,
-          perfil: 'Parceiro',
-          status: 'ativo',
-          cep: cleanCep,
-          street: logradouro.trim(),
-          neighborhood: bairro.trim(),
-          city: cidade.trim(),
-          uf: uf.trim().toUpperCase()
-        };
-        const userRes = await supabase.from('usuarios').insert(userPayload);
-        if (userRes.error) {
-          await supabase.from('usuarios').insert({
-            nome: nome.trim(),
-            email: cleanEmail,
-            telefone: cleanPhone,
-            perfil: 'Parceiro',
-            status: 'ativo'
-          });
-        }
-      }
-
-      // 3. Tenta cadastrar no Supabase Auth para login direto
-      try {
-        await supabase.auth.signUp({
-          email: cleanEmail,
-          password: senha,
-          options: {
-            data: {
-              name: nome.trim(),
-              nome: nome.trim(),
-              perfil: 'Parceiro'
-            }
-          }
-        });
-      } catch (authErr) {
-        console.warn('Registro Auth finalizado:', authErr);
-      }
-
-      // 4. Grava credenciais e sessão ativa no localStorage
+      // =========================================================================
+      // CASCATA ETAPA 4: GRAVAR SESSÃO LOCAL PARA ACESSO IMEDIATO
+      // =========================================================================
       localStorage.setItem('hotelnozap_user_role', 'Parceiro');
       localStorage.setItem('hotelnozap_user_email', cleanEmail);
       localStorage.setItem('hotelnozap_user_name', nome.trim());
       localStorage.setItem('hotelnozap_last_authenticated_at', new Date().toISOString());
 
-      // Atualiza visual para aprovação
       setIsApproved(true);
       setCurrentStep('sucesso');
     } catch (err: any) {
-      console.error('Erro ao liberar acesso do parceiro:', err);
-      // Mesmo se houver inconsistência não impeditiva no banco, autoriza a visualização do sucesso
+      console.error('Erro na cascata de criação do parceiro:', err);
+      // Mantém a visualização do sucesso em caso de inconsistência secundária
       setIsApproved(true);
       setCurrentStep('sucesso');
     } finally {
@@ -450,30 +581,46 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       {/* ========================================================================= */}
       <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1">
         
-        {/* Barra de Progresso Superior */}
-        <div className="max-w-2xl mx-auto mb-8 sm:mb-12">
+        {/* Barra de Progresso Superior (4 Etapas) */}
+        <div className="max-w-3xl mx-auto mb-8 sm:mb-12 px-2">
           <div className="flex items-center justify-between relative">
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 -translate-y-1/2 z-0" />
             
-            {/* Step 1 */}
+            {/* Step 1: Dados */}
             <div className={`relative z-10 flex flex-col items-center gap-1.5 ${currentStep === 'dados' ? 'text-[#003400]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
                 currentStep === 'dados' 
                   ? 'bg-[#003400] text-white ring-4 ring-emerald-100' 
-                  : (currentStep === 'pagamento' || currentStep === 'sucesso') 
+                  : (currentStep === 'login' || currentStep === 'pagamento' || currentStep === 'sucesso') 
                     ? 'bg-emerald-600 text-white' 
+                    : 'bg-white text-slate-500 border border-slate-300'
+              }`}>
+                {(currentStep === 'login' || currentStep === 'pagamento' || currentStep === 'sucesso') ? (
+                  <span className="material-symbols-outlined text-sm">check</span>
+                ) : '1'}
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-bold">1. Dados</span>
+            </div>
+
+            {/* Step 2: Acesso / Login */}
+            <div className={`relative z-10 flex flex-col items-center gap-1.5 ${currentStep === 'login' ? 'text-[#003400]' : 'text-slate-400'}`}>
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
+                currentStep === 'login' 
+                  ? 'bg-[#003400] text-white ring-4 ring-emerald-100' 
+                  : (currentStep === 'pagamento' || currentStep === 'sucesso')
+                    ? 'bg-emerald-600 text-white'
                     : 'bg-white text-slate-500 border border-slate-300'
               }`}>
                 {(currentStep === 'pagamento' || currentStep === 'sucesso') ? (
                   <span className="material-symbols-outlined text-sm">check</span>
-                ) : '1'}
+                ) : '2'}
               </div>
-              <span className="text-[11px] font-bold">1. Seus Dados</span>
+              <span className="text-[10px] sm:text-[11px] font-bold">2. Criar Acesso</span>
             </div>
 
-            {/* Step 2 */}
+            {/* Step 3: Pagamento */}
             <div className={`relative z-10 flex flex-col items-center gap-1.5 ${currentStep === 'pagamento' ? 'text-[#003400]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
                 currentStep === 'pagamento' 
                   ? 'bg-[#003400] text-white ring-4 ring-emerald-100' 
                   : currentStep === 'sucesso'
@@ -482,21 +629,21 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
               }`}>
                 {currentStep === 'sucesso' ? (
                   <span className="material-symbols-outlined text-sm">check</span>
-                ) : '2'}
+                ) : '3'}
               </div>
-              <span className="text-[11px] font-bold">2. Pagamento</span>
+              <span className="text-[10px] sm:text-[11px] font-bold">3. Pagamento</span>
             </div>
 
-            {/* Step 3 */}
+            {/* Step 4: Acesso Liberado */}
             <div className={`relative z-10 flex flex-col items-center gap-1.5 ${currentStep === 'sucesso' ? 'text-[#006c49]' : 'text-slate-400'}`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shadow-xs ${
                 currentStep === 'sucesso' 
                   ? 'bg-[#006c49] text-white ring-4 ring-emerald-100' 
                   : 'bg-white text-slate-500 border border-slate-300'
               }`}>
-                3
+                4
               </div>
-              <span className="text-[11px] font-bold">3. Acesso Liberado</span>
+              <span className="text-[10px] sm:text-[11px] font-bold">4. Liberado</span>
             </div>
 
           </div>
@@ -510,16 +657,16 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
           {/* ========================================================================= */}
           <div className="lg:col-span-7 flex flex-col gap-6">
 
-            {/* PASSO 1: DADOS DO FRANQUEADO */}
+            {/* PASSO 1: DADOS DO FRANQUEADO E ENDEREÇO */}
             {currentStep === 'dados' && (
               <div className="rounded-3xl bg-white p-6 sm:p-8 border border-slate-200/90 shadow-xl transition-all">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006c49] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-xl">person_add</span>
+                    <span className="material-symbols-outlined text-xl">person_pin</span>
                   </div>
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold text-[#0b1c30]">Dados da Franquia</h2>
-                    <p className="text-xs text-slate-500">Preencha seus dados para emitir a licença oficial e criar seu login.</p>
+                    <p className="text-xs text-slate-500">Informe seus dados cadastrais e endereço para emitir a licença oficial.</p>
                   </div>
                 </div>
 
@@ -530,11 +677,11 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                   </div>
                 )}
 
-                <form onSubmit={handleAvancarParaPagamento} className="flex flex-col gap-4 text-left">
+                <form onSubmit={handleAvancarParaLogin} className="flex flex-col gap-4 text-left">
                   
-                  {/* Seção 1: Dados Pessoais e de Acesso */}
-                  <div className="pb-2">
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">1. Dados Pessoais &amp; Login</span>
+                  {/* Seção 1: Dados Pessoais */}
+                  <div className="pb-1">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">1. Dados Pessoais</span>
                   </div>
 
                   {/* Nome Completo */}
@@ -575,44 +722,6 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         onChange={(e) => setWhatsapp(maskPhone(e.target.value))}
                         className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
                       />
-                    </div>
-                  </div>
-
-                  {/* E-mail e Senha */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">E-mail Principal *</label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="seuemail@exemplo.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Crie sua Senha de Acesso *</label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          minLength={6}
-                          placeholder="Mínimo 6 caracteres"
-                          value={senha}
-                          onChange={(e) => setSenha(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-12"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
-                        >
-                          <span className="material-symbols-outlined text-lg">
-                            {showPassword ? 'visibility_off' : 'visibility'}
-                          </span>
-                        </button>
-                      </div>
                     </div>
                   </div>
 
@@ -740,12 +849,212 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     </div>
                   </div>
 
-                  {/* Botão de Prosseguir */}
+                  {/* Botão de Prosseguir para Etapa 2 */}
                   <div className="pt-4 flex flex-col gap-2">
                     <button
                       type="submit"
+                      className="w-full inline-flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-[#FDB116] text-[#1b1b1b] hover:bg-[#e09c0f] font-black text-sm sm:text-base shadow-lg shadow-[#FDB116]/25 transition-all duration-200 active:scale-95 cursor-pointer"
+                    >
+                      <span>Continuar para Criar Acesso</span>
+                      <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                    </button>
+                    <span className="text-[11px] text-center text-slate-500 font-medium">
+                      Passo 1 de 3: Seus dados estão seguros e criptografados.
+                    </span>
+                  </div>
+
+                </form>
+              </div>
+            )}
+
+            {/* PASSO 2: CRIAR ACESSO & SENHA SEGURA */}
+            {currentStep === 'login' && (
+              <div className="rounded-3xl bg-white p-6 sm:p-8 border border-slate-200/90 shadow-xl transition-all">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006c49] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-xl">key</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-[#0b1c30]">Criação de Acesso &amp; Login</h2>
+                    <p className="text-xs text-slate-500">Defina suas credenciais oficiais para entrar no Painel de Franqueado.</p>
+                  </div>
+                </div>
+
+                {errorMsg && (
+                  <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">error</span>
+                    <span>{errorMsg}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleAvancarParaPagamento} className="flex flex-col gap-4 text-left">
+                  
+                  {/* E-mail Principal */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">E-mail Principal para Login *</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="seuemail@exemplo.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block">Este será o seu login oficial de acesso ao sistema do Hotel no Zap.</span>
+                  </div>
+
+                  {/* Senha de Acesso */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700">Senha Segura *</label>
+                      {senha && (
+                        <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md ${
+                          passwordAnalysis.score <= 2 
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                            : passwordAnalysis.score <= 4 
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}>
+                          Senha {passwordAnalysis.label}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Crie sua senha segura"
+                        value={senha}
+                        onChange={(e) => setSenha(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {showPassword ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Indicador Visual de Força da Senha (3 Segmentos) */}
+                    <div className="mt-2.5 flex items-center gap-1.5">
+                      <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                        senha ? (passwordAnalysis.score >= 1 ? passwordAnalysis.bgColor : 'bg-slate-200') : 'bg-slate-200'
+                      }`} />
+                      <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                        senha ? (passwordAnalysis.score >= 3 ? passwordAnalysis.bgColor : 'bg-slate-200') : 'bg-slate-200'
+                      }`} />
+                      <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                        senha ? (passwordAnalysis.score === 5 ? 'bg-emerald-500' : 'bg-slate-200') : 'bg-slate-200'
+                      }`} />
+                    </div>
+
+                    {/* Requisitos de Senha Segura */}
+                    <div className="mt-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-2">
+                      <span className="text-[11px] font-bold text-slate-600">Requisitos para senha segura:</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        
+                        <div className={`flex items-center gap-1.5 ${passwordAnalysis.hasMinLength ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>
+                          <span className={`material-symbols-outlined text-base ${passwordAnalysis.hasMinLength ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {passwordAnalysis.hasMinLength ? 'check_circle' : 'radio_button_unchecked'}
+                          </span>
+                          <span>Mínimo de 8 caracteres</span>
+                        </div>
+
+                        <div className={`flex items-center gap-1.5 ${passwordAnalysis.hasUppercase ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>
+                          <span className={`material-symbols-outlined text-base ${passwordAnalysis.hasUppercase ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {passwordAnalysis.hasUppercase ? 'check_circle' : 'radio_button_unchecked'}
+                          </span>
+                          <span>Letra maiúscula (A-Z)</span>
+                        </div>
+
+                        <div className={`flex items-center gap-1.5 ${passwordAnalysis.hasLowercase ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>
+                          <span className={`material-symbols-outlined text-base ${passwordAnalysis.hasLowercase ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {passwordAnalysis.hasLowercase ? 'check_circle' : 'radio_button_unchecked'}
+                          </span>
+                          <span>Letra minúscula (a-z)</span>
+                        </div>
+
+                        <div className={`flex items-center gap-1.5 ${passwordAnalysis.hasNumber ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>
+                          <span className={`material-symbols-outlined text-base ${passwordAnalysis.hasNumber ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {passwordAnalysis.hasNumber ? 'check_circle' : 'radio_button_unchecked'}
+                          </span>
+                          <span>Número (0-9)</span>
+                        </div>
+
+                        <div className={`flex items-center gap-1.5 ${passwordAnalysis.hasSpecial ? 'text-emerald-700 font-semibold' : 'text-slate-500'} sm:col-span-2`}>
+                          <span className={`material-symbols-outlined text-base ${passwordAnalysis.hasSpecial ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {passwordAnalysis.hasSpecial ? 'check_circle' : 'radio_button_unchecked'}
+                          </span>
+                          <span>Caractere especial (!@#$%*...)</span>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Confirmação de Senha */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Confirmar Senha *</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Repita sua senha exatamente igual"
+                        value={confirmarSenha}
+                        onChange={(e) => setConfirmarSenha(e.target.value)}
+                        className={`w-full px-4 py-3 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-12 ${
+                          confirmarSenha 
+                            ? (senha === confirmarSenha ? 'border-emerald-300 bg-emerald-50/20' : 'border-rose-300 bg-rose-50/20') 
+                            : 'border-slate-300'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+
+                    {confirmarSenha && (
+                      <span className={`text-[11px] font-semibold mt-1 flex items-center gap-1 ${
+                        senha === confirmarSenha ? 'text-emerald-700' : 'text-rose-600'
+                      }`}>
+                        <span className="material-symbols-outlined text-sm">
+                          {senha === confirmarSenha ? 'check' : 'close'}
+                        </span>
+                        <span>{senha === confirmarSenha ? 'As senhas coincidem perfeitamente' : 'As senhas não coincidem'}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Botões de Ação */}
+                  <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErrorMsg(null);
+                        setCurrentStep('dados');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="w-full sm:w-auto py-3.5 px-6 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-sm transition-all cursor-pointer"
+                    >
+                      ← Voltar para Dados
+                    </button>
+
+                    <button
+                      type="submit"
                       disabled={isSubmitting}
-                      className="w-full inline-flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-[#FDB116] text-[#1b1b1b] hover:bg-[#e09c0f] font-black text-sm sm:text-base shadow-lg shadow-[#FDB116]/25 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60"
+                      className="w-full flex-1 inline-flex items-center justify-center gap-3 py-4 px-6 rounded-xl bg-[#FDB116] text-[#1b1b1b] hover:bg-[#e09c0f] font-black text-sm sm:text-base shadow-lg shadow-[#FDB116]/25 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
@@ -759,10 +1068,10 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         </>
                       )}
                     </button>
-                    <span className="text-[11px] text-center text-slate-500 font-medium">
-                      🧪 <strong>Modo Teste Ativo:</strong> Cobrança via PIX configurada em R$ 1,00 para validação imediata (Valor oficial R$ 197,00/ano).
-                    </span>
                   </div>
+                  <span className="text-[11px] text-center text-slate-500 font-medium">
+                    🧪 <strong>Modo Teste Ativo:</strong> Cobrança via PIX configurada em R$ 1,00 para validação imediata (Valor oficial R$ 197,00/ano).
+                  </span>
 
                 </form>
               </div>
