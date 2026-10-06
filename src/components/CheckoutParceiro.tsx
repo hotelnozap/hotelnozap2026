@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ZapHotelLogo } from './ZapHotelLogo';
-import { maskCpf, maskPhone, isValidCpf } from '../utils/masks';
+import { maskCpf, maskPhone, isValidCpf, maskCep } from '../utils/masks';
+import { fetchAddressByCep } from '../utils/viacep';
 import { mercadopagoService, PixMasterResult } from '../services/mercadopagoService';
 import { parceirosService, usuariosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
@@ -19,26 +20,36 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   // Passos do Checkout: 'dados' | 'pagamento' | 'sucesso'
   const [currentStep, setCurrentStep] = useState<'dados' | 'pagamento' | 'sucesso'>('dados');
 
-  // Dados do Parceiro
+  // Dados Pessoais do Parceiro
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [cpf, setCpf] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [cidadeUf, setCidadeUf] = useState('');
+
+  // Dados de Endereço do Parceiro (Integração ViaCEP)
+  const [cep, setCep] = useState('');
+  const [logradouro, setLogradouro] = useState('');
+  const [numero, setNumero] = useState('');
+  const [complemento, setComplemento] = useState('');
+  const [bairro, setBairro] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [uf, setUf] = useState('');
+  const [buscandoCep, setBuscandoCep] = useState(false);
+  const [cepError, setCepError] = useState<string | null>(null);
 
   // Erros e Validação
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Estados do Pagamento PIX
+  // Estados do Pagamento PIX (5 minutos = 300 segundos)
   const [pixResult, setPixResult] = useState<PixMasterResult | null>(null);
   const [gerandoPix, setGerandoPix] = useState(false);
   const [copiadoPix, setCopiadoPix] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [isVerificando, setIsVerificando] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutos
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutos
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -54,6 +65,39 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
+  // Integração com ViaCEP
+  const handleSearchCep = async (rawCep: string) => {
+    const clean = rawCep.replace(/\D/g, '');
+    if (clean.length === 8) {
+      setBuscandoCep(true);
+      setCepError(null);
+      try {
+        const data = await fetchAddressByCep(clean);
+        if (data && !data.erro) {
+          if (data.logradouro) setLogradouro(data.logradouro);
+          if (data.bairro) setBairro(data.bairro);
+          if (data.localidade) setCidade(data.localidade);
+          if (data.uf) setUf(data.uf.toUpperCase());
+        } else {
+          setCepError('CEP não encontrado. Preencha os campos manualmente.');
+        }
+      } catch (err) {
+        setCepError('Erro ao consultar ViaCEP.');
+      } finally {
+        setBuscandoCep(false);
+      }
+    }
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const masked = maskCep(e.target.value);
+    setCep(masked);
+    setCepError(null);
+    if (masked.replace(/\D/g, '').length === 8) {
+      handleSearchCep(masked);
+    }
+  };
+
   // Gerar código de parceiro baseado no nome
   const generatePartnerCode = (nameStr: string): string => {
     const clean = nameStr.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -67,7 +111,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     e.preventDefault();
     setErrorMsg(null);
 
-    // Validações
+    // Validações de dados pessoais
     if (!nome.trim() || nome.trim().split(' ').length < 2) {
       setErrorMsg('Por favor, informe seu nome e sobrenome completos.');
       return;
@@ -91,24 +135,47 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       return;
     }
 
+    // Validações de endereço (ViaCEP)
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) {
+      setErrorMsg('Por favor, informe um CEP válido com 8 dígitos.');
+      return;
+    }
+    if (!logradouro.trim()) {
+      setErrorMsg('Por favor, informe a rua / logradouro do endereço.');
+      return;
+    }
+    if (!numero.trim()) {
+      setErrorMsg('Por favor, informe o número do endereço.');
+      return;
+    }
+    if (!bairro.trim()) {
+      setErrorMsg('Por favor, informe o bairro.');
+      return;
+    }
+    if (!cidade.trim() || !uf.trim()) {
+      setErrorMsg('Por favor, informe a cidade e estado (UF).');
+      return;
+    }
+
     setIsSubmitting(true);
     setGerandoPix(true);
     setCurrentStep('pagamento');
 
     try {
-      // Cria a cobrança PIX oficial no Mercado Pago (R$ 197,00)
+      // Cria a cobrança PIX oficial no Mercado Pago com valor padrão de teste de R$ 1,00 solicitado
       const res = await mercadopagoService.criarPagamentoPixMaster({
         hotelId: `parceiro_${Date.now()}`,
         hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
-        planoNome: 'Licença Anual de Franqueado & Revenda (R$ 197)',
-        valor: 197.00,
+        planoNome: 'Licença Anual Franqueado (Teste R$ 1,00)',
+        valor: 1.00, // R$ 1,00 para validação imediata em ambiente de teste
         pagadorEmail: email.trim().toLowerCase(),
         pagadorNome: nome.trim(),
         pagadorDoc: cleanCpf
       });
 
       setPixResult(res);
-      setTimeLeft(600);
+      setTimeLeft(300); // 5 minutos de validade
     } catch (err: any) {
       console.warn('Erro ao gerar cobrança Pix do Parceiro:', err);
       // Fallback amigável com chave da matriz se o webhook falhar
@@ -119,13 +186,14 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         gateway: 'pix_chave',
         qrCode: 'hotelnozap@gmail.com'
       });
+      setTimeLeft(300);
     } finally {
       setIsSubmitting(false);
       setGerandoPix(false);
     }
   };
 
-  // Timer regressivo de 10 minutos
+  // Timer regressivo de 5 minutos
   useEffect(() => {
     if (currentStep !== 'pagamento' || isApproved) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -195,29 +263,52 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
       let parceiroId = existingParc?.id;
 
+      const cleanCep = cep.replace(/\D/g, '');
+      const enderecoCompleto = `${logradouro.trim()}, ${numero.trim()}${complemento.trim() ? ` (${complemento.trim()})` : ''} - ${bairro.trim()}`;
+      const localidadeFormatada = `${cidade.trim()} - ${uf.trim().toUpperCase()}`;
+
+      const partnerPayload: any = {
+        nome: nome.trim(),
+        email: cleanEmail,
+        whatsapp: cleanPhone,
+        documento: cleanCpf,
+        cidade_uf: `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`,
+        categoria: 'Franquia Regional',
+        cupom: code,
+        taxa_comissao: 50, // 50% de comissão recorrente vitalícia
+        nivel: 'Franquia Oficial',
+        status: 'ativo',
+        pix_tipo: 'CPF',
+        pix_chave: cleanCpf,
+        titular_pix: nome.trim(),
+        endereco: enderecoCompleto,
+        bairro: bairro.trim(),
+        cep: cleanCep,
+        numero: numero.trim()
+      };
+
       if (!parceiroId) {
-        const { data: newParc, error: parcError } = await supabase
+        let insertRes = await supabase
           .from('parceiros')
-          .insert({
-            nome: nome.trim(),
-            email: cleanEmail,
-            whatsapp: cleanPhone,
-            documento: cleanCpf,
-            cidade_uf: cidadeUf.trim() || 'Brasil',
-            categoria: 'Franquia Regional',
-            cupom: code,
-            taxa_comissao: 50, // 50% de comissão recorrente vitalícia
-            nivel: 'Franquia Oficial',
-            status: 'ativo',
-            pix_tipo: 'CPF',
-            pix_chave: cleanCpf,
-            titular_pix: nome.trim()
-          })
+          .insert(partnerPayload)
           .select('id')
           .single();
 
-        if (newParc) parceiroId = newParc.id;
-        if (parcError) console.warn('Aviso ao inserir tabela parceiros:', parcError);
+        if (insertRes.error) {
+          // Se alguma coluna nova não existir na tabela parceiros, retenta com o formato padrão
+          delete partnerPayload.endereco;
+          delete partnerPayload.bairro;
+          delete partnerPayload.cep;
+          delete partnerPayload.numero;
+          partnerPayload.cidade_uf = `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`;
+          insertRes = await supabase
+            .from('parceiros')
+            .insert(partnerPayload)
+            .select('id')
+            .single();
+        }
+
+        if (insertRes.data) parceiroId = insertRes.data.id;
       } else {
         await supabase
           .from('parceiros')
@@ -225,7 +316,8 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
             status: 'ativo',
             taxa_comissao: 50,
             cupom: code,
-            nivel: 'Franquia Oficial'
+            nivel: 'Franquia Oficial',
+            cidade_uf: `${localidadeFormatada} | ${enderecoCompleto} - CEP: ${cep}`
           })
           .eq('id', parceiroId);
       }
@@ -238,15 +330,28 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         .maybeSingle();
 
       if (!existingUser) {
-        await supabase
-          .from('usuarios')
-          .insert({
+        const userPayload: any = {
+          nome: nome.trim(),
+          email: cleanEmail,
+          telefone: cleanPhone,
+          perfil: 'Parceiro',
+          status: 'ativo',
+          cep: cleanCep,
+          street: logradouro.trim(),
+          neighborhood: bairro.trim(),
+          city: cidade.trim(),
+          uf: uf.trim().toUpperCase()
+        };
+        const userRes = await supabase.from('usuarios').insert(userPayload);
+        if (userRes.error) {
+          await supabase.from('usuarios').insert({
             nome: nome.trim(),
             email: cleanEmail,
             telefone: cleanPhone,
             perfil: 'Parceiro',
             status: 'ativo'
           });
+        }
       }
 
       // 3. Tenta cadastrar no Supabase Auth para login direto
@@ -427,6 +532,11 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
                 <form onSubmit={handleAvancarParaPagamento} className="flex flex-col gap-4 text-left">
                   
+                  {/* Seção 1: Dados Pessoais e de Acesso */}
+                  <div className="pb-2">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">1. Dados Pessoais &amp; Login</span>
+                  </div>
+
                   {/* Nome Completo */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">Nome Completo *</label>
@@ -468,7 +578,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                     </div>
                   </div>
 
-                  {/* E-mail e Cidade/UF */}
+                  {/* E-mail e Senha */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">E-mail Principal *</label>
@@ -482,44 +592,156 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Cidade e Estado (Região de Atuação)</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Crie sua Senha de Acesso *</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          minLength={6}
+                          placeholder="Mínimo 6 caracteres"
+                          value={senha}
+                          onChange={(e) => setSenha(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-12"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            {showPassword ? 'visibility_off' : 'visibility'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seção 2: Endereço do Parceiro com ViaCEP */}
+                  <div className="pt-3 pb-1 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">2. Endereço da Franquia (ViaCEP)</span>
+                    {buscandoCep && (
+                      <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1 animate-pulse">
+                        <span className="w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                        Buscando endereço...
+                      </span>
+                    )}
+                  </div>
+
+                  {/* CEP e Bairro */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                        <span>CEP *</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Preenchimento automático</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          required
+                          placeholder="00000-000"
+                          value={cep}
+                          onChange={handleCepChange}
+                          onBlur={() => handleSearchCep(cep)}
+                          className={`w-full px-4 py-3 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-10 ${
+                            cepError ? 'border-red-300 bg-red-50/20' : 'border-slate-300'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSearchCep(cep)}
+                          title="Buscar CEP no ViaCEP"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-700 transition-colors p-1"
+                        >
+                          <span className="material-symbols-outlined text-lg">search</span>
+                        </button>
+                      </div>
+                      {cepError && (
+                        <span className="text-[11px] text-red-600 font-semibold mt-1 block">
+                          {cepError}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Bairro *</label>
                       <input
                         type="text"
-                        placeholder="Ex: Caldas Novas - GO"
-                        value={cidadeUf}
-                        onChange={(e) => setCidadeUf(e.target.value)}
+                        required
+                        placeholder="Ex: Centro"
+                        value={bairro}
+                        onChange={(e) => setBairro(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
                       />
                     </div>
                   </div>
 
-                  {/* Senha de Acesso */}
+                  {/* Logradouro (Rua/Avenida) */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Crie uma Senha para seu Painel *</label>
-                    <div className="relative">
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Rua / Logradouro *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Av. Brasil, Rua das Flores"
+                      value={logradouro}
+                      onChange={(e) => setLogradouro(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                    />
+                  </div>
+
+                  {/* Número e Complemento */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Número *</label>
                       <input
-                        type={showPassword ? 'text' : 'password'}
+                        type="text"
                         required
-                        minLength={6}
-                        placeholder="Mínimo 6 caracteres"
-                        value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all pr-12"
+                        placeholder="Ex: 1250 ou S/N"
+                        value={numero}
+                        onChange={(e) => setNumero(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
-                      >
-                        <span className="material-symbols-outlined text-lg">
-                          {showPassword ? 'visibility_off' : 'visibility'}
-                        </span>
-                      </button>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Complemento (opcional)</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Sala 302, Bloco B, Apto 101"
+                        value={complemento}
+                        onChange={(e) => setComplemento(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cidade e UF */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">Cidade *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: São Paulo"
+                        value={cidade}
+                        onChange={(e) => setCidade(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">UF (Estado) *</label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={2}
+                        placeholder="SP"
+                        value={uf}
+                        onChange={(e) => setUf(e.target.value.toUpperCase())}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all text-center"
+                      />
                     </div>
                   </div>
 
                   {/* Botão de Prosseguir */}
-                  <div className="pt-4">
+                  <div className="pt-4 flex flex-col gap-2">
                     <button
                       type="submit"
                       disabled={isSubmitting}
@@ -532,11 +754,14 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         </>
                       ) : (
                         <>
-                          <span>Continuar para Pagamento • R$ 197,00</span>
+                          <span>Continuar para Pagamento • R$ 1,00 (Modo Teste)</span>
                           <span className="material-symbols-outlined text-xl">arrow_forward</span>
                         </>
                       )}
                     </button>
+                    <span className="text-[11px] text-center text-slate-500 font-medium">
+                      🧪 <strong>Modo Teste Ativo:</strong> Cobrança via PIX configurada em R$ 1,00 para validação imediata (Valor oficial R$ 197,00/ano).
+                    </span>
                   </div>
 
                 </form>
@@ -554,7 +779,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold">
                     <span className="material-symbols-outlined text-[15px] text-amber-600">timer</span>
-                    <span>{formatTime(timeLeft)}</span>
+                    <span>{formatTime(timeLeft)} (5 min)</span>
                   </div>
                 </div>
 
@@ -585,7 +810,12 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-xs text-slate-500 font-medium">Abra o app do seu banco e escaneie o código acima, ou use o Pix Copia e Cola:</span>
-                      <span className="text-xl font-black text-[#003400]">R$ 197,00</span>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="text-2xl font-black text-[#003400]">R$ 1,00</span>
+                        <span className="text-xs text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                          🧪 Valor de Teste (Oficial: R$ 197,00)
+                        </span>
+                      </div>
                     </div>
 
                     {/* Copia e Cola Box */}
@@ -729,13 +959,22 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                 <p className="text-xs text-slate-500">Direito oficial de distribuição e revenda na sua região.</p>
                 
                 <div className="flex items-baseline gap-2 mt-4 pt-4 border-t border-slate-100">
-                  <span className="text-xs text-slate-500">Total:</span>
+                  <span className="text-xs text-slate-500">Valor Oficial:</span>
                   <span className="text-3xl font-black text-[#003400]">R$ 197,00</span>
                   <span className="text-xs text-slate-500 font-semibold">/ ano</span>
                 </div>
                 <span className="text-[11px] text-emerald-700 font-bold mt-0.5">
                   ✓ Pagamento anual único (sem mensalidades fixas)
                 </span>
+
+                {/* Box de Notificação do Modo Teste */}
+                <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+                  <span className="material-symbols-outlined text-amber-600 text-base shrink-0 mt-0.5">science</span>
+                  <div className="leading-tight">
+                    <strong className="block text-amber-950 mb-0.5">Cobrança de Teste Ativa: R$ 1,00</strong>
+                    O PIX será emitido no valor simbólico de <strong>R$ 1,00</strong> para que você possa efetuar o pagamento e testar a liberação imediata.
+                  </div>
+                </div>
               </div>
 
               {/* Lista dos Benefícios Inclusos */}
