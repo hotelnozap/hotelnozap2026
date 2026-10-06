@@ -612,13 +612,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
         {/* Topo: Marca e Identidade */}
         <div className="relative z-10">
-          <a href="/" className="flex items-center gap-3.5 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
-            <div className="w-13 h-13 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg p-2.5 group-hover:scale-105 transition-transform">
-              <span className="material-symbols-outlined text-emerald-400 text-3xl">hotel</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-black tracking-wider text-white">HOTEL NO ZAP</h1>
-              <p className="text-xs text-emerald-400 font-semibold tracking-wider">HOSPITALIDADE DIGITAL</p>
+          <a href="/" className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+            <ZapHotelLogo size={46} bubbleColor="#10B981" iconColor="#002600" className="group-hover:scale-105 transition-transform drop-shadow-md" />
+            <div className="flex flex-col leading-none">
+              <span className="text-2xl font-black tracking-tight text-white">Hotel no Zap</span>
+              <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider mt-1">Hospitalidade Digital</span>
             </div>
           </a>
         </div>
