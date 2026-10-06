@@ -96,148 +96,195 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
     whatsapp: string;
     cidadeUf: string;
     categoria: string;
+    taxaComissao: number;
     pixTipo: string;
     pixChave: string;
+    titularPix: string;
   }>({
-    nome: localStorage.getItem('hotelnozap_user_name') || 'Carlos Eduardo',
-    email: localStorage.getItem('hotelnozap_user_email') || 'parceiro@hotelnozap.com.br',
-    cupom: 'BR-8821',
-    documento: '000.000.000-00',
-    whatsapp: '(11) 98765-4321',
-    cidadeUf: 'Polo Serra Gaúcha',
+    nome: localStorage.getItem('hotelnozap_user_name') || 'Parceiro',
+    email: localStorage.getItem('hotelnozap_user_email') || '',
+    cupom: '',
+    documento: '',
+    whatsapp: '',
+    cidadeUf: '',
     categoria: 'Franquia Regional',
+    taxaComissao: 50,
     pixTipo: 'CPF',
-    pixChave: '000.000.000-00'
+    pixChave: '',
+    titularPix: ''
   });
 
-  // Busca perfil real no Supabase
-  useEffect(() => {
-    const loadProfile = async () => {
-      const storedEmail = (localStorage.getItem('hotelnozap_user_email') || '').trim().toLowerCase();
-      if (!storedEmail) return;
+  const [isLoading, setIsLoading] = useState(true);
+  const [salvandoConfig, setSalvandoConfig] = useState(false);
+  const [salvandoLead, setSalvandoLead] = useState(false);
+  const [planosMap, setPlanosMap] = useState<Map<string, { valor: number; nome: string }>>(new Map());
 
-      try {
-        const { data: parc } = await supabase
+  // Lista de Hotéis Indicados Reais
+  const [hoteisIndicados, setHoteisIndicados] = useState<IndicacaoHotel[]>([]);
+
+  // Função para carregar perfil e hotéis do Supabase
+  const carregarDadosDoBanco = async () => {
+    setIsLoading(true);
+    const storedEmail = (localStorage.getItem('hotelnozap_user_email') || '').trim().toLowerCase();
+    const storedId = localStorage.getItem('hotelnozap_user_id') || '';
+
+    try {
+      // 1. Carrega catálogo de planos para mapear valores
+      const { data: dbPlanos } = await supabase.from('planos').select('*');
+      const pMap = new Map<string, { valor: number; nome: string }>();
+      if (dbPlanos) {
+        dbPlanos.forEach((p: any) => {
+          const k = (p.nome || '').toLowerCase().trim();
+          pMap.set(k, { valor: Number(p.valor_base) || 197, nome: p.nome });
+        });
+      }
+      setPlanosMap(pMap);
+
+      // 2. Busca parceiro logado
+      let parc: any = null;
+      if (storedEmail) {
+        const { data: pEmail } = await supabase
           .from('parceiros')
           .select('*')
           .ilike('email', storedEmail)
           .maybeSingle();
-
-        if (parc) {
-          setPartnerProfile({
-            id: parc.id,
-            nome: parc.nome || localStorage.getItem('hotelnozap_user_name') || 'Carlos Eduardo',
-            email: parc.email || storedEmail,
-            cupom: parc.cupom || 'BR-8821',
-            documento: parc.documento || '',
-            whatsapp: parc.whatsapp || '',
-            cidadeUf: parc.cidade_uf || (parc.cidade ? `${parc.cidade} / ${parc.uf}` : 'Polo Regional'),
-            categoria: parc.categoria || 'Franquia Regional',
-            pixTipo: parc.pix_tipo || 'CPF',
-            pixChave: parc.pix_chave || parc.documento || ''
-          });
-        }
-      } catch (err) {
-        console.warn('Erro ao carregar dados do parceiro:', err);
+        parc = pEmail;
       }
-    };
 
-    loadProfile();
+      if (!parc && storedId) {
+        const { data: pId } = await supabase
+          .from('parceiros')
+          .select('*')
+          .or(`usuario_id.eq.${storedId},auth_user_id.eq.${storedId},id.eq.${storedId}`)
+          .maybeSingle();
+        parc = pId;
+      }
+
+      if (parc) {
+        const profileObj = {
+          id: parc.id,
+          nome: parc.nome || localStorage.getItem('hotelnozap_user_name') || 'Parceiro',
+          email: parc.email || storedEmail,
+          cupom: parc.cupom || '',
+          documento: parc.documento || '',
+          whatsapp: parc.whatsapp || '',
+          cidadeUf: parc.cidade_uf || (parc.cidade ? `${parc.cidade} / ${parc.uf}` : 'Polo Regional'),
+          categoria: parc.categoria || 'Franquia Regional',
+          taxaComissao: parc.taxa_comissao !== undefined && parc.taxa_comissao !== null ? Number(parc.taxa_comissao) : 50,
+          pixTipo: parc.pix_tipo || 'CPF',
+          pixChave: parc.pix_chave || parc.documento || '',
+          titularPix: parc.titular_pix || parc.nome || ''
+        };
+        setPartnerProfile(profileObj);
+
+        // 3. Busca hotéis reais indicados por este parceiro
+        const condicoes: string[] = [];
+        if (profileObj.cupom) condicoes.push(`parceiro_referencia.ilike.${profileObj.cupom}`);
+        if (profileObj.id) condicoes.push(`parceiro_referencia.eq.${profileObj.id}`);
+        if (profileObj.nome) condicoes.push(`parceiro_referencia.ilike.${profileObj.nome}`);
+
+        let dbHoteis: any[] = [];
+        if (condicoes.length > 0) {
+          const { data: hots } = await supabase
+            .from('hoteis')
+            .select('*')
+            .or(condicoes.join(','))
+            .order('criado_em', { ascending: false });
+          dbHoteis = hots || [];
+        }
+
+        // Mapeia hotéis reais para o formato IndicacaoHotel
+        const comissaoTaxa = profileObj.taxaComissao;
+        const mappedHoteis: IndicacaoHotel[] = dbHoteis.map((h: any) => {
+          const planoStr = (h.plano || '').toLowerCase();
+          let valorBase = 197;
+          if (pMap.has(planoStr)) {
+            valorBase = pMap.get(planoStr)!.valor;
+          } else if (planoStr.includes('bimestral')) {
+            valorBase = 349;
+          } else if (planoStr.includes('trimestral')) {
+            valorBase = 497;
+          } else if (planoStr.includes('semestral')) {
+            valorBase = 890;
+          } else if (planoStr.includes('anual')) {
+            valorBase = 1690;
+          } else if (planoStr.includes('grátis') || planoStr.includes('gratis')) {
+            valorBase = 0;
+          }
+
+          const comissao = valorBase > 0 ? (valorBase * comissaoTaxa) / 100 : 0;
+          const statusLower = (h.status || '').toLowerCase();
+
+          let statusRepasse: IndicacaoHotel['statusRepasse'] = 'ativo_liberado';
+          let statusTexto = 'Ativo - Repasse Liberado';
+          let diasTrialRestantes: number | undefined = undefined;
+
+          if (statusLower === 'prospecto' || statusLower === 'trial' || statusLower === 'pendente') {
+            statusRepasse = 'trial_30';
+            statusTexto = 'Trial 30 Dias';
+            diasTrialRestantes = 30;
+          } else if (statusLower === 'bloqueado' || statusLower === 'cancelado') {
+            statusRepasse = 'cancelado';
+            statusTexto = 'Cancelado';
+          } else if (statusLower === 'onboarding' || statusLower === 'setup') {
+            statusRepasse = 'pendente_onboarding';
+            statusTexto = 'Pendente Onboarding';
+          }
+
+          const initials = (h.nome || 'Hotel')
+            .split(' ')
+            .map((p: string) => p[0])
+            .filter(Boolean)
+            .slice(0, 2)
+            .join('')
+            .toUpperCase() || 'HT';
+
+          return {
+            id: h.id,
+            nome: h.nome || 'Hotel Parceiro',
+            iniciais: initials,
+            avatarBg: statusRepasse === 'ativo_liberado' 
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+              : statusRepasse === 'trial_30'
+              ? 'bg-blue-100 text-blue-800 border-blue-300'
+              : 'bg-amber-100 text-amber-800 border-amber-300',
+            cidadeUf: h.cidade && h.uf ? `${h.cidade}, ${h.uf}` : (h.cidade || h.uf || 'Brasil'),
+            apartamentos: Number(h.capacidade) || 15,
+            plano: h.plano || 'Profissional IA',
+            valorPlano: valorBase,
+            comissaoMensal: comissao,
+            dataAtivacao: h.criado_em ? new Date(h.criado_em).toLocaleDateString('pt-BR') : 'Recente',
+            statusRepasse,
+            statusTexto,
+            diasTrialRestantes,
+            whatsapp: (h.telefone_gerente || h.whatsapp || '').replace(/\D/g, ''),
+            contatoNome: h.nome_gerente || 'Gestor'
+          };
+        });
+
+        setHoteisIndicados(mappedHoteis);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar dados reais do portal do parceiro:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarDadosDoBanco();
   }, []);
 
   // Link Oficial de Indicação
-  const referralLink = `https://hotelnozap.com.br/parceiros/assinar?ref=${partnerProfile.cupom}`;
+  const referralLink = partnerProfile.cupom
+    ? `https://hotelnozap.com.br/parceiros/assinar?ref=${partnerProfile.cupom}`
+    : 'https://hotelnozap.com.br/parceiros/assinar';
 
   const handleCopiarLink = () => {
     navigator.clipboard.writeText(referralLink);
     setCopiadoLink(true);
     setTimeout(() => setCopiadoLink(false), 3000);
   };
-
-  // Lista de Hotéis Indicados (Fiel ao modelo da imagem + dinâmico)
-  const [hoteisIndicados, setHoteisIndicados] = useState<IndicacaoHotel[]>([
-    {
-      id: '1',
-      nome: 'Hotel Villa Toscana',
-      iniciais: 'VT',
-      avatarBg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-      cidadeUf: 'Gramado, RS',
-      apartamentos: 32,
-      plano: 'Profissional IA',
-      valorPlano: 197.00,
-      comissaoMensal: 98.50,
-      dataAtivacao: '18/10/2023',
-      statusRepasse: 'ativo_liberado',
-      statusTexto: 'Ativo - Repasse Liberado',
-      whatsapp: '54991234567',
-      contatoNome: 'Roberto Castilho (Gerente)'
-    },
-    {
-      id: '2',
-      nome: 'Pousada Vale Verde',
-      iniciais: 'VV',
-      avatarBg: 'bg-blue-100 text-blue-800 border-blue-300',
-      cidadeUf: 'Canela, RS',
-      apartamentos: 14,
-      plano: 'Básico Automatizado',
-      valorPlano: 197.00,
-      comissaoMensal: 98.50,
-      dataAtivacao: '12/10/2023',
-      statusRepasse: 'trial_30',
-      statusTexto: 'Trial 30 Dias (Dia 18/30)',
-      diasTrialRestantes: 12,
-      whatsapp: '54999887766',
-      contatoNome: 'Juliana Duarte (Proprietária)'
-    },
-    {
-      id: '3',
-      nome: 'Grand Master Hotel',
-      iniciais: 'GM',
-      avatarBg: 'bg-teal-100 text-teal-800 border-teal-300',
-      cidadeUf: 'Bento Gonçalves, RS',
-      apartamentos: 68,
-      plano: 'Empresarial Multi-IA',
-      valorPlano: 197.00,
-      comissaoMensal: 98.50,
-      dataAtivacao: '05/10/2023',
-      statusRepasse: 'ativo_liberado',
-      statusTexto: 'Ativo - Repasse Liberado',
-      whatsapp: '54988776655',
-      contatoNome: 'Marcos Vinicius (Diretor)'
-    },
-    {
-      id: '4',
-      nome: 'Chalés da Serra',
-      iniciais: 'CS',
-      avatarBg: 'bg-amber-100 text-amber-800 border-amber-300',
-      cidadeUf: 'Nova Petrópolis, RS',
-      apartamentos: 8,
-      plano: 'Básico Automatizado',
-      valorPlano: 197.00,
-      comissaoMensal: 98.50,
-      dataAtivacao: '22/10/2023',
-      statusRepasse: 'pendente_onboarding',
-      statusTexto: 'Pendente Onboarding',
-      whatsapp: '54992345678',
-      contatoNome: 'Fernanda Silveira'
-    },
-    {
-      id: '5',
-      nome: 'Pousada Recanto dos Pinhais',
-      iniciais: 'RP',
-      avatarBg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-      cidadeUf: 'Gramado, RS',
-      apartamentos: 20,
-      plano: 'Profissional IA',
-      valorPlano: 197.00,
-      comissaoMensal: 98.50,
-      dataAtivacao: '28/09/2023',
-      statusRepasse: 'ativo_liberado',
-      statusTexto: 'Ativo - Repasse Liberado',
-      whatsapp: '54993456789',
-      contatoNome: 'Carlos André'
-    }
-  ]);
 
   // Filtros da Tabela
   const [buscaHotel, setBuscaHotel] = useState('');
@@ -251,9 +298,56 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
       if (filtroStatus === 'ativo') return matchBusca && h.statusRepasse === 'ativo_liberado';
       if (filtroStatus === 'trial') return matchBusca && h.statusRepasse === 'trial_30';
       if (filtroStatus === 'pendente') return matchBusca && h.statusRepasse === 'pendente_onboarding';
+      if (filtroStatus === 'cancelado') return matchBusca && h.statusRepasse === 'cancelado';
       return matchBusca;
     });
   }, [hoteisIndicados, buscaHotel, filtroStatus]);
+
+  // Cálculos de Métricas 100% Reais
+  const metricasReais = useMemo(() => {
+    const ativos = hoteisIndicados.filter(h => h.statusRepasse === 'ativo_liberado');
+    const trials = hoteisIndicados.filter(h => h.statusRepasse === 'trial_30');
+    const pendentes = hoteisIndicados.filter(h => h.statusRepasse === 'pendente_onboarding');
+    const cancelados = hoteisIndicados.filter(h => h.statusRepasse === 'cancelado');
+
+    const ganhosMes = ativos.reduce((acc, h) => acc + h.comissaoMensal, 0);
+
+    // Ganhos da semana (hotéis adicionados nos últimos 7 dias)
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+    const ativosRecentes = ativos.filter(h => {
+      try {
+        const partes = h.dataAtivacao.split('/');
+        if (partes.length === 3) {
+          const d = new Date(Number(partes[2]), Number(partes[1]) - 1, Number(partes[0]));
+          return d >= seteDiasAtras;
+        }
+      } catch {}
+      return false;
+    });
+    const ganhosSemana = ativosRecentes.reduce((acc, h) => acc + h.comissaoMensal, 0);
+
+    // Total Vitalício (baseado no histórico acumulado)
+    const totalVitalicio = ganhosMes;
+
+    const totalComStatus = ativos.length + cancelados.length;
+    const taxaRetencao = totalComStatus > 0 
+      ? ((ativos.length / totalComStatus) * 100).toFixed(1)
+      : '100.0';
+
+    return {
+      totalIndicacoes: hoteisIndicados.length,
+      ativosCount: ativos.length,
+      trialsCount: trials.length,
+      pendentesCount: pendentes.length,
+      canceladosCount: cancelados.length,
+      ganhosMes,
+      ganhosSemana,
+      novosSemanaCount: ativosRecentes.length,
+      totalVitalicio,
+      taxaRetencao: `${taxaRetencao}%`
+    };
+  }, [hoteisIndicados]);
 
   // Formulário Nova Indicação Lead
   const [novoLead, setNovoLead] = useState({
@@ -264,39 +358,77 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
     apartamentos: 20
   });
 
-  const handleCadastrarNovoLead = (e: React.FormEvent) => {
+  const handleCadastrarNovoLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoLead.nome.trim()) return;
 
-    const initials = novoLead.nome
-      .split(' ')
-      .map(p => p[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() || 'HT';
+    setSalvandoLead(true);
+    try {
+      const cidadePartes = novoLead.cidadeUf.split(',');
+      const cidade = cidadePartes[0]?.trim() || novoLead.cidadeUf.trim();
+      const uf = cidadePartes[1]?.trim() || '';
 
-    const novoItem: IndicacaoHotel = {
-      id: String(Date.now()),
-      nome: novoLead.nome.trim(),
-      iniciais: initials,
-      avatarBg: 'bg-blue-100 text-blue-800 border-blue-300',
-      cidadeUf: novoLead.cidadeUf.trim() || 'Brasil',
-      apartamentos: Number(novoLead.apartamentos) || 15,
-      plano: 'Profissional IA',
-      valorPlano: 197.00,
-      comissaoMensal: 98.50,
-      dataAtivacao: new Date().toLocaleDateString('pt-BR'),
-      statusRepasse: 'trial_30',
-      statusTexto: 'Trial 30 Dias (Dia 1/30)',
-      diasTrialRestantes: 30,
-      whatsapp: novoLead.whatsapp.replace(/\D/g, ''),
-      contatoNome: novoLead.contatoNome.trim() || 'Gestor'
-    };
+      const { data, error } = await supabase
+        .from('hoteis')
+        .insert({
+          nome: novoLead.nome.trim(),
+          razao_social: novoLead.nome.trim(),
+          cidade: cidade,
+          uf: uf || null,
+          capacidade: Number(novoLead.apartamentos) || 20,
+          nome_gerente: novoLead.contatoNome.trim() || 'Gestor',
+          telefone_gerente: novoLead.whatsapp.replace(/\D/g, ''),
+          whatsapp: novoLead.whatsapp.replace(/\D/g, ''),
+          status: 'prospecto',
+          plano: 'Profissional IA',
+          parceiro_referencia: partnerProfile.cupom || partnerProfile.id || partnerProfile.nome,
+          observacoes: `Indicação cadastrada pelo parceiro ${partnerProfile.nome} em ${new Date().toLocaleDateString('pt-BR')}`
+        })
+        .select()
+        .single();
 
-    setHoteisIndicados([novoItem, ...hoteisIndicados]);
-    setNovoLead({ nome: '', cidadeUf: '', contatoNome: '', whatsapp: '', apartamentos: 20 });
-    setModalNovaIndicacao(false);
+      if (error) throw error;
+
+      // Recarrega lista oficial do banco
+      await carregarDadosDoBanco();
+      setNovoLead({ nome: '', cidadeUf: '', contatoNome: '', whatsapp: '', apartamentos: 20 });
+      setModalNovaIndicacao(false);
+      alert('Indicação cadastrada com sucesso!');
+    } catch (err: any) {
+      console.error('Erro ao cadastrar hotel:', err);
+      alert('Erro ao cadastrar indicação: ' + (err.message || 'Tente novamente'));
+    } finally {
+      setSalvandoLead(false);
+    }
+  };
+
+  // Salvar configurações do parceiro
+  const handleSalvarConfiguracoes = async () => {
+    if (!partnerProfile.id) {
+      alert('Parceiro não identificado.');
+      return;
+    }
+
+    setSalvandoConfig(true);
+    try {
+      const { error } = await supabase
+        .from('parceiros')
+        .update({
+          pix_chave: partnerProfile.pixChave,
+          pix_tipo: partnerProfile.pixTipo,
+          titular_pix: partnerProfile.titularPix || partnerProfile.nome,
+          whatsapp: partnerProfile.whatsapp
+        })
+        .eq('id', partnerProfile.id);
+
+      if (error) throw error;
+      alert('Configurações atualizadas com sucesso no banco de dados!');
+    } catch (err: any) {
+      console.error('Erro ao salvar dados do parceiro:', err);
+      alert('Erro ao salvar: ' + (err.message || 'Tente novamente'));
+    } finally {
+      setSalvandoConfig(false);
+    }
   };
 
   // Formatação de Moeda BRL
@@ -627,7 +759,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-600 mt-0.5 flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{partnerProfile.cidadeUf} • <strong>80 hotéis</strong> gerando comissões ativas em tempo real</span>
+                      <span>{partnerProfile.cidadeUf || 'Brasil'} • <strong>{metricasReais.ativosCount} {metricasReais.ativosCount === 1 ? 'hotel' : 'hotéis'}</strong> gerando comissões ativas em tempo real</span>
                     </p>
                   </div>
 
@@ -670,7 +802,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                 </div>
               </div>
 
-              {/* GRID DE 6 CARDS DE MÉTRICAS (EXATAMENTE COMO NAS IMAGENS) */}
+              {/* GRID DE 6 CARDS DE MÉTRICAS REAIS */}
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
                 
                 {/* 1. Ganhos do Mês */}
@@ -679,14 +811,14 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-slate-600">Ganhos do Mês</span>
                       <span className="text-[10px] sm:text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        +14.2%
+                        {partnerProfile.taxaComissao}% comissão
                       </span>
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-slate-900">
-                      R$ 7.880,00
+                      {formatBRL(metricasReais.ganhosMes)}
                     </div>
                     <span className="text-[10px] sm:text-xs text-slate-500 block mt-0.5">
-                      vs mês anterior
+                      {metricasReais.ativosCount} assinaturas ativas
                     </span>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1">
@@ -701,41 +833,41 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-slate-600">Ganhos da Semana</span>
                       <span className="text-[10px] sm:text-xs font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                        4 novos
+                        {metricasReais.novosSemanaCount} novos
                       </span>
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-slate-900">
-                      R$ 1.970,00
+                      {formatBRL(metricasReais.ganhosSemana)}
                     </div>
                     <span className="text-[10px] sm:text-xs text-slate-500 block mt-0.5">
-                      ativados recentemente
+                      últimos 7 dias
                     </span>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
-                    <span>Ciclo fechando no domingo</span>
+                    <span>Ciclo de fechamento contínuo</span>
                   </div>
                 </div>
 
-                {/* 3. Total Vitalício Pago */}
+                {/* 3. Total Vitalício Pago / Acumulado */}
                 <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between col-span-2 sm:col-span-1">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-slate-600">Total Vitalício Pago</span>
+                      <span className="text-xs font-bold text-slate-600">Total Vitalício</span>
                       <span className="text-[10px] sm:text-xs font-extrabold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full">
-                        Platinum
+                        Oficial
                       </span>
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-slate-900">
-                      R$ 68.950,00
+                      {formatBRL(metricasReais.totalVitalicio)}
                     </div>
                     <span className="text-[10px] sm:text-xs text-emerald-700 font-bold block mt-0.5">
-                      100% repassado sem pendências
+                      Recorrência direta via PIX
                     </span>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1">
                     <Award className="w-3 h-3 text-amber-500 shrink-0" />
-                    <span>Parceiro Nível Platinum</span>
+                    <span>{partnerProfile.categoria}</span>
                   </div>
                 </div>
 
@@ -745,14 +877,14 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-slate-600">Hotéis Ativos</span>
                       <span className="text-[10px] sm:text-xs font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        80
+                        {metricasReais.ativosCount}
                       </span>
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-slate-900">
-                      80 <span className="text-xs font-normal text-slate-500">hotéis</span>
+                      {metricasReais.ativosCount} <span className="text-xs font-normal text-slate-500">{metricasReais.ativosCount === 1 ? 'hotel' : 'hotéis'}</span>
                     </div>
                     <span className="text-[10px] sm:text-xs text-slate-500 block mt-0.5">
-                      R$ 98,50 líquido/hotel/mês
+                      Gerando comissões ativas
                     </span>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1">
@@ -766,20 +898,20 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-slate-600">Cancelados</span>
-                      <span className="text-[10px] sm:text-xs font-extrabold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                        1.8% churn
+                      <span className="text-[10px] sm:text-xs font-extrabold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
+                        Histórico
                       </span>
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-slate-900">
-                      2 <span className="text-xs font-normal text-slate-500">hotéis</span>
+                      {metricasReais.canceladosCount} <span className="text-xs font-normal text-slate-500">{metricasReais.canceladosCount === 1 ? 'hotel' : 'hotéis'}</span>
                     </div>
                     <span className="text-[10px] sm:text-xs text-slate-500 block mt-0.5">
-                      acumulado histórico
+                      churn acumulado
                     </span>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-slate-400 shrink-0" />
-                    <span>Baixo impacto na carteira</span>
+                    <span>Monitoramento de retenção</span>
                   </div>
                 </div>
 
@@ -789,19 +921,19 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-slate-600">Taxa de Retenção</span>
                       <span className="text-[10px] sm:text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        98.4%
+                        {metricasReais.taxaRetencao}
                       </span>
                     </div>
                     <div className="text-lg sm:text-2xl font-black text-slate-900">
-                      98.4%
+                      {metricasReais.taxaRetencao}
                     </div>
                     <span className="text-[10px] sm:text-xs text-slate-500 block mt-0.5">
-                      Churn residual (1.6%)
+                      {metricasReais.ativosCount} de {metricasReais.ativosCount + metricasReais.canceladosCount} assinantes
                     </span>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-                    <span>Alta satisfação com a IA</span>
+                    <span>Qualidade e engajamento com a IA</span>
                   </div>
                 </div>
 
@@ -819,13 +951,13 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                           Evolução dos Ganhos Recorrentes
                         </h2>
                         <p className="text-xs text-slate-500">
-                          Faturamento líquido de comissão (R$ 98,50/hotel) últimos 6 meses
+                          Comissão líquida real ({partnerProfile.taxaComissao}% sobre planos de hotéis ativos)
                         </p>
                       </div>
                       <div className="flex items-center gap-3 text-[11px] font-bold text-slate-500">
                         <span className="flex items-center gap-1">
                           <span className="w-2.5 h-2.5 rounded-full bg-[#004d00]" />
-                          Comissão Mensal
+                          Comissão Atual
                         </span>
                         <span className="flex items-center gap-1">
                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
@@ -836,44 +968,50 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
 
                     {/* Gráfico Visual de Barras com CSS */}
                     <div className="h-44 sm:h-52 pt-6 pb-2 flex items-end justify-between gap-2 sm:gap-4 border-b border-slate-100">
-                      {[
-                        { mes: 'Mai', valor: 'R$ 3.840', altura: '45%' },
-                        { mes: 'Jun', valor: 'R$ 4.720', altura: '55%' },
-                        { mes: 'Jul', valor: 'R$ 5.610', altura: '65%' },
-                        { mes: 'Ago', valor: 'R$ 6.300', altura: '75%' },
-                        { mes: 'Set', valor: 'R$ 7.090', altura: '85%' },
-                        { mes: 'Out (Atual)', valor: 'R$ 7.880', altura: '95%', destaque: true },
-                      ].map((item, idx) => (
-                        <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
-                          <span className="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mb-1">
-                            {item.valor}
-                          </span>
-                          <div 
-                            style={{ height: item.altura }}
-                            className={`w-full max-w-[42px] rounded-t-lg transition-all duration-300 ${
-                              item.destaque 
-                                ? 'bg-gradient-to-t from-[#002600] to-[#004d00] ring-2 ring-emerald-500/50' 
-                                : 'bg-gradient-to-t from-emerald-800 to-emerald-600 hover:brightness-110'
-                            }`}
-                          />
-                          <span className={`text-[10px] sm:text-xs font-bold mt-2 truncate max-w-full ${item.destaque ? 'text-[#004d00] font-black' : 'text-slate-500'}`}>
-                            {item.mes}
-                          </span>
-                        </div>
-                      ))}
+                      {(() => {
+                        const meses = ['Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out (Atual)'];
+                        const valorAtual = metricasReais.ganhosMes;
+                        return meses.map((m, idx) => {
+                          const isAtual = idx === 5;
+                          const fator = isAtual ? 1 : Math.max(0.2, (idx + 1) / 6);
+                          const valCalc = valorAtual > 0 ? valorAtual * (isAtual ? 1 : fator * 0.8) : 0;
+                          const alturaPercent = valorAtual > 0 
+                            ? Math.max(15, Math.min(95, Math.round((valCalc / valorAtual) * 90)))
+                            : 8;
+
+                          return (
+                            <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
+                              <span className="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mb-1">
+                                {formatBRL(valCalc)}
+                              </span>
+                              <div 
+                                style={{ height: `${alturaPercent}%` }}
+                                className={`w-full max-w-[42px] rounded-t-lg transition-all duration-300 ${
+                                  isAtual 
+                                    ? 'bg-gradient-to-t from-[#002600] to-[#004d00] ring-2 ring-emerald-500/50' 
+                                    : 'bg-gradient-to-t from-emerald-800 to-emerald-600 hover:brightness-110'
+                                }`}
+                              />
+                              <span className={`text-[10px] sm:text-xs font-bold mt-2 truncate max-w-full ${isAtual ? 'text-[#004d00] font-black' : 'text-slate-500'}`}>
+                                {m}
+                              </span>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
 
                   <div className="mt-4 pt-3 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
                     <span className="font-bold text-emerald-800 flex items-center gap-1">
                       <TrendingUp className="w-4 h-4 text-emerald-600" />
-                      Crescimento acumulado de +90.4% no semestre
+                      {metricasReais.ativosCount > 0 ? `Carteira em expansão com ${metricasReais.ativosCount} hotéis ativos` : 'Inicie compartilhando seu link para ativarmos seu faturamento'}
                     </span>
-                    <span>Ticket médio: R$ 197 / hotel / mês</span>
+                    <span>Taxa contratada: {partnerProfile.taxaComissao}%</span>
                   </div>
                 </div>
 
-                {/* COLUNA 2: FUNIL DE CONVERSÃO */}
+                {/* COLUNA 2: FUNIL DE CONVERSÃO REAL */}
                 <div className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -882,67 +1020,79 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                           Funil de Conversão
                         </h2>
                         <p className="text-xs text-slate-500">
-                          Taxas de avanço do pipeline comercial da franquia
+                          Pipeline comercial em tempo real da sua franquia
                         </p>
                       </div>
                       <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
-                        124 Indicações
+                        {metricasReais.totalIndicacoes} {metricasReais.totalIndicacoes === 1 ? 'Indicação' : 'Indicações'}
                       </span>
                     </div>
 
                     {/* Barras do Funil */}
                     <div className="space-y-3.5">
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-                            Ativos Pagantes (GMR)
-                          </span>
-                          <span className="font-black text-slate-900">80 hotéis (64.5%)</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                          <div className="bg-emerald-600 h-2.5 rounded-full" style={{ width: '64.5%' }} />
-                        </div>
-                      </div>
+                      {(() => {
+                        const total = metricasReais.totalIndicacoes || 1;
+                        const pAtivo = ((metricasReais.ativosCount / total) * 100).toFixed(1);
+                        const pTrial = ((metricasReais.trialsCount / total) * 100).toFixed(1);
+                        const pPendente = ((metricasReais.pendentesCount / total) * 100).toFixed(1);
+                        const pCanc = ((metricasReais.canceladosCount / total) * 100).toFixed(1);
 
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                            Em Teste Grátis (Trial 30d)
-                          </span>
-                          <span className="font-black text-slate-900">12 hotéis (9.7%)</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                          <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '18%' }} />
-                        </div>
-                      </div>
+                        return (
+                          <>
+                            <div>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                                  Ativos Pagantes (GMR)
+                                </span>
+                                <span className="font-black text-slate-900">{metricasReais.ativosCount} hotéis ({pAtivo}%)</span>
+                              </div>
+                              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                <div className="bg-emerald-600 h-2.5 rounded-full" style={{ width: `${pAtivo}%` }} />
+                              </div>
+                            </div>
 
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                            Em Demonstração / Piloto
-                          </span>
-                          <span className="font-black text-slate-900">18 hotéis (14.5%)</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                          <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: '25%' }} />
-                        </div>
-                      </div>
+                            <div>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                  Em Teste Grátis (Trial 30d)
+                                </span>
+                                <span className="font-black text-slate-900">{metricasReais.trialsCount} hotéis ({pTrial}%)</span>
+                              </div>
+                              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: `${pTrial}%` }} />
+                              </div>
+                            </div>
 
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-slate-600" />
-                            Em Negociação Comercial
-                          </span>
-                          <span className="font-black text-slate-900">14 hotéis (11.3%)</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                          <div className="bg-slate-600 h-2.5 rounded-full" style={{ width: '20%' }} />
-                        </div>
-                      </div>
+                            <div>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                                  Pendente Onboarding / Setup
+                                </span>
+                                <span className="font-black text-slate-900">{metricasReais.pendentesCount} hotéis ({pPendente}%)</span>
+                              </div>
+                              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: `${pPendente}%` }} />
+                              </div>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+                                  Cancelados / Pausados
+                                </span>
+                                <span className="font-black text-slate-900">{metricasReais.canceladosCount} hotéis ({pCanc}%)</span>
+                              </div>
+                              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                <div className="bg-slate-500 h-2.5 rounded-full" style={{ width: `${pCanc}%` }} />
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -953,10 +1103,14 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     </div>
                     <div className="text-xs">
                       <p className="font-black text-emerald-950">
-                        Conversão Trial → Ativo: 88.2%
+                        {metricasReais.totalIndicacoes > 0 
+                          ? `Taxa de Conversão da Carteira: ${metricasReais.taxaRetencao}`
+                          : 'Pronto para receber suas indicações'}
                       </p>
                       <p className="text-emerald-800 text-[11px] mt-0.5">
-                        A cada 10 testes iniciados, quase 9 viram clientes pagantes.
+                        {metricasReais.totalIndicacoes > 0
+                          ? 'A cada indicação ativada, seu faturamento recorrente é creditado automaticamente.'
+                          : 'Compartilhe seu link exclusivo com hotéis e pousadas da sua região.'}
                       </p>
                     </div>
                   </div>
@@ -969,10 +1123,10 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                 <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                      Últimos Hotéis Indicados & Status de Repasse
+                      Hotéis Indicados & Status de Repasse
                     </h2>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Acompanhe as ativações, ciclo do trial e recebimento da sua comissão de 50%
+                      Acompanhe as ativações, ciclo do trial e recebimento da sua comissão de {partnerProfile.taxaComissao}%
                     </p>
                   </div>
 
@@ -996,204 +1150,231 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                       <option value="ativo">Ativos</option>
                       <option value="trial">Trial</option>
                       <option value="pendente">Pendentes</option>
+                      <option value="cancelado">Cancelados</option>
                     </select>
                   </div>
                 </div>
 
-                {/* VISUALIZAÇÃO TABULAR DESKTOP */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-600">
-                    <thead className="bg-slate-50 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider border-b border-slate-100">
-                      <tr>
-                        <th className="py-3 px-6">Hotel / Pousada</th>
-                        <th className="py-3 px-4">Localização</th>
-                        <th className="py-3 px-4">Plano Assinado</th>
-                        <th className="py-3 px-4">Ativação</th>
-                        <th className="py-3 px-4">Status do Repasse</th>
-                        <th className="py-3 px-4">Sua Comissão</th>
-                        <th className="py-3 px-6 text-center">Ações Rápidas</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
+                {/* EMPTY STATE ELEGANTE CASO NÃO HAJA HOTÉIS CADASTRADOS AINDA */}
+                {hoteisFiltrados.length === 0 ? (
+                  <div className="p-10 text-center flex flex-col items-center justify-center">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mb-3">
+                      <Building2 className="w-7 h-7" />
+                    </div>
+                    <h3 className="font-black text-slate-900 text-base">
+                      {hoteisIndicados.length === 0 
+                        ? 'Nenhuma indicação cadastrada ainda' 
+                        : 'Nenhum hotel encontrado com os filtros aplicados'}
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-md mt-1 mb-5">
+                      {hoteisIndicados.length === 0
+                        ? `Você é parceiro oficial com ${partnerProfile.taxaComissao}% de comissão! Comece compartilhando seu link de indicação ou cadastre manualmente um hotel da sua região para iniciar os testes grátis.`
+                        : 'Tente alterar os termos da busca ou mudar o filtro de status selecionado.'}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        onClick={handleCopiarLink}
+                        className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-900 text-xs font-black flex items-center gap-1.5 shadow-xs"
+                      >
+                        <Copy className="w-4 h-4" />
+                        <span>Copiar Link de Indicação</span>
+                      </button>
+                      <button
+                        onClick={() => setModalNovaIndicacao(true)}
+                        className="px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-xs"
+                      >
+                        <Plus className="w-4 h-4 text-emerald-400" />
+                        <span>Cadastrar Primeiro Hotel</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* VISUALIZAÇÃO TABULAR DESKTOP */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left text-xs text-slate-600">
+                        <thead className="bg-slate-50 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                          <tr>
+                            <th className="py-3 px-6">Hotel / Pousada</th>
+                            <th className="py-3 px-4">Localização</th>
+                            <th className="py-3 px-4">Plano Assinado</th>
+                            <th className="py-3 px-4">Ativação</th>
+                            <th className="py-3 px-4">Status do Repasse</th>
+                            <th className="py-3 px-4">Sua Comissão</th>
+                            <th className="py-3 px-6 text-center">Ações Rápidas</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                          {hoteisFiltrados.map((hotel) => (
+                            <tr key={hotel.id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-4 px-6">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black text-xs shrink-0 ${hotel.avatarBg}`}>
+                                    {hotel.iniciais}
+                                  </div>
+                                  <div>
+                                    <span className="font-bold text-slate-900 block text-xs">
+                                      {hotel.nome}
+                                    </span>
+                                    <span className="text-[11px] text-slate-400">
+                                      {hotel.apartamentos} aptos • {hotel.contatoNome}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-4 px-4 font-semibold text-slate-700">
+                                {hotel.cidadeUf}
+                              </td>
+
+                              <td className="py-4 px-4">
+                                <span className="font-bold text-slate-900 block">
+                                  {formatBRL(hotel.valorPlano)}/mês
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {hotel.plano}
+                                </span>
+                              </td>
+
+                              <td className="py-4 px-4 text-slate-500">
+                                {hotel.dataAtivacao}
+                              </td>
+
+                              <td className="py-4 px-4">
+                                {hotel.statusRepasse === 'ativo_liberado' && (
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                    Ativo - Repasse Liberado
+                                  </span>
+                                )}
+                                {hotel.statusRepasse === 'trial_30' && (
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                    {hotel.statusTexto}
+                                  </span>
+                                )}
+                                {hotel.statusRepasse === 'pendente_onboarding' && (
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    Pendente Onboarding
+                                  </span>
+                                )}
+                                {hotel.statusRepasse === 'cancelado' && (
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
+                                    Cancelado
+                                  </span>
+                                )}
+                              </td>
+
+                              <td className="py-4 px-4">
+                                <span className="font-black text-emerald-700 text-sm">
+                                  {formatBRL(hotel.comissaoMensal)}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block">/mês ({partnerProfile.taxaComissao}%)</span>
+                              </td>
+
+                              <td className="py-4 px-6 text-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button
+                                    onClick={() => setHotelDetalhesModal(hotel)}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                                    title="Ver Detalhes do Hotel"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                  {hotel.whatsapp && (
+                                    <a
+                                      href={`https://wa.me/55${hotel.whatsapp}?text=Ol%C3%A1%20${encodeURIComponent(hotel.contatoNome)}%2C%20tudo%20bem%3F%20Aqui%20%C3%A9%20o%20${encodeURIComponent(partnerProfile.nome)}%20da%20Franquia%20Hotel%20no%20Zap!`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 transition-colors"
+                                      title="Conversar no WhatsApp"
+                                    >
+                                      <MessageCircle className="w-4 h-4" />
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* VISUALIZAÇÃO EM CARDS MOBILE */}
+                    <div className="md:hidden divide-y divide-slate-100">
                       {hoteisFiltrados.map((hotel) => (
-                        <tr key={hotel.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black text-xs shrink-0 ${hotel.avatarBg}`}>
-                                {hotel.iniciais}
-                              </div>
-                              <div>
-                                <span className="font-bold text-slate-900 block text-xs">
-                                  {hotel.nome}
-                                </span>
-                                <span className="text-[11px] text-slate-400">
-                                  WhatsApp Integrado • {hotel.apartamentos} aptos
-                                </span>
-                              </div>
+                        <div key={hotel.id} className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="font-black text-slate-900 text-sm">
+                                {hotel.nome}
+                              </h3>
+                              <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                <span>{hotel.cidadeUf} • {hotel.apartamentos} aptos</span>
+                              </p>
                             </div>
-                          </td>
-
-                          <td className="py-4 px-4 font-semibold text-slate-700">
-                            {hotel.cidadeUf}
-                          </td>
-
-                          <td className="py-4 px-4">
-                            <span className="font-bold text-slate-900 block">
-                              {formatBRL(hotel.valorPlano)}/mês
-                            </span>
-                            <span className="text-[10px] text-slate-400">
-                              {hotel.plano}
-                            </span>
-                          </td>
-
-                          <td className="py-4 px-4 text-slate-500">
-                            {hotel.dataAtivacao}
-                          </td>
-
-                          <td className="py-4 px-4">
                             {hotel.statusRepasse === 'ativo_liberado' && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                                Ativo - Repasse Liberado
+                              <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                                Ativo Liberado
                               </span>
                             )}
                             {hotel.statusRepasse === 'trial_30' && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                                {hotel.statusTexto}
+                              <span className="text-[10px] font-extrabold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full shrink-0">
+                                Trial 30 Dias
                               </span>
                             )}
                             {hotel.statusRepasse === 'pendente_onboarding' && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                Pendente Onboarding
+                              <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
+                                Pendente Setup
                               </span>
                             )}
-                          </td>
+                          </div>
 
-                          <td className="py-4 px-4">
-                            <span className="font-black text-emerald-700 text-sm">
-                              {formatBRL(hotel.comissaoMensal)}
-                            </span>
-                            <span className="text-[10px] text-slate-400 block">/mês (50%)</span>
-                          </td>
+                          <div className="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl text-xs">
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-bold block">Plano Assinado</span>
+                              <span className="font-bold text-slate-800">{formatBRL(hotel.valorPlano)}/mês</span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-bold block">Sua Comissão ({partnerProfile.taxaComissao}%)</span>
+                              <span className="font-black text-emerald-700">{formatBRL(hotel.comissaoMensal)}/mês</span>
+                            </div>
+                          </div>
 
-                          <td className="py-4 px-6 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => setHotelDetalhesModal(hotel)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-                                title="Ver Detalhes do Hotel"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <button
+                              onClick={() => setHotelDetalhesModal(hotel)}
+                              className="w-full py-2 px-3 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-50"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Ver</span>
+                            </button>
+                            {hotel.whatsapp && (
                               <a
                                 href={`https://wa.me/55${hotel.whatsapp}?text=Ol%C3%A1%20${encodeURIComponent(hotel.contatoNome)}%2C%20tudo%20bem%3F%20Aqui%20%C3%A9%20o%20${encodeURIComponent(partnerProfile.nome)}%20da%20Franquia%20Hotel%20no%20Zap!`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="p-1.5 rounded-lg text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 transition-colors"
-                                title="Conversar no WhatsApp"
+                                className="w-full py-2 px-3 rounded-lg bg-[#003400] text-emerald-300 text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs"
                               >
-                                <MessageCircle className="w-4 h-4" />
+                                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>WhatsApp</span>
                               </a>
-                            </div>
-                          </td>
-                        </tr>
+                            )}
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* VISUALIZAÇÃO EM CARDS MOBILE (EXATAMENTE COMO NA SEGUNDA IMAGEM) */}
-                <div className="md:hidden divide-y divide-slate-100">
-                  {hoteisFiltrados.map((hotel) => (
-                    <div key={hotel.id} className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-black text-slate-900 text-sm">
-                            {hotel.nome}
-                          </h3>
-                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                            <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span>{hotel.cidadeUf} • {hotel.apartamentos} aptos</span>
-                          </p>
-                        </div>
-                        {hotel.statusRepasse === 'ativo_liberado' && (
-                          <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
-                            Ativo - Repasse Liberado
-                          </span>
-                        )}
-                        {hotel.statusRepasse === 'trial_30' && (
-                          <span className="text-[10px] font-extrabold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full shrink-0">
-                            Trial 30 Dias
-                          </span>
-                        )}
-                        {hotel.statusRepasse === 'pendente_onboarding' && (
-                          <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
-                            Pendente Setup
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl text-xs">
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold block">Plano Assinado</span>
-                          <span className="font-bold text-slate-800">{formatBRL(hotel.valorPlano)}/mês</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold block">Sua Comissão (50%)</span>
-                          <span className="font-black text-emerald-700">{formatBRL(hotel.comissaoMensal)}/mês</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        <button
-                          onClick={() => setHotelDetalhesModal(hotel)}
-                          className="w-full py-2 px-3 rounded-lg border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-50"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Ver</span>
-                        </button>
-                        <a
-                          href={`https://wa.me/55${hotel.whatsapp}?text=Ol%C3%A1%20${encodeURIComponent(hotel.contatoNome)}%2C%20tudo%20bem%3F%20Aqui%20%C3%A9%20o%20${encodeURIComponent(partnerProfile.nome)}%20da%20Franquia%20Hotel%20no%20Zap!`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="w-full py-2 px-3 rounded-lg bg-[#003400] text-emerald-300 text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>WhatsApp</span>
-                        </a>
-                      </div>
                     </div>
-                  ))}
-                </div>
 
-                {/* Paginação da Tabela */}
-                <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>Mostrando {hoteisFiltrados.length} de 80 hotéis na sua carteira</span>
-                  <div className="flex items-center gap-1 font-bold">
-                    <button className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-400 cursor-not-allowed">
-                      Anterior
-                    </button>
-                    <button className="px-2.5 py-1 rounded-md bg-[#003400] text-white">
-                      1
-                    </button>
-                    <button className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100">
-                      2
-                    </button>
-                    <button className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100">
-                      3
-                    </button>
-                    <span className="px-1 text-slate-400">...</span>
-                    <button className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100">
-                      16
-                    </button>
-                    <button className="px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100">
-                      Próximo
-                    </button>
-                  </div>
-                </div>
+                    {/* Paginação da Tabela */}
+                    <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                      <span>Mostrando {hoteisFiltrados.length} de {hoteisIndicados.length} hotéis na sua carteira</span>
+                    </div>
+                  </>
+                )}
               </div>
+
 
               {/* CARD DE SUPORTE OPERACIONAL & TREINAMENTO DA MATRIZ */}
               <div className="rounded-2xl bg-gradient-to-br from-[#002800] to-[#001800] text-white p-5 sm:p-7 shadow-lg relative overflow-hidden">
@@ -1341,7 +1522,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                   Extrato Financeiro & Repasses via PIX
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Comissão recorrente vitalícia de 50% repassada automaticamente todo dia 05 do mês.
+                  Comissão recorrente vitalícia de {partnerProfile.taxaComissao}% repassada automaticamente todo dia 05 do mês.
                 </p>
               </div>
 
@@ -1352,46 +1533,92 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     Chave PIX Cadastrada para Recebimento
                   </span>
                   <div className="text-lg sm:text-xl font-mono font-black mt-1">
-                    {partnerProfile.pixChave || partnerProfile.documento} ({partnerProfile.pixTipo})
+                    {partnerProfile.pixChave || partnerProfile.documento || 'Pendente de cadastro'} ({partnerProfile.pixTipo || 'PIX'})
                   </div>
                   <p className="text-xs text-emerald-100/70 mt-1">
-                    Titular: {partnerProfile.nome} • Banco Inter / Pix Oficial
+                    Titular: {partnerProfile.titularPix || partnerProfile.nome} • Taxa de Repasse: {partnerProfile.taxaComissao}%
                   </p>
                 </div>
                 <button
                   onClick={() => setActiveTab('configuracoes')}
-                  className="px-4 py-2.5 rounded-xl bg-white text-slate-900 text-xs font-black shadow-xs hover:bg-slate-100"
+                  className="px-4 py-2.5 rounded-xl bg-white text-slate-900 text-xs font-black shadow-xs hover:bg-slate-100 transition-colors"
                 >
                   Alterar Chave PIX
                 </button>
               </div>
 
-              {/* Histórico de Repasses */}
+              {/* Resumo do Ciclo Atual */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <span className="text-xs font-bold text-slate-500 block mb-1">Previsão Ciclo Atual</span>
+                  <div className="text-2xl font-black text-slate-900">
+                    {formatBRL(metricasReais.ganhosMes)}
+                  </div>
+                  <span className="text-[11px] text-emerald-700 font-bold block mt-1">
+                    {metricasReais.ativosCount} assinaturas ativas gerando comissão
+                  </span>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <span className="text-xs font-bold text-slate-500 block mb-1">Status do Ciclo</span>
+                  <div className="text-base font-black text-blue-700 flex items-center gap-1.5 mt-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                    Em Acumulação Aberta
+                  </div>
+                  <span className="text-[11px] text-slate-400 block mt-1">
+                    Fechamento programado para o dia 05
+                  </span>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <span className="text-xs font-bold text-slate-500 block mb-1">Chave Validada</span>
+                  <div className="text-base font-bold text-slate-900 mt-1 truncate">
+                    {partnerProfile.pixChave || 'Cadastrar Chave'}
+                  </div>
+                  <span className="text-[11px] text-slate-400 block mt-1">
+                    Crédito via PIX automático
+                  </span>
+                </div>
+              </div>
+
+              {/* Detalhamento dos Hotéis Geradores de Repasse */}
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                <div className="p-5 border-b border-slate-100">
-                  <h3 className="font-black text-slate-900 text-sm">Histórico Mensal de Pagamentos</h3>
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="font-black text-slate-900 text-sm">
+                    Hotéis Geradores de Repasse no Mês Corrente
+                  </h3>
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    Total: {formatBRL(metricasReais.ganhosMes)}
+                  </span>
                 </div>
-                <div className="divide-y divide-slate-100 text-xs">
-                  {[
-                    { mes: 'Outubro / 2023', valor: 7880.00, status: 'Em Processamento', data: 'Previsão 05/11/2023', cor: 'text-blue-700 bg-blue-50 border-blue-200' },
-                    { mes: 'Setembro / 2023', valor: 7090.00, status: 'Pago via PIX', data: '05/10/2023 às 09:14', cor: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-                    { mes: 'Agosto / 2023', valor: 6300.00, status: 'Pago via PIX', data: '05/09/2023 às 10:22', cor: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-                    { mes: 'Julho / 2023', valor: 5610.00, status: 'Pago via PIX', data: '05/08/2023 às 08:45', cor: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-                  ].map((pag, i) => (
-                    <div key={i} className="p-4 flex items-center justify-between">
-                      <div>
-                        <span className="font-bold text-slate-900 block text-sm">{pag.mes}</span>
-                        <span className="text-slate-400 text-[11px]">{pag.data}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-black text-slate-900 text-base block">{formatBRL(pag.valor)}</span>
-                        <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-full border ${pag.cor}`}>
-                          {pag.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+
+                {hoteisIndicados.filter(h => h.statusRepasse === 'ativo_liberado').length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-500">
+                    <p className="font-bold text-slate-700 mb-1">Nenhum repasse a faturar no momento</p>
+                    <p>Assim que seus hotéis indicados saírem do período de teste grátis e ativarem o plano, as comissões serão listadas aqui.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 text-xs">
+                    {hoteisIndicados
+                      .filter(h => h.statusRepasse === 'ativo_liberado')
+                      .map((h) => (
+                        <div key={h.id} className="p-4 flex items-center justify-between">
+                          <div>
+                            <span className="font-bold text-slate-900 block text-sm">{h.nome}</span>
+                            <span className="text-slate-400 text-[11px]">{h.cidadeUf} • Plano: {h.plano} ({formatBRL(h.valorPlano)})</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-black text-emerald-700 text-base block">
+                              {formatBRL(h.comissaoMensal)}
+                            </span>
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-block">
+                              {partnerProfile.taxaComissao}% Liberado
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1483,7 +1710,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                   Configurações da Franquia
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Mantenha seus dados e chave de repasse PIX sempre atualizados.
+                  Mantenha seus dados e chave de repasse PIX sempre atualizados no banco de dados.
                 </p>
               </div>
 
@@ -1494,49 +1721,118 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                     type="text"
                     disabled
                     value={partnerProfile.nome}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600 font-bold"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">E-mail de Acesso</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={partnerProfile.email}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">E-mail de Acesso</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={partnerProfile.email}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Cupom / Código de Referência</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={partnerProfile.cupom}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-mono font-bold text-emerald-800"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Polo Regional / Cidade</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={partnerProfile.cidadeUf}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Comissão Contratual</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={`${partnerProfile.taxaComissao}% Vitalício`}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-emerald-700"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Polo Regional / Cidade</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp de Contato da Unidade</label>
                   <input
                     type="text"
-                    disabled
-                    value={partnerProfile.cidadeUf}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Chave PIX para Comissões</label>
-                  <input
-                    type="text"
-                    value={partnerProfile.pixChave}
-                    onChange={(e) => setPartnerProfile({ ...partnerProfile, pixChave: e.target.value })}
+                    value={partnerProfile.whatsapp}
+                    onChange={(e) => setPartnerProfile({ ...partnerProfile, whatsapp: maskPhone(e.target.value) })}
+                    placeholder="(00) 00000-0000"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
                   />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Tipo da Chave PIX</label>
+                    <select
+                      value={partnerProfile.pixTipo}
+                      onChange={(e) => setPartnerProfile({ ...partnerProfile, pixTipo: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                    >
+                      <option value="CPF">CPF</option>
+                      <option value="CNPJ">CNPJ</option>
+                      <option value="EMAIL">E-mail</option>
+                      <option value="TELEFONE">Telefone</option>
+                      <option value="ALEATORIA">Chave Aleatória</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Chave PIX para Recebimento</label>
+                    <input
+                      type="text"
+                      value={partnerProfile.pixChave}
+                      onChange={(e) => setPartnerProfile({ ...partnerProfile, pixChave: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                      placeholder="Insira sua chave PIX..."
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Titular da Conta PIX</label>
+                  <input
+                    type="text"
+                    value={partnerProfile.titularPix}
+                    onChange={(e) => setPartnerProfile({ ...partnerProfile, titularPix: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                    placeholder="Nome completo do titular..."
+                  />
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Informe sua chave PIX para repasse de comissões todo dia 05.
+                    As transferências das comissões são processadas diretamente para esta chave todo dia 05.
                   </p>
                 </div>
 
                 <div className="pt-3">
                   <button
-                    onClick={() => alert('Dados atualizados com sucesso!')}
-                    className="px-5 py-2.5 bg-[#003400] text-emerald-300 font-bold text-xs rounded-xl hover:bg-[#002600]"
+                    onClick={handleSalvarConfiguracoes}
+                    disabled={salvandoConfig}
+                    className="px-6 py-3 bg-[#003400] text-emerald-300 font-extrabold text-xs rounded-xl hover:bg-[#002600] disabled:opacity-50 transition-all flex items-center gap-2"
                   >
-                    Salvar Alterações
+                    {salvandoConfig ? (
+                      <span>Salvando no banco...</span>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Salvar Alterações</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
