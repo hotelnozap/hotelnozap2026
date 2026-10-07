@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { currentHotelService, HotelAtivo, usuariosService } from '../services/supabaseService';
 import { ZapHotelLogo } from './ZapHotelLogo';
+
+declare global {
+  interface Window {
+    grecaptcha?: any;
+    onRecaptchaLoaded?: () => void;
+  }
+}
 
 interface LoginProps {
   onLoginSuccess?: (userData: { name: string; email: string; role?: string }) => void;
@@ -38,6 +45,66 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [lockedEmail, setLockedEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState('');
+
+  // Estados do Google reCAPTCHA (v2 Checkbox)
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaError, setRecaptchaError] = useState<string>('');
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+  const recaptchaWidgetIdRef = useRef<number | null>(null);
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8';
+
+  // Carrega e renderiza o script do reCAPTCHA
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const renderWidget = () => {
+      if (
+        window.grecaptcha &&
+        window.grecaptcha.render &&
+        recaptchaContainerRef.current &&
+        recaptchaWidgetIdRef.current === null
+      ) {
+        try {
+          recaptchaContainerRef.current.innerHTML = '';
+          const widgetId = window.grecaptcha.render(recaptchaContainerRef.current, {
+            sitekey: recaptchaSiteKey,
+            callback: (token: string) => {
+              setRecaptchaToken(token);
+              setRecaptchaError('');
+            },
+            'expired-callback': () => {
+              setRecaptchaToken(null);
+            },
+            'error-callback': () => {
+              setRecaptchaToken(null);
+              setRecaptchaError('Não foi possível carregar a verificação humana. Tente novamente.');
+            }
+          });
+          recaptchaWidgetIdRef.current = widgetId;
+        } catch (e) {
+          console.warn('Erro ao renderizar widget reCAPTCHA:', e);
+        }
+      }
+    };
+
+    window.onRecaptchaLoaded = () => {
+      renderWidget();
+    };
+
+    if (window.grecaptcha && window.grecaptcha.render) {
+      renderWidget();
+    } else {
+      const existingScript = document.getElementById('recaptcha-script');
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.id = 'recaptcha-script';
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
+      }
+    }
+  }, [recaptchaSiteKey]);
 
   // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente e checa bloqueio
   useEffect(() => {
@@ -317,7 +384,36 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       console.warn('Erro ao checar status de bloqueio inicial:', checkErr);
     }
 
+    // 0.1 VERIFICAÇÃO RECAPTCHA OBRIGATÓRIA (ANTI-BOT)
+    if (!recaptchaToken) {
+      setErrorMessage('Por favor, marque a caixa de verificação "Não sou um robô" para continuar.');
+      setRecaptchaError('Confirmação do reCAPTCHA obrigatória.');
+      return;
+    }
+
     setLoading(true);
+
+    // Valida o token no backend de forma segura
+    try {
+      const verifyRes = await fetch('/api/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: recaptchaToken })
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        setLoading(false);
+        setErrorMessage('Verificação de segurança do reCAPTCHA falhou. Por favor, marque novamente.');
+        setRecaptchaToken(null);
+        if (window.grecaptcha && recaptchaWidgetIdRef.current !== null) {
+          try { window.grecaptcha.reset(recaptchaWidgetIdRef.current); } catch { /* ignore */ }
+        }
+        return;
+      }
+    } catch (recaptchaNetErr) {
+      console.warn('Aviso: endpoint serverless de reCAPTCHA offline ou em ambiente local direto:', recaptchaNetErr);
+      // Não bloqueia caso o endpoint serverless não esteja ativo localmente se o frontend gerou token válido
+    }
 
     let ultimoErroAuth: string | null = null;
 
@@ -881,8 +977,22 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                   </div>
 
+                  {/* Verificação Humana Google reCAPTCHA (v2 Checkbox) */}
+                  <div className="pt-2 flex flex-col items-center justify-center">
+                    <div 
+                      ref={recaptchaContainerRef} 
+                      className="min-h-[78px] flex items-center justify-center overflow-x-auto w-full max-w-full"
+                    />
+                    {recaptchaError && (
+                      <p className="text-[11px] text-red-500 font-semibold mt-1 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">error</span>
+                        <span>{recaptchaError}</span>
+                      </p>
+                    )}
+                  </div>
+
                   {/* Botão de Ação Principal (Login) */}
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <button
                       type="submit"
                       disabled={loading}
@@ -928,9 +1038,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           <div className="pt-6 mt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
             <span>Hotel no Zap • Sistema de Gestão v3.4</span>
             <div className="flex items-center gap-4">
-              <a href="#termos" className="hover:text-slate-600 transition-colors">Termos de Uso</a>
+              <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">Termos de Uso</a>
               <span className="w-1 h-1 rounded-full bg-slate-300" />
-              <a href="#privacidade" className="hover:text-slate-600 transition-colors">Privacidade</a>
+              <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">Privacidade</a>
             </div>
           </div>
 

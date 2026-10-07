@@ -876,10 +876,21 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
             </div>
 
             {/* Texto da Política de Privacidade */}
-            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs">
-              <label className="block text-xs font-bold text-slate-800 mb-2">
-                Texto do Termo de Privacidade & Consentimento (FNRH Digital)
-              </label>
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <label className="block text-xs font-bold text-slate-800">
+                  Texto do Termo de Privacidade & Consentimento (FNRH Digital)
+                </label>
+                <a
+                  href="/privacidade"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 hover:underline"
+                >
+                  <span className="material-symbols-outlined text-sm">open_in_new</span>
+                  <span>Ver Política de Privacidade Oficial do Sistema</span>
+                </a>
+              </div>
               <textarea
                 rows={4}
                 value={config.politicaPrivacidadeTexto}

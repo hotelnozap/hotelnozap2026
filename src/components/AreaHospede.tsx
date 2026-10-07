@@ -2043,10 +2043,16 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
                         <span className="text-slate-600 font-medium">Privacidade & LGPD:</span>
-                        <span className="text-emerald-700 font-bold flex items-center gap-1">
+                        <a
+                          href="/privacidade"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                          title="Clique para ler a Política de Privacidade"
+                        >
                           <span className="material-symbols-outlined text-sm">verified</span>
-                          Conforme Lei 13.709/18
-                        </span>
+                          <span>Conforme Lei 13.709/18</span>
+                        </a>
                       </div>
                     </div>
                   </div>

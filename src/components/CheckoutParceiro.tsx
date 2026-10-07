@@ -1734,8 +1734,16 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       {/* 3. FOOTER DISCRETO                                                        */}
       {/* ========================================================================= */}
       <footer className="w-full py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500 mt-12">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Hotel no Zap © {new Date().getFullYear()} • Todos os direitos reservados.</span>
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <span>Hotel no Zap © {new Date().getFullYear()} • Todos os direitos reservados.</span>
+            <span className="hidden sm:inline text-slate-300">•</span>
+            <div className="flex items-center gap-3 font-semibold text-slate-600">
+              <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">Termos</a>
+              <span className="text-slate-300">•</span>
+              <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">Privacidade</a>
+            </div>
+          </div>
           <span className="flex items-center gap-1 text-[11px] text-slate-400">
             <span className="material-symbols-outlined text-sm">security</span>
             Transação protegida por criptografia de ponta a ponta

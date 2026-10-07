@@ -648,11 +648,17 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors mb-2"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sair do Portal</span>
           </button>
+
+          <div className="pt-2 border-t border-white/10 flex items-center justify-center gap-2 text-[10px] text-slate-400">
+            <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Termos</a>
+            <span>•</span>
+            <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacidade</a>
+          </div>
         </div>
       </aside>
 
@@ -749,7 +755,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-white/10">
+            <div className="pt-4 border-t border-white/10 space-y-3">
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold text-rose-300 hover:bg-rose-500/10 rounded-xl"
@@ -757,6 +763,11 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                 <LogOut className="w-4 h-4" />
                 <span>Sair do Portal</span>
               </button>
+              <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
+                <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Termos</a>
+                <span>•</span>
+                <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacidade</a>
+              </div>
             </div>
           </div>
         </div>

@@ -1279,7 +1279,7 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
                       {aceitaTermos && <span className="material-symbols-outlined text-white text-sm">check</span>}
                     </div>
                     <span className="text-xs text-gray-600 leading-relaxed">
-                      Li e aceito os <a href="#" className="text-emerald-600 font-semibold underline">Termos de Uso</a> e a <a href="#" className="text-emerald-600 font-semibold underline">Politica de Privacidade</a> do Hotel no Zap.
+                      Li e aceito os <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-semibold underline">Termos de Uso</a> e a <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-semibold underline">Política de Privacidade</a> do Hotel no Zap.
                     </span>
                   </label>
                   {isTermosInvalid && (
@@ -1365,8 +1365,15 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 py-5 text-center text-gray-400 text-xs bg-white">
+      <footer className="border-t border-gray-200 py-5 text-center text-gray-400 text-xs bg-white space-y-2">
         <p>Copyright {new Date().getFullYear()} Hotel no Zap - Sistema SaaS Hoteleiro - Todos os direitos reservados</p>
+        <div className="flex items-center justify-center gap-3 font-medium text-slate-500">
+          <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">Termos de Uso</a>
+          <span>•</span>
+          <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">Política de Privacidade</a>
+          <span>•</span>
+          <a href="/fale-conosco" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">Fale Conosco</a>
+        </div>
       </footer>
     </div>
   );
