@@ -41,3 +41,9 @@ populate_live_data.js
 # Vercel local project credentials + local project links
 .vercel/
 .vercelignore
+
+# Android binaries and keystores
+*.apk
+*.aab
+*.keystore
+1 Telas do Sistema/
