@@ -217,8 +217,8 @@ export const App: React.FC = () => {
         return parts.length >= 2 ? 'pagina-hotel' : 'catalogo-hoteis';
       }
       if (parts[0] === 'hotel') return parts.length >= 3 ? 'detalhes-quarto' : 'pagina-hotel';
-      // /paineladmin → login (ou dashboard se já autenticado, ou /minhaconta se for hóspede, ou /camareira se for camareira)
-      if (parts[0] === 'paineladmin') {
+      // /login ou /paineladmin → login (ou dashboard se já autenticado, ou /minhaconta se for hóspede, ou /camareira se for camareira)
+      if (parts[0] === 'login' || parts[0] === 'paineladmin') {
         const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
         const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
         if (savedRole && savedEmail) {
