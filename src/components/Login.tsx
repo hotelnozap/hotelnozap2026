@@ -46,65 +46,52 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState('');
 
-  // Estados do Google reCAPTCHA (v2 Checkbox)
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const [recaptchaError, setRecaptchaError] = useState<string>('');
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  const recaptchaWidgetIdRef = useRef<number | null>(null);
-  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8';
+  // Estados do Google reCAPTCHA (v3 Invisível / Score Based)
+  const [recaptchaSiteKey] = useState<string>(
+    () => import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8'
+  );
 
-  // Carrega e renderiza o script do reCAPTCHA
+  // Carrega dinamicamente o script do reCAPTCHA v3
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const renderWidget = () => {
-      if (
-        window.grecaptcha &&
-        window.grecaptcha.render &&
-        recaptchaContainerRef.current &&
-        recaptchaWidgetIdRef.current === null
-      ) {
-        try {
-          recaptchaContainerRef.current.innerHTML = '';
-          const widgetId = window.grecaptcha.render(recaptchaContainerRef.current, {
-            sitekey: recaptchaSiteKey,
-            callback: (token: string) => {
-              setRecaptchaToken(token);
-              setRecaptchaError('');
-            },
-            'expired-callback': () => {
-              setRecaptchaToken(null);
-            },
-            'error-callback': () => {
-              setRecaptchaToken(null);
-              setRecaptchaError('Não foi possível carregar a verificação humana. Tente novamente.');
-            }
-          });
-          recaptchaWidgetIdRef.current = widgetId;
-        } catch (e) {
-          console.warn('Erro ao renderizar widget reCAPTCHA:', e);
-        }
-      }
-    };
-
-    window.onRecaptchaLoaded = () => {
-      renderWidget();
-    };
-
-    if (window.grecaptcha && window.grecaptcha.render) {
-      renderWidget();
-    } else {
-      const existingScript = document.getElementById('recaptcha-script');
-      if (!existingScript) {
-        const script = document.createElement('script');
-        script.id = 'recaptcha-script';
-        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit';
-        script.async = true;
-        script.defer = true;
-        document.body.appendChild(script);
-      }
+    const existingScript = document.getElementById('recaptcha-script');
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.id = 'recaptcha-script';
+      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`;
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
     }
   }, [recaptchaSiteKey]);
+
+  // Função auxiliar para obter token do reCAPTCHA v3
+  const executeRecaptcha = async (action: string = 'login'): Promise<string | null> => {
+    if (typeof window === 'undefined') return null;
+
+    if (!window.grecaptcha) {
+      console.warn('reCAPTCHA ainda não carregado no DOM.');
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      try {
+        window.grecaptcha.ready(async () => {
+          try {
+            const token = await window.grecaptcha.execute(recaptchaSiteKey, { action });
+            resolve(token);
+          } catch (err) {
+            console.warn('Erro ao executar reCAPTCHA v3:', err);
+            resolve(null);
+          }
+        });
+      } catch (e) {
+        console.warn('Falha na inicialização do grecaptcha.ready:', e);
+        resolve(null);
+      }
+    });
+  };
 
   // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente e checa bloqueio
   useEffect(() => {
@@ -384,35 +371,30 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       console.warn('Erro ao checar status de bloqueio inicial:', checkErr);
     }
 
-    // 0.1 VERIFICAÇÃO RECAPTCHA OBRIGATÓRIA (ANTI-BOT)
-    if (!recaptchaToken) {
-      setErrorMessage('Por favor, marque a caixa de verificação "Não sou um robô" para continuar.');
-      setRecaptchaError('Confirmação do reCAPTCHA obrigatória.');
-      return;
-    }
-
     setLoading(true);
 
-    // Valida o token no backend de forma segura
+    // 0.1 VERIFICAÇÃO RECAPTCHA v3 INVISÍVEL (ANTI-BOT)
     try {
-      const verifyRes = await fetch('/api/verify-recaptcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: recaptchaToken })
-      });
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        setLoading(false);
-        setErrorMessage('Verificação de segurança do reCAPTCHA falhou. Por favor, marque novamente.');
-        setRecaptchaToken(null);
-        if (window.grecaptcha && recaptchaWidgetIdRef.current !== null) {
-          try { window.grecaptcha.reset(recaptchaWidgetIdRef.current); } catch { /* ignore */ }
+      const token = await executeRecaptcha('login');
+      if (token) {
+        try {
+          const verifyRes = await fetch('/api/verify-recaptcha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData && verifyData.success === false && verifyData.score !== undefined && verifyData.score < 0.3) {
+            setLoading(false);
+            setErrorMessage('Acesso bloqueado por suspeita de atividade automatizada (bot). Tente novamente mais tarde.');
+            return;
+          }
+        } catch (recaptchaNetErr) {
+          console.warn('Aviso: endpoint serverless de reCAPTCHA offline ou em ambiente local direto:', recaptchaNetErr);
         }
-        return;
       }
-    } catch (recaptchaNetErr) {
-      console.warn('Aviso: endpoint serverless de reCAPTCHA offline ou em ambiente local direto:', recaptchaNetErr);
-      // Não bloqueia caso o endpoint serverless não esteja ativo localmente se o frontend gerou token válido
+    } catch (tokenErr) {
+      console.warn('Aviso: falha na geração do token reCAPTCHA:', tokenErr);
     }
 
     let ultimoErroAuth: string | null = null;
@@ -977,22 +959,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                   </div>
 
-                  {/* Verificação Humana Google reCAPTCHA (v2 Checkbox) */}
-                  <div className="pt-2 flex flex-col items-center justify-center">
-                    <div 
-                      ref={recaptchaContainerRef} 
-                      className="min-h-[78px] flex items-center justify-center overflow-x-auto w-full max-w-full"
-                    />
-                    {recaptchaError && (
-                      <p className="text-[11px] text-red-500 font-semibold mt-1 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs">error</span>
-                        <span>{recaptchaError}</span>
-                      </p>
-                    )}
-                  </div>
-
                   {/* Botão de Ação Principal (Login) */}
-                  <div className="pt-1">
+                  <div className="pt-2">
                     <button
                       type="submit"
                       disabled={loading}
@@ -1004,6 +972,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
                     </button>
                   </div>
+
+                  {/* Aviso de Proteção reCAPTCHA v3 */}
+                  <p className="text-[10px] text-center text-slate-400 mt-2">
+                    Protegido por reCAPTCHA •{' '}
+                    <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Privacidade</a> e{' '}
+                    <a href="/termos" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Termos</a>
+                  </p>
                 </>
               )}
 
