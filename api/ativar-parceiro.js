@@ -1,5 +1,34 @@
 import { createClient } from '@supabase/supabase-js';
 
+async function verifyIsAdmin(req, supabaseAdmin) {
+  try {
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
+    if (!token) return false;
+
+    const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !user) return false;
+
+    const { data: dbUser } = await supabaseAdmin
+      .from('usuarios')
+      .select('perfil, cargo')
+      .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
+      .maybeSingle();
+
+    const perfil = (dbUser?.perfil || user.user_metadata?.perfil || '').toLowerCase();
+    const cargo = (dbUser?.cargo || '').toLowerCase();
+    const userEmail = (user.email || '').toLowerCase();
+
+    return userEmail === 'contato@hotelnozap.com.br' ||
+      perfil.includes('admin') ||
+      perfil.includes('super') ||
+      perfil.includes('master') ||
+      cargo.includes('admin');
+  } catch {
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
   // CORS configuration
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -51,7 +80,8 @@ export default async function handler(req, res) {
     cidade,
     uf,
     senha,
-    cupom
+    cupom,
+    paymentId
   } = body || {};
 
   if (!nome || !email || !cpf) {
@@ -59,6 +89,49 @@ export default async function handler(req, res) {
       success: false,
       error: 'Campos obrigatórios ausentes: nome, email, cpf.'
     });
+  }
+
+  // ── BLINDAGEM DE SEGURANÇA: EXIGIR PAGAMENTO MERCADO PAGO APROVADO OU AUTORIZAÇÃO ADMIN ──
+  let pagamentoValido = false;
+
+  if (paymentId && /^\d+$/.test(String(paymentId).trim())) {
+    try {
+      const { data: dbParams } = await supabaseAdmin
+        .from('parametros_sistema')
+        .select('gateway_token')
+        .limit(1)
+        .maybeSingle();
+
+      const masterToken = (dbParams?.gateway_token || process.env.MERCADOPAGO_ACCESS_TOKEN || '').trim();
+      if (masterToken && masterToken.length > 15) {
+        const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+          headers: { 'Authorization': `Bearer ${masterToken}` }
+        });
+        if (mpRes.ok) {
+          const mpData = await mpRes.json();
+          if (mpData.status === 'approved' && Number(mpData.transaction_amount) >= 190) {
+            pagamentoValido = true;
+          } else {
+            return res.status(400).json({
+              success: false,
+              error: `Pagamento ${paymentId} não foi aprovado pelo Mercado Pago (status: ${mpData.status || 'desconhecido'}).`
+            });
+          }
+        }
+      }
+    } catch (mpErr) {
+      console.warn('[ATIVAR-PARCEIRO] Erro ao consultar pagamento MP:', mpErr);
+    }
+  }
+
+  if (!pagamentoValido) {
+    const isAdmin = await verifyIsAdmin(req, supabaseAdmin);
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Acesso negado: a ativação de franquia requer comprovação de pagamento PIX aprovado ou autorização administrativa.'
+      });
+    }
   }
 
   const cleanEmail = String(email).trim().toLowerCase();

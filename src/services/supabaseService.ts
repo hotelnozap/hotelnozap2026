@@ -952,9 +952,15 @@ export const hoteisService = {
 
       // 1. Tentar exclusão completa via Serverless Function (com service_role que apaga do Supabase Auth e tabela usuários)
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const authToken = sessionData?.session?.access_token || '';
+
         const resp = await fetch('/api/delete-hotel', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+          },
           body: JSON.stringify({ hotelId: id })
         });
         if (resp.ok) {

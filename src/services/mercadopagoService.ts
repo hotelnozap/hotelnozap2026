@@ -148,9 +148,15 @@ export const mercadopagoService = {
 
       // Sincroniza no Supabase via Serverless API (usando service_role)
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const authToken = sessionData?.session?.access_token || '';
+
         await fetch(`${getApiBaseUrl()}/api/get-pix-master`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+          },
           body: JSON.stringify({
             chavePix: payload.chavePixMaster,
             gatewayToken: payload.accessToken,

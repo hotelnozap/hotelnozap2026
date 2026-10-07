@@ -49,6 +49,43 @@ export default async function handler(req, res) {
     }
   });
 
+  // VALIDAÇÃO DE AUTENTICAÇÃO E PERMISSÃO
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+  const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
+
+  if (!token) {
+    return res.status(401).json({ error: 'Acesso não autorizado: token de autenticação ausente.' });
+  }
+
+  const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
+  if (userErr || !user) {
+    return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+  }
+
+  // Verifica permissão do usuário no banco
+  const { data: dbUser } = await supabaseAdmin
+    .from('usuarios')
+    .select('perfil, cargo, hotel_id')
+    .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
+    .maybeSingle();
+
+  const perfil = (dbUser?.perfil || user.user_metadata?.perfil || '').toLowerCase();
+  const cargo = (dbUser?.cargo || '').toLowerCase();
+  const userEmail = (user.email || '').toLowerCase();
+
+  const isMasterAdmin = 
+    userEmail === 'contato@hotelnozap.com.br' ||
+    perfil.includes('admin') ||
+    perfil.includes('super') ||
+    perfil.includes('master') ||
+    cargo.includes('admin');
+
+  const isHotelOwner = dbUser?.hotel_id === hotelId;
+
+  if (!isMasterAdmin && !isHotelOwner) {
+    return res.status(403).json({ error: 'Permissão negada. Apenas administradores ou proprietários podem excluir este hotel.' });
+  }
+
   try {
     // 1. Obter informações do hotel antes de deletar (emails de login e gerente)
     const { data: hotel, error: hotelErr } = await supabaseAdmin

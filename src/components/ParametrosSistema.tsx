@@ -220,9 +220,17 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
     }
 
     // Carregar parâmetros mestre oficiais diretamente do Supabase via API Serverless Master
-    fetch(`${getApiBaseUrl()}/api/get-pix-master`)
-      .then(res => res.json())
-      .then(data => {
+    (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const authToken = sessionData?.session?.access_token || '';
+
+        const res = await fetch(`${getApiBaseUrl()}/api/get-pix-master`, {
+          headers: {
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+          }
+        });
+        const data = await res.json();
         if (data && data.success) {
           if (data.chavePix) setGatewayPixKey(data.chavePix.trim());
           if (data.token && !data.token.includes('9812401928409182')) {
@@ -236,8 +244,10 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
           if (data.recaptchaSiteKey) setRecaptchaSiteKey(data.recaptchaSiteKey);
           if (data.recaptchaSecretKey) setRecaptchaSecretKey(data.recaptchaSecretKey);
         }
-      })
-      .catch(e => console.warn('Aviso ao carregar dados do get-pix-master:', e));
+      } catch (e) {
+        console.warn('Aviso ao carregar dados do get-pix-master:', e);
+      }
+    })();
   }, []);
 
   const handleTestGateway = async () => {
@@ -350,9 +360,15 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
 
     // Sincroniza diretamente com Supabase (Master) via Serverless Function
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const authToken = sessionData?.session?.access_token || '';
+
       await fetch(`${getApiBaseUrl()}/api/get-pix-master`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+        },
         body: JSON.stringify({
           chavePix: gatewayPixKey.trim(),
           gatewayToken: gatewayToken.trim(),

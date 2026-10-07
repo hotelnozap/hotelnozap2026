@@ -610,7 +610,8 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
             cidade: cidade.trim(),
             uf: uf.trim().toUpperCase(),
             senha: senha,
-            cupom: code
+            cupom: code,
+            paymentId: pixResult?.paymentId || ''
           })
         });
 

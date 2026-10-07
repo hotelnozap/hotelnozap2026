@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+
 export default async function handler(req, res) {
   // Configuração de CORS para garantir funcionamento
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -5,7 +7,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {
@@ -16,8 +18,51 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método não permitido.' });
   }
 
+  // 1. VALIDAÇÃO DE AUTENTICAÇÃO E PERMISSÃO DE ADMINISTRADOR
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (serviceKey) {
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
+
+    if (!token) {
+      return res.status(401).json({ error: 'Acesso não autorizado: token de autenticação ausente.' });
+    }
+
+    const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !user) {
+      return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+    }
+
+    const { data: dbUser } = await supabaseAdmin
+      .from('usuarios')
+      .select('perfil, cargo')
+      .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
+      .maybeSingle();
+
+    const perfil = (dbUser?.perfil || user.user_metadata?.perfil || '').toLowerCase();
+    const cargo = (dbUser?.cargo || '').toLowerCase();
+    const userEmail = (user.email || '').toLowerCase();
+
+    const isMasterAdmin = 
+      userEmail === 'contato@hotelnozap.com.br' ||
+      perfil.includes('admin') ||
+      perfil.includes('super') ||
+      perfil.includes('master') ||
+      cargo.includes('admin');
+
+    if (!isMasterAdmin) {
+      return res.status(403).json({ error: 'Permissão negada. Apenas administradores podem disparar notificações push.' });
+    }
+  }
+
   try {
-    const { title, message, url, segment, imageUrl, customKey } = req.body || {};
+    const { title, message, url, segment, imageUrl } = req.body || {};
 
     if (!title || !message) {
       return res.status(400).json({ error: 'Título e mensagem são obrigatórios.' });
@@ -65,21 +110,17 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({
-        error: data.errors || data.message || 'Erro ao enviar notificação no OneSignal',
-        details: data
-      });
+      return res.status(response.status).json(data);
     }
 
     return res.status(200).json({
       success: true,
-      id: data.id,
-      recipients: data.recipients ?? 0,
-      external_id: data.external_id
+      recipients: data.recipients || 0,
+      id: data.id
     });
   } catch (error) {
     return res.status(500).json({
-      error: error.message || 'Erro interno ao processar notificação'
+      error: 'Erro interno ao disparar notificação: ' + error.message
     });
   }
 }

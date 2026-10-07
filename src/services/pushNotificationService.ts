@@ -1,4 +1,5 @@
 import { systemLogsService } from './systemLogsService';
+import { supabase } from '../lib/supabase';
 
 export interface PushNotificationPayload {
   title: string;
@@ -43,10 +44,14 @@ class PushNotificationService {
     })();
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const authToken = sessionData?.session?.access_token || '';
+
       const response = await fetch('/api/send-push', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
         },
         body: JSON.stringify(payload),
       });
