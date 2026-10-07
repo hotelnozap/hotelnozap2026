@@ -74,6 +74,7 @@ import PainelCamareira from './components/PainelCamareira';
 import CardapioHotel from './components/CardapioHotel';
 import { GestaoPedidosCardapio } from './components/GestaoPedidosCardapio';
 import { PaginaInstitucional } from './components/PaginaInstitucional';
+import { Pagina404 } from './components/Pagina404';
 import { ListagemStatusQuartos } from './components/ListagemStatusQuartos';
 import { LogsSistema } from './components/LogsSistema';
 import { NotificacoesPushAdmin } from './components/NotificacoesPushAdmin';
@@ -217,6 +218,7 @@ export const App: React.FC = () => {
         return parts.length >= 2 ? 'pagina-hotel' : 'catalogo-hoteis';
       }
       if (parts[0] === 'hotel') return parts.length >= 3 ? 'detalhes-quarto' : 'pagina-hotel';
+      if (parts[0] === 'cardapio') return 'cardapio-hotel';
       // /login ou /paineladmin → login (ou dashboard se já autenticado, ou /minhaconta se for hóspede, ou /camareira se for camareira)
       if (parts[0] === 'login' || parts[0] === 'paineladmin') {
         const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
@@ -238,6 +240,13 @@ export const App: React.FC = () => {
           return isAdm ? 'admin-dashboard' : 'dashboard';
         }
         return 'login';
+      }
+      if (parts[0] === '404' || parts[0] === 'pagina-404') {
+        return 'pagina-404';
+      }
+      // Qualquer outra rota não reconhecida vinda da URL
+      if (parts.length > 0) {
+        return 'pagina-404';
       }
     } catch { /* ignore */ }
     try {
@@ -352,6 +361,14 @@ export const App: React.FC = () => {
         } else {
           setActiveTab('pagina-hotel');
         }
+      } else if (parts[0] === 'cardapio') {
+        setActiveTab('cardapio-hotel');
+      } else if (parts[0] === 'login') {
+        setActiveTab('login');
+      } else if (parts[0] === '404' || parts[0] === 'pagina-404') {
+        setActiveTab('pagina-404');
+      } else if (parts.length > 0) {
+        setActiveTab('pagina-404');
       }
     };
 
@@ -415,6 +432,9 @@ export const App: React.FC = () => {
       case 'pagina-hotel':
       case 'detalhes-quarto':
         // PaginaHotel e DetalhesQuarto definem seus próprios títulos com o nome do hotel
+        break;
+      case 'pagina-404':
+        document.title = '404 - Página Não Encontrada | Hotel no Zap';
         break;
       default:
         // Qualquer aba da área administrativa (dashboard, hoteis, parceiros, etc.)
@@ -704,6 +724,8 @@ export const App: React.FC = () => {
         currentParts[0] === 'lp' ||
         currentParts[0] === 'assinar' ||
         (currentParts[0] === 'parceiros' && currentParts[1] === 'assinar') ||
+        currentParts[0] === '404' ||
+        currentParts[0] === 'pagina-404' ||
         currentParts[0] === 'privacidade' ||
         currentParts[0] === 'termos' ||
         currentParts[0] === 'empresa' ||
@@ -1067,6 +1089,56 @@ export const App: React.FC = () => {
     );
   }
 
+  // ── Rota: 404 — Página Não Encontrada ──
+  const is404Route = activeTab === 'pagina-404' || pathParts[0] === '404' || pathParts[0] === 'pagina-404';
+
+  if (is404Route) {
+    return (
+      <Pagina404
+        onNavigateHome={() => {
+          if (isParceirosDomain()) {
+            window.history.pushState({}, '', '/');
+            setActiveTab('landingpage-parceiros');
+          } else if (isLpDomain()) {
+            window.history.pushState({}, '', '/');
+            setActiveTab('landingpage');
+          } else if (isAppDomain()) {
+            window.history.pushState({}, '', '/');
+            const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
+            const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
+            if (savedRole && savedEmail) {
+              const rLower = savedRole.toLowerCase();
+              if (rLower.includes('parceiro') || rLower.includes('franqueado')) {
+                setActiveTab('portal-parceiro');
+              } else if (rLower.includes('camareira') || rLower.includes('governanca')) {
+                setActiveTab('camareira');
+              } else {
+                setActiveTab(rLower.includes('admin') || rLower.includes('super') ? 'admin-dashboard' : 'dashboard');
+              }
+            } else {
+              setActiveTab('login');
+            }
+          } else {
+            window.history.pushState({}, '', '/');
+            setActiveTab('catalogo-hoteis');
+          }
+        }}
+        onNavigateCatalog={() => {
+          window.history.pushState({}, '', '/hoteis');
+          setActiveTab('catalogo-hoteis');
+        }}
+        onNavigateLogin={() => {
+          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+            window.location.href = 'https://app.hotelnozap.com.br/';
+          } else {
+            window.history.pushState({}, '', '/paineladmin');
+            setActiveTab('login');
+          }
+        }}
+      />
+    );
+  }
+
   // ── Rotas Institucionais do Hotel no Zap: /privacidade, /termos, /empresa, /quem-somos, /fale-conosco ──
   if (activeTab === 'privacidade' || pathParts[0] === 'privacidade') {
     return <PaginaInstitucional tipo="privacidade" />;
@@ -1333,11 +1405,14 @@ export const App: React.FC = () => {
     pathParts[0] === 'cardapio' ||
     pathParts[0] === 'lp' ||
     pathParts[0] === 'assinar' ||
+    pathParts[0] === '404' ||
+    pathParts[0] === 'pagina-404' ||
     (pathParts[0] === 'parceiros' && pathParts[1] === 'assinar') ||
     activeTab === 'pagina-hotel' ||
     activeTab === 'catalogo-hoteis' ||
     activeTab === 'detalhes-quarto' ||
-    activeTab === 'cardapio-hotel';
+    activeTab === 'cardapio-hotel' ||
+    activeTab === 'pagina-404';
 
   if (!isPublicOrHotelPath && (activeTab === 'minhaconta' || pathParts[0] === 'minhaconta' || isHospedeUser)) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/minhaconta') {

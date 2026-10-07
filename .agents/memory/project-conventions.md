@@ -8,6 +8,7 @@ updated: 2026-09-23
 
 ## Git Workflow & Deploy
 - Commitar e subir sempre diretamente na branch `master` (Produção), para que a Vercel gere deploy oficial em **Production** e atualize imediatamente os domínios oficiais (`hotelnozap.com.br` e `app.hotelnozap.com.br`).
+- **REGRA CRÍTICA DE AUTORIZAÇÃO:** NUNCA fazer `git push` ou disparar deploy automaticamente. Todas as alterações devem permanecer locais até que o usuário solicite explicitamente ("faça o deploy", "suba as alterações", "pode fazer o push").
 - Não usar branches de feature/preview para deploys, a menos que o usuário solicite explicitamente uma branch separada.
 
 ## Supported AI platforms (AG Kit)

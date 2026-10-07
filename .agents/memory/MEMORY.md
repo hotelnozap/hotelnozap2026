@@ -6,7 +6,7 @@
 - [project] Component metadata uses SemVer while toolkit releases use CalVer → tech-decisions.md
 
 ## Feedback
-- [feedback] Nunca fazer deploy automático; aguardar solicitação explícita do usuário → feedback-history.md
+- [feedback] Só fazer deploy/push quando expressamente solicitado/autorizado pelo usuário → feedback-history.md
 
 ## User Preferences
 - [preference] Disponibilizar no chat apenas scripts SQL prontos para colar no Supabase; código de aplicação já é aplicado diretamente nos arquivos → user-preferences.md
