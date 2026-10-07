@@ -972,13 +972,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
                     </button>
                   </div>
-
-                  {/* Aviso de Proteção reCAPTCHA v3 */}
-                  <p className="text-[10px] text-center text-slate-400 mt-2">
-                    Protegido por reCAPTCHA •{' '}
-                    <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Privacidade</a> e{' '}
-                    <a href="/termos" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Termos</a>
-                  </p>
                 </>
               )}
 
