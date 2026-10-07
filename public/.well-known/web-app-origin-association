@@ -1,7 +1,16 @@
 {
   "web_apps": [
     {
-      "web_app_identity": "https://hotelnozap.com.br/"
+      "manifest": "https://hotelnozap.com.br/manifest.json",
+      "details": {
+        "paths": ["/*"]
+      }
+    },
+    {
+      "manifest": "https://app.hotelnozap.com.br/manifest.json",
+      "details": {
+        "paths": ["/*"]
+      }
     }
   ]
 }
