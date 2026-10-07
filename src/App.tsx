@@ -134,6 +134,22 @@ const isParceirosDomain = (): boolean => {
   return host === 'parceiros.hotelnozap.com.br' || host.startsWith('parceiros.');
 };
 
+const isStandaloneMode = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true ||
+    document.referrer.includes('android-app://') ||
+    window.location.search.includes('mode=pwa')
+  );
+};
+
+// Se estiver no aplicativo instalado (APK/PWA standalone) ou no próprio subdomínio app,
+// NUNCA fazer redirecionamento de URL externa para não disparar a barra de navegação do Android
+const shouldStayInternal = (): boolean => {
+  return isAppDomain() || isStandaloneMode();
+};
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
@@ -1079,7 +1095,7 @@ export const App: React.FC = () => {
           }
         }}
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1129,7 +1145,7 @@ export const App: React.FC = () => {
           setActiveTab('catalogo-hoteis');
         }}
         onNavigateLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1178,7 +1194,7 @@ export const App: React.FC = () => {
           setActiveTab('landingpage');
         }}
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1197,7 +1213,7 @@ export const App: React.FC = () => {
     return (
       <LandingPage
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1205,7 +1221,7 @@ export const App: React.FC = () => {
           }
         }}
         onNavigateToSystem={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1242,7 +1258,7 @@ export const App: React.FC = () => {
           setActiveTab('landingpage-parceiros');
         }}
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1250,7 +1266,7 @@ export const App: React.FC = () => {
           }
         }}
         onNavigateToDashboard={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             setActiveTab('portal-parceiro');
@@ -1271,7 +1287,7 @@ export const App: React.FC = () => {
     return (
       <LandingPageParceiros
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1315,7 +1331,7 @@ export const App: React.FC = () => {
           setActiveTab('catalogo-hoteis');
         }}
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1362,7 +1378,7 @@ export const App: React.FC = () => {
           setActiveTab('catalogo-hoteis');
         }}
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1381,7 +1397,7 @@ export const App: React.FC = () => {
     return (
       <CatalogoHoteis 
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', '/paineladmin');
@@ -1432,7 +1448,7 @@ export const App: React.FC = () => {
           setActiveTab('pagina-hotel');
         }}
         onNavigateToSystem={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
@@ -1440,7 +1456,7 @@ export const App: React.FC = () => {
           }
         }}
         onNavigateToLogin={() => {
-          if (!isAppDomain() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
             window.location.href = 'https://app.hotelnozap.com.br/';
           } else {
             window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
