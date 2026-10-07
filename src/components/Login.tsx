@@ -60,6 +60,33 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   }, []);
 
+  // Atualiza título e meta tags no DOM para o Painel Administrativo
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.title = 'Hotel no Zap - Painel Administrativo';
+
+    const updateMeta = (nameOrProperty: string, value: string) => {
+      let meta = document.querySelector(`meta[name="${nameOrProperty}"], meta[property="${nameOrProperty}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        if (nameOrProperty.startsWith('og:') || nameOrProperty.startsWith('twitter:')) {
+          meta.setAttribute('property', nameOrProperty);
+        } else {
+          meta.setAttribute('name', nameOrProperty);
+        }
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', value);
+    };
+
+    updateMeta('description', 'Acesse agora mesmo o seu painel administrativo, e tenha o controle total do seu hotel.');
+    updateMeta('og:title', 'Hotel no Zap - Painel Administrativo');
+    updateMeta('og:description', 'Acesse agora mesmo o seu painel administrativo, e tenha o controle total do seu hotel.');
+    updateMeta('og:url', 'https://app.hotelnozap.com.br/');
+    updateMeta('twitter:title', 'Hotel no Zap - Painel Administrativo');
+    updateMeta('twitter:description', 'Acesse agora mesmo o seu painel administrativo, e tenha o controle total do seu hotel.');
+  }, []);
+
   // 2. Listener para capturar quando o usuário abre o link do e-mail de recuperação de senha
   useEffect(() => {
     if (typeof window !== 'undefined') {

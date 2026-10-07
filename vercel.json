@@ -67,6 +67,30 @@
       "destination": "/api/hotel-og?slug=:slug"
     },
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.hotelnozap.com.br"
+        }
+      ],
+      "destination": "/api/app-og"
+    },
+    {
+      "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|woff2?|ttf|map)).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.hotelnozap.com.br"
+        }
+      ],
+      "destination": "/api/app-og"
+    },
+    {
+      "source": "/(login|paineladmin)",
+      "destination": "/api/app-og"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

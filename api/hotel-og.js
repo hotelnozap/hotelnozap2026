@@ -24,6 +24,7 @@ function slugify(text) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Vary', 'User-Agent');
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
 
   if (req.method === 'OPTIONS') {
@@ -179,6 +180,9 @@ export default async function handler(req, res) {
 
       // Substitui o título
       html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeHtml(ogTitle)}</title>`);
+
+      // Substitui canonical
+      html = html.replace(/<link rel="canonical" href=".*?" \/>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
 
       // Substitui as meta tags Open Graph
       html = html.replace(/<meta property="og:title" content=".*?" \/>/i, `<meta property="og:title" content="${escapeHtml(ogTitle)}" />`);
