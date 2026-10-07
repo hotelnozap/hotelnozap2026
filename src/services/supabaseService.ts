@@ -1327,19 +1327,7 @@ export const hospedesService = {
         }));
       }
 
-      // Disparar início de atendimento / boas-vindas automática caso habilitado e haja telefone
-      if (telefone) {
-        import('./templateMensagemService')
-          .then(({ templateMensagemService }) => {
-            templateMensagemService.dispararBoasVindasAutomatica(hId, {
-              nome_hospede: nome,
-              telefone: telefone,
-              email: email
-            });
-          })
-          .catch(e => console.warn('Erro ao disparar boas-vindas automática para novo hóspede:', e));
-      }
-
+      // Autoresponder desativado permanentemente
       return { success: true, error: null };
     } catch (err: any) {
       console.error('Erro ao salvar hóspede completo no Supabase:', err);

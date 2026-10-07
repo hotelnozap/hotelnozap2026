@@ -54,7 +54,7 @@ export interface AutomacoesConfig {
 }
 
 export const AUTOMACOES_PADRAO: AutomacoesConfig = {
-  auto_boas_vindas: true,
+  auto_boas_vindas: false,
   auto_confirmacao: true,
   auto_lembrete_checkin: true,
   auto_checkout: true,
@@ -545,92 +545,8 @@ export const templateMensagemService = {
     hotelId: string | undefined,
     dados: any
   ): Promise<{ success: boolean; via?: string; instanceName?: string; error?: string }> {
-    try {
-      if (!dados) return { success: false, error: 'Dados não informados' };
-
-      const activeHotelId = hotelId || dados.hotel_id || currentHotelService.getCurrentHotel()?.id;
-      const automacoes = this.getHotelAutomacoes(activeHotelId);
-
-      // 1. Verifica se a automação de boas-vindas está ativada para o hotel
-      if (!automacoes.auto_boas_vindas) {
-        console.info('[templateMensagemService] Automação de boas-vindas desativada para o hotel:', activeHotelId);
-        return { success: false, error: 'Automação de boas-vindas desativada nas configurações do hotel.' };
-      }
-
-      // 2. Determinar telefone de destino
-      const telefoneDestino =
-        dados.telefone ||
-        dados.telefone_hospede ||
-        dados.hospedeTelefone ||
-        dados.phone ||
-        dados.contato?.telefone ||
-        dados.cliente?.telefone ||
-        '';
-
-      if (!telefoneDestino) {
-        console.warn('[templateMensagemService] Aviso: Telefone não informado para boas-vindas.');
-        return { success: false, error: 'Telefone do hóspede não informado.' };
-      }
-
-      const cleanPhone = formatPhoneEvolution(telefoneDestino);
-      if (!cleanPhone) {
-        return { success: false, error: 'Número de telefone inválido para o WhatsApp.' };
-      }
-
-      // Proteção anti-duplicidade COMPARTILHADA (5 minutos) via localStorage.
-      // Compartilhada com whatsappAutoResponderService para evitar duplo envio.
-      if (this._checkRecentDispatch(cleanPhone, activeHotelId)) {
-        console.info('[templateMensagemService] Boas-vindas já enviadas recentemente para este número (cache compartilhado):', cleanPhone);
-        return { success: true, error: 'Já enviado recentemente' };
-      }
-
-      // Marca ANTES de enviar para evitar race condition com AutoResponder
-      this._markRecentDispatch(cleanPhone, activeHotelId);
-
-      // 3. Obter dados do Hotel
-      let hotelData: any = null;
-      if (activeHotelId) {
-        try {
-          const { data: hDb } = await supabase
-            .from('hoteis')
-            .select('*')
-            .eq('id', activeHotelId)
-            .maybeSingle();
-          if (hDb) hotelData = hDb;
-        } catch (e) {
-          console.warn('[templateMensagemService] Erro ao buscar hotel:', e);
-        }
-      }
-      if (!hotelData) {
-        hotelData = currentHotelService.getCurrentHotel();
-      }
-
-      // 4. Montar Tags
-      const tags: TemplateTags = {
-        nome_hospede: dados.nome_hospede || dados.nome || dados.name || dados.contato?.nome || dados.cliente?.nome || '',
-        nome_hotel: hotelData?.name || hotelData?.nome || hotelData?.razao_social || 'Hotel',
-        link_hotel: this.getHotelPublicLink(activeHotelId)
-      };
-
-      // 5. Renderizar Template de Boas-Vindas
-      const mensagem = this.renderTemplate('boas_vindas', tags, activeHotelId);
-
-      // 6. Enviar diretamente via Evolution API pela instância conectada
-      const resultado = await this.enviarMensagemWhatsApp(activeHotelId, cleanPhone, mensagem);
-
-      if (!resultado.success) {
-        // Se falhou, remove do cache para permitir nova tentativa
-        const key = `${activeHotelId || 'default'}_${cleanPhone}`;
-        const cache = this._readDispatchCache();
-        delete cache[key];
-        this._writeDispatchCache(cache);
-      }
-
-      return resultado;
-    } catch (err: any) {
-      console.error('[templateMensagemService] Erro ao disparar boas-vindas automáticas:', err);
-      return { success: false, error: err?.message || 'Erro inesperado' };
-    }
+    // SERVIÇO DE RESPOSTA AUTOMÁTICA DESATIVADO PERMANENTEMENTE
+    return { success: false, error: 'Autoresponder desativado permanentemente.' };
   },
 
   /**
