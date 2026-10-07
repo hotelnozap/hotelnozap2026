@@ -53,19 +53,25 @@
       "permanent": false
     },
     {
-      "source": "/(index\\.html)?",
+      "source": "/",
       "has": [
         {
           "type": "host",
           "value": "app.hotelnozap.com.br"
-        },
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(?i).*(facebookexternalhit|whatsapp|telegrambot|twitterbot|linkedinbot|slackbot|discordbot|applebot|googlebot|bingbot|crawler|spider|bot).*"
         }
       ],
-      "destination": "/api/app-og",
+      "destination": "/login",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.hotelnozap.com.br"
+        }
+      ],
+      "destination": "/login",
       "permanent": false
     }
   ],
