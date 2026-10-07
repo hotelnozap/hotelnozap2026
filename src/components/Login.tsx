@@ -46,52 +46,66 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState('');
 
-  // Estados do Google reCAPTCHA (v3 Invisível / Score Based)
-  const [recaptchaSiteKey] = useState<string>(
-    () => import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8'
-  );
+  // Estados do Google reCAPTCHA v2 (Caixa Checkbox "Não sou um robô")
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaError, setRecaptchaError] = useState<string>('');
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+  const recaptchaWidgetIdRef = useRef<number | null>(null);
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LegAuQtAAAAAKXZEeinjRJ8Yb0LrcRvArBgEXSc';
 
-  // Carrega dinamicamente o script do reCAPTCHA v3
+  // Renderiza e inicializa o widget reCAPTCHA v2 Checkbox
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const existingScript = document.getElementById('recaptcha-script');
-    if (!existingScript) {
+    const renderRecaptchaWidget = () => {
+      if (
+        window.grecaptcha &&
+        typeof window.grecaptcha.render === 'function' &&
+        recaptchaContainerRef.current &&
+        recaptchaWidgetIdRef.current === null
+      ) {
+        try {
+          recaptchaContainerRef.current.innerHTML = '';
+          const widgetId = window.grecaptcha.render(recaptchaContainerRef.current, {
+            sitekey: recaptchaSiteKey,
+            callback: (token: string) => {
+              setRecaptchaToken(token);
+              setRecaptchaError('');
+            },
+            'expired-callback': () => {
+              setRecaptchaToken(null);
+            },
+            'error-callback': () => {
+              setRecaptchaToken(null);
+              setRecaptchaError('Não foi possível validar. Tente recarregar a página.');
+            }
+          });
+          recaptchaWidgetIdRef.current = widgetId;
+        } catch (e) {
+          console.warn('Erro ao renderizar widget reCAPTCHA v2:', e);
+        }
+      }
+    };
+
+    window.onRecaptchaLoaded = () => {
+      renderRecaptchaWidget();
+    };
+
+    if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
+      renderRecaptchaWidget();
+    } else {
+      const existingScript = document.getElementById('recaptcha-script');
+      if (existingScript) {
+        existingScript.remove();
+      }
       const script = document.createElement('script');
       script.id = 'recaptcha-script';
-      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`;
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit&hl=pt-BR';
       script.async = true;
       script.defer = true;
       document.body.appendChild(script);
     }
   }, [recaptchaSiteKey]);
-
-  // Função auxiliar para obter token do reCAPTCHA v3
-  const executeRecaptcha = async (action: string = 'login'): Promise<string | null> => {
-    if (typeof window === 'undefined') return null;
-
-    if (!window.grecaptcha) {
-      console.warn('reCAPTCHA ainda não carregado no DOM.');
-      return null;
-    }
-
-    return new Promise((resolve) => {
-      try {
-        window.grecaptcha.ready(async () => {
-          try {
-            const token = await window.grecaptcha.execute(recaptchaSiteKey, { action });
-            resolve(token);
-          } catch (err) {
-            console.warn('Erro ao executar reCAPTCHA v3:', err);
-            resolve(null);
-          }
-        });
-      } catch (e) {
-        console.warn('Falha na inicialização do grecaptcha.ready:', e);
-        resolve(null);
-      }
-    });
-  };
 
   // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente e checa bloqueio
   useEffect(() => {
@@ -371,30 +385,33 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       console.warn('Erro ao checar status de bloqueio inicial:', checkErr);
     }
 
+    // 0.1 VERIFICAÇÃO RECAPTCHA v2 (Caixa "Não sou um robô" obrigatória)
+    if (!recaptchaToken) {
+      setErrorMessage('Por favor, marque a caixa de verificação "Não sou um robô" para continuar.');
+      setRecaptchaError('Confirmação do reCAPTCHA obrigatória.');
+      return;
+    }
+
     setLoading(true);
 
-    // 0.1 VERIFICAÇÃO RECAPTCHA v3 INVISÍVEL (ANTI-BOT)
     try {
-      const token = await executeRecaptcha('login');
-      if (token) {
-        try {
-          const verifyRes = await fetch('/api/verify-recaptcha', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token })
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyData && verifyData.success === false && verifyData.score !== undefined && verifyData.score < 0.3) {
-            setLoading(false);
-            setErrorMessage('Acesso bloqueado por suspeita de atividade automatizada (bot). Tente novamente mais tarde.');
-            return;
-          }
-        } catch (recaptchaNetErr) {
-          console.warn('Aviso: endpoint serverless de reCAPTCHA offline ou em ambiente local direto:', recaptchaNetErr);
+      const verifyRes = await fetch('/api/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: recaptchaToken })
+      });
+      const verifyData = await verifyRes.json();
+      if (verifyData && verifyData.success === false) {
+        setLoading(false);
+        setErrorMessage('Verificação de segurança falhou. Por favor, marque a caixa novamente.');
+        setRecaptchaToken(null);
+        if (window.grecaptcha && recaptchaWidgetIdRef.current !== null) {
+          try { window.grecaptcha.reset(recaptchaWidgetIdRef.current); } catch { /* ignore */ }
         }
+        return;
       }
-    } catch (tokenErr) {
-      console.warn('Aviso: falha na geração do token reCAPTCHA:', tokenErr);
+    } catch (recaptchaNetErr) {
+      console.warn('Aviso: endpoint serverless de reCAPTCHA offline:', recaptchaNetErr);
     }
 
     let ultimoErroAuth: string | null = null;
@@ -957,6 +974,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       <span className="material-symbols-outlined text-sm text-emerald-700">help</span>
                       Esqueceu a senha?
                     </button>
+                  </div>
+
+                  {/* Caixa de Verificação Google reCAPTCHA v2 ("Não sou um robô") */}
+                  <div className="pt-3 flex flex-col items-center justify-center">
+                    <div 
+                      ref={recaptchaContainerRef} 
+                      className="min-h-[78px] flex items-center justify-center overflow-x-auto w-full max-w-full"
+                    />
+                    {recaptchaError && (
+                      <p className="text-[11px] text-red-500 font-semibold mt-1.5 flex items-center gap-1 text-center">
+                        <span className="material-symbols-outlined text-xs">error</span>
+                        <span>{recaptchaError}</span>
+                      </p>
+                    )}
                   </div>
 
                   {/* Botão de Ação Principal (Login) */}
