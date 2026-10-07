@@ -1,5 +1,5 @@
 // Service Worker para Hotel no Zap PWA (PWABuilder Certified)
-const CACHE_NAME = 'hotelnozap-pwa-v10';
+const CACHE_NAME = 'hotelnozap-pwa-v11';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -16,17 +16,13 @@ const STATIC_ASSETS = [
 
 // Instalação do Service Worker
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Caching robusto: tenta adicionar todos individualmente para garantir sucesso
       await Promise.allSettled(
-        STATIC_ASSETS.map((asset) =>
-          cache.add(asset).catch((err) => {
-            console.warn('[SW] Falha ao pré-cachear asset:', asset, err);
-          })
-        )
+        STATIC_ASSETS.map((asset) => cache.add(asset).catch(() => {}))
       );
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -35,11 +31,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
+        keys.map((key) => caches.delete(key))
       );
     }).then(() => self.clients.claim())
   );
