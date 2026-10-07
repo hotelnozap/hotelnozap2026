@@ -385,16 +385,8 @@ export const templateMensagemService = {
         }
       }
 
-      // 3. Fallback: Qualquer instância conectada no servidor (ex: meutim)
-      const anyOpen = evoList.find((inst) => inst.connectionStatus === 'open');
-      if (anyOpen) {
-        return {
-          instanceName: anyOpen.name,
-          status: 'open',
-          isOnline: true
-        };
-      }
-
+      // Se não encontrou nenhuma instância vinculada ao hotel, retorna desconectado.
+      // NUNCA fazer fallback para instâncias de outros hotéis ou instâncias pessoais abertas no servidor!
       return {
         instanceName: null,
         status: 'disconnected',

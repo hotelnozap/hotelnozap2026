@@ -478,12 +478,13 @@ export const App: React.FC = () => {
     }
   });
 
-  useEffect(() => {
-    whatsappAutoResponderService.start();
-    return () => {
-      whatsappAutoResponderService.stop();
-    };
-  }, []);
+  // AutoResponder desativado por padrão no cliente para evitar polling contínuo desnecessário e disparos indevidos
+  // useEffect(() => {
+  //   whatsappAutoResponderService.start();
+  //   return () => {
+  //     whatsappAutoResponderService.stop();
+  //   };
+  // }, []);
 
   useEffect(() => {
     evolutionApiService.fetchInstances().then((list) => {
