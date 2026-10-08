@@ -791,29 +791,29 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         </div>
       </div>
 
-      {/* PAINEL PRINCIPAL DO FORMULÁRIO (7 COLUNAS NO DESKTOP, CENTRALIZADO E ALINHADO) */}
-      <div className="lg:col-span-7 p-6 sm:p-12 xl:p-16 flex flex-col justify-center items-center bg-white overflow-y-auto h-full">
+      {/* PAINEL PRINCIPAL DO FORMULÁRIO (7 COLUNAS NO DESKTOP, SEM CORTAR O TOPO) */}
+      <div className="lg:col-span-7 px-6 sm:px-12 py-6 sm:py-8 xl:py-10 flex flex-col items-center bg-white overflow-y-auto h-full">
         
-        <div className="w-full max-w-md flex flex-col justify-between my-auto py-4">
+        <div className="w-full max-w-md flex flex-col justify-between my-auto py-2">
           
           {/* FEEDBACK DE MENSAGENS NO FORM */}
           <div>
             {successMessage && (
-              <div className="mb-6 w-full bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in shadow-md">
+              <div className="mb-4 w-full bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in shadow-md">
                 <span className="material-symbols-outlined text-emerald-600">check_circle</span>
                 <span>{successMessage}</span>
               </div>
             )}
 
             {errorMessage && (
-              <div className="mb-6 w-full bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in shadow-md">
+              <div className="mb-4 w-full bg-red-50 border border-red-300 text-red-800 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 animate-in fade-in shadow-md">
                 <span className="material-symbols-outlined text-red-600">error</span>
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {/* Header Mobile: Logo Centralizada no topo conforme solicitado */}
-            <div className="flex flex-col items-center justify-center text-center mb-6 lg:hidden">
+            <div className="flex flex-col items-center justify-center text-center mb-5 lg:hidden">
               <a href="/" className="flex items-center justify-center gap-2.5 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
                 <ZapHotelLogo size={42} className="group-hover:scale-105 transition-transform" />
                 <div className="flex flex-col text-left leading-none">
@@ -823,15 +823,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </a>
             </div>
 
-            <div className="mb-8">
+            <div className="mb-5 sm:mb-6">
               <h2 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight">Bem-vindo de volta! 👋</h2>
-              <p className="text-slate-500 text-sm sm:text-base mt-2">
+              <p className="text-slate-500 text-xs sm:text-sm mt-1.5 leading-relaxed">
                 Insira suas credenciais corporativas para acessar o painel de gerenciamento.
               </p>
             </div>
 
             {/* Formulário de Login */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               
               {/* Campo E-mail / Usuário */}
               <div>
@@ -977,13 +977,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   </div>
 
                   {/* Caixa de Verificação Google reCAPTCHA v2 ("Não sou um robô") */}
-                  <div className="pt-3 flex flex-col items-center justify-center">
+                  <div className="pt-2 flex flex-col items-center justify-center">
                     <div 
                       ref={recaptchaContainerRef} 
                       className="min-h-[78px] flex items-center justify-center overflow-x-auto w-full max-w-full"
                     />
                     {recaptchaError && (
-                      <p className="text-[11px] text-red-500 font-semibold mt-1.5 flex items-center gap-1 text-center">
+                      <p className="text-[11px] text-red-500 font-semibold mt-1 flex items-center gap-1 text-center">
                         <span className="material-symbols-outlined text-xs">error</span>
                         <span>{recaptchaError}</span>
                       </p>
@@ -991,11 +991,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   </div>
 
                   {/* Botão de Ação Principal (Login) */}
-                  <div className="pt-2">
+                  <div className="pt-1.5">
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#003400] to-[#052e16] hover:from-[#052e16] hover:to-[#000000] text-white text-sm font-bold shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer disabled:opacity-60"
+                      className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-[#003400] to-[#052e16] hover:from-[#052e16] hover:to-[#000000] text-white text-sm font-bold shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer disabled:opacity-60"
                     >
                       <span className="material-symbols-outlined text-xl">
                         {loading ? 'progress_activity' : 'login'}
@@ -1009,7 +1009,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </form>
 
             {/* Divisor */}
-            <div className="relative my-8">
+            <div className="relative my-4 sm:my-5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200" />
               </div>
@@ -1024,7 +1024,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20meu%20acesso%20ao%20Hotel%20no%20Zap"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-[0.99]"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-[0.99]"
               >
                 <span className="material-symbols-outlined text-base text-emerald-600">support_agent</span>
                 <span>Suporte no WhatsApp</span>
@@ -1034,7 +1034,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
 
           {/* Rodapé Informativo */}
-          <div className="pt-6 mt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+          <div className="pt-3 mt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] sm:text-xs text-slate-400 gap-1.5">
             <span>Hotel no Zap • Sistema de Gestão v3.4</span>
             <div className="flex items-center gap-4">
               <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">Termos de Uso</a>
