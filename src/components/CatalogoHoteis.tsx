@@ -980,6 +980,58 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     return () => window.removeEventListener('popstate', syncCityFromUrl);
   }, [hoteisList]);
 
+  // Atualização dinâmica de Meta Tags Open Graph & Twitter para compartilhamento de links
+  useEffect(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://hotelnozap.com.br';
+    const defaultImg = `${origin}/og-image.png`;
+
+    const setMeta = (attr: string, key: string, value: string) => {
+      if (typeof document === 'undefined') return;
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', value);
+    };
+
+    if (focusedCity) {
+      const cityTitle = `Hotéis e Pousadas em ${focusedCity} - Hotel no Zap`;
+      const cityDesc = `Confira as melhores acomodações em ${focusedCity}. Veja fotos reais, valores e reserve direto pelo WhatsApp!`;
+      const citySlug = normalizeCitySlug(focusedCity);
+      const cityUrl = `${origin}/cidades/${citySlug}`;
+
+      document.title = cityTitle;
+      setMeta('name', 'description', cityDesc);
+      setMeta('property', 'og:title', cityTitle);
+      setMeta('property', 'og:description', cityDesc);
+      setMeta('property', 'og:image', defaultImg);
+      setMeta('property', 'og:image:secure_url', defaultImg);
+      setMeta('property', 'og:url', cityUrl);
+      setMeta('property', 'og:site_name', 'Hotel no Zap');
+      setMeta('name', 'twitter:title', cityTitle);
+      setMeta('name', 'twitter:description', cityDesc);
+      setMeta('name', 'twitter:image', defaultImg);
+    } else {
+      const defaultTitle = 'Hotel no Zap - Guia de Hotéis, Pousadas e Reservas';
+      const defaultDesc = 'O jeito mais inteligente de se hospedar. Encontre os melhores hotéis da sua cidade, veja fotos, avaliações e reserve em instantes.';
+      const defaultUrl = `${origin}/`;
+
+      document.title = defaultTitle;
+      setMeta('name', 'description', defaultDesc);
+      setMeta('property', 'og:title', defaultTitle);
+      setMeta('property', 'og:description', defaultDesc);
+      setMeta('property', 'og:image', defaultImg);
+      setMeta('property', 'og:image:secure_url', defaultImg);
+      setMeta('property', 'og:url', defaultUrl);
+      setMeta('property', 'og:site_name', 'Hotel no Zap');
+      setMeta('name', 'twitter:title', defaultTitle);
+      setMeta('name', 'twitter:description', defaultDesc);
+      setMeta('name', 'twitter:image', defaultImg);
+    }
+  }, [focusedCity]);
+
   // Abertura oficial da rota /cidades/[nomedacidade]
   const handleOpenCityRoute = (citySlug: string, cityName: string) => {
     const cleanSlug = normalizeCitySlug(cityName || citySlug);
