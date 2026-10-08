@@ -1,5 +1,5 @@
 // Service Worker para Hotel no Zap PWA (PWABuilder Certified)
-const CACHE_NAME = 'hotelnozap-pwa-v11';
+const CACHE_NAME = 'hotelnozap-pwa-v12';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [

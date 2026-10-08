@@ -322,62 +322,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
     };
     window.addEventListener('hotel_notifications_all_read', handleAllReadEvent);
 
-    // 5.1 Escuta envio automático de boas-vindas / início de atendimento WhatsApp
-    const handleAutoReplySent = (e: any) => {
-      const detail = e.detail || {};
-      const recipient = (detail.recipient || '').replace(/\D/g, '');
-      if (!recipient) return;
 
-      const notifId = `atendimento-${recipient}`;
-      const readIds = getReadNotificationIds();
-
-      const newNotif: NotificationItem = {
-        id: notifId,
-        title: 'Atendimento WhatsApp Iniciado! 💬',
-        message: `Mensagem de boas-vindas enviada automaticamente para ${detail.nome ? detail.nome + ' (' + recipient + ')' : recipient}.`,
-        time: 'Agora mesmo',
-        type: 'atendimento',
-        read: false,
-        targetTab: 'conexao',
-        metadata: {
-          phone: recipient,
-          nome: detail.nome
-        }
-      };
-
-      // Garante que o ID não esteja no conjunto de lidas (sinal de alerta fica ativo)
-      readIds.delete(notifId);
-      saveReadNotificationIds(readIds);
-
-      setNotifications(prev => {
-        // Se já existe uma notificação não lida para este contato, não duplica
-        const existing = prev.find(n => n.id === notifId);
-        if (existing && !existing.read) {
-          return prev;
-        }
-
-        const filtered = prev.filter(n => n.id !== notifId);
-        const updatedList = [newNotif, ...filtered];
-
-        // Persiste atendimentos no storage local para manter o alerta ativo mesmo se recarregar
-        try {
-          const atendimentos = updatedList.filter(n => n.type === 'atendimento');
-          localStorage.setItem('hotel_notificacoes_atendimentos', JSON.stringify(atendimentos));
-        } catch {}
-
-        return updatedList;
-      });
-
-      // Tocar som suave de recepção
-      playHotelChime();
-
-      // Exibe toast flutuante apenas no desktop (evita toasts duplicados entre instâncias mobile/desktop)
-      if (!isMobile) {
-        setActiveToast(newNotif);
-        setTimeout(() => setActiveToast(null), 8000);
-      }
-    };
-    window.addEventListener('hotelnozap_auto_reply_sent', handleAutoReplySent);
 
     // 6. Handler Supabase Realtime
     try {
@@ -478,7 +423,6 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
       window.removeEventListener('hotel_nova_reserva', handleLocalNovaReserva);
       window.removeEventListener('hotel_notification_read', handleNotificationReadEvent);
       window.removeEventListener('hotel_notifications_all_read', handleAllReadEvent);
-      window.removeEventListener('hotelnozap_auto_reply_sent', handleAutoReplySent);
       if (channel) {
         try { supabase.removeChannel(channel); } catch (e) {}
       }
