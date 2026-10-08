@@ -3,6 +3,7 @@ import { hoteisService, reservasService, quartosService, ComodidadeCategoria } f
 import { webhookN8nService } from '../services/webhookN8nService';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { ZapHotelLogo } from './ZapHotelLogo';
+import { FALLBACK_HOTEIS_PRELOAD } from '../data/fallbackHoteisPreload';
 
 export interface PublicHotel {
   id: string;
@@ -430,7 +431,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   // Cache local para carregamento instantâneo (0 segundos)
   const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v5';
 
-  // Lista geral de hotéis do Supabase com inicialização via cache imediato
+  // Lista geral de hotéis com inicialização imediata via cache ou preload embutido (Zero tempo de espera)
   const [hoteisList, setHoteisList] = useState<PublicHotel[]>(() => {
     try {
       if (typeof window !== 'undefined') {
@@ -443,24 +444,11 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         }
       }
     } catch {}
-    return [];
+    return FALLBACK_HOTEIS_PRELOAD;
   });
 
-  // Se já houver dados no cache, o usuário NÃO vê tela de loading (carregamento instantâneo)
-  const [loading, setLoading] = useState<boolean>(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const cached = localStorage.getItem(CACHE_KEY_PUBLIC_HOTEIS);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return false;
-          }
-        }
-      }
-    } catch {}
-    return true;
-  });
+  // Zero loading no catálogo: os hotéis já aparecem instantaneamente na tela
+  const [loading, setLoading] = useState<boolean>(false);
 
   // Estados de busca e popover estilo Airbnb
   const [searchQuery, setSearchQuery] = useState('');
@@ -567,16 +555,8 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   }, []);
 
   const loadHoteisFromSupabase = async () => {
-    // Se ainda não tiver hotéis em cache na tela, exibe o loading
-    setHoteisList(current => {
-      if (!current || current.length === 0) {
-        setLoading(true);
-      }
-      return current;
-    });
-
     try {
-      // Timeout de segurança de 5.5s contra requisições que fiquem pendentes na rede
+      // Timeout de segurança de 4s contra requisições que fiquem pendentes na rede
       const fetchPromise = Promise.all([
         hoteisService.getHoteis(),
         quartosService.getAllQuartos()

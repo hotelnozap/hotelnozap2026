@@ -285,7 +285,22 @@ export const App: React.FC = () => {
     } catch { /* ignore */ }
     return 'login';
   });
-  const [restoringSession, setRestoringSession] = useState<boolean>(true);
+  const [restoringSession, setRestoringSession] = useState<boolean>(() => {
+    try {
+      // Se estiver em rota pública do catálogo de hotéis no site principal, nunca trava no splash screen
+      if (typeof window !== 'undefined' && !isAppDomain()) {
+        const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+        if (parts.length === 0 || parts[0] === 'cidades' || parts[0] === 'cidade' || parts[0] === 'hoteis' || parts[0] === 'hotel') {
+          return false;
+        }
+      }
+      // Se houver credencial salva, valida em background
+      const savedEmail = typeof window !== 'undefined' ? localStorage.getItem('hotelnozap_user_email') : null;
+      return Boolean(savedEmail);
+    } catch {
+      return false;
+    }
+  });
   const [selectedHotelForPage, setSelectedHotelForPage] = useState<PublicHotel | null>(null);
   const [selectedQuartoForPage, setSelectedQuartoForPage] = useState<QuartoCadastrado | null>(null);
 
@@ -878,10 +893,16 @@ export const App: React.FC = () => {
       }
     });
 
+    // Trava de segurança definitiva: garante que em no máximo 2 segundos restoringSession SEMPRE seja false
+    const sessionSafetyTimer = setTimeout(() => {
+      if (!disposed) setRestoringSession(false);
+    }, 2000);
+
     boot();
 
     return () => {
       disposed = true;
+      clearTimeout(sessionSafetyTimer);
       try { listener?.subscription.unsubscribe(); } catch { /* ignore */ }
     };
   }, []);

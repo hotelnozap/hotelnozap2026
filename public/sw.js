@@ -33,14 +33,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => caches.delete(key))
       );
-    }).then(() => self.clients.claim()).then(() => {
-      // Notifica abas e janelas abertas para atualizar e rodar o bundle limpo
-      return self.clients.matchAll({ type: 'window' }).then((clients) => {
-        for (const client of clients) {
-          client.postMessage({ type: 'FORCE_RELOAD' });
-        }
-      });
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
