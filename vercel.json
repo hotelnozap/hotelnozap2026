@@ -79,25 +79,14 @@
       "permanent": false
     },
     {
-      "source": "/",
+      "source": "/login",
       "has": [
         {
           "type": "host",
           "value": "app.hotelnozap.com.br"
         }
       ],
-      "destination": "/login",
-      "permanent": false
-    },
-    {
-      "source": "/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "app.hotelnozap.com.br"
-        }
-      ],
-      "destination": "/login",
+      "destination": "/",
       "permanent": false
     }
   ],

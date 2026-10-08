@@ -237,6 +237,9 @@ export const App: React.FC = () => {
       if (parts[0] === 'cardapio') return 'cardapio-hotel';
       // /login ou /paineladmin → login (ou dashboard se já autenticado, ou /minhaconta se for hóspede, ou /camareira se for camareira)
       if (parts[0] === 'login' || parts[0] === 'paineladmin') {
+        if (isAppDomain() && typeof window !== 'undefined' && window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '/');
+        }
         const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
         const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
         if (savedRole && savedEmail) {
@@ -320,6 +323,9 @@ export const App: React.FC = () => {
         }
         setActiveTab('assinar');
       } else if (parts[0] === 'paineladmin') {
+        if (isAppDomain() && typeof window !== 'undefined' && window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '/');
+        }
         const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
         const roleLower = savedRole.toLowerCase();
         if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
@@ -380,6 +386,9 @@ export const App: React.FC = () => {
       } else if (parts[0] === 'cardapio') {
         setActiveTab('cardapio-hotel');
       } else if (parts[0] === 'login') {
+        if (isAppDomain() && typeof window !== 'undefined' && window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '/');
+        }
         setActiveTab('login');
       } else if (parts[0] === '404' || parts[0] === 'pagina-404') {
         setActiveTab('pagina-404');
