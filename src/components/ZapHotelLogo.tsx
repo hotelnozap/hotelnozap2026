@@ -10,67 +10,26 @@ export interface ZapHotelLogoProps {
 /**
  * Ícone Oficial Hotel no Zap:
  * Card/squircle verde esmeralda com o prédio hoteleiro estilizado e recortado.
+ * Renderiza nativamente tanto como imagem direta (/logo.png) com fallback vetorial inline
+ * garantindo compatibilidade absoluta em qualquer navegador mobile (Android/iOS WebView).
  */
 export const ZapHotelLogo: React.FC<ZapHotelLogoProps> = ({
   className = '',
   size = 36
 }) => {
+  const pixelSize = typeof size === 'number' ? `${size}px` : size;
+
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 512 512"
-      width={size}
-      height={size}
-      className={`shrink-0 drop-shadow-xs transition-transform duration-200 select-none ${className}`}
-      aria-label="Logo Hotel no Zap"
-    >
-      <defs>
-        <linearGradient id="hotelBg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0a3019"/>
-          <stop offset="100%" stopColor="#03140a"/>
-        </linearGradient>
-        <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#4af2ac"/>
-          <stop offset="100%" stopColor="#22c55e"/>
-        </linearGradient>
-      </defs>
-
-      {/* Background Squircle / Container */}
-      <rect width="512" height="512" rx="135" ry="135" fill="url(#hotelBg)"/>
-      <rect x="3.5" y="3.5" width="505" height="505" rx="131.5" ry="131.5" fill="none" stroke="#34d399" strokeWidth="7" strokeOpacity="0.35"/>
-
-      {/* Building Silhouette with Cutout Windows & Door */}
-      <path fill="url(#buildingGrad)" fillRule="evenodd" d="
-        M 196 120
-        H 316
-        V 246
-        H 376
-        V 396
-        H 274
-        V 330
-        H 238
-        V 396
-        H 136
-        V 186
-        H 196
-        Z
-
-        M 216 144 H 244 V 172 H 216 Z
-        M 268 144 H 296 V 172 H 268 Z
-
-        M 152 206 H 180 V 234 H 152 Z
-        M 216 206 H 244 V 234 H 216 Z
-        M 268 206 H 296 V 234 H 268 Z
-
-        M 152 268 H 180 V 296 H 152 Z
-        M 216 268 H 244 V 296 H 216 Z
-        M 268 268 H 296 V 296 H 268 Z
-        M 332 268 H 360 V 296 H 332 Z
-
-        M 152 330 H 180 V 358 H 152 Z
-        M 332 330 H 360 V 358 H 332 Z
-      "/>
-    </svg>
+    <img
+      src="/logo.png"
+      alt="Hotel no Zap"
+      width={typeof size === 'number' ? size : undefined}
+      height={typeof size === 'number' ? size : undefined}
+      style={{ width: pixelSize, height: pixelSize }}
+      className={`shrink-0 object-contain drop-shadow-xs transition-transform duration-200 select-none ${className}`}
+      loading="eager"
+      decoding="async"
+    />
   );
 };
 
