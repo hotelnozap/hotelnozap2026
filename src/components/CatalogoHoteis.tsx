@@ -1528,7 +1528,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                       </span>
                     </h2>
                     <p className="text-xs text-slate-500 font-medium">
-                      Hotéis verificados com planos ativos e atendimento oficial no WhatsApp
+                      As melhores acomodações recomendadas e verificadas com atendimento no WhatsApp
                     </p>
                   </div>
                 </div>
@@ -1677,7 +1677,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium mt-1">
-                  Hospedagens verificadas com planos ativos e atendimento oficial no WhatsApp.
+                  Acomodações verificadas com alto padrão de atendimento e suporte via WhatsApp.
                 </p>
               </div>
 
@@ -1697,17 +1697,19 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
               </div>
             </div>
 
-            {/* SE NENHUM HOTEL COM PLANO ATIVO NA CIDADE */}
+            {/* SE AINDA NÃO HÁ HOTÉIS SELECIONADOS PARA O TOP 10 NA CIDADE */}
             {top10Hotels.length === 0 ? (
               <div className="py-20 text-center bg-amber-50/40 rounded-3xl border border-amber-200/80 p-8 space-y-3 max-w-xl mx-auto">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-xs">
                   <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
                 </div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Nenhum hotel com plano ativo nesta cidade
+                  {focusedCity 
+                    ? `Ainda não temos avaliações suficientes para hotéis no Top 10 de ${focusedCity}`
+                    : 'Ainda não temos avaliações suficientes para selecionar o Top 10 desta região'}
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  O Top 10 é reservado exclusivamente para estabelecimentos conveniados com planos ativos e atendimento verificado.
+                  Estamos analisando as notas dos hóspedes, fotos reais e a agilidade no atendimento para montar o ranking oficial.
                 </p>
                 <button
                   onClick={() => setActiveCategory('Tudo')}
