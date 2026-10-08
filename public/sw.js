@@ -1,5 +1,5 @@
 // Service Worker para Hotel no Zap PWA (PWABuilder Certified)
-const CACHE_NAME = 'hotelnozap-pwa-v12';
+const CACHE_NAME = 'hotelnozap-pwa-v13';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -33,7 +33,14 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => caches.delete(key))
       );
-    }).then(() => self.clients.claim())
+    }).then(() => self.clients.claim()).then(() => {
+      // Notifica abas e janelas abertas para atualizar e rodar o bundle limpo
+      return self.clients.matchAll({ type: 'window' }).then((clients) => {
+        for (const client of clients) {
+          client.postMessage({ type: 'FORCE_RELOAD' });
+        }
+      });
+    })
   );
 });
 

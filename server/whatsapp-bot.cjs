@@ -110,6 +110,8 @@ async function checkAndReply(instanceName = 'meutim') {
 
       console.log(`[Bot] 📨 Nova mensagem recebida de ${phone} (${pushName || 'Sem nome'}). Enviando resposta automática...`);
 
+      // 🛑 Resposta automática desativada permanentemente
+      /*
       const sendRes = await fetch(`${EVOLUTION_API_URL}/message/sendText/${encodeURIComponent(instanceName)}`, {
         method: 'POST',
         headers: {
@@ -129,6 +131,8 @@ async function checkAndReply(instanceName = 'meutim') {
       } else {
         console.error(`[Bot] ❌ Falha ao enviar para ${phone}:`, sendData);
       }
+      */
+      answeredCache.set(phone, agora);
     }
   } catch (err) {
     // Silencioso em caso de oscilação momentânea

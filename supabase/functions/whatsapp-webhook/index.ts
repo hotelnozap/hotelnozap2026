@@ -123,7 +123,8 @@ serve(async (req: Request) => {
     const saudacao = pushName ? `Olá ${pushName}! 👋` : `Olá! 👋`;
     const mensagemTexto = `${saudacao} Bem-vindo(a) ao ${hotelNome}.\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 ${hotelLink}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição por aqui!`;
 
-    // 6. Dispara a resposta através da Evolution API
+    // 6. Resposta automática DESATIVADA permanentemente
+    /*
     const sendRes = await fetch(`${EVOLUTION_API_URL}/message/sendText/${encodeURIComponent(instanceName)}`, {
       method: "POST",
       headers: {
@@ -137,6 +138,7 @@ serve(async (req: Request) => {
     });
 
     const sendJson = await sendRes.json().catch(() => null);
+    */
 
     // Registra envio no cache anti-loop
     antiLoopCache.set(cacheKey, agora);

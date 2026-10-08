@@ -70,15 +70,16 @@ export const templateMensagemService = {
   getHotelAutomacoes(hotelId?: string): AutomacoesConfig {
     const activeHotelId = hotelId || currentHotelService.getCurrentHotel()?.id;
     if (!activeHotelId || typeof window === 'undefined') {
-      return { ...AUTOMACOES_PADRAO };
+      return { ...AUTOMACOES_PADRAO, auto_boas_vindas: false };
     }
     try {
       const saved = localStorage.getItem(`hotelnozap_automacoes_hotel_${activeHotelId}`);
       if (saved) {
-        return { ...AUTOMACOES_PADRAO, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        return { ...AUTOMACOES_PADRAO, ...parsed, auto_boas_vindas: false };
       }
     } catch {}
-    return { ...AUTOMACOES_PADRAO };
+    return { ...AUTOMACOES_PADRAO, auto_boas_vindas: false };
   },
 
   /**
@@ -88,7 +89,7 @@ export const templateMensagemService = {
     if (!hotelId || typeof window === 'undefined') return;
     try {
       const current = this.getHotelAutomacoes(hotelId);
-      const updated = { ...current, ...config };
+      const updated = { ...current, ...config, auto_boas_vindas: false };
       localStorage.setItem(`hotelnozap_automacoes_hotel_${hotelId}`, JSON.stringify(updated));
       window.dispatchEvent(
         new CustomEvent('hotelnozap_automacoes_atualizadas', { detail: { hotelId, automacoes: updated } })
@@ -319,6 +320,9 @@ export const templateMensagemService = {
    * Renderiza o template substituindo as tags dinâmicas pelos valores reais
    */
   renderTemplate(type: TemplateType, tags: TemplateTags, hotelId?: string): string {
+    if (type === 'boas_vindas') {
+      return ''; // Boas-vindas desativadas permanentemente no sistema
+    }
     const templates = this.getHotelTemplates(hotelId);
     const text = templates[type] || TEMPLATES_PADRAO[type] || '';
     return this.interpolarTemplate(text, tags, hotelId);

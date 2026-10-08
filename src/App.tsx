@@ -494,13 +494,26 @@ export const App: React.FC = () => {
     }
   });
 
-  // AutoResponder desativado por padrão no cliente para evitar polling contínuo desnecessário e disparos indevidos
-  // useEffect(() => {
-  //   whatsappAutoResponderService.start();
-  //   return () => {
-  //     whatsappAutoResponderService.stop();
-  //   };
-  // }, []);
+  // Limpeza imediata de resíduos de autoresponder / boas-vindas automáticas em todos os hotéis no localStorage
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('hotelnozap_automacoes_hotel_')) {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed.auto_boas_vindas) {
+                parsed.auto_boas_vindas = false;
+                localStorage.setItem(k, JSON.stringify(parsed));
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     evolutionApiService.fetchInstances().then((list) => {

@@ -147,7 +147,8 @@ const server = http.createServer(async (req, res) => {
 
         console.log(`[Webhook] Disparando auto-resposta para ${cleanNumber} (${hotelNome})...`);
 
-        // Disparo para Evolution API
+        // 🛑 Auto-resposta desativada permanentemente
+        /*
         const evoUrl = `${EVOLUTION_API_URL}/message/sendText/${encodeURIComponent(instanceName)}`;
         const fetchRes = await fetch(evoUrl, {
           method: 'POST',
@@ -163,6 +164,7 @@ const server = http.createServer(async (req, res) => {
 
         const evoData = await fetchRes.json().catch(() => null);
         console.log(`[Webhook] Resposta Evolution API: status ${fetchRes.status}`, evoData?.key?.id ? 'Mensagem enviada!' : evoData);
+        */
 
         antiLoopCache.set(cacheKey, agora);
 

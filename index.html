@@ -83,6 +83,21 @@
     <!-- Registro PWA Service Worker (PWABuilder Compliance) -->
     <script>
       if ('serviceWorker' in navigator) {
+        // Recarregar imediatamente quando o SW enviar sinal de atualização forçada
+        navigator.serviceWorker.addEventListener('message', function(event) {
+          if (event.data && event.data.type === 'FORCE_RELOAD') {
+            window.location.reload();
+          }
+        });
+
+        var isRefreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          if (!isRefreshing) {
+            isRefreshing = true;
+            window.location.reload();
+          }
+        });
+
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           navigator.serviceWorker.getRegistrations().then(function(registrations) {
             for (let registration of registrations) {

@@ -132,7 +132,8 @@ const server = http.createServer(async (req, res) => {
         const hotelLink = `${domain}/hoteis/${hotelSlug}`;
         const mensagem = `${saudacao} Bem-vindo(a) ao ${hotelNome}.\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 ${hotelLink}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição por aqui!`;
 
-        // Disparo para Evolution API
+        // 🛑 AUTO-RESPOSTA DESATIVADA: Não envia mensagem automática de boas-vindas
+        /*
         const evoUrl = `${EVOLUTION_API_URL}/message/sendText/${encodeURIComponent(instanceName)}`;
         const fetchRes = await fetch(evoUrl, {
           method: 'POST',
@@ -145,6 +146,7 @@ const server = http.createServer(async (req, res) => {
             text: mensagem
           })
         });
+        */
 
         antiLoopCache.set(cacheKey, agora);
 
