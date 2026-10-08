@@ -72,6 +72,8 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConfigSubmenuOpen, setIsConfigSubmenuOpen] = useState(false);
   const [selectedHotelDelete, setSelectedHotelDelete] = useState<Hotel | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   // Data formatada em português para o cabeçalho
   const [currentDateFormatted] = useState(() => {
@@ -433,6 +435,18 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
       );
     });
   }, [hoteis, searchTerm]);
+
+  // Resetar para página 1 quando o termo de busca for alterado
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredHotels.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedHotels = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredHotels.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredHotels, currentPage]);
 
   const getInitials = (name: string) => {
     const parts = (name || '').trim().split(' ');
@@ -1341,8 +1355,8 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredHotels.length > 0 ? (
-                      filteredHotels.map((hotel, idx) => {
+                    {paginatedHotels.length > 0 ? (
+                      paginatedHotels.map((hotel, idx) => {
                         const isConnected = Boolean(hotel.instanceName && hotel.apiKey && hotel.apiKey.trim() !== '');
                         const badgeColors = ['bg-emerald-100 text-emerald-800', 'bg-blue-100 text-blue-800', 'bg-amber-100 text-amber-800', 'bg-purple-100 text-purple-800'];
                         const badgeColor = badgeColors[idx % badgeColors.length];
@@ -1430,8 +1444,8 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
 
               {/* Cards Mobile para Hotéis Recentes */}
               <div className="sm:hidden space-y-2.5 mt-3">
-                {filteredHotels.length > 0 ? (
-                  filteredHotels.map((hotel, idx) => {
+                {paginatedHotels.length > 0 ? (
+                  paginatedHotels.map((hotel, idx) => {
                     const isConnected = Boolean(hotel.instanceName && hotel.apiKey && hotel.apiKey.trim() !== '');
                     const badgeColors = ['bg-emerald-100 text-emerald-800', 'bg-blue-100 text-blue-800', 'bg-amber-100 text-amber-800', 'bg-purple-100 text-purple-800'];
                     const badgeColor = badgeColors[idx % badgeColors.length];
@@ -1496,16 +1510,65 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                 )}
               </div>
 
-              {/* Rodapé de paginação */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-                <span>Exibindo {filteredHotels.length} de {totalHoteis} hotéis cadastrados</span>
-                <div className="flex items-center gap-1">
-                  <button onClick={onNavigateToHoteisList} className="px-2.5 py-1 rounded bg-[#003400] text-white font-bold cursor-pointer">
-                    Ver Todos os Hotéis
-                  </button>
-                  <button onClick={onNavigateToCreateHotel} className="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer">
-                    + Cadastrar Hotel
-                  </button>
+              {/* Rodapé de paginação (20 por página) */}
+              <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-slate-600">
+                    Mostrando <strong className="text-slate-900">{filteredHotels.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}</strong> a <strong className="text-slate-900">{Math.min(currentPage * ITEMS_PER_PAGE, filteredHotels.length)}</strong> de <strong className="text-slate-900">{filteredHotels.length}</strong> hotéis
+                  </span>
+                  {filteredHotels.length !== totalHoteis && (
+                    <span className="text-[11px] text-slate-400">
+                      (filtrados de {totalHoteis} no total)
+                    </span>
+                  )}
+                </div>
+
+                {/* Controles de navegação da página */}
+                <div className="flex items-center gap-2">
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                        disabled={currentPage === 1}
+                        className={`inline-flex items-center gap-0.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                          currentPage === 1
+                            ? 'text-slate-300 cursor-not-allowed'
+                            : 'text-slate-700 hover:bg-white hover:shadow-2xs cursor-pointer'
+                        }`}
+                        title="Página Anterior"
+                      >
+                        <span className="material-symbols-outlined text-sm">chevron_left</span>
+                        <span className="hidden sm:inline">Anterior</span>
+                      </button>
+
+                      <div className="px-2 py-1 text-xs font-bold text-slate-700">
+                        Página {currentPage} de {totalPages}
+                      </div>
+
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className={`inline-flex items-center gap-0.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                          currentPage === totalPages
+                            ? 'text-slate-300 cursor-not-allowed'
+                            : 'text-slate-700 hover:bg-white hover:shadow-2xs cursor-pointer'
+                        }`}
+                        title="Próxima Página"
+                      >
+                        <span className="hidden sm:inline">Próxima</span>
+                        <span className="material-symbols-outlined text-sm">chevron_right</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <button onClick={onNavigateToHoteisList} className="px-2.5 py-1.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold transition cursor-pointer">
+                      Ver Todos
+                    </button>
+                    <button onClick={onNavigateToCreateHotel} className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition cursor-pointer">
+                      + Cadastrar
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
