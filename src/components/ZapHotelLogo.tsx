@@ -3,40 +3,73 @@ import React from 'react';
 export interface ZapHotelLogoProps {
   className?: string;
   size?: number | string;
-  /** Cor de fundo do balão (padrão: #006C49) */
   bubbleColor?: string;
-  /** Cor do ícone da cama (padrão: #ffffff) */
   iconColor?: string;
 }
 
 /**
  * Ícone Oficial Hotel no Zap:
- * Balão de conversa no estilo característico do WhatsApp com o ícone de cama hoteleira perfeitamente centralizado.
+ * Card/squircle verde esmeralda com o prédio hoteleiro estilizado e recortado.
  */
 export const ZapHotelLogo: React.FC<ZapHotelLogoProps> = ({
   className = '',
-  size = 36,
-  bubbleColor = '#006C49',
-  iconColor = '#ffffff'
+  size = 36
 }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 32 32"
+      viewBox="0 0 512 512"
       width={size}
       height={size}
       className={`shrink-0 drop-shadow-xs transition-transform duration-200 select-none ${className}`}
       aria-label="Logo Hotel no Zap"
     >
-      {/* Balão de conversa estilo WhatsApp com ponta inferior esquerda */}
-      <path
-        fill={bubbleColor}
-        d="M16 2C8.28 2 2 8.28 2 16c0 2.58.7 5.01 1.93 7.11L2 30l7.15-1.87A13.9 13.9 0 0016 30c7.72 0 14-6.28 14-14S23.72 2 16 2z"
-      />
-      {/* Cama de hotel vetorizada (Material Symbols 'hotel') alinhada opticamente */}
-      <g transform="translate(7.8, 6.0) scale(0.72)" fill={iconColor}>
-        <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z" />
-      </g>
+      <defs>
+        <linearGradient id="hotelBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0a3019"/>
+          <stop offset="100%" stopColor="#03140a"/>
+        </linearGradient>
+        <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#4af2ac"/>
+          <stop offset="100%" stopColor="#22c55e"/>
+        </linearGradient>
+      </defs>
+
+      {/* Background Squircle / Container */}
+      <rect width="512" height="512" rx="135" ry="135" fill="url(#hotelBg)"/>
+      <rect x="3.5" y="3.5" width="505" height="505" rx="131.5" ry="131.5" fill="none" stroke="#34d399" strokeWidth="7" strokeOpacity="0.35"/>
+
+      {/* Building Silhouette with Cutout Windows & Door */}
+      <path fill="url(#buildingGrad)" fillRule="evenodd" d="
+        M 196 120
+        H 316
+        V 246
+        H 376
+        V 396
+        H 274
+        V 330
+        H 238
+        V 396
+        H 136
+        V 186
+        H 196
+        Z
+
+        M 216 144 H 244 V 172 H 216 Z
+        M 268 144 H 296 V 172 H 268 Z
+
+        M 152 206 H 180 V 234 H 152 Z
+        M 216 206 H 244 V 234 H 216 Z
+        M 268 206 H 296 V 234 H 268 Z
+
+        M 152 268 H 180 V 296 H 152 Z
+        M 216 268 H 244 V 296 H 216 Z
+        M 268 268 H 296 V 296 H 268 Z
+        M 332 268 H 360 V 296 H 332 Z
+
+        M 152 330 H 180 V 358 H 152 Z
+        M 332 330 H 360 V 358 H 332 Z
+      "/>
     </svg>
   );
 };
