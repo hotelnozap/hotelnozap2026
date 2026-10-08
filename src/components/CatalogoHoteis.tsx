@@ -683,52 +683,19 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
       });
     });
 
-    // Separar grupos: Cidades que possuem hotéis com planos ativos ganham destaque especial
+    // Criar as seções das cidades da página inicial (uma para cada cidade com seus hotéis)
     const rawGroups = Object.values(map);
 
-    const formattedGroups: CityGroup[] = [];
+    const formattedGroups: CityGroup[] = rawGroups.map(g => ({
+      city: g.city,
+      uf: g.uf,
+      slug: g.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-'),
+      isPaidWithRooms: g.hotels.some(h => h.hasActivePlan),
+      hotels: g.hotels
+    }));
 
-    // 1. Para cada cidade que tiver hotéis com plano ativo (ou quartos com fotos), criar a categoria em destaque:
-    // "Hotéis com fotos dos quartos em [nome da cidade]"
-    rawGroups.forEach(g => {
-      const paidHotelsInCity = g.hotels.filter(h => h.hasActivePlan || (h.hasRooms && !h.isImportedFromGoogle));
-      if (paidHotelsInCity.length > 0) {
-        formattedGroups.push({
-          city: g.city,
-          uf: g.uf,
-          slug: `quartos-${g.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-')}`,
-          customTitle: `Hotéis com fotos dos quartos em ${g.city} · ${g.uf}`,
-          isPaidWithRooms: true,
-          hotels: paidHotelsInCity
-        });
-      }
-    });
-
-    // 2. Adicionar as seções normais de cada cidade (garantindo que hotéis com planos fiquem na frente dos importados)
-    rawGroups.forEach(g => {
-      formattedGroups.push({
-        city: g.city,
-        uf: g.uf,
-        slug: g.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-'),
-        isPaidWithRooms: false,
-        hotels: g.hotels
-      });
-    });
-
-    // Ordenação geral dos grupos:
-    // Cidades/Seções com hotéis de plano ativo SEMPRE no topo!
-    return formattedGroups.sort((a, b) => {
-      if (a.isPaidWithRooms && !b.isPaidWithRooms) return -1;
-      if (!a.isPaidWithRooms && b.isPaidWithRooms) return 1;
-
-      // Cidades com hotéis de plano ativo vêm primeiro
-      const aHasPaid = a.hotels.some(h => h.hasActivePlan);
-      const bHasPaid = b.hotels.some(h => h.hasActivePlan);
-      if (aHasPaid && !bHasPaid) return -1;
-      if (!aHasPaid && bHasPaid) return 1;
-
-      return b.hotels.length - a.hotels.length;
-    });
+    // ORDEM ALFABÉTICA (A a Z) DE TODAS AS CIDADES NA PÁGINA INICIAL
+    return formattedGroups.sort((a, b) => a.city.localeCompare(b.city, 'pt-BR', { sensitivity: 'base' }));
   }, [hoteisList, activeCategory, searchQuery]);
 
   // Lista de cidades disponíveis para o popover de busca
@@ -987,15 +954,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
   // Cidades a serem renderizadas agora
   const visibleGroups = cityGroups.slice(0, visibleCitiesCount);
 
-  // Cidade de referência para o Top 10 (cidade pesquisada/selecionada ou a primeira cidade com hotel Top 10 e plano ativo)
+  // Cidade de referência para o Top 10: SOMENTE quando a cidade for filtrada
   const top10City = useMemo(() => {
     if (focusedCity && focusedCity.trim()) {
       return focusedCity.trim().toLowerCase();
     }
-    // Se nenhuma cidade estiver no filtro, busca a cidade do primeiro hotel com isTop10 E plano ativo
-    const firstHotelTop10 = hoteisList.find(h => h.isTop10 && h.hasActivePlan && !h.isImportedFromGoogle);
-    return firstHotelTop10 ? firstHotelTop10.city.trim().toLowerCase() : null;
-  }, [focusedCity, hoteisList]);
+    return null;
+  }, [focusedCity]);
 
   // Hotéis selecionados para o Top 10:
   // - SOMENTE hotéis que possuem a opção Top 10 marcada no seu cadastro (isTop10 === true)
@@ -1582,45 +1547,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           /* MODO PÁGINA INICIAL: DIVIDIDO POR CIDADES COM CARROSSÉIS CONFORME AIRBNB  */
           /* ========================================================================= */
           <>
-            {/* SEÇÃO OS TOP 10 DA REDE (SEMPRE EXIBIDA NO INÍCIO DA HOME SE HOUVER HOTÉIS MARCADOS) */}
-            {top10Hotels.length > 0 && (
-              <section className="space-y-4 pb-4 border-b border-slate-100">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
-                      <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
-                    </div>
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                        {top10City ? `Os Top 10 em ${top10Hotels[0]?.city || ''}` : 'Os Top 10 da Cidade'}
-                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
-                          {top10Hotels.length} {top10Hotels.length === 1 ? 'hotel' : 'hotéis'}
-                        </span>
-                      </h2>
-                      <p className="text-xs text-slate-500 font-medium">
-                        Hospedagens verificadas com planos ativos e atendimento oficial no WhatsApp
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* GRADE: Desktop 2 linhas de 5 (md:grid-cols-5) | Mobile 2 cards por linha (grid-cols-2) */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 sm:gap-5">
-                  {top10Hotels.map((hotel) => (
-                    <AirbnbHotelCard
-                      key={`top10-home-${hotel.id}`}
-                      hotel={hotel}
-                      onHotelClick={handleVerHotel}
-                      isFav={favorites.has(hotel.id)}
-                      toggleFavorite={toggleFavorite}
-                      className="w-full"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* CARROSSÉIS RENDERIZADOS POR CIDADE (INICIA COM AS PRIMEIRAS CIDADES E ROLA SUAVE) */}
+            {/* CARROSSÉIS RENDERIZADOS POR CIDADE (ORDEM ALFABÉTICA) */}
             {cityGroups.slice(0, visibleCitiesCount).map((group) => (
               <CityCarousel
                 key={group.slug}

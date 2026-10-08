@@ -47,3 +47,4 @@ populate_live_data.js
 *.aab
 *.keystore
 1 Telas do Sistema/
+.vercel
