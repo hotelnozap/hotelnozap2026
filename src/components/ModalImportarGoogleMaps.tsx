@@ -466,8 +466,8 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
               <span className="material-symbols-outlined text-emerald-300 text-2xl">travel_explore</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight">Importar Hotéis do Google Maps</h2>
-              <p className="text-xs text-emerald-200/80">Busca oficial em tempo real com todos os municípios do Brasil</p>
+              <h2 className="text-xl font-bold tracking-tight">Importar Hotéis & Pousadas</h2>
+              <p className="text-xs text-emerald-200/80">Busca em tempo real via n8n & OpenStreetMap (Custo Zero)</p>
             </div>
           </div>
           <button
