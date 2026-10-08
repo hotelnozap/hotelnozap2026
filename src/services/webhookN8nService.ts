@@ -225,6 +225,8 @@ export interface WebhookN8nPayload {
     status: string;
     whatsapp_conectado: string;
     servidor_evolution: string;
+    api_key: string;
+    apikey: string;
   };
 
   // Campos retrocompatíveis para chamadas de rotas legadas
@@ -270,6 +272,8 @@ export function montarPayloadUnificadoN8n(params: {
     status?: string;
     whatsapp_conectado?: string;
     servidor_evolution?: string;
+    api_key?: string;
+    apikey?: string;
   };
   identificador?: string;
   tipo_evento?: string;
@@ -425,12 +429,15 @@ export function montarPayloadUnificadoN8n(params: {
     instanciaWhatsapp = `${cleanInst}@s.whatsapp.net`;
   }
   const instanciaServidor = params.instanciaData?.servidor_evolution || 'https://painelevolution.hotelnozap.com.br';
+  const instanciaApiKey = params.instanciaData?.api_key || params.instanciaData?.apikey || hotelData?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm';
 
   const instanciaObj = {
     nome: instanciaNome,
     status: instanciaStatus,
     whatsapp_conectado: instanciaWhatsapp,
-    servidor_evolution: instanciaServidor
+    servidor_evolution: instanciaServidor,
+    api_key: instanciaApiKey,
+    apikey: instanciaApiKey
   };
 
   // 6. Mensagem descritiva de apoio
@@ -671,7 +678,9 @@ export const webhookN8nService = {
         nome: hotelData?.nome_instancia || hotelData?.instanceName || 'meutim',
         status: 'open',
         whatsapp_conectado: '',
-        servidor_evolution: 'https://painelevolution.hotelnozap.com.br'
+        servidor_evolution: 'https://painelevolution.hotelnozap.com.br',
+        api_key: hotelData?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm',
+        apikey: hotelData?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm'
       };
 
       try {
@@ -686,6 +695,10 @@ export const webhookN8nService = {
           const jid = matched.ownerJid || (matched.number ? `${matched.number}@s.whatsapp.net` : '');
           if (jid) {
             instanciaInfo.whatsapp_conectado = jid.includes('@') ? jid : `${jid}@s.whatsapp.net`;
+          }
+          if (matched.token) {
+            instanciaInfo.api_key = matched.token;
+            instanciaInfo.apikey = matched.token;
           }
         }
       } catch (eInst) {
@@ -824,7 +837,9 @@ export const webhookN8nService = {
         nome: hotel?.nome_instancia || hotel?.instanceName || 'meutim',
         status: 'open',
         whatsapp_conectado: `${limparTelefoneComDDI(hotel?.whatsapp || hotel?.telefone || '556681585014')}@s.whatsapp.net`,
-        servidor_evolution: 'https://painelevolution.hotelnozap.com.br'
+        servidor_evolution: 'https://painelevolution.hotelnozap.com.br',
+        api_key: hotel?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm',
+        apikey: hotel?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm'
       }
     };
 
