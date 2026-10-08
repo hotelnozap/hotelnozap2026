@@ -48,3 +48,4 @@ populate_live_data.js
 *.keystore
 1 Telas do Sistema/
 .vercel
+json_n8n/
