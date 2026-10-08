@@ -450,7 +450,13 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
     if (updatedHoteis) setLiveDbHoteis(updatedHoteis);
 
     onImportSuccess(successCount);
-    onClose();
+
+    // Retorna o modal para o estado de pesquisa limpo para permitir novas buscas
+    setResults([]);
+    setHasSearched(false);
+    setSelectedIds(new Set());
+    setCityInput('');
+    setImportProgress(0);
   };
 
   const eligibleCount = results.filter(r => !isHotelAlreadyRegistered(r)).length;
@@ -467,7 +473,7 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
             </div>
             <div>
               <h2 className="text-xl font-bold tracking-tight">Importar Hotéis & Pousadas</h2>
-              <p className="text-xs text-emerald-200/80">Busca em tempo real via n8n & OpenStreetMap (Custo Zero)</p>
+              <p className="text-xs text-emerald-200/80">Busca em tempo real via n8n & Google Maps (Telefone & Fotos Reais)</p>
             </div>
           </div>
           <button
