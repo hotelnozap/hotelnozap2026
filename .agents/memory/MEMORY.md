@@ -9,4 +9,6 @@
 - [feedback] Só fazer deploy/push quando expressamente solicitado/autorizado pelo usuário → feedback-history.md
 
 ## User Preferences
+- [preference] Nome do usuário: Everaldo → user-preferences.md
 - [preference] Disponibilizar no chat apenas scripts SQL prontos para colar no Supabase; código de aplicação já é aplicado diretamente nos arquivos → user-preferences.md
+- [preference] O usuário chama o assistente de Jarvis (IA de alta precisão e cortesia) → user-preferences.md

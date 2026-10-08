@@ -4063,6 +4063,13 @@ export const reservasService = {
         }
       }
 
+      // Disparar Webhook unificado oficial para o n8n em toda reserva feita
+      import('./webhookN8nService')
+        .then(({ webhookN8nService }) => {
+          webhookN8nService.dispararWebhookConfirmacaoReserva(data);
+        })
+        .catch(wErr => console.warn('[webhookN8nService] Erro ao disparar webhook na criação de reserva:', wErr));
+
       // Disparar envio automático do template de confirmação pela instância conectada do hotel
       const statusCriacao = (data.status || '').toString().toLowerCase();
       if (statusCriacao.includes('confirmad')) {
@@ -4172,6 +4179,13 @@ export const reservasService = {
             window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId: qId, numero: qNum, status: 'livre' } }));
           }
         }
+
+        // Disparar Webhook unificado oficial para o n8n
+        import('./webhookN8nService')
+          .then(({ webhookN8nService }) => {
+            webhookN8nService.dispararWebhookConfirmacaoReserva(data);
+          })
+          .catch(wErr => console.warn('[webhookN8nService] Erro ao disparar webhook na alteração de status:', wErr));
 
         // Disparar envio automático do template de confirmação pela instância conectada do hotel
         if (newStatus.toLowerCase().includes('confirmad')) {

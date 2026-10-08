@@ -820,6 +820,13 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
         cuponsService.registrarUsoCupom(cupomAplicado.cupom.id);
       }
 
+      // Dispara webhook unificado do n8n com dados completos da sessão
+      webhookN8nService.dispararWebhookConfirmacaoReserva(reservaCreated, {
+        hotel: currentHotel,
+        hospede: guest,
+        quarto: currentQuarto
+      }).catch(wErr => console.warn('[DetalhesQuarto] Aviso ao disparar webhook n8n:', wErr));
+
       // Dispara notificação inteligente em tempo real para a tela do hotel
       const payloadNotif = {
         id: reservaCreated.id || `res-${Date.now()}`,
