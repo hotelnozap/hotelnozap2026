@@ -83,6 +83,7 @@ import { CheckoutParceiro } from './components/CheckoutParceiro';
 import { PortalParceiro } from './components/PortalParceiro';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
+import { autoCheckoutService } from './services/autoCheckoutService';
 
 const checkIsAssinarUrl = (pathname: string, search: string, hash: string): boolean => {
   const parts = (pathname || '').toLowerCase().replace(/\\/g, '/').split('/').filter(Boolean);
@@ -522,6 +523,14 @@ export const App: React.FC = () => {
         }
       }
     } catch {}
+  }, []);
+
+  // Inicializa o monitoramento global de check-out automático às 07:00 no fuso do hotel
+  useEffect(() => {
+    const cleanupCheckout = autoCheckoutService.iniciarMonitoramentoGlobal();
+    return () => {
+      cleanupCheckout();
+    };
   }, []);
 
   useEffect(() => {

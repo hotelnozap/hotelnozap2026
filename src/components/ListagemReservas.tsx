@@ -6,6 +6,7 @@ import { ModalCheckinEntrada } from './ModalCheckinEntrada';
 import { ModalEnviarTemplateWhatsApp } from './ModalEnviarTemplateWhatsApp';
 import { caixaService } from '../services/caixaService';
 import { templateMensagemService } from '../services/templateMensagemService';
+import { autoCheckoutService } from '../services/autoCheckoutService';
 
 export interface Reserva {
   id: string;
@@ -78,7 +79,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
           setSelectedReserva((prev) => prev ? { ...prev, status: 'Concluída' } : null);
         }
         const msg = isAutomatico
-          ? `⏰ Check-out automático das 12:00 concluído! Quarto ${reserva.quartoNome} agora está em LIMPEZA.`
+          ? `⏰ Check-out automático das 07:00 concluído! Quarto ${reserva.quartoNome} agora está em LIMPEZA.`
           : `✅ Check-out manual concluído com sucesso! Quarto ${reserva.quartoNome} agora está em LIMPEZA.`;
         showToast(msg);
       } else {
@@ -90,34 +91,13 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
     }
   };
 
-  // Motor Inteligente: Executa Check-out Automático às 12:00 para hóspedes com saída hoje ou data anterior
+  // Motor Inteligente: Executa Check-out Automático às 07:00 no fuso oficial do hotel
   const verificarCheckoutsAutomaticos = async (lista: Reserva[]) => {
     if (!lista || lista.length === 0) return;
-    const agora = new Date();
-    const hojeStr = agora.toISOString().split('T')[0]; // "YYYY-MM-DD"
-    const horaAtual = agora.getHours();
-
-    const pendentes = lista.filter((r) => {
-      if (r.status !== 'Hospedado') return false;
-      if (!r.checkOut) return false;
-
-      const dOut = r.checkOut.trim();
-      if (dOut < hojeStr) {
-        // Data de saída expirou em dias anteriores
-        return true;
-      }
-      if (dOut === hojeStr) {
-        // Data de saída é hoje: ativa automaticamente a partir das 12:00
-        return horaAtual >= 12;
-      }
-      return false;
-    });
-
-    if (pendentes.length > 0) {
-      console.log(`[Check-out Inteligente] Disparando check-out automático para ${pendentes.length} reserva(s) às 12:00.`);
-      for (const res of pendentes) {
-        await handleExecutarCheckout(res, true);
-      }
+    try {
+      await autoCheckoutService.verificarEExecutarCheckoutsAutomaticos(lista);
+    } catch (err) {
+      console.warn('[ListagemReservas] Erro ao verificar check-outs automáticos:', err);
     }
   };
 
@@ -170,7 +150,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
       fetchReservas();
     });
 
-    // Timer Inteligente: a cada 30 segundos valida se o relógio atingiu 12:00
+    // Timer Inteligente: a cada 30 segundos valida se o relógio atingiu 07:00 no fuso do hotel
     const timerCheckouts = setInterval(() => {
       verificarCheckoutsAutomaticos(reservasRef.current);
     }, 30000);

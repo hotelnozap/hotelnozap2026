@@ -3827,6 +3827,15 @@ export const reservasService = {
         return [];
       }
 
+      // Disparar checagem de check-out automático das 07:00 no fuso do hotel
+      if (data && data.length > 0) {
+        import('./autoCheckoutService')
+          .then(({ autoCheckoutService }) => {
+            autoCheckoutService.verificarEExecutarCheckoutsAutomaticos(data);
+          })
+          .catch(() => {});
+      }
+
       return data.map((r: any) => {
         const checkInDate = r.data_checkin ? r.data_checkin.split('T')[0] : '';
         const checkOutDate = r.data_checkout ? r.data_checkout.split('T')[0] : '';
@@ -4284,14 +4293,14 @@ export const reservasService = {
       // 4. Montar notificação de Recepção
       const isAuto = !!options?.isAutomatico;
       const notifMsg = isAuto
-        ? `⏰ Check-out automático às 12:00 executado com sucesso para a reserva de ${nomeHospede}. O Quarto ${numeroQuarto || ''} foi liberado e o status alterado para LIMPEZA.`
+        ? `⏰ Check-out automático às 07:00 executado com sucesso para a reserva de ${nomeHospede}. O Quarto ${numeroQuarto || ''} foi liberado e o status alterado para LIMPEZA.`
         : `🛎️ Check-out manual realizado pela recepção para a reserva de ${nomeHospede}. O Quarto ${numeroQuarto || ''} foi liberado e o status alterado para LIMPEZA.`;
 
       const notifPayload = {
         id: `notif-co-${Date.now()}`,
         tipo: 'limpeza',
         hotel_id: hotelId,
-        titulo: isAuto ? '⏰ Check-out Automático (12:00)' : '🛎️ Check-out Realizado',
+        titulo: isAuto ? '⏰ Check-out Automático (07:00)' : '🛎️ Check-out Realizado',
         mensagem: notifMsg,
         itemNome: `Higienização Quarto ${numeroQuarto || ''}`,
         categoria: 'Limpeza',
@@ -4340,6 +4349,16 @@ export const reservasService = {
             templateMensagemService.dispararCheckoutAutomatico(hotelId, reservaAtualizada);
           })
           .catch(cErr => console.warn('[templateMensagemService] Erro ao disparar pós-checkout:', cErr));
+
+        // Disparar Webhook unificado oficial para o n8n
+        import('./webhookN8nService')
+          .then(({ webhookN8nService }) => {
+            webhookN8nService.dispararWebhookConfirmacaoReserva(reservaAtualizada, {
+              tipo: 'checkout_realizado',
+              evento: isAuto ? 'Check-out Automático Realizado (07:00)' : 'Check-out Realizado'
+            });
+          })
+          .catch(wErr => console.warn('[webhookN8nService] Erro ao disparar webhook de checkout:', wErr));
       }
 
       return { success: true, reserva: reservaAtualizada, quartoNumero: String(numeroQuarto || '') };
