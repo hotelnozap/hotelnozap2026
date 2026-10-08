@@ -230,6 +230,9 @@ export const App: React.FC = () => {
         }
         return 'catalogo-hoteis';
       }
+      if (parts[0] === 'cidades' || parts[0] === 'cidade') {
+        return 'catalogo-hoteis';
+      }
       if (parts[0] === 'hoteis') {
         if (parts[1] === 'cardapio') return 'cardapio-hotel';
         return parts.length >= 2 ? 'pagina-hotel' : 'catalogo-hoteis';
@@ -370,6 +373,8 @@ export const App: React.FC = () => {
         } else {
           setActiveTab('catalogo-hoteis');
         }
+      } else if (parts[0] === 'cidades' || parts[0] === 'cidade') {
+        setActiveTab('catalogo-hoteis');
       } else if (parts[0] === 'hoteis') {
         if (parts[1] === 'cardapio') {
           setActiveTab('cardapio-hotel');
@@ -1424,7 +1429,7 @@ export const App: React.FC = () => {
     );
   }
 
-  if (activeTab === 'catalogo-hoteis' || (!isAppDomain() && !isLpDomain() && !isParceirosDomain() && (pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1)))) {
+  if (activeTab === 'catalogo-hoteis' || (!isAppDomain() && !isLpDomain() && !isParceirosDomain() && (pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1) || pathParts[0] === 'cidades' || pathParts[0] === 'cidade'))) {
     return (
       <CatalogoHoteis 
         onNavigateToLogin={() => {
@@ -1449,6 +1454,8 @@ export const App: React.FC = () => {
   const isPublicOrHotelPath = 
     pathParts[0] === 'hoteis' || 
     pathParts[0] === 'hotel' || 
+    pathParts[0] === 'cidades' ||
+    pathParts[0] === 'cidade' ||
     pathParts[0] === 'catalogo-hoteis' || 
     pathParts[0] === 'cardapio' ||
     pathParts[0] === 'lp' ||

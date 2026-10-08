@@ -49,6 +49,49 @@ export interface CityGroup {
   isPaidWithRooms?: boolean;
 }
 
+export const normalizeCitySlug = (str: string): string => {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+export const findCityBySlug = (slug: string, hotels: PublicHotel[]): string | null => {
+  if (!slug || !hotels || hotels.length === 0) return null;
+  const cleanTarget = normalizeCitySlug(slug);
+
+  // 1. Match exato com slug da cidade
+  for (const h of hotels) {
+    if (h.city && normalizeCitySlug(h.city) === cleanTarget) {
+      return h.city;
+    }
+  }
+
+  // 2. Match com cidade-uf (ex: agua-boa-mt)
+  for (const h of hotels) {
+    if (h.city) {
+      const cityUfSlug = normalizeCitySlug(`${h.city}-${h.uf || ''}`);
+      if (cityUfSlug === cleanTarget) {
+        return h.city;
+      }
+    }
+  }
+
+  // 3. Match parcial de prefixo
+  for (const h of hotels) {
+    if (h.city) {
+      const cSlug = normalizeCitySlug(h.city);
+      if (cSlug && (cleanTarget.startsWith(cSlug) || cSlug.startsWith(cleanTarget))) {
+        return h.city;
+      }
+    }
+  }
+
+  return null;
+};
+
 // Cidades populares pré-cadastradas por estado
 export const CIDADES_POR_ESTADO: Record<string, string[]> = {
   'PE': ['Ipojuca (Porto de Galinhas)', 'Recife', 'Gravatá', 'Tamandaré (Praia dos Carneiros)', 'Olinda', 'Fernando de Noronha'],
@@ -246,13 +289,15 @@ interface CityCarouselProps {
   onHotelClick: (hotel: PublicHotel) => void;
   favorites: Set<string>;
   toggleFavorite: (hotelId: string, e: React.MouseEvent) => void;
+  onCityClick?: (slug: string, cityName: string) => void;
 }
 
 const CityCarousel: React.FC<CityCarouselProps> = ({
   group,
   onHotelClick,
   favorites,
-  toggleFavorite
+  toggleFavorite,
+  onCityClick
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -294,21 +339,31 @@ const CityCarousel: React.FC<CityCarouselProps> = ({
     setIsDragging(false);
   };
 
+  const handleTitleClick = () => {
+    if (onCityClick) {
+      onCityClick(group.slug, group.city);
+    }
+  };
+
   return (
     <section id={`cidade-${group.slug}`} className="space-y-3.5 scroll-mt-28 py-2">
       {/* CABEÇALHO DA SEÇÃO DE CIDADE */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div 
+          onClick={handleTitleClick}
+          className="flex items-center gap-2 cursor-pointer group select-none transition-colors"
+          title={`Ver todos os hotéis em ${group.city}`}
+        >
           {group.isPaidWithRooms && (
-            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
               <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
             </div>
           )}
-          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
+          <h2 className="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1 sm:gap-1.5 group-hover:text-emerald-700 transition-colors">
             <span>{group.customTitle || `Hotéis e Pousadas em ${group.city} · ${group.uf}`}</span>
-            <span className="material-symbols-outlined text-base text-slate-400 group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+            <span className="material-symbols-outlined text-base sm:text-lg text-slate-400 group-hover:text-emerald-700 group-hover:translate-x-1 transition-all">arrow_forward</span>
           </h2>
-          <span className="text-xs text-slate-500 font-semibold hidden sm:inline">
+          <span className="text-[11px] sm:text-xs text-slate-500 font-semibold inline shrink-0 bg-slate-100 sm:bg-transparent px-2 py-0.5 sm:p-0 rounded-full sm:rounded-none">
             ({group.hotels.length} {group.hotels.length === 1 ? 'acomodação' : 'acomodações'})
           </span>
         </div>
@@ -830,11 +885,55 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
     return () => observer.disconnect();
   }, [cityGroups.length, isSearchActive]);
 
-  // Seleciona um destino da busca e ativa a visualização em grade de 5 por linha do resultado
-  const handleSelectDestination = (slug: string, cityName: string) => {
+  // Efeito para sincronizar URL /cidades/:slug com o estado focusedCity (ao carregar e ao navegar com popstate)
+  useEffect(() => {
+    const syncCityFromUrl = () => {
+      const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+      if ((parts[0] === 'cidades' || parts[0] === 'cidade') && parts[1]) {
+        const rawSlug = decodeURIComponent(parts[1]);
+        const matched = findCityBySlug(rawSlug, hoteisList);
+        if (matched) {
+          setFocusedCity(matched);
+        } else if (rawSlug && hoteisList.length > 0) {
+          const fallbackName = rawSlug
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          setFocusedCity(fallbackName);
+        }
+      } else if (window.location.pathname === '/' || window.location.pathname === '/hoteis') {
+        if (!searchQuery.trim() && focusedCity) {
+          setFocusedCity(null);
+        }
+      }
+    };
+
+    syncCityFromUrl();
+    window.addEventListener('popstate', syncCityFromUrl);
+    return () => window.removeEventListener('popstate', syncCityFromUrl);
+  }, [hoteisList]);
+
+  // Abertura oficial da rota /cidades/[nomedacidade]
+  const handleOpenCityRoute = (citySlug: string, cityName: string) => {
+    const cleanSlug = normalizeCitySlug(cityName || citySlug);
+    window.history.pushState({}, '', `/cidades/${cleanSlug}`);
     setFocusedCity(cityName);
     setIsSearchPopoverOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Limpeza de filtro de cidade e retorno para a raiz /
+  const handleClearCityFilter = () => {
+    setFocusedCity(null);
+    setSearchQuery('');
+    setActiveCategory('Tudo');
+    window.history.pushState({}, '', '/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Seleciona um destino da busca e ativa a rota da cidade
+  const handleSelectDestination = (slug: string, cityName: string) => {
+    handleOpenCityRoute(slug, cityName);
   };
 
   const handleVerHotel = (hotel: PublicHotel) => {
@@ -961,7 +1060,12 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
         <div className="hidden md:flex h-20 w-full max-w-7xl mx-auto px-8 items-center justify-between gap-4">
 
           {/* 1. LOGO HOTEL NO ZAP */}
-          <a href="/" className="flex items-center gap-2.5 shrink-0 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+          <a 
+            href="/" 
+            onClick={(e) => { e.preventDefault(); handleClearCityFilter(); }}
+            className="flex items-center gap-2.5 shrink-0 group cursor-pointer hover:opacity-90 transition-opacity" 
+            title="Ir para a página inicial"
+          >
             <ZapHotelLogo size={40} className="group-hover:scale-105 transition-transform" />
             <div className="flex flex-col leading-none">
               <span className="font-extrabold text-lg text-slate-900 tracking-tight">Hotel no Zap</span>
@@ -1117,9 +1221,14 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           </div>
 
           {/* 1. LOGO, NOME E SLOGAN CENTRALIZADOS */}
-          <a href="/" className="flex flex-col items-center justify-center text-center w-full group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
+          <a 
+            href="/" 
+            onClick={(e) => { e.preventDefault(); handleClearCityFilter(); }}
+            className="flex flex-col items-center justify-center text-center w-full group cursor-pointer hover:opacity-90 transition-opacity" 
+            title="Ir para a página inicial"
+          >
+            <ZapHotelLogo size={34} className="group-hover:scale-105 transition-transform" />
             <div className="flex items-center justify-center gap-2">
-              <ZapHotelLogo size={34} className="group-hover:scale-105 transition-transform" />
               <span className="font-extrabold text-base text-slate-900 tracking-tight">Hotel no Zap</span>
             </div>
             <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
@@ -1250,37 +1359,71 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           /* MODO RESULTADO DA BUSCA: 5 CARDS POR LINHA (SOMENTE QUANDO PESQUISADO)    */
           /* ========================================================================= */
           <div className="space-y-6">
-            {/* CABEÇALHO DO RESULTADO DA BUSCA */}
+            {/* CABEÇALHO DO RESULTADO DA BUSCA / CIDADE */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                    {focusedCity ? `Acomodações em ${focusedCity}` : `Busca por "${searchQuery}"`}
+                    {focusedCity ? `Hotéis e Pousadas em ${focusedCity}` : `Busca por "${searchQuery}"`}
                   </h1>
                   <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold shadow-2xs">
-                    {searchResultHotels.length} {searchResultHotels.length === 1 ? 'hotel encontrado' : 'hotéis encontrados'}
+                    {searchResultHotels.length} {searchResultHotels.length === 1 ? 'acomodação' : 'acomodações'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium mt-1">
-                  Exibindo 5 acomodações em {focusedCity || searchQuery || 'sua cidade'}
+                  {focusedCity 
+                    ? `Exibindo todas as acomodações disponíveis em ${focusedCity}` 
+                    : `Resultados encontrados para "${searchQuery}"`}
                 </p>
               </div>
 
               {/* AÇÃO: LIMPAR BUSCA E VOLTAR À HOME POR CIDADES */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    setFocusedCity(null);
-                    setSearchQuery('');
-                    setActiveCategory('Tudo');
-                  }}
+                  onClick={handleClearCityFilter}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                 >
-                  <span className="material-symbols-outlined text-base">close</span>
-                  <span>Limpar busca / Ver todas as cidades</span>
+                  <span className="material-symbols-outlined text-base">arrow_back</span>
+                  <span>Ver todas as cidades</span>
                 </button>
               </div>
             </div>
+
+            {/* SE A CIDADE TIVER TOP 10 (COM PLANOS ATIVOS), EXIBE O TOP 10 DA CIDADE NO TOPO */}
+            {top10Hotels.length > 0 && (
+              <section className="space-y-4 pb-6 border-b border-slate-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                    <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                      <span>Os Top 10 em {focusedCity || top10Hotels[0]?.city}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold">
+                        {top10Hotels.length} {top10Hotels.length === 1 ? 'hotel' : 'hotéis'}
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Hotéis verificados com planos ativos e atendimento oficial no WhatsApp
+                    </p>
+                  </div>
+                </div>
+
+                {/* GRADE DO TOP 10 (2 colunas no mobile, 5 no desktop) */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3.5 sm:gap-5">
+                  {top10Hotels.map((hotel) => (
+                    <AirbnbHotelCard
+                      key={`city-top10-${hotel.id}`}
+                      hotel={hotel}
+                      onHotelClick={handleVerHotel}
+                      isFav={favorites.has(hotel.id)}
+                      toggleFavorite={toggleFavorite}
+                      className="w-full"
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* SE NÃO ENCONTROU NENHUM HOTEL */}
             {searchResultHotels.length === 0 ? (
@@ -1291,15 +1434,26 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                 </h3>
                 <p className="text-xs text-slate-500">Tente buscar por outra cidade ou mudar a categoria.</p>
                 <button
-                  onClick={() => { setFocusedCity(null); setSearchQuery(''); setActiveCategory('Tudo'); }}
-                  className="px-4 py-2 bg-[#006c49] text-white text-xs font-bold rounded-xl shadow-xs"
+                  onClick={handleClearCityFilter}
+                  className="px-4 py-2 bg-[#006c49] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer active:scale-95"
                 >
                   Voltar à Página Inicial
                 </button>
               </div>
             ) : (
-              <>
-                {/* GRADE DE 5 CARDS POR LINHA COM RESPONSIVIDADE (2 no mobile, 2 no sm, 3 no md, 4 no lg, 5 no xl/2xl) */}
+              <div className="space-y-4">
+                {top10Hotels.length > 0 && (
+                  <div>
+                    <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                      Todas as acomodações em {focusedCity}
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Priorizando hotéis com planos ativos e fotos dos quartos
+                    </p>
+                  </div>
+                )}
+
+                {/* GRADE DE CARDS COM RESPONSIVIDADE (2 no mobile, 5 no xl/2xl) */}
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3.5 sm:gap-5">
                   {visibleSearchResults.map((hotel) => (
                     <AirbnbHotelCard
@@ -1326,7 +1480,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                     </p>
                   )}
                 </div>
-              </>
+              </div>
             )}
           </div>
         ) : activeCategory === 'Os Top 10' ? (
@@ -1467,6 +1621,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                 onHotelClick={handleVerHotel}
                 favorites={favorites}
                 toggleFavorite={toggleFavorite}
+                onCityClick={handleOpenCityRoute}
               />
             ))}
 
