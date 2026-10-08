@@ -73,6 +73,20 @@
           },
           allowLocalhostAsSecureOrigin: true,
         });
+
+        // Solicita permissão nativa de notificação com delay suave no app instalado
+        try {
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+          if (isStandalone) {
+            setTimeout(async () => {
+              if (OneSignal.Notifications && OneSignal.Notifications.permission !== true) {
+                await OneSignal.Notifications.requestPermission();
+              }
+            }, 3000);
+          }
+        } catch (e) {
+          // ignore
+        }
       });
     </script>
   </head>

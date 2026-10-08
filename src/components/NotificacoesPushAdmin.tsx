@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { pushNotificationService, PushNotificationHistoryItem } from '../services/pushNotificationService';
+import { uploadImageToStorage } from '../services/storageService';
 
 interface NotificacoesPushAdminProps {
   onBackToDashboard: () => void;
@@ -34,6 +35,8 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
   const [mensagem, setMensagem] = useState('');
   const [url, setUrl] = useState('https://hotelnozap.com.br');
   const [imageUrl, setImageUrl] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [segmento, setSegmento] = useState<'all' | 'active'>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
@@ -66,6 +69,40 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
     setTitulo(tpl.titulo);
     setMensagem(tpl.mensagem);
     setUrl(tpl.url);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('erro', 'Por favor, selecione um arquivo de imagem válido (JPG, PNG, WebP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('erro', 'A imagem deve ter no máximo 5MB.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const uploadedUrl = await uploadImageToStorage(file, 'notificacoes');
+      if (uploadedUrl) {
+        setImageUrl(uploadedUrl);
+        showToast('sucesso', 'Imagem enviada com sucesso!');
+      } else {
+        showToast('erro', 'Falha ao enviar imagem. Verifique sua conexão.');
+      }
+    } catch (err: any) {
+      console.error('Erro no upload da imagem:', err);
+      showToast('erro', 'Erro ao fazer upload da imagem.');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSendNotification = async () => {
@@ -280,19 +317,63 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
               </p>
             </div>
 
-            {/* Campo: Imagem / Banner (Opcional) */}
+            {/* Campo: Imagem / Banner com Upload Direto (Estilo Serasa) */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm text-slate-400">image</span>
-                URL da Imagem / Banner (Opcional)
-              </label>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://... imagem em JPG ou PNG"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium text-slate-800 transition outline-none"
-              />
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm text-emerald-600">photo_library</span>
+                  Banner / Imagem Grande (Estilo Serasa / Rich Push)
+                </label>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl('')}
+                    className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer"
+                  >
+                    Remover Imagem
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Cole o link ou clique ao lado para carregar foto"
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs font-medium text-slate-800 transition outline-none"
+                />
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                />
+
+                <button
+                  type="button"
+                  disabled={isUploadingImage}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer disabled:opacity-50 shrink-0"
+                >
+                  {isUploadingImage ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-slate-400 border-t-emerald-600 rounded-full animate-spin" />
+                      <span>Enviando foto...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">cloud_upload</span>
+                      <span>Carregar do Celular/PC</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Esta foto aparecerá expandida na tela de bloqueio e na barra de notificações do Android.
+              </p>
             </div>
 
             {/* Segmento de Destinatários */}
@@ -375,55 +456,77 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
               </span>
             </div>
 
-            {/* Card estilo Notificação Android / Windows */}
-            <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-xl border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-400">
+            {/* Card fiel estilo Notificação Android (Estilo Serasa / Rich Push) */}
+            <div className="bg-[#f2f4f7] rounded-3xl p-3.5 sm:p-4 shadow-md border border-slate-200/90 space-y-2.5">
+              {/* Header do App Android */}
+              <div className="flex items-center justify-between text-xs text-slate-600">
                 <div className="flex items-center gap-2">
                   <img
                     src="/icon-192.png"
                     alt="Hotel no Zap"
-                    className="w-5 h-5 rounded-md object-cover border border-white/20"
+                    className="w-5 h-5 rounded-full object-cover border border-slate-300 shadow-2xs"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/favicon.svg';
+                      (e.currentTarget as HTMLImageElement).src = '/logo.png';
                     }}
                   />
-                  <span className="font-semibold text-slate-200">Hotel no Zap</span>
-                  <span className="text-[10px] text-slate-400">• agora</span>
+                  <span className="font-bold text-slate-800 text-xs">Hotel no Zap</span>
+                  <span className="text-[11px] text-slate-400">• agora</span>
+                  <span className="material-symbols-outlined text-[13px] text-slate-400">notifications</span>
                 </div>
-                <span className="material-symbols-outlined text-sm text-slate-500">expand_more</span>
+                <div className="w-5 h-5 rounded-full bg-slate-200/80 flex items-center justify-center text-slate-500">
+                  <span className="material-symbols-outlined text-sm">expand_less</span>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <p className="font-bold text-sm text-white line-clamp-1">
-                  {titulo.trim() || 'Título da sua notificação aparecerá aqui'}
+              {/* Título e Conteúdo da Notificação */}
+              <div className="space-y-1 px-0.5">
+                <p className="font-extrabold text-sm text-slate-900 leading-snug">
+                  {titulo.trim() || 'Economize nas suas diárias 🏨'}
                 </p>
-                <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
-                  {mensagem.trim() || 'O conteúdo do texto da mensagem enviada para os clientes aparecerá neste espaço.'}
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {mensagem.trim() || 'Acomodações verificadas sem taxas e com confirmação em 1 minuto direto no WhatsApp.'}
                 </p>
               </div>
 
-              {imageUrl.trim() && (
-                <div className="mt-2 rounded-xl overflow-hidden border border-white/10 max-h-36">
+              {/* Banner / Foto Grande (Igual Serasa / Inter) */}
+              {imageUrl.trim() ? (
+                <div className="rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs aspect-video w-full bg-slate-100">
                   <img
                     src={imageUrl.trim()}
-                    alt="Prévia Banner"
+                    alt="Banner Notificação"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       (e.currentTarget as HTMLElement).style.display = 'none';
                     }}
                   />
                 </div>
+              ) : (
+                <div className="rounded-2xl border-2 border-dashed border-slate-300/80 bg-slate-50/60 p-4 text-center">
+                  <span className="material-symbols-outlined text-2xl text-slate-400">image</span>
+                  <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                    Sem banner anexado (notificação simples).
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    Ao adicionar uma imagem, ela aparecerá grande aqui igual à notificação da Serasa!
+                  </p>
+                </div>
               )}
 
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-emerald-400">
-                <span>hotelnozap.com.br</span>
-                <span className="font-semibold hover:underline cursor-pointer">Ver Reserva</span>
+              {/* Rodapé de Ação */}
+              <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 truncate max-w-[200px]">
+                  {url.trim() || 'hotelnozap.com.br'}
+                </span>
+                <span className="font-extrabold text-[#006c49] hover:underline cursor-pointer flex items-center gap-0.5">
+                  <span>Abrir no App</span>
+                  <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                </span>
               </div>
             </div>
 
             {/* Dica Informativa */}
-            <div className="bg-emerald-50/60 rounded-xl p-3 border border-emerald-100 text-[11px] text-emerald-900 leading-relaxed">
-              <strong>Como o usuário recebe?</strong> Notificação nativa no topo da tela do smartphone (Android) ou no canto da tela do computador (Windows/Mac), mesmo com o navegador fechado!
+            <div className="bg-emerald-50/70 rounded-2xl p-3.5 border border-emerald-200/80 text-[11px] text-emerald-950 leading-relaxed">
+              <strong>Como chega no celular?</strong> O cliente recebe na tela de bloqueio e na central do Android exatamente com essa imagem ampla, o ícone do Hotel no Zap e botão direto para o app!
             </div>
           </div>
 
