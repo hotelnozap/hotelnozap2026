@@ -428,7 +428,7 @@ export interface CatalogoHoteisProps {
 
 const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogin, onNavigateToHotel }) => {
   // Cache local para carregamento instantâneo (0 segundos)
-  const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v4';
+  const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v5';
 
   // Lista geral de hotéis do Supabase com inicialização via cache imediato
   const [hoteisList, setHoteisList] = useState<PublicHotel[]>(() => {
