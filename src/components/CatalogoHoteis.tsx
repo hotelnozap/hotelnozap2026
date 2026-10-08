@@ -987,31 +987,38 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
   // Cidades a serem renderizadas agora
   const visibleGroups = cityGroups.slice(0, visibleCitiesCount);
 
-  // Cidade de referência para o Top 10 (cidade pesquisada/selecionada ou a primeira cidade com planos ativos)
+  // Cidade de referência para o Top 10 (cidade pesquisada/selecionada ou a primeira cidade com hotel Top 10 e plano ativo)
   const top10City = useMemo(() => {
     if (focusedCity && focusedCity.trim()) {
       return focusedCity.trim().toLowerCase();
     }
-    // Se nenhuma cidade estiver no filtro, busca a cidade do primeiro hotel com plano ativo
-    const firstHotelWithPlan = hoteisList.find(h => h.hasActivePlan && !h.isImportedFromGoogle);
-    return firstHotelWithPlan ? firstHotelWithPlan.city.trim().toLowerCase() : null;
+    // Se nenhuma cidade estiver no filtro, busca a cidade do primeiro hotel com isTop10 E plano ativo
+    const firstHotelTop10 = hoteisList.find(h => h.isTop10 && h.hasActivePlan && !h.isImportedFromGoogle);
+    return firstHotelTop10 ? firstHotelTop10.city.trim().toLowerCase() : null;
   }, [focusedCity, hoteisList]);
 
   // Hotéis selecionados para o Top 10:
-  // - SOMENTE na cidade em questão
+  // - SOMENTE hotéis que possuem a opção Top 10 marcada no seu cadastro (isTop10 === true)
+  // - SOMENTE na cidade em questão (top10City)
   // - SOMENTE se houver hotéis com planos ativos (se a cidade não tiver hotel com plano, não mostra o Top 10)
   // - Hotéis importados do n8n/Google NUNCA são os primeiros (ficam no final)
   const top10Hotels = useMemo<PublicHotel[]>(() => {
     if (!top10City) return [];
 
-    // Filtra hotéis apenas da cidade do Top 10
-    const cityHotels = hoteisList.filter(h => 
-      h.city.trim().toLowerCase() === top10City ||
-      `${h.city} - ${h.uf}`.toLowerCase().includes(top10City)
-    );
+    // Filtra hotéis apenas da cidade do Top 10 QUE TENHAM A OPÇÃO TOP 10 MARCADA NO CADASTRO
+    const cityTop10Hotels = hoteisList.filter(h => {
+      if (!h.isTop10) return false;
+      const c = (h.city || '').trim().toLowerCase();
+      const u = (h.uf || '').trim().toLowerCase();
+      const matchesCity = 
+        c === top10City ||
+        `${c} - ${u}`.includes(top10City) ||
+        normalizeCitySlug(h.city) === normalizeCitySlug(top10City);
+      return matchesCity;
+    });
 
     // Regra: "se a cidade em questão não tem hotel com planos então não mostra o top 10"
-    const hasAnyHotelWithActivePlan = cityHotels.some(h => h.hasActivePlan && !h.isImportedFromGoogle);
+    const hasAnyHotelWithActivePlan = cityTop10Hotels.some(h => h.hasActivePlan && !h.isImportedFromGoogle);
     if (!hasAnyHotelWithActivePlan) {
       return [];
     }
@@ -1020,7 +1027,7 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
     // 1. Planos ativos primeiro
     // 2. Fotos e quartos reais
     // 3. Importados do n8n NUNCA nos primeiros lugares
-    const sorted = [...cityHotels].sort((a, b) => {
+    const sorted = [...cityTop10Hotels].sort((a, b) => {
       if (a.hasActivePlan && !b.hasActivePlan) return -1;
       if (!a.hasActivePlan && b.hasActivePlan) return 1;
 
