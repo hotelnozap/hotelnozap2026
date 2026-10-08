@@ -5,6 +5,7 @@
       "namespace": "android_app",
       "package_name": "br.com.hotelnozap.twa",
       "sha256_cert_fingerprints": [
+        "4C:90:15:0B:94:75:1C:C7:DE:6C:A8:6E:6C:AD:2C:59:D6:5A:44:AE:A8:26:6C:F5:0C:B7:6C:0B:27:5B:B5:E6",
         "68:01:39:20:69:AF:A7:BA:A6:64:E8:FD:B5:AA:09:D1:3D:B9:D0:B8:C6:0A:C5:CF:38:E0:18:1E:FC:A5:F8:22",
         "55:3F:7A:ED:30:78:ED:4F:38:7F:E1:F1:E4:9F:B2:E9:CB:91:0B:30:8E:0B:10:18:B2:9D:4B:AE:09:E8:99:02",
         "EA:3D:A5:53:6B:52:69:2D:34:DE:FF:AF:C4:BA:9D:6E:E0:A5:E8:90:11:47:4E:34:36:A9:FF:7F:B9:C1:95:1D"
@@ -17,6 +18,7 @@
       "namespace": "android_app",
       "package_name": "br.com.hotelnozap.app",
       "sha256_cert_fingerprints": [
+        "4C:90:15:0B:94:75:1C:C7:DE:6C:A8:6E:6C:AD:2C:59:D6:5A:44:AE:A8:26:6C:F5:0C:B7:6C:0B:27:5B:B5:E6",
         "68:01:39:20:69:AF:A7:BA:A6:64:E8:FD:B5:AA:09:D1:3D:B9:D0:B8:C6:0A:C5:CF:38:E0:18:1E:FC:A5:F8:22",
         "55:3F:7A:ED:30:78:ED:4F:38:7F:E1:F1:E4:9F:B2:E9:CB:91:0B:30:8E:0B:10:18:B2:9D:4B:AE:09:E8:99:02",
         "EA:3D:A5:53:6B:52:69:2D:34:DE:FF:AF:C4:BA:9D:6E:E0:A5:E8:90:11:47:4E:34:36:A9:FF:7F:B9:C1:95:1D"
