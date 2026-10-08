@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Dashboard from './components/Dashboard';
 import MapaQuartos, { Room } from './components/MapaQuartos';
 import CadastroQuarto, { EditingQuartoData } from './components/CadastroQuarto';
@@ -1429,21 +1429,25 @@ export const App: React.FC = () => {
     );
   }
 
+  const handleNavigateToLoginFromCatalogo = useCallback(() => {
+    if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+      window.location.href = 'https://app.hotelnozap.com.br/';
+    } else {
+      window.history.pushState({}, '', '/paineladmin');
+      setActiveTab('login');
+    }
+  }, []);
+
+  const handleNavigateToHotelFromCatalogo = useCallback((hotel: PublicHotel) => {
+    setSelectedHotelForPage(hotel);
+    setActiveTab('pagina-hotel');
+  }, []);
+
   if (activeTab === 'catalogo-hoteis' || (!isAppDomain() && !isLpDomain() && !isParceirosDomain() && (pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1) || pathParts[0] === 'cidades' || pathParts[0] === 'cidade'))) {
     return (
       <CatalogoHoteis 
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-        onNavigateToHotel={(hotel) => {
-          setSelectedHotelForPage(hotel);
-          setActiveTab('pagina-hotel');
-        }}
+        onNavigateToLogin={handleNavigateToLoginFromCatalogo}
+        onNavigateToHotel={handleNavigateToHotelFromCatalogo}
       />
     );
   }

@@ -426,7 +426,7 @@ export interface CatalogoHoteisProps {
   onNavigateToHotel?: (hotel: PublicHotel) => void;
 }
 
-export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogin, onNavigateToHotel }) => {
+const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogin, onNavigateToHotel }) => {
   // Cache local para carregamento instantâneo (0 segundos)
   const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v3';
 
@@ -468,8 +468,8 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
   const [activeCategory, setActiveCategory] = useState('Tudo');
   const [focusedCity, setFocusedCity] = useState<string | null>(null);
 
-  // Infinite Scroll / Lazy Loading de Cidades
-  const [visibleCitiesCount, setVisibleCitiesCount] = useState<number>(6);
+  // Infinite Scroll / Lazy Loading de Cidades (começa com 14 cidades para preenchimento estável sem saltos)
+  const [visibleCitiesCount, setVisibleCitiesCount] = useState<number>(14);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Favoritos
@@ -666,10 +666,21 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
       });
 
       if (mappedDbHoteis && mappedDbHoteis.length > 0) {
-        setHoteisList(mappedDbHoteis);
-        try {
-          localStorage.setItem(CACHE_KEY_PUBLIC_HOTEIS, JSON.stringify(mappedDbHoteis));
-        } catch {}
+        setHoteisList(prev => {
+          // Se já temos a mesma quantidade de hotéis e o primeiro e último IDs são iguais, preserva o estado estável
+          if (
+            prev &&
+            prev.length === mappedDbHoteis.length &&
+            prev[0]?.id === mappedDbHoteis[0]?.id &&
+            prev[prev.length - 1]?.id === mappedDbHoteis[mappedDbHoteis.length - 1]?.id
+          ) {
+            return prev;
+          }
+          try {
+            localStorage.setItem(CACHE_KEY_PUBLIC_HOTEIS, JSON.stringify(mappedDbHoteis));
+          } catch {}
+          return mappedDbHoteis;
+        });
       }
     } catch (err) {
       console.error('Erro ao carregar hotéis no catálogo:', err);
@@ -853,9 +864,12 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
   // SCROLL INFINITO CONTÍNUO VIA WINDOW SCROLL (INFALÍVEL EM QUALQUER NAVEGADOR)
   useEffect(() => {
     const handleWindowScroll = () => {
+      // Ignora chamadas se o usuário ainda não rolou a tela significativamente
+      if (typeof window === 'undefined' || window.scrollY < 120) return;
+
       const scrollPos = window.innerHeight + window.scrollY;
       const scrollHeight = document.documentElement.scrollHeight;
-      if (scrollPos >= scrollHeight - 750) {
+      if (scrollPos >= scrollHeight - 450) {
         if (isSearchActive) {
           setVisibleSearchCount(prev => {
             if (prev >= searchResultHotels.length) return prev;
@@ -864,15 +878,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
         } else {
           setVisibleCitiesCount(prev => {
             if (prev >= cityGroups.length) return prev;
-            return Math.min(prev + 4, cityGroups.length);
+            return Math.min(prev + 6, cityGroups.length);
           });
         }
       }
     };
 
     window.addEventListener('scroll', handleWindowScroll, { passive: true });
-    handleWindowScroll();
-
     return () => window.removeEventListener('scroll', handleWindowScroll);
   }, [searchResultHotels.length, cityGroups.length, isSearchActive]);
 
@@ -880,13 +892,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
   useEffect(() => {
     if (!searchSentinelRef.current || !isSearchActive) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
+      if (entries[0].isIntersecting && typeof window !== 'undefined' && window.scrollY > 100) {
         setVisibleSearchCount(prev => {
           if (prev >= searchResultHotels.length) return prev;
           return Math.min(prev + 15, searchResultHotels.length);
         });
       }
-    }, { rootMargin: '450px' });
+    }, { rootMargin: '300px' });
 
     observer.observe(searchSentinelRef.current);
     return () => observer.disconnect();
@@ -900,13 +912,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
   useEffect(() => {
     if (!sentinelRef.current || isSearchActive) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
+      if (entries[0].isIntersecting && typeof window !== 'undefined' && window.scrollY > 150) {
         setVisibleCitiesCount(prev => {
           if (prev >= cityGroups.length) return prev;
-          return Math.min(prev + 4, cityGroups.length);
+          return Math.min(prev + 6, cityGroups.length);
         });
       }
-    }, { rootMargin: '450px' });
+    }, { rootMargin: '300px' });
 
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
@@ -1856,5 +1868,6 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
     </div>
   );
 };
-
+ 
+export const CatalogoHoteis = React.memo(CatalogoHoteisComponent);
 export default CatalogoHoteis;
