@@ -499,6 +499,41 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   // Modais e Detalhes
   const [selectedHotelDetails, setSelectedHotelDetails] = useState<PublicHotel | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
+  const [shareToast, setShareToast] = useState<string | null>(null);
+
+  // Compartilhar link da cidade com suporte a Web Share API e fallback Clipboard
+  const handleShareCity = async () => {
+    const cityName = focusedCity || (searchResultHotels[0]?.city) || 'Hospedagens';
+    const citySlug = normalizeCitySlug(cityName);
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://hotelnozap.com.br';
+    const shareUrl = `${origin}/cidades/${citySlug}`;
+
+    const shareData = {
+      title: `Hotéis e Pousadas em ${cityName} - Hotel no Zap`,
+      text: `Confira os melhores hotéis e pousadas em ${cityName} no Hotel no Zap!`,
+      url: shareUrl
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareToast(`Link de ${cityName} copiado para a área de transferência!`);
+        setTimeout(() => setShareToast(null), 3000);
+      }
+    } catch {
+      setShareToast(`Copie o link: ${shareUrl}`);
+      setTimeout(() => setShareToast(null), 4000);
+    }
+  };
 
   // Usuário logado
   const [currentUser, setCurrentUser] = useState<{
@@ -851,6 +886,19 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
       return (b.pricePerNight || 0) - (a.pricePerNight || 0);
     });
   }, [hoteisList, focusedCity, searchQuery, activeCategory, isSearchActive]);
+
+  // Hotéis com fotos dos quartos na busca/cidade selecionada
+  const searchHotelsWithRooms = useMemo<PublicHotel[]>(() => {
+    return searchResultHotels.filter(h => h.hasRooms);
+  }, [searchResultHotels]);
+
+  // Demais acomodações da cidade (para não duplicar quem já está na seção de quartos)
+  const searchOtherHotels = useMemo<PublicHotel[]>(() => {
+    if (searchHotelsWithRooms.length > 0) {
+      return searchResultHotels.filter(h => !h.hasRooms);
+    }
+    return searchResultHotels;
+  }, [searchResultHotels, searchHotelsWithRooms.length]);
 
   // Carregamento sob demanda (Infinite Scroll) do resultado da busca
   const [visibleSearchCount, setVisibleSearchCount] = useState<number>(20); // 4 linhas x 5 cards = 20 cards
@@ -1485,30 +1533,80 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {top10Hotels.length > 0 && (
-                  <div>
-                    <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-                      Todas as acomodações em {focusedCity}
-                    </h2>
-                    <p className="text-xs text-slate-500 font-medium">
-                      Priorizando hotéis com planos ativos e fotos dos quartos
-                    </p>
-                  </div>
+              <div className="space-y-8">
+                {/* 1. SEÇÃO EXCLUSIVA: HOTÉIS COM FOTOS DOS QUARTOS (SE HOUVER) */}
+                {searchHotelsWithRooms.length > 0 && (
+                  <section className="space-y-4 pb-6 border-b border-slate-200">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                        <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>bed</span>
+                      </div>
+                      <div>
+                        <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                          <span>Hotéis com fotos dos quartos</span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 text-[11px] font-bold">
+                            {searchHotelsWithRooms.length} {searchHotelsWithRooms.length === 1 ? 'acomodação' : 'acomodações'}
+                          </span>
+                        </h2>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Acomodações com fotos dos quartos e valores das diárias disponíveis
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* GRADE DE HOTÉIS COM QUARTOS */}
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3.5 sm:gap-5">
+                      {searchHotelsWithRooms.map((hotel) => (
+                        <AirbnbHotelCard
+                          key={`with-rooms-${hotel.id}`}
+                          hotel={hotel}
+                          onHotelClick={handleVerHotel}
+                          isFav={favorites.has(hotel.id)}
+                          toggleFavorite={toggleFavorite}
+                          className="w-full"
+                        />
+                      ))}
+                    </div>
+                  </section>
                 )}
 
-                {/* GRADE DE CARDS COM RESPONSIVIDADE (2 no mobile, 5 no xl/2xl) */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3.5 sm:gap-5">
-                  {visibleSearchResults.map((hotel) => (
-                    <AirbnbHotelCard
-                      key={hotel.id}
-                      hotel={hotel}
-                      onHotelClick={handleVerHotel}
-                      isFav={favorites.has(hotel.id)}
-                      toggleFavorite={toggleFavorite}
-                      className="w-full"
-                    />
-                  ))}
+                {/* 2. SEÇÃO: TODAS AS ACOMODAÇÕES (COM BOTÃO COMPARTILHAR) */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                        {focusedCity ? `Todas as acomodações em ${focusedCity}` : 'Todas as acomodações'}
+                      </h2>
+                      <span className="text-xs font-semibold text-slate-400">
+                        ({searchOtherHotels.length} {searchOtherHotels.length === 1 ? 'disponível' : 'disponíveis'})
+                      </span>
+                    </div>
+
+                    {/* BOTÃO COMPARTILHAR A CIDADE */}
+                    <button
+                      type="button"
+                      onClick={handleShareCity}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-300 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/50 bg-white text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                      title={focusedCity ? `Compartilhar link de acomodações em ${focusedCity}` : 'Compartilhar esta busca'}
+                    >
+                      <span className="material-symbols-outlined text-base text-emerald-600">share</span>
+                      <span>Compartilhar</span>
+                    </button>
+                  </div>
+
+                  {/* GRADE DE CARDS COM RESPONSIVIDADE (2 no mobile, 5 no xl/2xl) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3.5 sm:gap-5">
+                    {searchOtherHotels.slice(0, visibleSearchCount).map((hotel) => (
+                      <AirbnbHotelCard
+                        key={hotel.id}
+                        hotel={hotel}
+                        onHotelClick={handleVerHotel}
+                        isFav={favorites.has(hotel.id)}
+                        toggleFavorite={toggleFavorite}
+                        className="w-full"
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {/* SENTINELA DE SCROLL INFINITO DA BUSCA */}
@@ -1864,6 +1962,14 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
           </div>
         </div>
       </footer>
+
+      {/* FEEDBACK FLUTUANTE DE COMPARTILHAMENTO */}
+      {shareToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#003400] text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-fadeIn border border-emerald-500/30">
+          <span className="material-symbols-outlined text-emerald-300 text-lg">check_circle</span>
+          <span>{shareToast}</span>
+        </div>
+      )}
 
     </div>
   );
