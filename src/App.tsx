@@ -1440,10 +1440,63 @@ export const App: React.FC = () => {
         userRole={currentUserRole || 'hospede'}
         userName={localStorage.getItem('hotelnozap_user_name') || 'Hóspede'}
         userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
-        onNavigateToHotel={(hotelSlugOrUrl: string, codigoCupom?: string) => {
-          const cleanSlug = hotelSlugOrUrl.replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0];
+        onNavigateToHotel={async (hotelIdentifier: string, codigoCupom?: string, cupomObj?: any) => {
           const query = codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : '';
-          const targetUrl = `/hoteis/${cleanSlug}${query}`;
+          
+          try {
+            const allHoteis = await hoteisService.getHoteis();
+            const rawId = (cupomObj?.hotel_id || hotelIdentifier || '').replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0].trim();
+            const targetName = (cupomObj?.hotel_nome || hotelIdentifier || '').trim();
+            const normCleanName = targetName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+            const safeSlugFromInput = slugify(rawId || targetName);
+
+            const matched = (allHoteis || []).find((h: any) => {
+              if (rawId && h.id === rawId) return true;
+              if (cupomObj?.hotel_id && h.id === cupomObj.hotel_id) return true;
+              if (h.name && h.name.toLowerCase() === targetName.toLowerCase()) return true;
+              const hNorm = h.name ? h.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') : '';
+              if (hNorm && normCleanName && (hNorm === normCleanName || hNorm.includes(normCleanName) || normCleanName.includes(hNorm))) return true;
+              const hSlug = h.name ? slugify(h.name) : '';
+              if (hSlug && (hSlug === safeSlugFromInput || hSlug.includes(safeSlugFromInput))) return true;
+              return false;
+            });
+
+            if (matched) {
+              const matchedPublic: PublicHotel = {
+                id: matched.id,
+                name: matched.name,
+                link: matched.link,
+                category: matched.category || 'Hotel & Pousada',
+                city: matched.city || matched.cityUf?.split('/')[0]?.trim() || '',
+                uf: matched.uf || matched.cityUf?.split('/')[1]?.trim() || '',
+                neighborhood: matched.neighborhood || 'Centro',
+                imageUrl: matched.imageUrl || '',
+                rating: 4.90,
+                reviewsCount: 45,
+                pricePerNight: 0,
+                whatsappPhone: (matched.whatsapp ? matched.whatsapp.replace(/\D/g, '') : ''),
+                instagram: matched.instagram,
+                facebook: matched.facebook,
+                tiktok: matched.tiktok,
+                whatsapp: matched.whatsapp,
+                cancellationText: 'Cancelamento flexível via Zap',
+                capacity: 0,
+                roomTitle: 'Contato Direto',
+                amenities: []
+              };
+              setSelectedHotelForPage(matchedPublic);
+              const targetSlug = matched.link ? matched.link.replace(/^\/(hotel|hoteis)\/?/, '') : slugify(matched.name);
+              const targetUrl = `/hoteis/${targetSlug}${query}`;
+              window.history.pushState({}, '', targetUrl);
+              setActiveTab('pagina-hotel');
+              return;
+            }
+          } catch (e) {
+            console.warn('Erro ao resolver hotel para navegação em Área do Hóspede:', e);
+          }
+
+          const fallbackSlug = slugify(hotelIdentifier.replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0]);
+          const targetUrl = `/hoteis/${fallbackSlug}${query}`;
           window.history.pushState({}, '', targetUrl);
           setActiveTab('pagina-hotel');
         }}

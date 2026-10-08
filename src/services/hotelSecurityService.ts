@@ -159,12 +159,15 @@ export const hotelSecurityService = {
     }
 
     try {
-      // 1. Consulta em usuarios (email)
-      const qUsuario = supabase
+      // 1. Consulta em usuarios (email) - se for o mesmo hotel, não considera duplicado
+      let qUsuario = supabase
         .from('usuarios')
-        .select('id, nome, email')
-        .ilike('email', clean)
-        .limit(1);
+        .select('id, nome, email, hotel_id')
+        .ilike('email', clean);
+
+      if (excludeHotelId) {
+        qUsuario = qUsuario.or(`hotel_id.is.null,hotel_id.neq.${excludeHotelId}`);
+      }
 
       // 2. Consulta em hoteis (email_login ou email_gerente)
       let qHotel = supabase
@@ -184,7 +187,7 @@ export const hotelSecurityService = {
         .limit(1);
 
       const [resUsuario, resHotel, resParceiro] = await Promise.all([
-        qUsuario,
+        qUsuario.limit(1),
         qHotel.limit(1),
         qParceiro
       ]).catch(() => [{ data: null }, { data: null }, { data: null }]);

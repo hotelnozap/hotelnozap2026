@@ -11,7 +11,7 @@ export interface AreaHospedeProps {
   userRole?: string; // 'administrador' | 'hospede' | 'recepcao' | 'financeiro' | etc.
   userName?: string;
   userEmail?: string;
-  onNavigateToHotel?: (hotelSlugOrUrl: string, codigoCupom?: string) => void;
+  onNavigateToHotel?: (hotelSlugOrUrl: string, codigoCupom?: string, cupomObj?: any) => void;
   onNavigateToSystem?: () => void;
   onNavigateToLogin?: () => void;
   onLogout?: () => void;

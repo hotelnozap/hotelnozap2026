@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { cuponsService, CupomDesconto } from '../services/cuponsService';
+import { slugify } from './PaginaHotel';
 
 interface CuponsHospedeProps {
   onNavigateBack?: () => void;
   onNavigateToCatalogo?: () => void;
-  onNavigateToHotel?: (hotelSlugOrUrl: string, codigoCupom?: string) => void;
+  onNavigateToHotel?: (hotelSlugOrId: string, codigoCupom?: string, cupomObj?: CupomDesconto) => void;
 }
 
 export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
@@ -72,15 +73,9 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
     }
   };
 
-  const gerarLinkHotel = (hotelNome?: string, codigoCupom?: string) => {
-    if (!hotelNome) return '/hoteis';
-    const slug = hotelNome
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-');
+  const gerarLinkHotel = (hotelNome?: string, codigoCupom?: string, hotelId?: string) => {
+    if (!hotelNome && !hotelId) return '/hoteis';
+    const slug = hotelNome ? slugify(hotelNome) : (hotelId ? slugify(hotelId) : 'hotel');
     return `/hoteis/${slug}${codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : ''}`;
   };
 
@@ -94,14 +89,14 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
       return;
     }
 
-    if (onNavigateToHotel && cupom.hotel_nome) {
+    if (onNavigateToHotel && (cupom.hotel_id || cupom.hotel_nome)) {
       e.preventDefault();
-      onNavigateToHotel(cupom.hotel_nome, cupom.codigo);
+      onNavigateToHotel(cupom.hotel_id || cupom.hotel_nome || '', cupom.codigo, cupom);
       return;
     }
 
     e.preventDefault();
-    const link = gerarLinkHotel(cupom.hotel_nome, cupom.codigo);
+    const link = gerarLinkHotel(cupom.hotel_nome, cupom.codigo, cupom.hotel_id);
     window.location.href = link;
   };
 
@@ -219,7 +214,7 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {cuponsFiltrados.map((cupom) => {
             const isCopiado = copiadoId === cupom.id;
-            const hotelLink = gerarLinkHotel(cupom.hotel_nome, cupom.codigo);
+            const hotelLink = gerarLinkHotel(cupom.hotel_nome, cupom.codigo, cupom.hotel_id);
 
             return (
               <div
@@ -247,10 +242,12 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
                       </a>
 
                       {/* Nome da Cidade do Hotel */}
-                      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 mt-0.5">
-                        <span className="material-symbols-outlined text-xs text-rose-500 shrink-0">location_on</span>
-                        <span className="truncate">{cupom.hotel_cidade || 'Porto de Galinhas / PE'}</span>
-                      </div>
+                      {cupom.hotel_cidade && (
+                        <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 mt-0.5">
+                          <span className="material-symbols-outlined text-xs text-rose-500 shrink-0">location_on</span>
+                          <span className="truncate">{cupom.hotel_cidade}</span>
+                        </div>
+                      )}
 
                       <h3 className="text-xs sm:text-sm font-extrabold text-emerald-800 mt-1 leading-tight">
                         {cupom.tipo_desconto === 'porcentagem'

@@ -28,86 +28,91 @@ export interface ValidacaoCupomResult {
   novoTotal?: number;
 }
 
-const STORAGE_KEY = 'hotelnozap_cupons_desconto_v1';
+const STORAGE_KEY = 'hotelnozap_cupons_desconto_v2';
 
-// Cupons padrão para demonstração inicial e fallback offline
+// Cupons padrão para demonstração inicial e fallback offline com hotéis reais cadastrados
 const CUPONS_PADRAO: CupomDesconto[] = [
   {
-    id: 'cupom-verao-2026',
-    hotel_id: 'hotel-demo-01',
-    hotel_nome: 'Hotel Solar das Águas',
-    hotel_cidade: 'Porto de Galinhas / PE',
-    codigo: 'VERAO10',
+    id: 'cupom-santiago-10',
+    hotel_id: 'f5ce4199-8cd4-4baf-aadb-ff253cf6659d',
+    hotel_nome: 'Hotel Santiago',
+    hotel_cidade: 'Primavera do Leste / MT',
+    codigo: 'SANTIAGO10',
     tipo_desconto: 'porcentagem',
     valor_desconto: 10,
-    valor_minimo_reserva: 200,
+    valor_minimo_reserva: 150,
     data_inicio: '2026-01-01',
     data_expiracao: '2026-12-31',
     limite_usos: 100,
     usos_atuais: 14,
     status: 'Ativo',
     visivel_hospedes: true,
-    descricao: '10% de desconto especial em reservas acima de R$ 200,00 para a temporada de férias.',
+    descricao: '10% de desconto especial no Hotel Santiago em Primavera do Leste para reservas diretas.',
     created_at: new Date().toISOString()
   },
   {
-    id: 'cupom-bem-vindo',
-    hotel_id: 'hotel-demo-01',
-    hotel_nome: 'Hotel Solar das Águas',
-    hotel_cidade: 'Porto de Galinhas / PE',
-    codigo: 'BEMVINDO50',
+    id: 'cupom-morada-lua-50',
+    hotel_id: '3c18756c-d41d-4d7f-873f-57e87e3e2c78',
+    hotel_nome: 'Hotel Morada da Lua',
+    hotel_cidade: 'Vila Rica / MT',
+    codigo: 'MORADALUA50',
     tipo_desconto: 'fixo',
     valor_desconto: 50,
-    valor_minimo_reserva: 350,
+    valor_minimo_reserva: 250,
     data_inicio: '2026-01-01',
     data_expiracao: '2026-12-31',
     limite_usos: 50,
     usos_atuais: 8,
     status: 'Ativo',
     visivel_hospedes: true,
-    descricao: 'R$ 50,00 OFF na sua primeira hospedagem para reservas a partir de R$ 350,00.',
+    descricao: 'R$ 50,00 OFF na sua hospedagem no Hotel Morada da Lua para reservas a partir de R$ 250,00.',
     created_at: new Date().toISOString()
   },
   {
-    id: 'cupom-vip-resort',
-    hotel_id: 'hotel-demo-02',
-    hotel_nome: 'Resort & Spa Estrela do Mar',
-    hotel_cidade: 'Maragogi / AL',
-    codigo: 'VIPESTRELA',
+    id: 'cupom-vila-rica-15',
+    hotel_id: '81b9a9ce-dcf1-416b-907d-e42c769477ef',
+    hotel_nome: 'Hotel Vila Rica',
+    hotel_cidade: 'Vila Rica / MT',
+    codigo: 'VILARICA15',
     tipo_desconto: 'porcentagem',
     valor_desconto: 15,
-    valor_minimo_reserva: 500,
+    valor_minimo_reserva: 200,
     data_inicio: '2026-01-01',
-    data_expiracao: '2026-11-30',
+    data_expiracao: '2026-12-31',
     limite_usos: null,
     usos_atuais: 23,
     status: 'Ativo',
     visivel_hospedes: true,
-    descricao: '15% de desconto para todas as suítes e bangalôs em reservas a partir de R$ 500,00.',
+    descricao: '15% de desconto especial para todas as acomodações do Hotel Vila Rica.',
     created_at: new Date().toISOString()
   },
   {
-    id: 'cupom-fim-semana',
-    hotel_id: 'hotel-demo-03',
-    hotel_nome: 'Pousada Recanto da Serra',
-    hotel_cidade: 'Campos do Jordão / SP',
-    codigo: 'FIMDESEMANA',
+    id: 'cupom-recanto-mutum',
+    hotel_id: '2ae56a2b-2f15-4841-be85-c315ff4a0617',
+    hotel_nome: 'Hotel Recanto',
+    hotel_cidade: 'Nova Mutum / MT',
+    codigo: 'RECANTO40',
     tipo_desconto: 'fixo',
     valor_desconto: 40,
-    valor_minimo_reserva: 280,
-    data_inicio: '2026-02-01',
-    data_expiracao: '2026-12-15',
+    valor_minimo_reserva: 220,
+    data_inicio: '2026-01-01',
+    data_expiracao: '2026-12-31',
     limite_usos: 80,
-    usos_atuais: 32,
+    usos_atuais: 19,
     status: 'Ativo',
     visivel_hospedes: true,
-    descricao: 'R$ 40,00 de desconto promocional para reservas de finais de semana acima de R$ 280,00.',
+    descricao: 'R$ 40,00 de desconto promocional para reservas acima de R$ 220,00 no Hotel Recanto em Nova Mutum.',
     created_at: new Date().toISOString()
   }
 ];
 
 const loadFromStorage = (): CupomDesconto[] => {
   try {
+    // Limpar versão legada com dados mockados antigos se existir
+    if (localStorage.getItem('hotelnozap_cupons_desconto_v1')) {
+      localStorage.removeItem('hotelnozap_cupons_desconto_v1');
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(CUPONS_PADRAO));
@@ -117,12 +122,7 @@ const loadFromStorage = (): CupomDesconto[] => {
     if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed.map((c: CupomDesconto) => ({
         ...c,
-        hotel_cidade: c.hotel_cidade || (
-          c.hotel_nome?.includes('Solar') ? 'Porto de Galinhas / PE' :
-          c.hotel_nome?.includes('Estrela') ? 'Maragogi / AL' :
-          c.hotel_nome?.includes('Serra') ? 'Campos do Jordão / SP' :
-          'Porto de Galinhas / PE'
-        )
+        hotel_cidade: c.hotel_cidade || ''
       }));
     }
     return CUPONS_PADRAO;
@@ -160,12 +160,7 @@ export const cuponsService = {
           id: d.id,
           hotel_id: d.hotel_id,
           hotel_nome: d.hotel_nome,
-          hotel_cidade: d.hotel_cidade || (
-            d.hotel_nome?.includes('Solar') ? 'Porto de Galinhas / PE' :
-            d.hotel_nome?.includes('Estrela') ? 'Maragogi / AL' :
-            d.hotel_nome?.includes('Serra') ? 'Campos do Jordão / SP' :
-            'Porto de Galinhas / PE'
-          ),
+          hotel_cidade: d.hotel_cidade || '',
           codigo: d.codigo,
           tipo_desconto: d.tipo_desconto,
           valor_desconto: Number(d.valor_desconto) || 0,
@@ -209,12 +204,7 @@ export const cuponsService = {
           id: d.id,
           hotel_id: d.hotel_id,
           hotel_nome: d.hotel_nome,
-          hotel_cidade: d.hotel_cidade || (
-            d.hotel_nome?.includes('Solar') ? 'Porto de Galinhas / PE' :
-            d.hotel_nome?.includes('Estrela') ? 'Maragogi / AL' :
-            d.hotel_nome?.includes('Serra') ? 'Campos do Jordão / SP' :
-            'Porto de Galinhas / PE'
-          ),
+          hotel_cidade: d.hotel_cidade || '',
           codigo: d.codigo,
           tipo_desconto: d.tipo_desconto,
           valor_desconto: Number(d.valor_desconto) || 0,
@@ -365,7 +355,7 @@ export const cuponsService = {
       id: `cupom-${Date.now()}`,
       hotel_id: novoCupom.hotel_id || current?.id || 'hotel-local',
       hotel_nome: novoCupom.hotel_nome || current?.name || 'Hotel Parceiro',
-      hotel_cidade: novoCupom.hotel_cidade || current?.cityUf || current?.city || 'Porto de Galinhas / PE',
+      hotel_cidade: novoCupom.hotel_cidade || current?.cityUf || current?.city || '',
       codigo: (novoCupom.codigo || 'DESC10').trim().toUpperCase(),
       tipo_desconto: novoCupom.tipo_desconto || 'porcentagem',
       valor_desconto: Number(novoCupom.valor_desconto) || 10,

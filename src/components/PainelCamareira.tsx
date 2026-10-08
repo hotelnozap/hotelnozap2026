@@ -347,6 +347,7 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
   const [modalFrigobarRoom, setModalFrigobarRoom] = useState<RoomHousekeeping | null>(null);
   const [modalInfoRoom, setModalInfoRoom] = useState<RoomHousekeeping | null>(null);
   const [modalEscalaOpen, setModalEscalaOpen] = useState<boolean>(false);
+  const [modalFinalizarTurnoOpen, setModalFinalizarTurnoOpen] = useState<boolean>(false);
 
   // Modal de Conclusão Detalhada de Higienização (Checklist + Tempo Gasto + Observações)
   const [modalConcluirRoom, setModalConcluirRoom] = useState<RoomHousekeeping | null>(null);
@@ -367,6 +368,15 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleConfirmarSaida = () => {
+    setModalFinalizarTurnoOpen(false);
+    if (onLogout) {
+      onLogout();
+    } else if (onNavigateBack) {
+      onNavigateBack();
+    }
   };
 
   // Usuário e Hotel Reais Identificados
@@ -1380,12 +1390,7 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
 
             <button
               type="button"
-              onClick={() => {
-                if (window.confirm('Deseja realmente finalizar o turno da camareira?')) {
-                  if (onLogout) onLogout();
-                  else if (onNavigateBack) onNavigateBack();
-                }
-              }}
+              onClick={() => setModalFinalizarTurnoOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-300 hover:text-rose-100 hover:bg-rose-950/40 transition-all cursor-pointer border border-rose-900/30"
               title="Finalizar Turno e Sair"
             >
@@ -1416,14 +1421,9 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
             )}
             <button
               type="button"
-              onClick={() => {
-                if (window.confirm('Finalizar turno?')) {
-                  if (onLogout) onLogout();
-                  else if (onNavigateBack) onNavigateBack();
-                }
-              }}
+              onClick={() => setModalFinalizarTurnoOpen(true)}
               className="p-1.5 rounded-lg bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 cursor-pointer"
-              title="Sair"
+              title="Finalizar Turno"
             >
               <span className="material-symbols-outlined text-lg">logout</span>
             </button>
@@ -3137,6 +3137,136 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
               >
                 <span className="material-symbols-outlined text-base">check_circle</span>
                 <span>Confirmar & Liberar Quarto</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: FINALIZAR TURNO / SAÍDA DA CAMAREIRA                              */}
+      {/* ========================================================================= */}
+      {modalFinalizarTurnoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm sm:max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Topo do Modal com Tema Escuro Elegante */}
+            <div className="bg-gradient-to-br from-[#07170f] via-[#0b2416] to-[#12080a] text-white p-5 sm:p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/15 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500/20 to-red-600/30 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-inner shrink-0">
+                    <span className="material-symbols-outlined text-2xl">logout</span>
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base sm:text-lg text-white leading-tight">
+                      Finalizar Turno?
+                    </h3>
+                    <p className="text-xs text-emerald-200/80 mt-0.5">
+                      Encerramento da jornada de governança
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalFinalizarTurnoOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0"
+                  title="Fechar"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Conteúdo Central */}
+            <div className="p-5 sm:p-6 space-y-4">
+              {/* Card com Dados da Camareira e Hotel */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-[#003400] text-emerald-300 font-black text-sm flex items-center justify-center shadow-xs border border-emerald-600/40 shrink-0">
+                      {loggedUser.iniciais || 'ML'}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm text-slate-900 leading-snug truncate">
+                        {loggedUser.nome || 'Maria da Limpeza'}
+                      </h4>
+                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5 truncate">
+                        <span className="material-symbols-outlined text-[13px] text-emerald-600 shrink-0">apartment</span>
+                        <span className="truncate">{hotelInfo.nome || 'Hotel Morada da Lua'}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                    Em Serviço
+                  </span>
+                </div>
+
+                {/* Resumo Rápido da Jornada de Hoje */}
+                <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-slate-200/60">
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200/70 text-center">
+                    <div className="flex items-center justify-center gap-1 text-emerald-600 text-xs font-bold mb-0.5">
+                      <span className="material-symbols-outlined text-sm">verified</span>
+                      <span>Limpos Hoje</span>
+                    </div>
+                    <span className="text-lg font-black text-slate-900">
+                      {limposHojeCount}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200/70 text-center">
+                    <div className="flex items-center justify-center gap-1 text-amber-600 text-xs font-bold mb-0.5">
+                      <span className="material-symbols-outlined text-sm">cleaning_services</span>
+                      <span>Pendentes</span>
+                    </div>
+                    <span className="text-lg font-black text-slate-900">
+                      {pendentesCount}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mensagem Explicativa */}
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-200/70 text-amber-900 text-xs leading-relaxed">
+                <span className="material-symbols-outlined text-amber-600 text-base shrink-0 mt-0.5">info</span>
+                <span>
+                  Ao confirmar, seu turno de trabalho será finalizado e o seu acesso ao painel será desconectado com segurança deste aparelho.
+                </span>
+              </div>
+
+              {/* Opção Adicional para Administradores / Gestores */}
+              {onNavigateBack && isManager && (
+                <div className="pt-1 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalFinalizarTurnoOpen(false);
+                      onNavigateBack();
+                    }}
+                    className="text-xs text-slate-500 hover:text-emerald-700 font-semibold underline transition-colors cursor-pointer"
+                  >
+                    Voltar ao sistema principal sem deslogar
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Rodapé com Botões de Ação */}
+            <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-1 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setModalFinalizarTurnoOpen(false)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition-all cursor-pointer text-center"
+              >
+                Continuar Trabalhando
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmarSaida}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 active:scale-98 text-white text-xs sm:text-sm font-bold shadow-md shadow-rose-600/25 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base">logout</span>
+                <span>Finalizar Turno & Sair</span>
               </button>
             </div>
           </div>

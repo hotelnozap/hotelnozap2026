@@ -495,7 +495,9 @@ export const FormHotel: React.FC<FormHotelProps> = ({
     cnpj,
     cpf: managerCpf,
     email: loginEmail,
-    excludeHotelId: hotelToEdit?.id || null
+    excludeHotelId: hotelToEdit?.id || null,
+    originalEmail: hotelToEdit?.loginEmail || null,
+    isEditing
   });
 
   const [password, setPassword] = useState('');
@@ -867,8 +869,14 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       // Validação de segurança final rigorosa (bloqueio de duplicidade de CNPJ, CPF e E-mail de Login)
       const secResult = await validateFinalStep();
       if (!secResult.allowed) {
-        showToast(`Alerta de Segurança: ${secResult.error || 'Dados já cadastrados no sistema.'}`);
-        return;
+        // Na edição: se o erro for apenas o e-mail, mas o e-mail não foi alterado ou foi deixado em branco, permite salvar
+        const isEmailOnlyError = secResult.emailExists && !secResult.cnpjExists && !secResult.cpfExists;
+        const isEmailUnchangedOrEmpty = isEditing && (!loginEmail.trim() || (hotelToEdit?.loginEmail && loginEmail.trim().toLowerCase() === hotelToEdit.loginEmail.trim().toLowerCase()));
+
+        if (!isEmailOnlyError || !isEmailUnchangedOrEmpty) {
+          showToast(`Alerta de Segurança: ${secResult.error || 'Dados já cadastrados no sistema.'}`);
+          return;
+        }
       }
     }
 
@@ -915,7 +923,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         managerEmail: managerEmail,
         managerCpf: managerCpf,
         managerRole: managerRole,
-        loginEmail: loginEmail,
+        loginEmail: loginEmail.trim() || hotelToEdit?.loginEmail || '',
         instanceName: instanceName,
         apiUrl: apiUrl,
         apiKey: apiKey,
@@ -2367,7 +2375,14 @@ export const FormHotel: React.FC<FormHotelProps> = ({
             </div>
             <div>
               <h2 className="text-base md:text-lg font-bold text-slate-900">4. Credenciais de Acesso</h2>
-              <p className="text-xs text-slate-500">Usuário master para acesso ao painel de controle do hotel no Hotel no Zap</p>
+              <p className="text-xs text-slate-500">
+                Usuário master para acesso ao painel de controle do hotel no Hotel no Zap
+                {isEditing && (
+                  <span className="text-emerald-700 font-medium ml-1">
+                    • Opcional na edição: se não desejar alterar as credenciais, deixe em branco.
+                  </span>
+                )}
+              </p>
             </div>
           </div>
 
@@ -2375,30 +2390,30 @@ export const FormHotel: React.FC<FormHotelProps> = ({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  E-mail de Login Master *
+                  E-mail de Login Master {!isEditing && <span className="text-rose-500">*</span>}
                 </label>
                 <SecurityFieldBadge
                   check={emailCheck}
-                  isValidFormat={/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())}
-                  validLabel="Válido"
+                  isValidFormat={Boolean(loginEmail.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim()))}
+                  validLabel={isEditing && hotelToEdit?.loginEmail && loginEmail.trim().toLowerCase() === hotelToEdit.loginEmail.trim().toLowerCase() ? "Atual" : "Válido"}
                 />
               </div>
               <input 
                 type="email" 
-                required
+                required={!isEditing}
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="admin@hotelmaster.com.br" 
+                placeholder={isEditing ? "Deixe em branco para manter o atual" : "admin@hotelmaster.com.br"} 
                 autoComplete="off"
                 className={`w-full px-3.5 py-2.5 rounded-xl border text-xs md:text-sm focus:outline-none bg-slate-50/30 font-medium ${
-                  emailCheck.exists
+                  emailCheck.exists && (!isEditing || (hotelToEdit?.loginEmail && loginEmail.trim().toLowerCase() !== hotelToEdit.loginEmail.trim().toLowerCase()))
                     ? 'border-red-500 bg-red-50/30 text-red-950 focus:border-red-600 focus:ring-1 focus:ring-red-400'
                     : emailCheck.checked && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())
                     ? 'border-emerald-500 bg-emerald-50/20 text-slate-900 focus:border-emerald-600'
                     : 'border-slate-200 focus:border-[#003400] text-slate-900'
                 }`}
               />
-              {emailCheck.exists ? (
+              {emailCheck.exists && (!isEditing || (hotelToEdit?.loginEmail && loginEmail.trim().toLowerCase() !== hotelToEdit.loginEmail.trim().toLowerCase())) ? (
                 <p className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-0.5 animate-fadeIn">
                   <span className="material-symbols-outlined text-xs">error</span>
                   {emailCheck.message || 'Este e-mail de login já está cadastrado no sistema.'}

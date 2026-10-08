@@ -422,9 +422,20 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                      cleanSlug.includes(hSlug);
             }) || null;
           }
+
+          if (!targetHotel) {
+            // Busca inteligente por palavras-chave (ex: 'santiago' em 'hotel-santiago')
+            const slugTokens = cleanSlug.split(/[-_ ]+/).filter(t => t.length >= 3 && t !== 'hotel' && t !== 'pousada' && t !== 'hoteis');
+            if (slugTokens.length > 0) {
+              targetHotel = combinedHoteis.find((h: any) => {
+                const hNorm = h.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                return slugTokens.some(token => hNorm.includes(token));
+              }) || null;
+            }
+          }
         }
 
-        if (!targetHotel && loggedHotel) {
+        if (!targetHotel && (!cleanSlug || cleanSlug === 'nomedohotel' || cleanSlug === 'hotel') && loggedHotel) {
           targetHotel = combinedHoteis.find((h: any) => h.id === loggedHotel.id || h.name.toLowerCase() === loggedHotel.name.toLowerCase()) || null;
         }
 
