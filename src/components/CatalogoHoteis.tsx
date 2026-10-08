@@ -427,9 +427,40 @@ export interface CatalogoHoteisProps {
 }
 
 export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogin, onNavigateToHotel }) => {
-  // Lista geral de hotéis do Supabase
-  const [hoteisList, setHoteisList] = useState<PublicHotel[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Cache local para carregamento instantâneo (0 segundos)
+  const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v3';
+
+  // Lista geral de hotéis do Supabase com inicialização via cache imediato
+  const [hoteisList, setHoteisList] = useState<PublicHotel[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem(CACHE_KEY_PUBLIC_HOTEIS);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      }
+    } catch {}
+    return [];
+  });
+
+  // Se já houver dados no cache, o usuário NÃO vê tela de loading (carregamento instantâneo)
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem(CACHE_KEY_PUBLIC_HOTEIS);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return false;
+          }
+        }
+      }
+    } catch {}
+    return true;
+  });
 
   // Estados de busca e popover estilo Airbnb
   const [searchQuery, setSearchQuery] = useState('');
@@ -491,15 +522,39 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
 
   useEffect(() => {
     loadHoteisFromSupabase();
+
+    // Trava de segurança definitiva: garante que após 6 segundos o loading SEMPRE seja false
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 6000);
+
+    return () => clearTimeout(safetyTimer);
   }, []);
 
   const loadHoteisFromSupabase = async () => {
-    setLoading(true);
+    // Se ainda não tiver hotéis em cache na tela, exibe o loading
+    setHoteisList(current => {
+      if (!current || current.length === 0) {
+        setLoading(true);
+      }
+      return current;
+    });
+
     try {
-      const [dbHoteis, dbQuartos] = await Promise.all([
+      // Timeout de segurança de 5.5s contra requisições que fiquem pendentes na rede
+      const fetchPromise = Promise.all([
         hoteisService.getHoteis(),
         quartosService.getAllQuartos()
       ]);
+
+      const timeoutPromise = new Promise<[any[], any[]]>((resolve) => {
+        setTimeout(() => {
+          console.warn('Timeout de 5.5s no Supabase. Liberando renderização.');
+          resolve([[], []]);
+        }, 5500);
+      });
+
+      const [dbHoteis, dbQuartos] = await Promise.race([fetchPromise, timeoutPromise]);
 
       const minPriceByHotel: Record<string, number> = {};
       const roomsCountByHotel: Record<string, number> = {};
@@ -610,7 +665,12 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
         };
       });
 
-      setHoteisList(mappedDbHoteis);
+      if (mappedDbHoteis && mappedDbHoteis.length > 0) {
+        setHoteisList(mappedDbHoteis);
+        try {
+          localStorage.setItem(CACHE_KEY_PUBLIC_HOTEIS, JSON.stringify(mappedDbHoteis));
+        } catch {}
+      }
     } catch (err) {
       console.error('Erro ao carregar hotéis no catálogo:', err);
     } finally {
