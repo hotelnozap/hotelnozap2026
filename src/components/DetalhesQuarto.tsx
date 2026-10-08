@@ -2887,8 +2887,8 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 </div>
               </div>
 
-              {/* Ações Inteligentes: Minha Conta + WhatsApp */}
-              <div className="space-y-2.5 pt-2">
+              {/* Ações Inteligentes: Minha Conta */}
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={handleIrParaMinhaConta}
@@ -2896,15 +2896,6 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 >
                   <span className="material-symbols-outlined text-lg text-[#10B981]">manage_accounts</span>
                   <span>Acessar Minha Conta de Hóspede</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={enviarWhatsAppConfirmado}
-                  className="w-full py-3 px-4 rounded-2xl border-2 border-[#10B981] bg-emerald-50 hover:bg-emerald-100 text-[#003400] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-lg text-[#10B981]">chat</span>
-                  <span>Enviar Comprovante no WhatsApp do Hotel</span>
                 </button>
               </div>
 
