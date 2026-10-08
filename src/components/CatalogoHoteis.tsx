@@ -37,6 +37,7 @@ export interface PublicHotel {
   metaTitulo?: string;
   metaDescricao?: string;
   metaImagem?: string;
+  hasActivePlan?: boolean;
 }
 
 export interface CityGroup {
@@ -44,6 +45,8 @@ export interface CityGroup {
   uf: string;
   slug: string;
   hotels: PublicHotel[];
+  customTitle?: string;
+  isPaidWithRooms?: boolean;
 }
 
 // Cidades populares pré-cadastradas por estado
@@ -296,8 +299,13 @@ const CityCarousel: React.FC<CityCarouselProps> = ({
       {/* CABEÇALHO DA SEÇÃO DE CIDADE */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {group.isPaidWithRooms && (
+            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+              <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+            </div>
+          )}
           <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
-            <span>Hotéis e Pousadas em {group.city} · {group.uf}</span>
+            <span>{group.customTitle || `Hotéis e Pousadas em ${group.city} · ${group.uf}`}</span>
             <span className="material-symbols-outlined text-base text-slate-400 group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
           </h2>
           <span className="text-xs text-slate-500 font-semibold hidden sm:inline">
@@ -495,6 +503,24 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           finalImageUrl = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80';
         }
 
+        const planLower = (h.plan || h.plano || '').toLowerCase().trim();
+        const obsLower = (h.observacoes || h.notes || '').toLowerCase();
+        const isImported = Boolean(
+          h.is_imported_from_google ||
+          h.isImportedFromGoogle ||
+          planLower.includes('google') ||
+          planLower.includes('maps') ||
+          planLower.includes('n8n') ||
+          planLower.includes('osm') ||
+          obsLower.includes('importado') ||
+          obsLower.includes('n8n') ||
+          obsLower.includes('openstreetmap')
+        );
+
+        // Um hotel tem plano ativo se seu plano não for gratuito/importado e seu status estiver ativo
+        const isFree = planLower.includes('grátis') || planLower.includes('gratis') || planLower.includes('free') || isImported || !planLower;
+        const hasActivePlan = !isFree && (h.status === 'ativo' || !h.status);
+
         return {
           id: h.id,
           name: h.name,
@@ -517,7 +543,9 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
           ],
           hasRooms: hasRealRooms,
           notes: h.observacoes,
-          isImportedFromGoogle: h.is_imported_from_google || false,
+          plan: h.plan || h.plano,
+          isImportedFromGoogle: isImported,
+          hasActivePlan,
           isTop10: Boolean(
             h.isTop10 ||
             h.is_top_10 ||
@@ -574,25 +602,78 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
       if (!map[key]) {
         map[key] = { city: c, uf: u, hotels: [] };
       }
+      // Ordena hotéis dentro da cidade:
+      // 1. Hotéis com planos ativos (pagos)
+      // 2. Hotéis com fotos reais dos quartos (hasRooms / preço)
+      // 3. Hotéis importados do n8n/Google por último
       map[key].hotels.push(h);
     });
 
-    // Ordenação com destaque para cidades polo / mais populosas de hotéis
-    return Object.values(map)
-      .sort((a, b) => {
-        // Água Boa em primeiro destaque
-        const aIsAguaBoa = a.city.toLowerCase().includes('água boa') || a.city.toLowerCase().includes('agua boa');
-        const bIsAguaBoa = b.city.toLowerCase().includes('água boa') || b.city.toLowerCase().includes('agua boa');
-        if (aIsAguaBoa && !bIsAguaBoa) return -1;
-        if (!aIsAguaBoa && bIsAguaBoa) return 1;
-        return b.hotels.length - a.hotels.length;
-      })
-      .map(g => ({
+    // Ordenar os hotéis de cada cidade internamente
+    Object.values(map).forEach(g => {
+      g.hotels.sort((a, b) => {
+        // Prioridade 1: Planos Ativos primeiro
+        if (a.hasActivePlan && !b.hasActivePlan) return -1;
+        if (!a.hasActivePlan && b.hasActivePlan) return 1;
+
+        // Prioridade 2: Hotéis com quartos/fotos reais
+        if (a.hasRooms && !b.hasRooms) return -1;
+        if (!a.hasRooms && b.hasRooms) return 1;
+
+        // Prioridade 3: Hotéis importados vão para o final
+        if (a.isImportedFromGoogle && !b.isImportedFromGoogle) return 1;
+        if (!a.isImportedFromGoogle && b.isImportedFromGoogle) return -1;
+
+        return (b.pricePerNight || 0) - (a.pricePerNight || 0);
+      });
+    });
+
+    // Separar grupos: Cidades que possuem hotéis com planos ativos ganham destaque especial
+    const rawGroups = Object.values(map);
+
+    const formattedGroups: CityGroup[] = [];
+
+    // 1. Para cada cidade que tiver hotéis com plano ativo (ou quartos com fotos), criar a categoria em destaque:
+    // "Hotéis com fotos dos quartos em [nome da cidade]"
+    rawGroups.forEach(g => {
+      const paidHotelsInCity = g.hotels.filter(h => h.hasActivePlan || (h.hasRooms && !h.isImportedFromGoogle));
+      if (paidHotelsInCity.length > 0) {
+        formattedGroups.push({
+          city: g.city,
+          uf: g.uf,
+          slug: `quartos-${g.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-')}`,
+          customTitle: `Hotéis com fotos dos quartos em ${g.city} · ${g.uf}`,
+          isPaidWithRooms: true,
+          hotels: paidHotelsInCity
+        });
+      }
+    });
+
+    // 2. Adicionar as seções normais de cada cidade (garantindo que hotéis com planos fiquem na frente dos importados)
+    rawGroups.forEach(g => {
+      formattedGroups.push({
         city: g.city,
         uf: g.uf,
         slug: g.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-'),
+        isPaidWithRooms: false,
         hotels: g.hotels
-      }));
+      });
+    });
+
+    // Ordenação geral dos grupos:
+    // Cidades/Seções com hotéis de plano ativo SEMPRE no topo!
+    return formattedGroups.sort((a, b) => {
+      if (a.isPaidWithRooms && !b.isPaidWithRooms) return -1;
+      if (!a.isPaidWithRooms && b.isPaidWithRooms) return 1;
+
+      // Cidades com hotéis de plano ativo vêm primeiro
+      const aHasPaid = a.hotels.some(h => h.hasActivePlan);
+      const bHasPaid = b.hotels.some(h => h.hasActivePlan);
+      if (aHasPaid && !bHasPaid) return -1;
+      if (!aHasPaid && bHasPaid) return 1;
+
+      return b.hotels.length - a.hotels.length;
+    });
   }, [hoteisList, activeCategory, searchQuery]);
 
   // Lista de cidades disponíveis para o popover de busca
@@ -661,6 +742,20 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
       }
 
       return true;
+    }).sort((a, b) => {
+      // Prioridade 1: Planos Ativos primeiro
+      if (a.hasActivePlan && !b.hasActivePlan) return -1;
+      if (!a.hasActivePlan && b.hasActivePlan) return 1;
+
+      // Prioridade 2: Quartos com fotos reais
+      if (a.hasRooms && !b.hasRooms) return -1;
+      if (!a.hasRooms && b.hasRooms) return 1;
+
+      // Prioridade 3: Importados por último
+      if (a.isImportedFromGoogle && !b.isImportedFromGoogle) return 1;
+      if (!a.isImportedFromGoogle && b.isImportedFromGoogle) return -1;
+
+      return (b.pricePerNight || 0) - (a.pricePerNight || 0);
     });
   }, [hoteisList, focusedCity, searchQuery, activeCategory, isSearchActive]);
 
@@ -793,10 +888,54 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
   // Cidades a serem renderizadas agora
   const visibleGroups = cityGroups.slice(0, visibleCitiesCount);
 
-  // Hotéis selecionados para a categoria exclusiva Top 10 (máximo 10 hotéis)
+  // Cidade de referência para o Top 10 (cidade pesquisada/selecionada ou a primeira cidade com planos ativos)
+  const top10City = useMemo(() => {
+    if (focusedCity && focusedCity.trim()) {
+      return focusedCity.trim().toLowerCase();
+    }
+    // Se nenhuma cidade estiver no filtro, busca a cidade do primeiro hotel com plano ativo
+    const firstHotelWithPlan = hoteisList.find(h => h.hasActivePlan && !h.isImportedFromGoogle);
+    return firstHotelWithPlan ? firstHotelWithPlan.city.trim().toLowerCase() : null;
+  }, [focusedCity, hoteisList]);
+
+  // Hotéis selecionados para o Top 10:
+  // - SOMENTE na cidade em questão
+  // - SOMENTE se houver hotéis com planos ativos (se a cidade não tiver hotel com plano, não mostra o Top 10)
+  // - Hotéis importados do n8n/Google NUNCA são os primeiros (ficam no final)
   const top10Hotels = useMemo<PublicHotel[]>(() => {
-    return hoteisList.filter(h => Boolean(h.isTop10)).slice(0, 10);
-  }, [hoteisList]);
+    if (!top10City) return [];
+
+    // Filtra hotéis apenas da cidade do Top 10
+    const cityHotels = hoteisList.filter(h => 
+      h.city.trim().toLowerCase() === top10City ||
+      `${h.city} - ${h.uf}`.toLowerCase().includes(top10City)
+    );
+
+    // Regra: "se a cidade em questão não tem hotel com planos então não mostra o top 10"
+    const hasAnyHotelWithActivePlan = cityHotels.some(h => h.hasActivePlan && !h.isImportedFromGoogle);
+    if (!hasAnyHotelWithActivePlan) {
+      return [];
+    }
+
+    // Ordenação estrita:
+    // 1. Planos ativos primeiro
+    // 2. Fotos e quartos reais
+    // 3. Importados do n8n NUNCA nos primeiros lugares
+    const sorted = [...cityHotels].sort((a, b) => {
+      if (a.hasActivePlan && !b.hasActivePlan) return -1;
+      if (!a.hasActivePlan && b.hasActivePlan) return 1;
+
+      if (a.hasRooms && !b.hasRooms) return -1;
+      if (!a.hasRooms && b.hasRooms) return 1;
+
+      if (a.isImportedFromGoogle && !b.isImportedFromGoogle) return 1;
+      if (!a.isImportedFromGoogle && b.isImportedFromGoogle) return -1;
+
+      return (b.pricePerNight || 0) - (a.pricePerNight || 0);
+    });
+
+    return sorted.slice(0, 10);
+  }, [hoteisList, top10City]);
 
   // Categorias horizontais estilo Airbnb (Os Top 10 é a primeira categoria conforme solicitado)
   const CATEGORIAS_HEADER = [
@@ -1203,14 +1342,14 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                     <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
                   </div>
                   <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                    Os Top 10 da Rede
+                    {top10City ? `Os Top 10 em ${top10Hotels[0]?.city || ''}` : 'Os Top 10'}
                   </h1>
                   <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold shadow-2xs">
                     {top10Hotels.length} {top10Hotels.length === 1 ? 'hotel selecionado' : 'hotéis selecionados'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium mt-1">
-                  Seleção exclusiva das melhores hospedagens e parceiros recomendados pela nossa equipe.
+                  Hospedagens verificadas com planos ativos e atendimento oficial no WhatsApp.
                 </p>
               </div>
 
@@ -1230,17 +1369,17 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
               </div>
             </div>
 
-            {/* SE NENHUM HOTEL FOI MARCADO AINDA COMO TOP 10 NO ADMIN */}
+            {/* SE NENHUM HOTEL COM PLANO ATIVO NA CIDADE */}
             {top10Hotels.length === 0 ? (
               <div className="py-20 text-center bg-amber-50/40 rounded-3xl border border-amber-200/80 p-8 space-y-3 max-w-xl mx-auto">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-xs">
                   <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>military_tech</span>
                 </div>
                 <h3 className="text-base font-bold text-slate-900">
-                  Nenhum hotel marcado no Top 10 ainda
+                  Nenhum hotel com plano ativo nesta cidade
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Para exibir hotéis nesta categoria, acesse o painel administrativo e marque a opção <strong>"Destacar no Top 10"</strong> no cadastro ou edição do hotel.
+                  O Top 10 é reservado exclusivamente para estabelecimentos conveniados com planos ativos e atendimento verificado.
                 </p>
                 <button
                   onClick={() => setActiveCategory('Tudo')}
@@ -1292,13 +1431,13 @@ export const CatalogoHoteis: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogi
                     </div>
                     <div>
                       <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                        Os Top 10 da Rede
+                        {top10City ? `Os Top 10 em ${top10Hotels[0]?.city || ''}` : 'Os Top 10 da Cidade'}
                         <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold">
                           {top10Hotels.length} {top10Hotels.length === 1 ? 'hotel' : 'hotéis'}
                         </span>
                       </h2>
                       <p className="text-xs text-slate-500 font-medium">
-                        Seleção exclusiva das melhores hospedagens e parceiros recomendados pela nossa equipe
+                        Hospedagens verificadas com planos ativos e atendimento oficial no WhatsApp
                       </p>
                     </div>
                   </div>
