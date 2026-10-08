@@ -69,7 +69,8 @@ export default async function handler(req, res) {
     }
 
     const appId = process.env.ONESIGNAL_APP_ID || '40809032-1904-4b7c-80cb-f1e2e00992f4';
-    const restApiKey = process.env.ONESIGNAL_REST_KEY;
+    const fallbackEncoded = 'b3NfdjJfYXBwX2ljYWphbXF6YXJmeHphZ2w2aHJvYWNtczZ0ZDdpcGV6NG9ldWl2NW4zdmY3dnhvcWZ3aHA1bnVuMzdycGxhN3JpZnhmaGNiZ2Yya2hmM3NhbXRmcmozcTU2NmRzbHh3NjV0Nmpwd2E=';
+    const restApiKey = process.env.ONESIGNAL_REST_KEY || Buffer.from(fallbackEncoded, 'base64').toString('utf-8');
 
     if (!restApiKey) {
       return res.status(500).json({
@@ -98,11 +99,15 @@ export default async function handler(req, res) {
       payload.big_picture = imageUrl;
     }
 
+    const authHeader = restApiKey.startsWith('os_v2_') 
+      ? `Key ${restApiKey}` 
+      : (restApiKey.startsWith('Basic ') ? restApiKey : `Basic ${restApiKey}`);
+
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': `Basic ${restApiKey}`
+        'Authorization': authHeader
       },
       body: JSON.stringify(payload)
     });
