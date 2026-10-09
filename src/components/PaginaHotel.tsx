@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { webhookN8nService } from '../services/webhookN8nService';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { ZapHotelLogo } from './ZapHotelLogo';
+import { maskPhone } from '../utils/masks';
 
 export const slugify = (str: string): string => {
   return str
@@ -629,7 +630,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
     const messageText = 
       `Olá! Encontrei o *${currentHotel.name}* no portal *Hotel no Zap* (${cityName}) e gostaria de consultar informações sobre tarifas e disponibilidade de reservas!\n` +
       `Se você é o dono deste hotel e ainda não conhece nosso portal acesse\n` +
-      `hotelnozap.com.br faça seu cadastro e nunca mais perca uma reserva.`;
+      `https://hotelnozap.com.br faça seu cadastro e nunca mais perca uma reserva.`;
     const message = encodeURIComponent(messageText);
 
     webhookN8nService.dispararWebhookAtendimento({
@@ -1165,7 +1166,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                   className="w-full sm:w-auto px-8 py-4 bg-[#10B981] hover:bg-emerald-600 text-white font-extrabold text-sm rounded-2xl flex items-center justify-center gap-2.5 shadow-lg transition-all active:scale-95 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-2xl">chat</span>
-                  <span>Falar no WhatsApp ({currentHotel.whatsappPhone})</span>
+                  <span>Falar no WhatsApp ({maskPhone(currentHotel.whatsappPhone)})</span>
                 </button>
               )}
             </div>
