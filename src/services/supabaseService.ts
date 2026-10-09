@@ -4105,15 +4105,18 @@ export const reservasService = {
         })
         .catch(wErr => console.warn('[webhookN8nService] Erro ao disparar webhook na criação de reserva:', wErr));
 
-      // Disparar envio automático do template de confirmação pela instância conectada do hotel
-      const statusCriacao = (data.status || '').toString().toLowerCase();
-      if (statusCriacao.includes('confirmad')) {
-        import('./templateMensagemService')
-          .then(({ templateMensagemService }) => {
+      // Disparar notificações automáticas pela instância conectada do hotel
+      import('./templateMensagemService')
+        .then(({ templateMensagemService }) => {
+          // Dispara notificação imediata para o proprietário do hotel
+          templateMensagemService.dispararNotificacaoNovaReservaProprietario(data.hotel_id, data);
+
+          const statusCriacao = (data.status || '').toString().toLowerCase();
+          if (statusCriacao.includes('confirmad')) {
             templateMensagemService.dispararConfirmacaoAutomatica(data.hotel_id, data);
-          })
-          .catch(tErr => console.warn('[templateMensagemService] Erro ao disparar confirmação na criação:', tErr));
-      }
+          }
+        })
+        .catch(tErr => console.warn('[templateMensagemService] Erro ao disparar notificações de reserva:', tErr));
 
       const shortId = data.id ? data.id.substring(0, 6).toUpperCase() : '202601';
 

@@ -576,6 +576,8 @@ export const templateMensagemService = {
       // 1. Verifica se a automação de confirmação está ativada para o hotel
       if (!automacoes.auto_confirmacao) {
         console.info('[templateMensagemService] Automação de confirmação desativada para o hotel:', activeHotelId);
+        // Notifica o proprietário mesmo se a confirmação do hóspede estiver desligada
+        this.dispararNotificacaoNovaReservaProprietario(activeHotelId, dados).catch(() => {});
         return { success: false, error: 'Automação de confirmação desativada nas configurações do hotel.' };
       }
 
@@ -674,6 +676,8 @@ export const templateMensagemService = {
 
       if (!telefoneDestino) {
         console.warn('[templateMensagemService] Aviso: Telefone do hóspede não encontrado para confirmação.');
+        // Notifica o proprietário mesmo se o hóspede não tiver telefone
+        this.dispararNotificacaoNovaReservaProprietario(activeHotelId, dados, hospedeData).catch(() => {});
         return { success: false, error: 'Telefone do hóspede não encontrado.' };
       }
 
@@ -714,9 +718,185 @@ export const templateMensagemService = {
         this._recentDispatches.set(cacheKey, Date.now());
       }
 
+      // 9. Disparar notificação no WhatsApp do proprietário do hotel
+      this.dispararNotificacaoNovaReservaProprietario(activeHotelId, dados, hospedeData).catch(pErr => {
+        console.warn('[templateMensagemService] Aviso ao notificar proprietário:', pErr);
+      });
+
       return resultado;
     } catch (err: any) {
       console.error('[templateMensagemService] Erro ao disparar confirmação automática:', err);
+      return { success: false, error: err?.message || 'Erro inesperado' };
+    }
+  },
+
+  /**
+   * Dispara notificação no WhatsApp do proprietário/administrador do hotel
+   * Título: VOCÊ TEM UMA NOVA RESERVA + dados da reserva enviados ao hóspede + valor da reserva
+   */
+  async dispararNotificacaoNovaReservaProprietario(
+    hotelId: string | undefined,
+    dados: any,
+    guestExtra?: any
+  ): Promise<{ success: boolean; via?: string; instanceName?: string; error?: string }> {
+    try {
+      if (!dados) return { success: false, error: 'Dados da reserva não informados' };
+
+      const activeHotelId = hotelId || dados.hotel_id || currentHotelService.getCurrentHotel()?.id;
+
+      // 1. Proteção anti-duplicidade (15 segundos)
+      const reservaId = dados.id || `${dados.nome_hospede}_${dados.numero_quarto}_${dados.data_checkin}`;
+      const cacheKey = `notif_proprietario_${reservaId}`;
+      const lastSent = this._recentDispatches.get(cacheKey);
+      if (lastSent && Date.now() - lastSent < 15000) {
+        console.info('[templateMensagemService] Notificação ao proprietário ignorada por anti-duplicidade recente:', cacheKey);
+        return { success: true, error: 'Já enviado recentemente ao proprietário' };
+      }
+
+      // 2. Obter dados do Hotel
+      let hotelData: any = null;
+      if (activeHotelId) {
+        try {
+          const { data: hDb } = await supabase
+            .from('hoteis')
+            .select('*')
+            .eq('id', activeHotelId)
+            .maybeSingle();
+          if (hDb) hotelData = hDb;
+        } catch (e) {
+          console.warn('[templateMensagemService] Erro ao buscar hotel para notificação do proprietário:', e);
+        }
+      }
+      if (!hotelData) {
+        hotelData = currentHotelService.getCurrentHotel();
+      }
+
+      // 3. Localizar o WhatsApp / Telefone do Proprietário
+      let proprietarioPhone =
+        hotelData?.telefone_gerente ||
+        hotelData?.managerPhone ||
+        hotelData?.whatsapp ||
+        hotelData?.telefone ||
+        '';
+
+      // Se não encontrou no cadastro do hotel, busca nos usuários com perfil de gestão vinculados ao hotel
+      if (!proprietarioPhone && activeHotelId) {
+        try {
+          const { data: users } = await supabase
+            .from('usuarios')
+            .select('telefone, whatsapp, celular')
+            .eq('hotel_id', activeHotelId)
+            .in('perfil', ['Hotel', 'Administrador', 'gerente'])
+            .order('criado_em', { ascending: true });
+          if (users && users.length > 0) {
+            const uWithPhone = users.find((u: any) => u.whatsapp || u.telefone || u.celular);
+            if (uWithPhone) {
+              proprietarioPhone = uWithPhone.whatsapp || uWithPhone.telefone || uWithPhone.celular;
+            }
+          }
+        } catch (uErr) {
+          console.warn('[templateMensagemService] Erro ao buscar telefone de usuários do hotel:', uErr);
+        }
+      }
+
+      if (!proprietarioPhone) {
+        console.warn('[templateMensagemService] ⚠️ WhatsApp do proprietário/gerente não configurado no hotel:', activeHotelId);
+        return { success: false, error: 'WhatsApp do proprietário não configurado no hotel.' };
+      }
+
+      // 4. Buscar dados do Hóspede caso não tenham vindo completos
+      let hospedeNome = dados.nome_hospede || dados.hospedeNome || guestExtra?.nome || 'Hóspede';
+      let hospedeTelefone = guestExtra?.telefone || dados.telefone_hospede || dados.hospedeTelefone || dados.telefone || '';
+      let hospedeEmail = guestExtra?.email || dados.hospedeEmail || dados.email_hospede || dados.email || '';
+
+      if ((!hospedeTelefone || !hospedeEmail) && dados.hospede_id) {
+        try {
+          const { data: gDb } = await supabase
+            .from('hospedes')
+            .select('*')
+            .eq('id', dados.hospede_id)
+            .maybeSingle();
+          if (gDb) {
+            if (!hospedeTelefone) hospedeTelefone = gDb.telefone || gDb.whatsapp || gDb.celular || '';
+            if (!hospedeEmail) hospedeEmail = gDb.email || '';
+            if (!hospedeNome || hospedeNome === 'Hóspede') hospedeNome = gDb.nome || hospedeNome;
+          }
+        } catch {}
+      }
+
+      // 5. Buscar dados do Quarto
+      let numeroQuarto = String(dados.numero_quarto || dados.quartoNumero || '101');
+      let tipoQuarto = dados.tipo_quarto || dados.quartoTipo || dados.quartoNome || 'Acomodação';
+      if (dados.quarto_id) {
+        try {
+          const { data: qDb } = await supabase
+            .from('quartos')
+            .select('*')
+            .eq('id', dados.quarto_id)
+            .maybeSingle();
+          if (qDb) {
+            numeroQuarto = String(qDb.numero || numeroQuarto);
+            tipoQuarto = qDb.tipo || qDb.nome || tipoQuarto;
+          }
+        } catch {}
+      }
+
+      // 6. Formatações
+      const formatarDataBR = (val: any) => {
+        if (!val) return '';
+        const s = String(val).split('T')[0];
+        const parts = s.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return s;
+      };
+
+      const formatarMoedaBR = (val: any) => {
+        if (val === undefined || val === null || val === '') return 'R$ 0,00';
+        if (typeof val === 'string' && val.includes('R$')) return val;
+        const num = Number(val) || 0;
+        return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      };
+
+      const checkinStr = formatarDataBR(dados.data_checkin || dados.checkIn || dados.check_in);
+      const checkoutStr = formatarDataBR(dados.data_checkout || dados.checkOut || dados.check_out);
+      const valorStr = formatarMoedaBR(dados.valor_total || dados.valorTotal);
+      const shortId = dados.id ? String(dados.id).substring(0, 6).toUpperCase() : 'NOVA';
+      const reservaNum = dados.reservaNumber || `#RES-${shortId}`;
+      const hotelNome = hotelData?.nome || hotelData?.name || hotelData?.razao_social || 'Hotel no Zap';
+      const statusStr = dados.status || 'Confirmada';
+
+      // 7. Montar mensagem conforme especificação do usuário
+      const mensagemProprietario =
+        `🔔 *VOCÊ TEM UMA NOVA RESERVA!* 🏨\n\n` +
+        `Olá! Uma nova reserva acaba de ser registrada no *${hotelNome}*.\n\n` +
+        `📋 *DETALHES DA RESERVA:*\n` +
+        `• *Código:* ${reservaNum}\n` +
+        `• *Hóspede:* ${hospedeNome}\n` +
+        (hospedeTelefone ? `• *WhatsApp do Hóspede:* ${hospedeTelefone}\n` : '') +
+        (hospedeEmail ? `• *E-mail:* ${hospedeEmail}\n` : '') +
+        `• *Quarto / Acomodação:* ${tipoQuarto} (${numeroQuarto})\n` +
+        `• *Check-in:* ${checkinStr}\n` +
+        `• *Check-out:* ${checkoutStr}\n` +
+        `• *Valor da Reserva:* ${valorStr}\n` +
+        `• *Status:* ${statusStr}\n` +
+        (dados.observacoes ? `• *Observações:* ${dados.observacoes}\n` : '') +
+        `\n📲 Acesse o painel para gerenciar a acomodação:\n` +
+        `👉 https://app.hotelnozap.com.br/`;
+
+      // 8. Disparo via WhatsApp (Evolution API pela instância conectada do hotel)
+      console.info(`[templateMensagemService] 🚀 Disparando notificação de nova reserva para o proprietário: ${proprietarioPhone}`);
+      const resultado = await this.enviarMensagemWhatsApp(activeHotelId, proprietarioPhone, mensagemProprietario);
+
+      if (resultado.success) {
+        this._recentDispatches.set(cacheKey, Date.now());
+        console.info(`[templateMensagemService] ✅ Notificação enviada com sucesso ao proprietário (${proprietarioPhone})`);
+      } else {
+        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar notificação ao proprietário:`, resultado.error);
+      }
+
+      return resultado;
+    } catch (err: any) {
+      console.error('[templateMensagemService] Erro ao disparar notificação de nova reserva ao proprietário:', err);
       return { success: false, error: err?.message || 'Erro inesperado' };
     }
   },

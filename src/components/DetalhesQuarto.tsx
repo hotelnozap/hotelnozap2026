@@ -828,6 +828,13 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
         quarto: currentQuarto
       }).catch(wErr => console.warn('[DetalhesQuarto] Aviso ao disparar webhook n8n:', wErr));
 
+      // Dispara notificação no WhatsApp do proprietário do hotel com os dados da reserva e hóspede
+      import('../services/templateMensagemService')
+        .then(({ templateMensagemService }) => {
+          templateMensagemService.dispararNotificacaoNovaReservaProprietario(hotelIdToUse, reservaCreated, guest);
+        })
+        .catch(tErr => console.warn('[DetalhesQuarto] Aviso ao notificar WhatsApp do proprietário:', tErr));
+
       // Dispara notificação inteligente em tempo real para a tela do hotel
       const payloadNotif = {
         id: reservaCreated.id || `res-${Date.now()}`,
