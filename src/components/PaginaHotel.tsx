@@ -1160,10 +1160,13 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                 <button
                   type="button"
                   onClick={openWhatsAppDirectContact}
-                  className="w-full sm:w-auto px-8 py-4 bg-[#10B981] hover:bg-emerald-600 text-white font-extrabold text-sm rounded-2xl flex items-center justify-center gap-2.5 shadow-lg transition-all active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto min-w-[280px] sm:min-w-[320px] px-8 py-3.5 bg-[#10B981] hover:bg-emerald-600 text-white rounded-2xl flex items-center justify-center gap-3.5 shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer group"
                 >
-                  <span className="material-symbols-outlined text-2xl">chat</span>
-                  <span>Falar no WhatsApp {maskPhone(currentHotel.whatsappPhone)}</span>
+                  <span className="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform shrink-0">chat</span>
+                  <div className="flex flex-col items-center justify-center text-center leading-tight">
+                    <span className="text-xs sm:text-sm font-bold opacity-95">Falar no WhatsApp</span>
+                    <span className="text-sm sm:text-base font-extrabold tracking-wide mt-0.5">{maskPhone(currentHotel.whatsappPhone)}</span>
+                  </div>
                 </button>
               )}
             </div>
