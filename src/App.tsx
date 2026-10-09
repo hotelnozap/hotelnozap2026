@@ -81,6 +81,7 @@ import { NotificacoesPushAdmin } from './components/NotificacoesPushAdmin';
 import { LandingPageParceiros } from './components/LandingPageParceiros';
 import { CheckoutParceiro } from './components/CheckoutParceiro';
 import { PortalParceiro } from './components/PortalParceiro';
+import { ZapHotelLogo } from './components/ZapHotelLogo';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 import { autoCheckoutService } from './services/autoCheckoutService';
@@ -639,17 +640,39 @@ export const App: React.FC = () => {
     return '';
   });
 
+  const [currentUserName, setCurrentUserName] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('hotelnozap_user_name');
+      if (saved && saved.trim()) return saved.trim();
+    } catch { /* ignore */ }
+    return 'Everaldo Souza';
+  });
+
+  const userInitials = (() => {
+    const parts = (currentUserName || 'Everaldo Souza').trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (parts[0]?.[0] || 'E').toUpperCase();
+  })();
+
   useEffect(() => {
     const handleRoleChanged = (e: any) => {
-      if (e.detail) {
+      if (e?.detail) {
         setCurrentUserRole(e.detail);
       } else {
         const saved = localStorage.getItem('hotelnozap_user_role');
         if (saved) setCurrentUserRole(saved);
       }
+      try {
+        const savedName = localStorage.getItem('hotelnozap_user_name');
+        if (savedName && savedName.trim()) setCurrentUserName(savedName.trim());
+      } catch { /* ignore */ }
     };
     window.addEventListener('user_role_changed', handleRoleChanged);
-    return () => window.removeEventListener('user_role_changed', handleRoleChanged);
+    window.addEventListener('storage', handleRoleChanged);
+    return () => {
+      window.removeEventListener('user_role_changed', handleRoleChanged);
+      window.removeEventListener('storage', handleRoleChanged);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -1904,8 +1927,9 @@ export const App: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-white truncate max-w-[150px]">{hotelNomeFantasia}</span>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-xs font-black text-white truncate max-w-[170px]" title={hotelNomeFantasia}>{hotelNomeFantasia}</span>
+              <span className="text-[10px] text-emerald-300 font-medium truncate">Olá, {currentUserName}</span>
             </div>
           )}
         </div>
@@ -1924,7 +1948,7 @@ export const App: React.FC = () => {
               onMouseEnter={handleUserMenuEnter}
               className="w-8 h-8 rounded-full bg-[#131b2e] border border-[#c6c6cd]/40 overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-xs text-white cursor-pointer shadow-xs"
             >
-              A
+              {userInitials}
             </button>
 
             {/* MENU SUSPENSO MOBILE (PERFIL, AJUDA E SAIR) */}
@@ -2048,16 +2072,14 @@ export const App: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-[#131b2e] flex items-center justify-center text-white shadow-md shrink-0">
-                    <span className="material-symbols-outlined text-xl">hotel</span>
-                  </div>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <ZapHotelLogo size={32} className="shrink-0" />
                   <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-base text-white leading-tight truncate" title={hotelNomeFantasia}>
-                      {hotelNomeFantasia}
+                    <span className="font-black text-base text-white leading-tight tracking-tight truncate">
+                      Hotel no Zap
                     </span>
-                    <span className="text-xs font-semibold text-[#6cf8bb] tracking-wider uppercase truncate">
-                      {hotelSubtitle}
+                    <span className="text-[10px] font-bold text-[#6cf8bb] tracking-wider uppercase truncate mt-0.5">
+                      Hospedagem Digital
                     </span>
                   </div>
                 </div>
@@ -2824,17 +2846,15 @@ export const App: React.FC = () => {
         </aside>
       ) : (
         <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-[280px] p-4 gap-1.5 z-40 bg-gradient-to-b from-[#003400] to-[#000000] text-white overflow-hidden">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-4 px-4 py-2 mt-2 shrink-0">
-            <div className="w-10 h-10 rounded-full bg-[#131b2e] flex items-center justify-center text-white shadow-md shrink-0">
-              <span className="material-symbols-outlined text-2xl">hotel</span>
-            </div>
+          {/* Logo Hotel no Zap - Hospedagem Digital */}
+          <div className="flex items-center gap-3 mb-4 px-3 py-2 mt-2 shrink-0">
+            <ZapHotelLogo size={38} className="shrink-0" />
             <div className="flex flex-col min-w-0">
-              <h1 className="text-xl font-black text-white tracking-tight leading-tight truncate" title={hotelNomeFantasia}>
-                {hotelNomeFantasia}
-              </h1>
-              <span className="text-xs font-semibold text-[#6cf8bb] tracking-wider uppercase truncate">
-                {hotelSubtitle}
+              <span className="text-lg font-black text-white tracking-tight leading-none">
+                Hotel no Zap
+              </span>
+              <span className="text-[10px] font-bold text-[#6cf8bb] tracking-wider uppercase mt-1">
+                Hospedagem Digital
               </span>
             </div>
           </div>
@@ -3011,9 +3031,13 @@ export const App: React.FC = () => {
         {/* DESKTOP TOP HEADER */}
         {isHotelUser && (
           <header className="hidden lg:flex items-center justify-between w-full px-6 sm:px-8 lg:px-10 bg-[#f8f9ff] h-16 border-b border-[#c6c6cd]/40 shrink-0">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-[#45464d]">Olá,</span>
-              <span className="font-semibold text-[#0b1c30]">Everaldo Souza</span>
+            <div className="flex flex-col justify-center leading-tight">
+              <span className="font-extrabold text-base text-[#0b1c30] tracking-tight truncate max-w-xl" title={hotelNomeFantasia}>
+                {hotelNomeFantasia}
+              </span>
+              <span className="text-xs text-[#45464d] font-normal mt-0.5">
+                Olá, <span className="font-semibold text-[#0b1c30]">{currentUserName}</span>
+              </span>
             </div>
 
             <div className="flex items-center gap-4 text-sm">
@@ -3033,7 +3057,7 @@ export const App: React.FC = () => {
                     className="flex items-center gap-2 hover:bg-[#eff4ff] p-1 rounded-full transition-colors cursor-pointer"
                   >
                     <div className="w-8 h-8 rounded-full bg-[#003400] flex items-center justify-center text-emerald-400 font-bold text-xs shadow-xs border border-emerald-500/30">
-                      ES
+                      {userInitials}
                     </div>
                   </button>
 
@@ -3047,7 +3071,7 @@ export const App: React.FC = () => {
                       {/* Cabeçalho do Perfil */}
                       <div className="p-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50 rounded-xl mb-1">
                         <div className="w-10 h-10 rounded-full bg-[#003400] flex items-center justify-center text-emerald-400 font-bold text-sm shrink-0 border border-emerald-500/30">
-                          ES
+                          {userInitials}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-extrabold text-slate-900 text-sm truncate">
