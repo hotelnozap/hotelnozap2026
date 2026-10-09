@@ -1912,11 +1912,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             <div>
               <h4 className="font-bold text-xs uppercase tracking-wider text-white mb-4">Empresa</h4>
               <ul className="space-y-2.5 text-xs text-white/70">
-                <li><a href="/quem-somos" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Sobre Nós</a></li>
+                <li><a href="/quem-somos" className="hover:text-white transition-colors">Sobre Nós</a></li>
                 <li><a href="https://wa.me/5566981585014?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20as%20novidades%20do%20Hotel%20no%20Zap" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Blog do Hoteleiro</a></li>
-                <li><a href="/parceiros" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Programa de Parceiros & Indicadores</a></li>
-                <li><a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Termos de Uso</a></li>
-                <li><a href="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Política de Privacidade</a></li>
+                <li><a href="/parceiros" className="hover:text-white transition-colors">Programa de Parceiros & Indicadores</a></li>
+                <li><a href="/termos" className="hover:text-white transition-colors">Termos de Uso</a></li>
+                <li><a href="/privacidade" className="hover:text-white transition-colors">Política de Privacidade</a></li>
               </ul>
             </div>
 

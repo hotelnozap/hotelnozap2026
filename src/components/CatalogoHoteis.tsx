@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { hoteisService, reservasService, quartosService, ComodidadeCategoria } from '../services/supabaseService';
 import { webhookN8nService } from '../services/webhookN8nService';
 import { getAppLoginUrl } from '../utils/partnerUrl';
+import { navigateSpa } from '../utils/navigation';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { FALLBACK_HOTEIS_PRELOAD } from '../data/fallbackHoteisPreload';
 
@@ -1240,8 +1241,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
           <nav className="flex items-center gap-1 sm:gap-2 font-semibold text-xs text-slate-700 shrink-0">
             <a
               href="/quem-somos"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
             >
               Quem Somos
@@ -1249,8 +1248,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
 
             <a
               href="/fale-conosco"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
             >
               Fale Conosco
@@ -1277,7 +1274,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                         <p className="text-xs font-bold text-slate-900 truncate">{currentUser.name}</p>
                       </div>
                       <button
-                        onClick={() => { window.location.href = '/minhaconta'; }}
+                        onClick={() => { navigateSpa('/minhaconta'); }}
                         className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-base text-[#006c49]">dashboard</span>
@@ -1340,16 +1337,12 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             <div className="flex items-center gap-3 shrink-0 text-xs font-bold text-slate-800">
               <a
                 href="/quem-somos"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-emerald-700 transition-colors whitespace-nowrap"
               >
                 Quem Somos
               </a>
               <a
                 href="/fale-conosco"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-emerald-700 transition-colors whitespace-nowrap"
               >
                 Fale Conosco
@@ -1802,7 +1795,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         <button
           onClick={() => {
             if (currentUser.isLoggedIn) {
-              window.location.href = '/minhaconta';
+              navigateSpa('/minhaconta');
             } else if (onNavigateToLogin) {
               onNavigateToLogin();
             } else {
@@ -1947,8 +1940,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
           <div className="flex md:hidden items-center justify-center gap-3 text-slate-300 font-semibold text-xs border-y border-slate-800/80 py-2.5 w-full my-1">
             <a
               href="/quem-somos"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors"
             >
               Quem Somos
@@ -1956,8 +1947,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             <span className="text-slate-600 select-none">•</span>
             <a
               href="/fale-conosco"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors"
             >
               Fale Conosco
@@ -1968,8 +1957,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-slate-400 font-medium">
             <a
               href="/privacidade"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors cursor-pointer"
             >
               Privacidade
@@ -1977,8 +1964,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             <span className="text-slate-600 select-none">•</span>
             <a
               href="/termos"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors cursor-pointer"
             >
               Termos
@@ -1986,8 +1971,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             <span className="text-slate-600 select-none">•</span>
             <a
               href="/empresa"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors cursor-pointer"
             >
               Informações da empresa

@@ -17,6 +17,7 @@ import { fetchAddressByCep } from '../utils/viacep';
 import { webhookN8nService } from '../services/webhookN8nService';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { cuponsService, ValidacaoCupomResult } from '../services/cuponsService';
+import { navigateSpa } from '../utils/navigation';
 
 export interface DetalhesQuartoProps {
   hotel?: PublicHotel | null;
@@ -1175,8 +1176,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
     if (onNavigateToMinhaConta) {
       onNavigateToMinhaConta();
     } else {
-      window.history.pushState({}, '', '/minhaconta');
-      window.location.href = '/minhaconta';
+      navigateSpa('/minhaconta');
     }
   };
 
@@ -1200,7 +1200,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
         <button
           onClick={() => {
             if (onNavigateToHotel) onNavigateToHotel();
-            else window.location.href = `/hotel/${slugify(currentHotel?.name || 'hotel')}`;
+            else navigateSpa(`/hotel/${slugify(currentHotel?.name || 'hotel')}`);
           }}
           className="px-6 py-2.5 bg-[#003400] text-white rounded-xl font-bold text-xs shadow-md cursor-pointer"
         >
@@ -1232,7 +1232,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
             <button 
               onClick={() => {
                 if (onNavigateToHotel) onNavigateToHotel();
-                else window.location.href = `/hotel/${slugify(currentHotel.name)}`;
+                else navigateSpa(`/hotel/${slugify(currentHotel.name)}`);
               }}
               className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all cursor-pointer flex items-center gap-1 font-bold text-xs"
             >
@@ -1253,8 +1253,8 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
 
           {/* Nav */}
           <nav className="flex items-center gap-1 font-semibold text-xs text-slate-600">
-            <button onClick={() => { if (onNavigateToCatalog) onNavigateToCatalog(); else window.location.href = '/hoteis'; }} className="hidden sm:inline-block px-3 py-2 rounded-xl hover:bg-slate-100 transition-all">Lista de Hotéis</button>
-            <button onClick={() => { if (onNavigateToHotel) onNavigateToHotel(); else window.location.href = `/hotel/${slugify(currentHotel.name)}`; }} className="hidden sm:inline-block px-3 py-2 rounded-xl hover:bg-slate-100 transition-all">{currentHotel.name}</button>
+            <button onClick={() => { if (onNavigateToCatalog) onNavigateToCatalog(); else navigateSpa('/hoteis'); }} className="hidden sm:inline-block px-3 py-2 rounded-xl hover:bg-slate-100 transition-all">Lista de Hotéis</button>
+            <button onClick={() => { if (onNavigateToHotel) onNavigateToHotel(); else navigateSpa(`/hotel/${slugify(currentHotel.name)}`); }} className="hidden sm:inline-block px-3 py-2 rounded-xl hover:bg-slate-100 transition-all">{currentHotel.name}</button>
             <button onClick={openWhatsAppReservation} className="px-3 py-2 rounded-xl text-[#006c49] font-bold hover:bg-emerald-50 transition-all flex items-center gap-1">
               <span className="material-symbols-outlined text-base">chat</span>
               <span>Recepção Zap</span>
@@ -1268,17 +1268,17 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       <section className="pt-20 pb-3 px-4 sm:px-8 max-w-7xl mx-auto border-b border-slate-200/80">
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2 overflow-x-auto text-nowrap">
-            <button onClick={() => { if (onNavigateToCatalog) onNavigateToCatalog(); else window.location.href = '/hoteis'; }} className="hover:text-slate-900 transition-colors">Lista de Hotéis</button>
+            <button onClick={() => { if (onNavigateToCatalog) onNavigateToCatalog(); else navigateSpa('/hoteis'); }} className="hover:text-slate-900 transition-colors">Lista de Hotéis</button>
             <span>/</span>
             <span className="text-slate-700">{currentHotel.city}, {currentHotel.uf}</span>
             <span>/</span>
-            <button onClick={() => { if (onNavigateToHotel) onNavigateToHotel(); else window.location.href = `/hotel/${slugify(currentHotel.name)}`; }} className="hover:text-slate-900 transition-colors">{currentHotel.name}</button>
+            <button onClick={() => { if (onNavigateToHotel) onNavigateToHotel(); else navigateSpa(`/hotel/${slugify(currentHotel.name)}`); }} className="hover:text-slate-900 transition-colors">{currentHotel.name}</button>
             <span>/</span>
             <span className="font-bold text-slate-900">{getTituloExplicitoQuarto(currentQuarto)}</span>
           </div>
 
           <button 
-            onClick={() => { if (onNavigateToHotel) onNavigateToHotel(); else window.location.href = `/hotel/${slugify(currentHotel.name)}`; }}
+            onClick={() => { if (onNavigateToHotel) onNavigateToHotel(); else navigateSpa(`/hotel/${slugify(currentHotel.name)}`); }}
             className="inline-flex items-center gap-1 text-xs font-bold text-[#006c49] hover:underline cursor-pointer"
           >
             <span className="material-symbols-outlined text-sm">arrow_back</span>
@@ -2251,8 +2251,6 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
           <div className="flex md:hidden items-center justify-center gap-3 text-slate-300 font-semibold text-xs border-y border-slate-800/80 py-2.5 w-full my-1">
             <a
               href="/quem-somos"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors"
             >
               Quem Somos
@@ -2260,8 +2258,6 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
             <span className="text-slate-600 select-none">•</span>
             <a
               href="/fale-conosco"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors"
             >
               Fale Conosco
@@ -2272,8 +2268,6 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-slate-400 font-medium">
             <a
               href="/privacidade"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors cursor-pointer"
             >
               Privacidade
@@ -2281,8 +2275,6 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
             <span className="text-slate-600 select-none">•</span>
             <a
               href="/termos"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors cursor-pointer"
             >
               Termos
@@ -2290,8 +2282,6 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
             <span className="text-slate-600 select-none">•</span>
             <a
               href="/empresa"
-              target="_blank"
-              rel="noopener noreferrer"
               className="hover:text-white transition-colors cursor-pointer"
             >
               Informações da empresa

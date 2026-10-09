@@ -2,10 +2,40 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { navigateSpa } from './utils/navigation';
 
 // Força HTTPS em ambiente de produção (remove aviso 'Não seguro')
 if (typeof window !== 'undefined' && window.location.protocol === 'http:' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
   window.location.href = window.location.href.replace('http:', 'https:');
+}
+
+// Interceptador global para transformar cliques em links internos em navegação SPA instantânea
+// Impede que o aplicativo PWABuilder / TWA no Android recarregue o documento e mostre pre-load "Abrindo..." ou splash cortada
+if (typeof window !== 'undefined') {
+  document.addEventListener('click', (event: MouseEvent) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const anchor = (event.target as HTMLElement)?.closest('a');
+    if (!anchor) return;
+    const href = anchor.getAttribute('href');
+    if (!href) return;
+    if (
+      href.startsWith('http://') ||
+      href.startsWith('https://') ||
+      href.startsWith('mailto:') ||
+      href.startsWith('tel:') ||
+      href.startsWith('whatsapp:') ||
+      href.startsWith('javascript:') ||
+      href.startsWith('#') ||
+      anchor.target === '_blank' ||
+      anchor.hasAttribute('download')
+    ) {
+      return;
+    }
+    if (href.startsWith('/')) {
+      event.preventDefault();
+      navigateSpa(href);
+    }
+  });
 }
 
 interface ErrorBoundaryProps {

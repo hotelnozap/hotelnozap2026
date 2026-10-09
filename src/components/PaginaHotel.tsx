@@ -4,6 +4,7 @@ import { hoteisService, quartosService, tiposQuartosService, currentHotelService
 import { supabase } from '../lib/supabase';
 import { webhookN8nService } from '../services/webhookN8nService';
 import { getAppLoginUrl } from '../utils/partnerUrl';
+import { navigateSpa } from '../utils/navigation';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { maskPhone } from '../utils/masks';
 
@@ -683,7 +684,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
         <button
           onClick={() => {
             if (onNavigateBack) onNavigateBack();
-            else window.location.href = '/hoteis';
+            else navigateSpa('/hoteis');
           }}
           className="px-6 py-2.5 bg-[#003400] text-white rounded-xl font-bold text-xs shadow-md cursor-pointer"
         >
@@ -714,16 +715,12 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
           <nav className="flex items-center gap-1 sm:gap-2 font-semibold text-xs text-slate-700 shrink-0">
             <a 
               href="/quem-somos" 
-              target="_blank" 
-              rel="noopener noreferrer"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
             >
               Quem Somos
             </a>
             <a 
               href="/fale-conosco" 
-              target="_blank" 
-              rel="noopener noreferrer"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-slate-100 text-slate-700 transition-all font-semibold cursor-pointer"
             >
               Fale Conosco
@@ -1345,8 +1342,6 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
             <div className="flex md:hidden items-center justify-center gap-3 text-slate-300 font-semibold text-xs border-y border-slate-800/80 py-2.5 w-full my-1">
               <a
                 href="/quem-somos"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-white transition-colors"
               >
                 Quem Somos
@@ -1354,8 +1349,6 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               <span className="text-slate-600 select-none">•</span>
               <a
                 href="/fale-conosco"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-white transition-colors"
               >
                 Fale Conosco
@@ -1366,8 +1359,6 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-slate-400 font-medium">
               <a
                 href="/privacidade"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-white transition-colors cursor-pointer"
               >
                 Privacidade
@@ -1375,8 +1366,6 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               <span className="text-slate-600 select-none">•</span>
               <a
                 href="/termos"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-white transition-colors cursor-pointer"
               >
                 Termos
@@ -1384,8 +1373,6 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               <span className="text-slate-600 select-none">•</span>
               <a
                 href="/empresa"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="hover:text-white transition-colors cursor-pointer"
               >
                 Informações da empresa

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ZapHotelLogo } from './ZapHotelLogo';
+import { navigateSpa } from '../utils/navigation';
 
 interface Pagina404Props {
   onNavigateHome?: () => void;
@@ -21,7 +22,7 @@ export const Pagina404: React.FC<Pagina404Props> = ({
       onNavigateHome();
       return;
     }
-    window.location.href = '/';
+    navigateSpa('/');
   };
 
   const handleGoCatalog = () => {
@@ -29,7 +30,7 @@ export const Pagina404: React.FC<Pagina404Props> = ({
       onNavigateCatalog();
       return;
     }
-    window.location.href = '/hoteis';
+    navigateSpa('/hoteis');
   };
 
   const handleGoLogin = () => {
@@ -37,7 +38,7 @@ export const Pagina404: React.FC<Pagina404Props> = ({
       onNavigateLogin();
       return;
     }
-    window.location.href = '/paineladmin';
+    navigateSpa('/paineladmin');
   };
 
   return (
