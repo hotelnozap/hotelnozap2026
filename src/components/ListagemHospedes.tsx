@@ -264,9 +264,9 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
 
           <button 
             onClick={() => alert('Exportando cadastro de hóspedes...')}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm shadow-sm transition-all text-[#1F2937] bg-[#FDB116] hover:bg-[#eab308] cursor-pointer active:scale-95"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm shadow-sm transition-all text-slate-950 bg-[#FDB116] hover:bg-[#e5a013] cursor-pointer active:scale-95"
           >
-            <span className="material-symbols-outlined text-xl">download</span>
+            <span className="material-symbols-outlined text-xl text-slate-950">download</span>
             <span>Exportar</span>
           </button>
 
@@ -324,9 +324,9 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
 
           <button 
             onClick={() => alert('Exportando cadastro de hóspedes...')}
-            className="w-full py-2 px-3 bg-[#FDB116] hover:bg-[#eab308] text-[#1F2937] rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-transform"
+            className="w-full py-2 px-3 bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-transform"
           >
-            <span className="material-symbols-outlined text-base">download</span>
+            <span className="material-symbols-outlined text-base text-slate-950">download</span>
             <span>Exportar</span>
           </button>
         </div>

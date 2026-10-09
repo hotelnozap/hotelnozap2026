@@ -622,9 +622,9 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
             <button
               type="button"
               onClick={() => showToast('Módulo de importação em lote acionado.')}
-              className="flex items-center justify-center gap-1.5 bg-white text-slate-700 border border-slate-300 py-2 px-3 rounded-lg text-xs font-semibold shadow-xs hover:bg-slate-50 active:scale-[0.98] transition cursor-pointer"
+              className="flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-semibold shadow-xs hover:bg-blue-700 active:scale-[0.98] transition cursor-pointer"
             >
-              <span className="material-symbols-outlined text-base text-slate-600">upload</span>
+              <span className="material-symbols-outlined text-base text-white">upload</span>
               <span>Importar</span>
             </button>
           </div>
@@ -953,9 +953,9 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
             <button
               type="button"
               onClick={() => showToast('Módulo de importação em lote acionado.')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium text-sm bg-white hover:bg-slate-50 transition shadow-xs cursor-pointer whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition shadow-xs cursor-pointer whitespace-nowrap shrink-0"
             >
-              <span className="material-symbols-outlined text-base text-slate-500">upload</span>
+              <span className="material-symbols-outlined text-base text-white">upload</span>
               <span>Importar</span>
             </button>
 

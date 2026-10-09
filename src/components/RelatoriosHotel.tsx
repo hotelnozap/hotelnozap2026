@@ -479,10 +479,10 @@ export const RelatoriosHotel: React.FC<RelatoriosHotelProps> = ({ activeHotel, o
             <button
               type="button"
               onClick={handleExportarCsv}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95 border border-slate-200"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 rounded-xl text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs"
               title="Exportar dados para planilha Excel (.csv)"
             >
-              <span className="material-symbols-outlined text-base text-emerald-700">file_download</span>
+              <span className="material-symbols-outlined text-base text-slate-950">file_download</span>
               <span>Exportar Excel (CSV)</span>
             </button>
 

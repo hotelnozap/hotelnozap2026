@@ -184,9 +184,9 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={() => showToast('Histórico completo exportado em PDF!')}
-              className="inline-flex items-center gap-2 px-3.5 md:px-4 py-2 md:py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs md:text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 md:px-4 py-2 md:py-2.5 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-xs md:text-sm font-bold transition-all shadow-xs cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px] text-slate-500">file_download</span>
+              <span className="material-symbols-outlined text-[18px] text-slate-950">file_download</span>
               <span className="hidden sm:inline">Exportar Histórico</span>
               <span className="sm:hidden">Exportar</span>
             </button>

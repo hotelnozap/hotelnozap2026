@@ -218,10 +218,10 @@ export const LogsSistema: React.FC<LogsSistemaProps> = ({
           <button
             type="button"
             onClick={handleExportCsv}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 active:scale-98 text-xs font-bold text-slate-700 border border-slate-300 shadow-2xs transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] active:scale-98 text-xs font-bold text-slate-950 shadow-xs transition cursor-pointer"
             title="Exportar registros filtrados para arquivo CSV"
           >
-            <span className="material-symbols-outlined text-base text-emerald-800">download</span>
+            <span className="material-symbols-outlined text-base text-slate-950">download</span>
             <span>Exportar CSV</span>
           </button>
 

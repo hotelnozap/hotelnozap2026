@@ -1338,10 +1338,10 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
                 <button
                   type="button"
                   onClick={handleExportarLogs}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-xs font-bold shadow-xs cursor-pointer"
                   title="Exportar CSV"
                 >
-                  <span className="material-symbols-outlined text-sm">download</span>
+                  <span className="material-symbols-outlined text-sm text-slate-950">download</span>
                   <span className="hidden sm:inline">Exportar</span>
                 </button>
                 <button

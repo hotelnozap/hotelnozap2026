@@ -363,9 +363,9 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
         </button>
         <button
           onClick={() => showToast('Exportando relatório de reservas...')}
-          className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FDB116] hover:bg-amber-500 active:scale-[0.98] text-slate-900 rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
+          className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FDB116] hover:bg-[#e5a013] active:scale-[0.98] text-slate-950 rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[18px]">download</span>
+          <span className="material-symbols-outlined text-[18px] text-slate-950">download</span>
           Exportar
         </button>
       </div>
@@ -684,14 +684,14 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
             </div>
 
             {/* Botão Importar */}
-            <button className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-sm transition-colors whitespace-nowrap cursor-pointer">
+            <button className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors whitespace-nowrap cursor-pointer">
               <span className="material-symbols-outlined text-[18px]">upload</span>
               Importar
             </button>
 
             {/* Botão Exportar */}
-            <button className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#FDB116] hover:bg-amber-500 text-slate-900 text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap cursor-pointer">
-              <span className="material-symbols-outlined text-[18px]">download</span>
+            <button className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap cursor-pointer">
+              <span className="material-symbols-outlined text-[18px] text-slate-950">download</span>
               Exportar
             </button>
 

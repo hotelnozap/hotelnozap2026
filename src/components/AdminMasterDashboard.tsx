@@ -954,9 +954,9 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                 </button>
                 <button 
                   onClick={handleExportRelatorio}
-                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold backdrop-blur-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-base">download</span>
+                  <span className="material-symbols-outlined text-base text-slate-950">download</span>
                   <span>Exportar Relatório Geral</span>
                 </button>
                 <button 

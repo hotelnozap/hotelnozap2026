@@ -223,7 +223,7 @@ export const CategoriasProdutos: React.FC<CategoriasProdutosProps> = ({
 
           <button
             onClick={() => alert('Importando categorias...')}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-[#d3e4fe] hover:bg-[#cbdbf5] text-[#0b1c30] font-semibold text-xs cursor-pointer active:scale-95 transition-transform"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs cursor-pointer active:scale-95 transition-transform"
           >
             <span className="material-symbols-outlined text-base">upload</span>
             <span>Importar</span>
@@ -231,7 +231,7 @@ export const CategoriasProdutos: React.FC<CategoriasProdutosProps> = ({
 
           <button
             onClick={() => alert('Exportando categorias...')}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-[#ffddb8] hover:bg-[#ffb95f] text-[#2a1700] font-semibold text-xs cursor-pointer active:scale-95 transition-transform"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 font-bold text-xs cursor-pointer active:scale-95 transition-transform"
           >
             <span className="material-symbols-outlined text-base">download</span>
             <span>Exportar</span>
@@ -568,7 +568,7 @@ export const CategoriasProdutos: React.FC<CategoriasProdutosProps> = ({
               {/* BOTÃO IMPORTAR */}
               <button
                 onClick={() => alert('Importando categorias...')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-xs cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-xs cursor-pointer active:scale-95"
               >
                 <span className="material-symbols-outlined text-base">upload</span>
                 <span>Importar</span>
@@ -577,9 +577,9 @@ export const CategoriasProdutos: React.FC<CategoriasProdutosProps> = ({
               {/* BOTÃO EXPORTAR */}
               <button
                 onClick={() => alert('Exportando categorias...')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors shadow-xs cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-sm font-bold rounded-lg transition-colors shadow-xs cursor-pointer active:scale-95"
               >
-                <span className="material-symbols-outlined text-base">download</span>
+                <span className="material-symbols-outlined text-base text-slate-950">download</span>
                 <span>Exportar</span>
               </button>
 

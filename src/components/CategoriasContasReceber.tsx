@@ -218,9 +218,9 @@ export const CategoriasContasReceber: React.FC<CategoriasContasReceberProps> = (
             <button
               type="button"
               onClick={() => showToast('Exportando categorias em CSV/Excel...')}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#FDB116] hover:bg-amber-500 text-slate-900 text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer whitespace-nowrap"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer whitespace-nowrap"
             >
-              <span className="material-symbols-outlined text-lg">download</span>
+              <span className="material-symbols-outlined text-lg text-slate-950">download</span>
               <span>Exportar</span>
             </button>
           </div>

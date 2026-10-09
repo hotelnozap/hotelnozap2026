@@ -166,9 +166,9 @@ export const ListagemItens: React.FC<ListagemItensProps> = ({
           <div className="flex items-center gap-3">
             <button 
               onClick={() => alert('Exportando catálogo de itens dos quartos em Excel...')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#FDB116] hover:bg-[#e59e0f] shadow-xs transition-all cursor-pointer active:scale-95"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-950 bg-[#FDB116] hover:bg-[#e5a013] shadow-xs transition-all cursor-pointer active:scale-95"
             >
-              <span className="material-symbols-outlined text-lg">file_download</span>
+              <span className="material-symbols-outlined text-lg text-slate-950">file_download</span>
               <span>Exportar</span>
             </button>
 

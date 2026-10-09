@@ -510,9 +510,9 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
         <button 
           type="button"
           onClick={() => showToast('Gerando relatório de fechamento do caixa...')}
-          className="flex items-center justify-center gap-1.5 h-12 px-1.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white shadow-xs active:scale-[0.98] transition-all text-[11px] font-bold cursor-pointer whitespace-nowrap"
+          className="flex items-center justify-center gap-1.5 h-12 px-1.5 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 shadow-xs active:scale-[0.98] transition-all text-[11px] font-bold cursor-pointer whitespace-nowrap"
         >
-          <span className="material-symbols-outlined text-[18px] shrink-0">ios_share</span>
+          <span className="material-symbols-outlined text-[18px] shrink-0 text-slate-950">ios_share</span>
           <span className="whitespace-nowrap tracking-tight">Exportar Relatório</span>
         </button>
 
@@ -605,9 +605,9 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
               <button 
                 type="button"
                 onClick={() => showToast('Exportando extrato de movimentações...')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
               >
-                <span className="material-symbols-outlined text-base">download</span>
+                <span className="material-symbols-outlined text-base text-slate-950">download</span>
                 <span>Exportar</span>
               </button>
             </div>

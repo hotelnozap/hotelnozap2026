@@ -352,9 +352,9 @@ export const ListagemParceiros: React.FC<ListagemParceirosProps> = ({
             <button 
               type="button"
               onClick={() => setIsImportModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm font-semibold text-white transition-all shadow-xs cursor-pointer whitespace-nowrap"
             >
-              <span className="material-symbols-outlined text-base text-slate-600">upload</span>
+              <span className="material-symbols-outlined text-base text-white">upload</span>
               <span>Importar</span>
             </button>
 
