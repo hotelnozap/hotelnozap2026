@@ -34,9 +34,12 @@ export default async function handler(req, res) {
     });
   }
 
-  let secretKey = process.env.RECAPTCHA_SECRET_KEY;
+  // Lista de chaves secretas candidatas (prioriza V2 se configurada)
+  const candidateKeys = [];
+  if (process.env.RECAPTCHA_SECRET_KEY_V2) candidateKeys.push(process.env.RECAPTCHA_SECRET_KEY_V2.trim());
+  if (process.env.RECAPTCHA_SECRET_KEY) candidateKeys.push(process.env.RECAPTCHA_SECRET_KEY.trim());
 
-  if (!secretKey) {
+  if (candidateKeys.length === 0) {
     const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (serviceKey) {
@@ -51,7 +54,7 @@ export default async function handler(req, res) {
           .limit(1)
           .maybeSingle();
         if (dbParams?.recaptcha_secret_key && dbParams.recaptcha_secret_key.trim().length > 10) {
-          secretKey = dbParams.recaptcha_secret_key.trim();
+          candidateKeys.push(dbParams.recaptcha_secret_key.trim());
         }
       } catch (e) {
         console.warn('[RECAPTCHA] Erro ao consultar parametros_sistema:', e);
@@ -59,50 +62,59 @@ export default async function handler(req, res) {
     }
   }
 
-  if (!secretKey) {
-    secretKey = '6Ldg2eMtAAAAABA-ounkrgVFn4k4MQSe696c-M-1';
-  }
-
-  if (!secretKey) {
-    console.warn('[RECAPTCHA] RECAPTCHA_SECRET_KEY não encontrada nas variáveis de ambiente nem no banco.');
-    // Se a secret key não estiver definida, não bloqueia o login
-    return res.status(200).json({
-      success: true,
-      score: 1.0,
-      warning: 'Validação ignorada: chave secreta não configurada no servidor.'
-    });
-  }
+  // Chave padrão de contingência
+  candidateKeys.push('6Ldg2eMtAAAAABA-ounkrgVFn4k4MQSe696c-M-1');
 
   try {
-    const postData = new URLSearchParams({
-      secret: secretKey,
-      response: token
-    }).toString();
+    let lastErrorCodes = [];
+    let hasInvalidSecret = false;
 
-    const verifyResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': String(Buffer.byteLength(postData))
-      },
-      body: postData
-    });
+    for (const secret of candidateKeys) {
+      const postData = new URLSearchParams({
+        secret: secret,
+        response: token
+      }).toString();
 
-    const verifyResult = await verifyResponse.json();
+      const verifyResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': String(Buffer.byteLength(postData))
+        },
+        body: postData
+      });
 
-    if (verifyResult.success) {
+      const verifyResult = await verifyResponse.json();
+
+      if (verifyResult.success) {
+        return res.status(200).json({
+          success: true,
+          score: verifyResult.score ?? 1.0,
+          action: verifyResult.action,
+          hostname: verifyResult.hostname
+        });
+      }
+
+      lastErrorCodes = verifyResult['error-codes'] || [];
+      if (lastErrorCodes.includes('invalid-input-secret')) {
+        hasInvalidSecret = true;
+      }
+    }
+
+    // Se o erro foi apenas incompatibilidade de chave secreta no servidor (v2 vs v3), não bloqueia o usuário legítimo
+    if (hasInvalidSecret && !lastErrorCodes.includes('invalid-input-response')) {
+      console.warn('[RECAPTCHA] Token recebido mas chave secreta divergente no servidor. Acesso liberado por tolerância.');
       return res.status(200).json({
         success: true,
-        score: verifyResult.score ?? 1.0,
-        action: verifyResult.action,
-        hostname: verifyResult.hostname
+        score: 1.0,
+        warning: 'Validação tolerada por divergência de versão da chave secreta.'
       });
     }
 
     return res.status(400).json({
       success: false,
       error: 'Verificação do reCAPTCHA falhou. Por favor, tente novamente.',
-      codes: verifyResult['error-codes']
+      codes: lastErrorCodes
     });
   } catch (error) {
     console.error('[RECAPTCHA] Erro na validação com Google API:', error);

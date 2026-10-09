@@ -61,8 +61,8 @@
     <!-- RemixIcon -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" />
 
-    <!-- Google reCAPTCHA v3 Invisível (Ativo em todas as páginas do sistema) -->
-    <script src="https://www.google.com/recaptcha/api.js?render=6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8" async defer></script>
+    <!-- Google reCAPTCHA (render=explicit permite v2 Checkbox no Login e v3 nas demais páginas) -->
+    <script src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit&hl=pt-BR" async defer></script>
     <style>
       /* Oculta o selo flutuante visual do Google reCAPTCHA v3 mantendo a proteção 100% ativa em background */
       .grecaptcha-badge {
