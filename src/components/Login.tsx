@@ -542,10 +542,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         role = (dbUser?.perfil || 'Super Admin').trim();
       } else {
         role = (dbUser?.perfil || dbUser?.cargo || '').trim();
-        // Todo usuário do tipo gerente tem que ser o perfil de acesso Hotel
-        if (role.toLowerCase().includes('gerente')) {
-          role = 'Hotel';
-        }
         // Se não possui perfil configurado no banco, negar acesso
         if (!role) {
           try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* ignore */ }
@@ -553,6 +549,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             localStorage.removeItem('hotelnozap_user_role');
             localStorage.removeItem('hotelnozap_user_email');
             localStorage.removeItem('hotelnozap_user_name');
+            localStorage.removeItem('hotelnozap_user_perfil');
+            localStorage.removeItem('hotelnozap_user_cargo');
             localStorage.removeItem('hotelnozap_hotel_atual');
           } catch { /* ignore */ }
           setErrorMessage('Acesso não autorizado. Seu cadastro não possui perfil de acesso definido na tabela de usuários.');
@@ -583,6 +581,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           localStorage.removeItem('hotelnozap_user_role');
           localStorage.removeItem('hotelnozap_user_email');
           localStorage.removeItem('hotelnozap_user_name');
+          localStorage.removeItem('hotelnozap_user_perfil');
+          localStorage.removeItem('hotelnozap_user_cargo');
           localStorage.removeItem('hotelnozap_hotel_atual');
         } catch {}
         setLoading(false);
@@ -593,6 +593,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       localStorage.setItem('hotelnozap_user_role', role);
       localStorage.setItem('hotelnozap_user_email', cleanEmail);
       localStorage.setItem('hotelnozap_user_name', userName);
+      if (dbUser?.perfil) localStorage.setItem('hotelnozap_user_perfil', dbUser.perfil);
       if (dbUser?.cargo) localStorage.setItem('hotelnozap_user_cargo', dbUser.cargo);
       localStorage.setItem('hotelnozap_last_authenticated_at', new Date().toISOString());
       usuariosService.registrarUltimoAcesso(cleanEmail);

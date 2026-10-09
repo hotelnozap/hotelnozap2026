@@ -43,7 +43,6 @@ export const FormUsuario: React.FC<FormUsuarioProps> = ({
   const FORBIDDEN_PROFILES_HOTEL = ['Super Admin', 'Administrador', 'Parceiro'] as const;
   const resolveInitialProfile = (): Usuario['perfil'] => {
     if (userToEdit?.perfil) {
-      if (userToEdit.perfil === 'Gerente') return 'Hotel';
       if (isHotelScope && (FORBIDDEN_PROFILES_HOTEL as readonly string[]).includes(userToEdit.perfil)) {
         return DEFAULT_PROFILE_HOTEL;
       }
@@ -179,11 +178,7 @@ export const FormUsuario: React.FC<FormUsuarioProps> = ({
       return n.substring(0, 2).toUpperCase();
     };
 
-    // Todo usuário do tipo gerente tem perfil de acesso Hotel
-    const finalPerfil: Usuario['perfil'] = 
-      (perfil === 'Gerente' || cargo.toLowerCase().includes('gerente')) 
-        ? 'Hotel' 
-        : perfil;
+    const finalPerfil: Usuario['perfil'] = perfil;
 
     // R11: validação frontend adicional para origem Hotel
     if (isHotelScope) {
@@ -580,7 +575,7 @@ export const FormUsuario: React.FC<FormUsuarioProps> = ({
                 <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-[18px]">admin_panel_settings</span>
                 <select
                   required
-                  value={perfil === 'Gerente' ? 'Hotel' : perfil}
+                  value={perfil}
                   onChange={(e) => setPerfil(e.target.value as Usuario['perfil'])}
                   className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003400]/20 focus:border-[#003400] cursor-pointer"
                 >
@@ -591,7 +586,8 @@ export const FormUsuario: React.FC<FormUsuarioProps> = ({
                       <option value="Parceiro">Parceiro (Afiliado/Indicador)</option>
                     </>
                   )}
-                  <option value="Hotel">Gerente & Gestão Geral do Hotel</option>
+                  <option value="Hotel">Proprietário / Gestão Total do Hotel</option>
+                  <option value="Gerente">Gerente (Operacional - Sem Configurações)</option>
                   <option value="Recepção">Recepção (Reservas, Hóspedes e Quartos)</option>
                   <option value="Financeiro">Financeiro (Caixa, Despesas e Vendas)</option>
                   <option value="Governança">Governança (Limpeza e Status dos Quartos)</option>

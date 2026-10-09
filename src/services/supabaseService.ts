@@ -245,10 +245,8 @@ export const usuariosService = {
       const roleScope = isPublicSignup ? 'public' : this._extractHotelRole(savedRole);
       const forcedScopeHotelId = roleScope === 'hotel' ? this._currentScopeHotelId() : null;
 
-      // Regra de Negócio: Todo usuário do tipo gerente ou cadastrado via onboarding de hotel tem perfil de acesso Hotel
+      // Regra de Negócio: Usuários públicos ou de hotel não podem ser Administrador global
       if (
-        usuario.perfil === 'Gerente' ||
-        usuario.cargo?.toLowerCase().includes('gerente') ||
         (isPublicSignup && usuario.perfil === 'Administrador') ||
         (usuario.hotel_id && usuario.perfil === 'Administrador')
       ) {
@@ -488,8 +486,8 @@ export const usuariosService = {
 
   async updateUsuario(id: string, usuario: Partial<Usuario>): Promise<boolean> {
     try {
-      // Regra de Negócio: Todo usuário do tipo gerente tem perfil de acesso Hotel
-      if (usuario.perfil === 'Gerente' || usuario.cargo?.toLowerCase().includes('gerente')) {
+      // Regra de Negócio: Usuários de hotel não podem ser Administrador global
+      if ((usuario.hotelId || (usuario as any).hotel_id) && usuario.perfil === 'Administrador') {
         usuario.perfil = 'Hotel';
       }
 

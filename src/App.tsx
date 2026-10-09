@@ -931,8 +931,12 @@ export const App: React.FC = () => {
   }, []);
 
   const userRoleClean = (currentUserRole || '').toLowerCase();
+  const userPerfilClean = (typeof localStorage !== 'undefined' ? (localStorage.getItem('hotelnozap_user_perfil') || '') : '').toLowerCase();
+  const userCargoClean = (typeof localStorage !== 'undefined' ? (localStorage.getItem('hotelnozap_user_cargo') || '') : '').toLowerCase();
+
   const isHotelUser = Boolean(currentUserRole) && (
     userRoleClean.includes('hotel') || 
+    userRoleClean.includes('gerente') || 
     (!userRoleClean.includes('admin') && 
      !userRoleClean.includes('super') && 
      !userRoleClean.includes('administrador') && 
@@ -941,11 +945,18 @@ export const App: React.FC = () => {
      !userRoleClean.includes('camareira') && 
      !userRoleClean.includes('hospede'))
   );
+
   const isRecepcao = isHotelUser && (
     userRoleClean.includes('recep') || 
     userRoleClean.includes('recepcao') || 
     userRoleClean.includes('recepção')
   );
+
+  const isGerente = isHotelUser && !isRecepcao && (
+    userRoleClean.includes('gerente') ||
+    userPerfilClean.includes('gerente') ||
+    userCargoClean.includes('gerente')
+  ) && !userRoleClean.includes('admin') && !userRoleClean.includes('super');
 
 
 
@@ -1103,6 +1114,17 @@ export const App: React.FC = () => {
         }
       }
 
+      if (isGerente) {
+        const gerenteBlockedTabs = [
+          'config', 'config-hotel', 'config-mercado-pago',
+          'usuarios', 'cadastro-usuario', 'tipos-usuarios', 'cadastro-tipo-usuario'
+        ];
+        if (gerenteBlockedTabs.includes(activeTab)) {
+          setActiveTab('dashboard');
+          return;
+        }
+      }
+
       const adminOnlyTabs = [
         'admin-dashboard', 'parceiros', 'cadastro-parceiro', 'planos', 
         'cadastro-plano', 'admin-conexoes', 'admin-financeiro', 
@@ -1129,7 +1151,7 @@ export const App: React.FC = () => {
         setActiveTab('admin-dashboard');
       }
     }
-  }, [isHotelUser, isRecepcao, activeTab]);
+  }, [isHotelUser, isRecepcao, isGerente, activeTab]);
 
   // Função para obter o link público do hotel logado na rota /hoteis/nomedohotel
   const getLoggedHotelUrl = () => {
@@ -1172,6 +1194,8 @@ export const App: React.FC = () => {
 
   const filteredHotelMenuItems = isRecepcao
     ? hotelMenuItems.filter(item => !['camareira', 'cupons', 'usuarios', 'caixa', 'config', 'relatorios'].includes(item.id))
+    : isGerente
+    ? hotelMenuItems.filter(item => !['config', 'usuarios'].includes(item.id))
     : hotelMenuItems;
 
   const menuItems = !isHotelUser ? [
@@ -1970,14 +1994,22 @@ export const App: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        const newRole = isHotelUser ? 'Administrador' : 'Hotel';
+                        let newRole = 'Hotel';
+                        if (currentUserRole === 'Hotel') newRole = 'Gerente';
+                        else if (currentUserRole === 'Gerente') newRole = 'Administrador';
+                        else newRole = 'Hotel';
                         setCurrentUserRole(newRole);
                         localStorage.setItem('hotelnozap_user_role', newRole);
+                        if (newRole === 'Gerente') {
+                          localStorage.setItem('hotelnozap_user_perfil', 'Gerente');
+                        } else {
+                          localStorage.removeItem('hotelnozap_user_perfil');
+                        }
                         window.dispatchEvent(new CustomEvent('user_role_changed', { detail: newRole }));
                       }}
                       className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-slate-200 hover:bg-emerald-100 text-slate-700 hover:text-emerald-900 transition-colors cursor-pointer"
                     >
-                      Mudar para {isHotelUser ? 'Admin' : 'Hotel'}
+                      Mudar para {currentUserRole === 'Hotel' ? 'Gerente' : currentUserRole === 'Gerente' ? 'Admin' : 'Hotel'}
                     </button>
                   </div>
                 </div>
@@ -3089,15 +3121,23 @@ export const App: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const newRole = isHotelUser ? 'Administrador' : 'Hotel';
+                                let newRole = 'Hotel';
+                                if (currentUserRole === 'Hotel') newRole = 'Gerente';
+                                else if (currentUserRole === 'Gerente') newRole = 'Administrador';
+                                else newRole = 'Hotel';
                                 setCurrentUserRole(newRole);
                                 localStorage.setItem('hotelnozap_user_role', newRole);
+                                if (newRole === 'Gerente') {
+                                  localStorage.setItem('hotelnozap_user_perfil', 'Gerente');
+                                } else {
+                                  localStorage.removeItem('hotelnozap_user_perfil');
+                                }
                                 window.dispatchEvent(new CustomEvent('user_role_changed', { detail: newRole }));
                               }}
                               className="text-[9px] font-semibold text-slate-600 hover:text-emerald-800 underline cursor-pointer"
                               title="Alternar perfil para testes de permissão"
                             >
-                              Mudar para {isHotelUser ? 'Admin' : 'Hotel'}
+                              Mudar para {currentUserRole === 'Hotel' ? 'Gerente' : currentUserRole === 'Gerente' ? 'Admin' : 'Hotel'}
                             </button>
                           </div>
                         </div>
@@ -3582,7 +3622,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {(activeTab === 'config' || activeTab === 'config-hotel') && (
+          {(activeTab === 'config' || activeTab === 'config-hotel') && !isGerente && (
             <ConfiguracoesHotel 
               initialTab="horarios"
               onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
@@ -3594,7 +3634,7 @@ export const App: React.FC = () => {
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
             />
           )}
-          {activeTab === 'config-mercado-pago' && isHotelUser && (
+          {activeTab === 'config-mercado-pago' && isHotelUser && !isGerente && (
             <ConfiguracoesMercadoPago 
               isAdmin={false}
               hotelId={activeHotel?.id}
@@ -3711,7 +3751,7 @@ export const App: React.FC = () => {
               onSaveSuccess={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
             />
           )}
-          {activeTab === 'usuarios' && (
+          {activeTab === 'usuarios' && !isGerente && (
             <ListagemUsuarios 
               isHotelScope={isHotelUser}
               hotelId={activeHotel?.id}
@@ -3729,7 +3769,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab === 'cadastro-usuario' && (
+          {activeTab === 'cadastro-usuario' && !isGerente && (
             <FormUsuario 
               userToEdit={userToEdit}
               isHotelScope={isHotelUser}

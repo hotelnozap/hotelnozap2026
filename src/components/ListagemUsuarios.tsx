@@ -452,12 +452,18 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
             Governança
           </span>
         );
-      case 'Hotel':
       case 'Gerente':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold border border-blue-200">
+            <span className="material-symbols-outlined text-[14px]">shield_person</span>
+            Gerente
+          </span>
+        );
+      case 'Hotel':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-bold border border-purple-200">
             <span className="material-symbols-outlined text-[14px]">manage_accounts</span>
-            Gerente / Hotel
+            Proprietário / Hotel
           </span>
         );
       default:
@@ -818,7 +824,8 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
             >
               <option value="">Todos os Perfis</option>
               <option value="Administrador">Administrador</option>
-              <option value="Hotel">Gerente / Hotel</option>
+              <option value="Hotel">Proprietário / Hotel</option>
+              <option value="Gerente">Gerente</option>
               <option value="Recepção">Recepção</option>
               <option value="Governança">Governança</option>
               <option value="Camareira">Camareira</option>
@@ -1304,8 +1311,9 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
                     onChange={(e) => setFormPerfil(e.target.value as Usuario['perfil'])}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-slate-50/50 cursor-pointer"
                   >
-                    <option value="Administrador">Administrador</option>
-                    <option value="Hotel">Gerente (Acesso Hotel)</option>
+                    <option value="Administrador">Administrador (Master SaaS)</option>
+                    <option value="Hotel">Proprietário / Hotel (Acesso Total)</option>
+                    <option value="Gerente">Gerente (Operacional - Sem Configurações)</option>
                     <option value="Recepção">Recepção</option>
                     <option value="Governança">Governança</option>
                     <option value="Camareira">Camareira</option>
