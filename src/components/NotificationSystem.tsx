@@ -52,6 +52,7 @@ export interface NotificationItem {
 interface NotificationSystemProps {
   onNavigateTab: (tabId: string) => void;
   isMobile?: boolean;
+  currentUserRole?: string;
 }
 
 // Helpers de persistência de status de leitura de notificações no localStorage
@@ -69,12 +70,43 @@ const saveReadNotificationIds = (set: Set<string>) => {
   } catch {}
 };
 
-export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNavigateTab, isMobile = false }) => {
+// Helpers de persistência de notificações excluídas no localStorage
+const getDeletedNotificationIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem('hotel_notificacoes_excluidas_ids');
+    if (raw) return new Set(JSON.parse(raw));
+  } catch {}
+  return new Set();
+};
+
+const saveDeletedNotificationIds = (set: Set<string>) => {
+  try {
+    localStorage.setItem('hotel_notificacoes_excluidas_ids', JSON.stringify(Array.from(set)));
+  } catch {}
+};
+
+export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNavigateTab, isMobile = false, currentUserRole }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'todas' | 'reserva' | 'pedido'>('todas');
   const [activeToast, setActiveToast] = useState<NotificationItem | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Verificação de permissão: somente usuário administrador e hotel (gerente, proprietário, gestor) poderá excluir
+  const userRole = (
+    currentUserRole ||
+    (typeof window !== 'undefined' ? localStorage.getItem('hotelnozap_user_role') || '' : '')
+  ).toLowerCase().trim();
+
+  const canDelete = Boolean(
+    userRole.includes('admin') ||
+    userRole.includes('super') ||
+    userRole.includes('master') ||
+    userRole.includes('hotel') ||
+    userRole.includes('gerente') ||
+    userRole.includes('proprietario') ||
+    userRole.includes('gestor')
+  );
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -102,6 +134,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
     const loadInitialNotifications = async () => {
       try {
         const readIds = getReadNotificationIds();
+        const deletedIds = getDeletedNotificationIds();
 
         let initialSaved: NotificationItem[] = [];
         try {
@@ -171,7 +204,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
           }
         });
 
-        setNotifications(combined);
+        // Filtrar notificações que já foram excluídas
+        const filtered = combined.filter(n => !deletedIds.has(n.id));
+        setNotifications(filtered);
       } catch (err) {
         console.warn('Erro ao carregar notificações iniciais do Supabase:', err);
       }
@@ -257,6 +292,12 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
           setNotifications(prev => prev.map(n => n.id === readId ? { ...n, read: true } : n));
         } else if (event.data?.type === 'NOTIFICATIONS_ALL_READ') {
           setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        } else if (event.data?.type === 'NOTIFICATION_DELETED' && event.data?.id) {
+          const delId = event.data.id;
+          setNotifications(prev => prev.filter(n => n.id !== delId));
+        } else if (event.data?.type === 'NOTIFICATIONS_ALL_DELETED') {
+          const delIds = new Set(event.data?.ids || []);
+          setNotifications(prev => prev.filter(n => !delIds.has(n.id)));
         }
       };
     } catch (e) {
@@ -321,6 +362,26 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     };
     window.addEventListener('hotel_notifications_all_read', handleAllReadEvent);
+
+    const handleNotificationDeletedEvent = (e: any) => {
+      const id = e.detail?.id;
+      if (id) {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }
+    };
+    window.addEventListener('hotel_notification_deleted', handleNotificationDeletedEvent);
+
+    const handleAllDeletedEvent = (e: any) => {
+      const ids = e.detail?.ids;
+      if (Array.isArray(ids) && ids.length > 0) {
+        const set = new Set(ids);
+        setNotifications(prev => prev.filter(n => !set.has(n.id)));
+      } else {
+        const deletedIds = getDeletedNotificationIds();
+        setNotifications(prev => prev.filter(n => !deletedIds.has(n.id)));
+      }
+    };
+    window.addEventListener('hotel_notifications_all_deleted', handleAllDeletedEvent);
 
 
 
@@ -423,6 +484,8 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
       window.removeEventListener('hotel_nova_reserva', handleLocalNovaReserva);
       window.removeEventListener('hotel_notification_read', handleNotificationReadEvent);
       window.removeEventListener('hotel_notifications_all_read', handleAllReadEvent);
+      window.removeEventListener('hotel_notification_deleted', handleNotificationDeletedEvent);
+      window.removeEventListener('hotel_notifications_all_deleted', handleAllDeletedEvent);
       if (channel) {
         try { supabase.removeChannel(channel); } catch (e) {}
       }
@@ -511,6 +574,88 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
     } catch {}
   };
 
+  // Exclui notificação individual (Permitido apenas para Administrador e Hotel)
+  const deleteNotification = (itemId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!canDelete) return;
+
+    // 1. Grava no storage persistente de IDs excluídos
+    const deletedIds = getDeletedNotificationIds();
+    deletedIds.add(itemId);
+    saveDeletedNotificationIds(deletedIds);
+
+    // 2. Remove dos storages de pedidos e atendimentos
+    try {
+      const rawSaved = localStorage.getItem('hotel_notificacoes_pedidos');
+      if (rawSaved) {
+        const list = JSON.parse(rawSaved);
+        if (Array.isArray(list)) {
+          const updated = list.filter((solic: any) => {
+            const sId = solic.id || `solic-${solic.quartoNumero || '100'}-${(solic.itemNome || '').substring(0, 15)}-${solic.horario || ''}`;
+            return sId !== itemId && solic.id !== itemId;
+          });
+          localStorage.setItem('hotel_notificacoes_pedidos', JSON.stringify(updated));
+        }
+      }
+
+      const rawAtendimentos = localStorage.getItem('hotel_notificacoes_atendimentos');
+      if (rawAtendimentos) {
+        const list = JSON.parse(rawAtendimentos);
+        if (Array.isArray(list)) {
+          const updated = list.filter((at: any) => at.id !== itemId);
+          localStorage.setItem('hotel_notificacoes_atendimentos', JSON.stringify(updated));
+        }
+      }
+    } catch {}
+
+    // 3. Atualiza estado em tela
+    setNotifications(prev => prev.filter(n => n.id !== itemId));
+
+    // 4. Notifica outras instâncias e abas
+    window.dispatchEvent(new CustomEvent('hotel_notification_deleted', { detail: { id: itemId } }));
+    try {
+      const bc = new BroadcastChannel('hotel_notifications_channel');
+      bc.postMessage({ type: 'NOTIFICATION_DELETED', id: itemId });
+      bc.close();
+    } catch {}
+  };
+
+  // Exclui todas as notificações (Permitido apenas para Administrador e Hotel)
+  const deleteAllNotifications = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!canDelete) return;
+
+    if (!window.confirm('Tem certeza que deseja excluir todas as notificações?')) {
+      return;
+    }
+
+    // 1. Grava todos os IDs atuais no storage persistente de excluídos
+    const deletedIds = getDeletedNotificationIds();
+    const currentIds: string[] = [];
+    notifications.forEach(n => {
+      deletedIds.add(n.id);
+      currentIds.push(n.id);
+    });
+    saveDeletedNotificationIds(deletedIds);
+
+    // 2. Limpa storages locais de pedidos e atendimentos
+    try {
+      localStorage.setItem('hotel_notificacoes_pedidos', JSON.stringify([]));
+      localStorage.setItem('hotel_notificacoes_atendimentos', JSON.stringify([]));
+    } catch {}
+
+    // 3. Limpa estado da lista
+    setNotifications([]);
+
+    // 4. Notifica outras instâncias e abas
+    window.dispatchEvent(new CustomEvent('hotel_notifications_all_deleted', { detail: { ids: currentIds } }));
+    try {
+      const bc = new BroadcastChannel('hotel_notifications_channel');
+      bc.postMessage({ type: 'NOTIFICATIONS_ALL_DELETED', ids: currentIds });
+      bc.close();
+    } catch {}
+  };
+
   // Ao clicar na notificação:
   // Marca imediatamente como lida (-1 no contador e retira alerta) e navega para a aba de destino
   const handleNotificationClick = (item: NotificationItem) => {
@@ -577,35 +722,39 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
           className={`absolute ${isMobile ? 'right-0 top-12 w-[340px]' : 'right-0 top-12 w-[380px]'} bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 font-sans text-slate-800`}
         >
           {/* Cabeçalho do Painel */}
-          <div className="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/80">
-            <div className="flex items-center gap-2.5 min-w-0 flex-wrap sm:flex-nowrap">
+          <div className="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between gap-2 bg-slate-50/80">
+            <div className="flex items-center gap-2 min-w-0">
               <span className="material-symbols-outlined text-emerald-700 text-xl shrink-0 animate-bounce">notifications_active</span>
               <h3 className="font-extrabold text-slate-900 text-sm sm:text-base whitespace-nowrap">Notificações</h3>
               {unreadCount > 0 && (
-                <span className="whitespace-nowrap inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200/90 text-[11px] font-extrabold shrink-0 shadow-2xs">
+                <span className="whitespace-nowrap inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200/90 text-[10px] sm:text-[11px] font-extrabold shrink-0 shadow-2xs">
                   {unreadCount} {unreadCount === 1 ? 'nova' : 'novas'}
                 </span>
               )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               {unreadCount > 0 && (
                 <button
                   type="button"
                   onClick={markAllAsRead}
-                  className="hidden sm:inline-block whitespace-nowrap text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer ml-1 shrink-0 transition-colors"
+                  className="whitespace-nowrap text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer transition-colors"
                   title="Marcar todas as notificações como lidas"
                 >
-                  Marcar como lida
+                  Marcar lida
+                </button>
+              )}
+              {canDelete && notifications.length > 0 && (
+                <button
+                  type="button"
+                  onClick={deleteAllNotifications}
+                  className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer transition-colors"
+                  title="Excluir todas as notificações (Apenas Administrador e Hotel)"
+                >
+                  <span className="material-symbols-outlined text-[15px]">delete_sweep</span>
+                  <span>Limpar</span>
                 </button>
               )}
             </div>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={markAllAsRead}
-                className="sm:hidden whitespace-nowrap text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer shrink-0"
-              >
-                Marcar como lida
-              </button>
-            )}
           </div>
 
           {/* Abas de Filtro de Notificação */}
@@ -708,8 +857,8 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
                     </div>
                   </div>
 
-                  {/* Indicador de Lida/Não Lida */}
-                  <div className="shrink-0 pt-1 flex flex-col items-center">
+                  {/* Indicador de Lida/Não Lida e Botão de Excluir */}
+                  <div className="shrink-0 pt-1 flex flex-col items-center gap-2">
                     {!item.read ? (
                       <span 
                         className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse shadow-xs" 
@@ -722,6 +871,17 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
                       >
                         done_all
                       </span>
+                    )}
+
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={(e) => deleteNotification(item.id, e)}
+                        className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Excluir notificação"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
                     )}
                   </div>
                 </div>

@@ -1959,7 +1959,7 @@ export const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1">
-          <NotificationSystem isMobile={true} onNavigateTab={(tab) => setActiveTab(tab)} />
+          <NotificationSystem isMobile={true} onNavigateTab={(tab) => setActiveTab(tab)} currentUserRole={currentUserRole} />
           
           <div 
             className="relative ml-2 user-menu-container"
@@ -3075,7 +3075,7 @@ export const App: React.FC = () => {
             <div className="flex items-center gap-4 text-sm">
               <span className="text-[#45464d] hidden sm:inline mr-2">{currentDateTime}</span>
               <div className="flex items-center gap-2">
-                <NotificationSystem isMobile={false} onNavigateTab={(tab) => setActiveTab(tab)} />
+                <NotificationSystem isMobile={false} onNavigateTab={(tab) => setActiveTab(tab)} currentUserRole={currentUserRole} />
                 <div className="w-px h-6 bg-[#c6c6cd]/50 mx-1"></div>
                 <div 
                   className="relative user-menu-container"
