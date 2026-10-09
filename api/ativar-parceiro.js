@@ -110,6 +110,20 @@ export default async function handler(req, res) {
         if (mpRes.ok) {
           const mpData = await mpRes.json();
           if (mpData.status === 'approved' && Number(mpData.transaction_amount) >= 190) {
+            // Verificação anti-replay: impede reutilizar o mesmo comprovante para múltiplas contas
+            const { data: alreadyUsedPartner } = await supabaseAdmin
+              .from('parceiros')
+              .select('id, email, nome')
+              .ilike('categoria', `%MP_${paymentId}%`)
+              .maybeSingle();
+
+            if (alreadyUsedPartner && alreadyUsedPartner.email?.toLowerCase() !== String(email).trim().toLowerCase()) {
+              return res.status(400).json({
+                success: false,
+                error: `Este comprovante de pagamento já foi utilizado pelo parceiro ${alreadyUsedPartner.nome}. Não é permitido reutilizar pagamentos.`
+              });
+            }
+
             pagamentoValido = true;
           } else {
             return res.status(400).json({
@@ -285,7 +299,7 @@ export default async function handler(req, res) {
       email: cleanEmail,
       whatsapp: cleanPhone || '11999999999',
       documento: cleanCpf,
-      categoria: 'Franquia Regional',
+      categoria: paymentId ? `Franquia Regional [MP_${paymentId}]` : 'Franquia Regional',
       cidade_uf: `${cleanCidade || 'São Paulo'} / ${cleanUf || 'SP'}`,
       cidade: cleanCidade,
       uf: cleanUf,

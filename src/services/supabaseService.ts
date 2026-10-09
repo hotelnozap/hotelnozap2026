@@ -619,6 +619,18 @@ export const usuariosService = {
         return false;
       }
 
+      // R11: escopo Hotel não pode excluir usuário de outro hotel
+      const savedRole = this._currentUserRoleString();
+      const roleScope = this._extractHotelRole(savedRole);
+      const forcedScopeHotelId = roleScope === 'hotel' ? this._currentScopeHotelId() : null;
+      if (roleScope === 'hotel' && forcedScopeHotelId) {
+        const targetHotelId = targetUser?.hotel_id || null;
+        if (!targetHotelId || targetHotelId !== forcedScopeHotelId) {
+          console.warn('deleteUsuario bloqueado: usuário não pertence ao hotel da sessão.');
+          return false;
+        }
+      }
+
       if (targetUser?.perfil === 'Hotel' && targetUser?.hotel_id) {
         const { data: hotelUsers } = await supabase
           .from('usuarios')
@@ -1359,11 +1371,17 @@ export const hospedesService = {
         }
       }
 
-      // 2. Garantia de exclusão direta nas tabelas da aplicação
-      await supabase.from('hospedes').delete().eq('id', id);
+      // 2. Garantia de exclusão direta nas tabelas da aplicação com isolamento de hotel
+      const dbHotelId = resolveHotelDbId(hId);
+      let delHospQ = supabase.from('hospedes').delete().eq('id', id);
+      if (dbHotelId) {
+        delHospQ = delHospQ.eq('hotel_id', dbHotelId);
+      }
+      await delHospQ;
 
       if (targetEmail) {
-        await supabase.from('usuarios').delete().ilike('email', targetEmail);
+        // Blindagem: NUNCA excluir contas com perfil de gerência, recepção ou administração ao deletar um hóspede
+        await supabase.from('usuarios').delete().ilike('email', targetEmail).eq('perfil', 'Hospede');
       }
 
       if (typeof window !== 'undefined') {
@@ -2022,7 +2040,12 @@ export const produtosService = {
     this.saveLocalProdutos(local.filter(p => p.id !== id), hId);
 
     try {
-      await supabase.from('produtos').delete().eq('id', id);
+      const dbHotelId = resolveHotelDbId(hId);
+      let delQuery = supabase.from('produtos').delete().eq('id', id);
+      if (dbHotelId) {
+        delQuery = delQuery.eq('hotel_id', dbHotelId);
+      }
+      await delQuery;
     } catch (err) {
       console.warn('Erro ao excluir produto no Supabase:', err);
     }
@@ -3610,11 +3633,16 @@ export const quartosService = {
     this.saveLocalQuartos(local.filter(q => q.id !== id), hId);
 
     try {
+      const dbHotelId = resolveHotelDbId(hId);
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let delQuery = supabase.from('quartos').delete();
+      if (dbHotelId) {
+        delQuery = delQuery.eq('hotel_id', dbHotelId);
+      }
       if (uuidRegex.test(id)) {
-        await supabase.from('quartos').delete().eq('id', id);
+        await delQuery.eq('id', id);
       } else if (target?.number) {
-        await supabase.from('quartos').delete().eq('numero', target.number);
+        await delQuery.eq('numero', target.number);
       }
     } catch { /* ignore */ }
     return true;
@@ -4117,10 +4145,16 @@ export const reservasService = {
 
   async deleteReserva(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('reservas')
-        .delete()
-        .eq('id', id);
+      const savedRole = usuariosService._currentUserRoleString();
+      const roleScope = usuariosService._extractHotelRole(savedRole);
+      const forcedScopeHotelId = roleScope === 'hotel' ? usuariosService._currentScopeHotelId() : null;
+
+      let delQuery = supabase.from('reservas').delete().eq('id', id);
+      if (forcedScopeHotelId) {
+        delQuery = delQuery.eq('hotel_id', forcedScopeHotelId);
+      }
+
+      const { error } = await delQuery;
 
       if (!error && typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: { id, deleted: true } }));

@@ -55,23 +55,30 @@ export const caixaService = {
           const parsed = JSON.parse(savedSpecific);
           if (Array.isArray(parsed)) {
             parsed.forEach((m: CaixaMovimentacao) => {
-              if (m.id) mapa.set(m.id, m);
+              if (m.id) {
+                if (!hotelId || !m.hotelId || m.hotelId === hotelId) {
+                  mapa.set(m.id, m);
+                }
+              }
             });
           }
         } catch {}
       }
 
-      // Procura também em todas as outras chaves de movimentações de caixa do localStorage para não perder nada
+      // Procura com isolamento de tenant em chaves legadas se hotelId for compatível
       try {
         const allKeys = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_KEY_PREFIX));
         for (const k of allKeys) {
+          if (hotelId && hotelId !== 'default' && k !== specificKey && k !== `${STORAGE_KEY_PREFIX}default`) {
+            continue;
+          }
           const raw = localStorage.getItem(k);
           if (raw) {
             const arr = JSON.parse(raw);
             if (Array.isArray(arr)) {
               arr.forEach((m: CaixaMovimentacao) => {
                 if (m.id && !mapa.has(m.id)) {
-                  if (!hotelId || !m.hotelId || m.hotelId === hotelId || m.hotelId === 'default') {
+                  if (!hotelId || m.hotelId === hotelId) {
                     mapa.set(m.id, m);
                   }
                 }
@@ -102,13 +109,6 @@ export const caixaService = {
       if (typeof window === 'undefined') return;
       const key = this._getStorageKey(hotelId);
       localStorage.setItem(key, JSON.stringify(movs));
-
-      // Garante espelhamento na chave default para acesso global da recepção
-      if (key !== `${STORAGE_KEY_PREFIX}default`) {
-        try {
-          localStorage.setItem(`${STORAGE_KEY_PREFIX}default`, JSON.stringify(movs));
-        } catch {}
-      }
 
       // Dispara eventos para atualização instantânea em todas as telas
       window.dispatchEvent(new CustomEvent('hotel_caixa_atualizado', { detail: movs }));

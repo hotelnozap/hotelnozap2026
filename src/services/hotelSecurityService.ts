@@ -153,10 +153,12 @@ export const hotelSecurityService = {
    * Verifica se o E-mail de Acesso já está cadastrado no sistema (usuarios, hoteis, parceiros).
    */
   async checkEmail(email: string, excludeHotelId?: string | null): Promise<UniquenessCheckResult> {
-    const clean = email.trim().toLowerCase();
+    const clean = email.trim().toLowerCase().replace(/[,()'"\s]/g, '');
     if (!clean || !clean.includes('@') || !clean.includes('.')) {
       return { checking: false, checked: false, exists: false, message: '' };
     }
+
+    const safeExcludeId = excludeHotelId && /^[0-9a-f-]{36}$/i.test(excludeHotelId) ? excludeHotelId : null;
 
     try {
       // 1. Consulta em usuarios (email) - se for o mesmo hotel, não considera duplicado
@@ -165,8 +167,8 @@ export const hotelSecurityService = {
         .select('id, nome, email, hotel_id')
         .ilike('email', clean);
 
-      if (excludeHotelId) {
-        qUsuario = qUsuario.or(`hotel_id.is.null,hotel_id.neq.${excludeHotelId}`);
+      if (safeExcludeId) {
+        qUsuario = qUsuario.or(`hotel_id.is.null,hotel_id.neq.${safeExcludeId}`);
       }
 
       // 2. Consulta em hoteis (email_login ou email_gerente)
@@ -175,8 +177,8 @@ export const hotelSecurityService = {
         .select('id, nome, email_login, email_gerente')
         .or(`email_login.ilike.${clean},email_gerente.ilike.${clean}`);
 
-      if (excludeHotelId) {
-        qHotel = qHotel.neq('id', excludeHotelId);
+      if (safeExcludeId) {
+        qHotel = qHotel.neq('id', safeExcludeId);
       }
 
       // 3. Consulta em parceiros (email)

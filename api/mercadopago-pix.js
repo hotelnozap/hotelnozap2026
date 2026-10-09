@@ -272,7 +272,24 @@ export default async function handler(req, res) {
           console.log(`[MP-PIX] action=check FASE2A MP retornou status=${mpData.status} transaction_amount=${mpData.transaction_amount} external_reference=${mpData.external_reference}`);
           if (mpData.status === 'approved') {
             if (hotelId && supabaseAdmin) {
-              try { await supabaseAdmin.from('hoteis').update({ status: 'ativo' }).eq('id', hotelId); console.log(`[MP-PIX] action=check FASE2A hotel ${hotelId} status atualizado PARA ATIVO via paymentId MP.`); } catch (uerr) { console.warn('[MP-PIX] FASE2A update erro:', uerr); }
+              try {
+                const { data: alreadyUsed } = await supabaseAdmin
+                  .from('hoteis')
+                  .select('id, nome')
+                  .like('notes', `%MP_ID=${paymentId}%`)
+                  .maybeSingle();
+
+                if (alreadyUsed && alreadyUsed.id !== hotelId) {
+                  console.warn(`[MP-PIX] FASE2A: Pagamento ${paymentId} já consumido por outro hotel (${alreadyUsed.id}).`);
+                  return res.status(400).json({ approved: false, error: 'Este pagamento já foi vinculado a outro hotel.' });
+                }
+
+                await supabaseAdmin.from('hoteis').update({ 
+                  status: 'ativo',
+                  notes: `Ativação via paymentId MP_ID=${paymentId} em ${new Date().toLocaleString('pt-BR')}`
+                }).eq('id', hotelId); 
+                console.log(`[MP-PIX] action=check FASE2A hotel ${hotelId} status atualizado PARA ATIVO via paymentId MP.`); 
+              } catch (uerr) { console.warn('[MP-PIX] FASE2A update erro:', uerr); }
             }
             return res.status(200).json({ approved: true, status: 'approved', source: 'mercadopago_payment_id', mpStatus: mpData.status });
           }
@@ -315,6 +332,24 @@ export default async function handler(req, res) {
           const matchRef = hotelId ? (p.external_reference === hotelId || String(p.description || '').includes(hotelId)) : false;
 
           if (!isApproved || !isRecent) continue;
+
+          // Proteção Anti-Replay: Verifica se este paymentId já foi consumido por outro hotel
+          if (supabaseAdmin) {
+            try {
+              const { data: alreadyUsed } = await supabaseAdmin
+                .from('hoteis')
+                .select('id, nome')
+                .like('notes', `%MP_ID=${p.id}%`)
+                .maybeSingle();
+
+              if (alreadyUsed && alreadyUsed.id !== hotelId) {
+                console.warn(`[MP-PIX] Pagamento ${p.id} já consumido pelo hotel ${alreadyUsed.id} (${alreadyUsed.nome}). Pulando.`);
+                continue;
+              }
+            } catch (errCheck) {
+              console.warn('[MP-PIX] Aviso ao verificar reuso de paymentId:', errCheck);
+            }
+          }
 
           // REGRA ESPECIAL FALLBACK pix_chave (Copia-e-Cola): NÃO necessita external_reference, basta VALOR
           if (isFallbackPixChave && matchAmount && valorEsperado > 0) {

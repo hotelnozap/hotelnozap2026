@@ -22,43 +22,45 @@ export default async function handler(req, res) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (serviceKey) {
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
+  if (!serviceKey) {
+    return res.status(500).json({ error: 'Configuração do servidor incompleta: SUPABASE_SERVICE_ROLE_KEY ausente.' });
+  }
 
-    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
-    const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
+  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
 
-    if (!token) {
-      return res.status(401).json({ error: 'Acesso não autorizado: token de autenticação ausente.' });
-    }
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+  const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
 
-    const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
-    if (userErr || !user) {
-      return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
-    }
+  if (!token) {
+    return res.status(401).json({ error: 'Acesso não autorizado: token de autenticação ausente.' });
+  }
 
-    const { data: dbUser } = await supabaseAdmin
-      .from('usuarios')
-      .select('perfil, cargo')
-      .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
-      .maybeSingle();
+  const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
+  if (userErr || !user) {
+    return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+  }
 
-    const perfil = (dbUser?.perfil || user.user_metadata?.perfil || '').toLowerCase();
-    const cargo = (dbUser?.cargo || '').toLowerCase();
-    const userEmail = (user.email || '').toLowerCase();
+  const { data: dbUser } = await supabaseAdmin
+    .from('usuarios')
+    .select('perfil, cargo')
+    .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
+    .maybeSingle();
 
-    const isMasterAdmin = 
-      userEmail === 'contato@hotelnozap.com.br' ||
-      perfil.includes('admin') ||
-      perfil.includes('super') ||
-      perfil.includes('master') ||
-      cargo.includes('admin');
+  const perfil = (dbUser?.perfil || user.user_metadata?.perfil || '').toLowerCase();
+  const cargo = (dbUser?.cargo || '').toLowerCase();
+  const userEmail = (user.email || '').toLowerCase();
 
-    if (!isMasterAdmin) {
-      return res.status(403).json({ error: 'Permissão negada. Apenas administradores podem disparar notificações push.' });
-    }
+  const isMasterAdmin = 
+    userEmail === 'contato@hotelnozap.com.br' ||
+    perfil.includes('admin') ||
+    perfil.includes('super') ||
+    perfil.includes('master') ||
+    cargo.includes('admin');
+
+  if (!isMasterAdmin) {
+    return res.status(403).json({ error: 'Permissão negada. Apenas administradores podem disparar notificações push.' });
   }
 
   try {

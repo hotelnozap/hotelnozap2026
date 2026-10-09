@@ -34,11 +34,34 @@ export default async function handler(req, res) {
     });
   }
 
-  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+  let secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
   if (!secretKey) {
-    console.warn('[RECAPTCHA] RECAPTCHA_SECRET_KEY não encontrada nas variáveis de ambiente do servidor.');
-    // Se a secret key não estiver definida no runtime da Vercel, não bloqueia o login
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceKey) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+          auth: { autoRefreshToken: false, persistSession: false }
+        });
+        const { data: dbParams } = await supabaseAdmin
+          .from('parametros_sistema')
+          .select('recaptcha_secret_key')
+          .limit(1)
+          .maybeSingle();
+        if (dbParams?.recaptcha_secret_key && dbParams.recaptcha_secret_key.trim().length > 10) {
+          secretKey = dbParams.recaptcha_secret_key.trim();
+        }
+      } catch (e) {
+        console.warn('[RECAPTCHA] Erro ao consultar parametros_sistema:', e);
+      }
+    }
+  }
+
+  if (!secretKey) {
+    console.warn('[RECAPTCHA] RECAPTCHA_SECRET_KEY não encontrada nas variáveis de ambiente nem no banco.');
+    // Se a secret key não estiver definida, não bloqueia o login
     return res.status(200).json({
       success: true,
       score: 1.0,
