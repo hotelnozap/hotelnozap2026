@@ -1484,7 +1484,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
             uf: currentHotel.uf,
             whatsappPhone: currentHotel.whatsappPhone || (currentHotel as any).whatsapp,
             notes: currentHotel.notes,
-            cnpj: currentHotel.cnpj
+            cnpj: (currentHotel as any).cnpj || ''
           }}
           onSuccess={(updatedHotel) => {
             setCurrentHotel(prev => prev ? ({

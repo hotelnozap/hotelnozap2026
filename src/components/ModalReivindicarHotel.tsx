@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { hoteisService, usuariosService, creditosService, resolveHotelDbId } from '../services/supabaseService';
+import { hoteisService, usuariosService, resolveHotelDbId } from '../services/supabaseService';
+import { creditosService } from '../services/creditosService';
 import { maskCnpj, maskPhone, isValidCnpj } from '../utils/masks';
 
 export interface ModalReivindicarHotelProps {
