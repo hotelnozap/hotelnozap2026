@@ -45,12 +45,16 @@ export interface HotelPlanInfo {
 export interface ConexoesWhatsappProps {
   onNavigateToDashboard?: () => void;
   onNavigateToUpgrade?: () => void;
+  currentUserRole?: string;
 }
 
 export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
   onNavigateToDashboard,
-  onNavigateToUpgrade
+  onNavigateToUpgrade,
+  currentUserRole
 }) => {
+  const roleClean = (currentUserRole || (typeof window !== 'undefined' ? localStorage.getItem('hotelnozap_user_role') || '' : '')).toLowerCase();
+  const isRecepcao = roleClean.includes('recep') || roleClean.includes('recepcao') || roleClean.includes('recepção');
   const [instances, setInstances] = useState<WhatsappInstance[]>([]);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [atualizandoStatus, setAtualizandoStatus] = useState<boolean>(false);
@@ -1124,23 +1128,26 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
               <span>Escanear QR Code</span>
             </button>
 
-            {hotelPlanInfo.canCreateMore ? (
-              <button
-                onClick={() => setIsNovaConexaoOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#003400] hover:bg-[#002500] text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-xs transition cursor-pointer active:scale-95"
-              >
-                <span className="material-symbols-outlined text-xl">add</span>
-                <span>Nova Conexão</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsUpgradeModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-xs transition cursor-pointer active:scale-95"
-                title="Limite de instâncias do seu plano atingido. Clique para ver opções de upgrade."
-              >
-                <span className="material-symbols-outlined text-xl">lock</span>
-                <span>{hotelPlanInfo.maxInstances === 0 ? 'Sem Conexão no Plano Grátis' : `Limite do Plano (${hotelPlanInfo.currentCount}/${hotelPlanInfo.maxInstances})`}</span>
-              </button>
+            {/* BOTÕES DE AÇÃO SUPERIORES: Recepção não tem permissão para criar novas instâncias nem ver limite do plano */}
+            {!isRecepcao && (
+              hotelPlanInfo.canCreateMore ? (
+                <button
+                  onClick={() => setIsNovaConexaoOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#003400] hover:bg-[#002500] text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-xs transition cursor-pointer active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-xl">add</span>
+                  <span>Nova Conexão</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-xs transition cursor-pointer active:scale-95"
+                  title="Limite de instâncias do seu plano atingido. Clique para ver opções de upgrade."
+                >
+                  <span className="material-symbols-outlined text-xl">lock</span>
+                  <span>{hotelPlanInfo.maxInstances === 0 ? 'Sem Conexão no Plano Grátis' : `Limite do Plano (${hotelPlanInfo.currentCount}/${hotelPlanInfo.maxInstances})`}</span>
+                </button>
+              )
             )}
           </div>
         ) : activeSubTab === 'atendimentos' ? (
@@ -1258,63 +1265,65 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
       {/* CONTEÚDO DA ABA 1: INSTÂNCIAS & CONEXÕES */}
       {activeSubTab === 'instancias' && (
         <>
-          {/* BANNER DE REGRAS E CONSUMO DO PLANO */}
-      <div
-        className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
-          !hotelPlanInfo.canCreateMore
-            ? 'bg-amber-50/90 border-amber-300 text-amber-950 shadow-xs'
-            : 'bg-slate-50 border-slate-200 text-slate-800'
-        }`}
-      >
-        <div className="flex items-start md:items-center gap-3.5">
-          <div
-            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-              !hotelPlanInfo.canCreateMore ? 'bg-amber-500 text-white' : 'bg-[#003400] text-white'
-            }`}
-          >
-            <span className="material-symbols-outlined text-2xl">
-              {!hotelPlanInfo.canCreateMore ? 'lock' : 'verified_user'}
-            </span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-extrabold text-sm text-slate-900">
-                Plano do Hotel: <span className="text-emerald-800 font-black">{hotelPlanInfo.planName}</span>
-              </span>
-              <span
-                className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full ${
-                  !hotelPlanInfo.canCreateMore
-                    ? 'bg-amber-200 text-amber-900 border border-amber-300'
-                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                }`}
-              >
-                {!hotelPlanInfo.canCreateMore ? 'Limite Atingido' : 'Conexão Disponível'}
+          {/* BANNER DE REGRAS E CONSUMO DO PLANO (oculto para recepção) */}
+      {!isRecepcao && (
+        <div
+          className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
+            !hotelPlanInfo.canCreateMore
+              ? 'bg-amber-50/90 border-amber-300 text-amber-950 shadow-xs'
+              : 'bg-slate-50 border-slate-200 text-slate-800'
+          }`}
+        >
+          <div className="flex items-start md:items-center gap-3.5">
+            <div
+              className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+                !hotelPlanInfo.canCreateMore ? 'bg-amber-500 text-white' : 'bg-[#003400] text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-2xl">
+                {!hotelPlanInfo.canCreateMore ? 'lock' : 'verified_user'}
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5">
-              {!hotelPlanInfo.canCreateMore ? (
-                <>
-                  Seu plano permite no máximo <strong>{hotelPlanInfo.maxInstances} conexão(ões) de WhatsApp</strong> simultânea(s). Todas as vagas já estão ocupadas. Para conectar novos setores (ex: Reservas, Recepção, Governança), faça o upgrade do plano.
-                </>
-              ) : (
-                <>
-                  Uso de conexões: <strong>{hotelPlanInfo.currentCount} de {hotelPlanInfo.maxInstances}</strong> em uso ({hotelPlanInfo.maxInstances - hotelPlanInfo.currentCount} vaga restante no plano).
-                </>
-              )}
-            </p>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-extrabold text-sm text-slate-900">
+                  Plano do Hotel: <span className="text-emerald-800 font-black">{hotelPlanInfo.planName}</span>
+                </span>
+                <span
+                  className={`text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                    !hotelPlanInfo.canCreateMore
+                      ? 'bg-amber-200 text-amber-900 border border-amber-300'
+                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  }`}
+                >
+                  {!hotelPlanInfo.canCreateMore ? 'Limite Atingido' : 'Conexão Disponível'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5">
+                {!hotelPlanInfo.canCreateMore ? (
+                  <>
+                    Seu plano permite no máximo <strong>{hotelPlanInfo.maxInstances} conexão(ões) de WhatsApp</strong> simultânea(s). Todas as vagas já estão ocupadas. Para conectar novos setores (ex: Reservas, Recepção, Governança), faça o upgrade do plano.
+                  </>
+                ) : (
+                  <>
+                    Uso de conexões: <strong>{hotelPlanInfo.currentCount} de {hotelPlanInfo.maxInstances}</strong> em uso ({hotelPlanInfo.maxInstances - hotelPlanInfo.currentCount} vaga restante no plano).
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+            <button
+              onClick={() => setIsUpgradeModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-base text-amber-600">workspace_premium</span>
+              <span>Regras & Upgrade</span>
+            </button>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-          <button
-            onClick={() => setIsUpgradeModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 shadow-2xs"
-          >
-            <span className="material-symbols-outlined text-base text-amber-600">workspace_premium</span>
-            <span>Regras & Upgrade</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* PAINEL KPIS BENTO GRID (4 CARDS) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1504,15 +1513,19 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
           </div>
           <h3 className="text-base font-bold text-slate-800 mb-1">Nenhuma instância encontrada</h3>
           <p className="text-xs sm:text-sm text-slate-500 max-w-sm mb-4">
-            Cadastre uma nova conexão para vincular o WhatsApp da recepção ou reservas do hotel.
+            {isRecepcao 
+              ? 'Nenhuma conexão ativa configurada para o hotel no momento. Solicite à gerência a conexão de uma instância.'
+              : 'Cadastre uma nova conexão para vincular o WhatsApp da recepção ou reservas do hotel.'}
           </p>
-          <button
-            onClick={() => setIsNovaConexaoOpen(true)}
-            className="px-5 py-2.5 bg-[#003400] hover:bg-[#002500] text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            <span>Cadastrar Primeira Conexão</span>
-          </button>
+          {!isRecepcao && (
+            <button
+              onClick={() => setIsNovaConexaoOpen(true)}
+              className="px-5 py-2.5 bg-[#003400] hover:bg-[#002500] text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              <span>Cadastrar Primeira Conexão</span>
+            </button>
+          )}
         </div>
       ) : viewMode === 'list' ? (
         /* MODO LISTA / TABELA */

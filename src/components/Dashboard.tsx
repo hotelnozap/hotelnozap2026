@@ -3,9 +3,12 @@ import { dashboardService, DashboardMetrics, currentHotelService, reservasServic
 
 interface DashboardProps {
   onNavigateTab?: (tab: string) => void;
+  currentUserRole?: string;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab, currentUserRole }) => {
+  const userRoleClean = (currentUserRole || '').toLowerCase();
+  const isRecepcao = userRoleClean.includes('recep') || userRoleClean.includes('recepcao') || userRoleClean.includes('recepção');
   const [period, setPeriod] = useState<'hoje' | 'semana' | 'mes'>('hoje');
   const [currentHotelName, setCurrentHotelName] = useState<string>(() => {
     return currentHotelService.getCurrentHotel()?.name || 'Hotel Master';
@@ -302,9 +305,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
 
         {/* KPI 6: Faturamento do Período */}
         <div 
-          onClick={() => onNavigateTab && onNavigateTab('caixa')}
-          className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-emerald-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
-          title="Ver Controle de Caixa"
+          onClick={() => !isRecepcao && onNavigateTab && onNavigateTab('caixa')}
+          className={`bg-emerald-50/90 border border-emerald-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between ${isRecepcao ? '' : 'cursor-pointer hover:border-emerald-300 hover:shadow-xs active:scale-[0.98]'} transition-all duration-150`}
+          title={isRecepcao ? undefined : "Ver Controle de Caixa"}
         >
           <div className="flex items-start justify-between mb-2">
             <span className="text-xs sm:text-sm font-medium text-slate-700 truncate">
@@ -339,7 +342,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
                 Total registrado nos últimos 7 dias: <span className="font-bold text-[#006c49]">{totalSemana.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
               </p>
             </div>
-            {onNavigateTab && (
+            {onNavigateTab && !isRecepcao && (
               <button 
                 type="button"
                 onClick={() => onNavigateTab('caixa')}

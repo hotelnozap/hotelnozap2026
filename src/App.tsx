@@ -918,6 +918,11 @@ export const App: React.FC = () => {
      !userRoleClean.includes('camareira') && 
      !userRoleClean.includes('hospede'))
   );
+  const isRecepcao = isHotelUser && (
+    userRoleClean.includes('recep') || 
+    userRoleClean.includes('recepcao') || 
+    userRoleClean.includes('recepção')
+  );
 
 
 
@@ -1057,6 +1062,24 @@ export const App: React.FC = () => {
   // Proteção de abas: Administrador não acessa abas operacionais de hotel e Hotel não acessa abas administrativas
   useEffect(() => {
     if (isHotelUser) {
+      if (isRecepcao) {
+        const recepcaoBlockedTabs = [
+          'camareira',
+          'cupons', 'cadastro-cupom',
+          'usuarios', 'cadastro-usuario', 'tipos-usuarios', 'cadastro-tipo-usuario',
+          'caixa', 'controle-caixa', 'contas-pagar', 'contas-receber',
+          'categorias-contas-pagar', 'categorias-contas-receber',
+          'cadastro-conta-pagar', 'cadastro-conta-receber',
+          'cadastro-categoria-conta-pagar', 'cadastro-categoria-conta-receber',
+          'config', 'config-hotel', 'config-mercado-pago',
+          'relatorios'
+        ];
+        if (recepcaoBlockedTabs.includes(activeTab)) {
+          setActiveTab('dashboard');
+          return;
+        }
+      }
+
       const adminOnlyTabs = [
         'admin-dashboard', 'parceiros', 'cadastro-parceiro', 'planos', 
         'cadastro-plano', 'admin-conexoes', 'admin-financeiro', 
@@ -1083,7 +1106,7 @@ export const App: React.FC = () => {
         setActiveTab('admin-dashboard');
       }
     }
-  }, [isHotelUser, activeTab]);
+  }, [isHotelUser, isRecepcao, activeTab]);
 
   // Função para obter o link público do hotel logado na rota /hoteis/nomedohotel
   const getLoggedHotelUrl = () => {
@@ -1107,6 +1130,27 @@ export const App: React.FC = () => {
   };
 
   // Menus distintos: Administrador tem menus globais SaaS, Usuário de Hotel tem menus operacionais
+  const hotelMenuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { id: 'reservas', label: 'Reservas', icon: 'book_online' },
+    { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
+    { id: 'mapa', label: 'Mapa dos Quartos', icon: 'calendar_view_month' },
+    { id: 'camareira', label: 'Governança & Camareiras', icon: 'cleaning_services' },
+    { id: 'hospedes', label: 'Hóspedes', icon: 'group' },
+    { id: 'cupons', label: 'Cupom de Desconto', icon: 'confirmation_number' },
+    { id: 'usuarios', label: 'Usuários da Equipe', icon: 'manage_accounts' },
+    { id: 'produto', label: 'Cadastro de Produtos', icon: 'inventory_2' },
+    { id: 'caixa', label: 'Controle de Caixa', icon: 'account_balance_wallet' },
+    { id: 'conexao', label: 'Conexão WhatsApp', icon: 'sync' },
+    { id: 'config', label: 'Configurações', icon: 'settings' },
+    { id: 'relatorios', label: 'Relatórios', icon: 'assessment' },
+    { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
+  ];
+
+  const filteredHotelMenuItems = isRecepcao
+    ? hotelMenuItems.filter(item => !['camareira', 'cupons', 'usuarios', 'caixa', 'config', 'relatorios'].includes(item.id))
+    : hotelMenuItems;
+
   const menuItems = !isHotelUser ? [
     { id: 'admin-dashboard', label: 'Área Administrativa', icon: 'admin_panel_settings' },
     { id: 'cadastro-hoteis', label: 'Hotéis & Pousadas', icon: 'domain' },
@@ -1124,22 +1168,7 @@ export const App: React.FC = () => {
     { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
     { id: 'relatorios', label: 'Relatórios', icon: 'assessment' },
     { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
-  ] : [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'reservas', label: 'Reservas', icon: 'book_online' },
-    { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
-    { id: 'mapa', label: 'Mapa dos Quartos', icon: 'calendar_view_month' },
-    { id: 'camareira', label: 'Governança & Camareiras', icon: 'cleaning_services' },
-    { id: 'hospedes', label: 'Hóspedes', icon: 'group' },
-    { id: 'cupons', label: 'Cupom de Desconto', icon: 'confirmation_number' },
-    { id: 'usuarios', label: 'Usuários da Equipe', icon: 'manage_accounts' },
-    { id: 'produto', label: 'Cadastro de Produtos', icon: 'inventory_2' },
-    { id: 'caixa', label: 'Controle de Caixa', icon: 'account_balance_wallet' },
-    { id: 'conexao', label: 'Conexão WhatsApp', icon: 'sync' },
-    { id: 'config', label: 'Configurações', icon: 'settings' },
-    { id: 'relatorios', label: 'Relatórios', icon: 'assessment' },
-    { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
-  ];
+  ] : filteredHotelMenuItems;
 
   const pathParts = window.location.pathname
     .toLowerCase()
@@ -3163,7 +3192,7 @@ export const App: React.FC = () => {
               onLogout={() => handleLogout()}
             />
           )}
-          {activeTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setActiveTab(tab)} />}
+          {activeTab === 'dashboard' && <Dashboard onNavigateTab={(tab) => setActiveTab(tab)} currentUserRole={currentUserRole} />}
           {activeTab === 'mapa' && isHotelUser && (
             <MapaQuartos 
               currentUserRole={currentUserRole}
@@ -3417,6 +3446,7 @@ export const App: React.FC = () => {
           )}
           {(activeTab === 'conexao' || activeTab === 'conexoes-whatsapp') && (
             <ConexoesWhatsapp 
+              currentUserRole={currentUserRole}
               onNavigateToDashboard={() => setActiveTab('dashboard')}
               onNavigateToUpgrade={() => setActiveTab(isHotelUser ? 'assinar' : 'planos')}
             />
@@ -3813,16 +3843,18 @@ export const App: React.FC = () => {
               <span className="text-[11px]">Reservas</span>
             </button>
 
-            <button 
-              onClick={() => setActiveTab('caixa')}
-              className={
-                "flex flex-col items-center gap-0.5 flex-1 transition-colors " +
-                (activeTab === 'caixa' ? 'text-[#006c49] font-bold' : 'text-[#45464d] hover:text-[#0b1c30]')
-              }
-            >
-              <span className={"material-symbols-outlined text-2xl " + (activeTab === 'caixa' ? 'icon-fill' : '')}>account_balance_wallet</span>
-              <span className="text-[11px]">Financeiro</span>
-            </button>
+            {!isRecepcao && (
+              <button 
+                onClick={() => setActiveTab('caixa')}
+                className={
+                  "flex flex-col items-center gap-0.5 flex-1 transition-colors " +
+                  (activeTab === 'caixa' ? 'text-[#006c49] font-bold' : 'text-[#45464d] hover:text-[#0b1c30]')
+                }
+              >
+                <span className={"material-symbols-outlined text-2xl " + (activeTab === 'caixa' ? 'icon-fill' : '')}>account_balance_wallet</span>
+                <span className="text-[11px]">Financeiro</span>
+              </button>
+            )}
           </>
         )}
       </nav>
