@@ -6,6 +6,7 @@ import { webhookN8nService } from '../services/webhookN8nService';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { maskPhone } from '../utils/masks';
+import { ModalReivindicarHotel } from './ModalReivindicarHotel';
 
 export const slugify = (str: string): string => {
   return str
@@ -129,6 +130,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [activePhoto, setActivePhoto] = useState<string>('');
   const [totalQuartosCount, setTotalQuartosCount] = useState<number>(0);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState<boolean>(false);
 
   // Estados para captura da Fila de Espera VIP (quando o hotel está 100% lotado)
   const [leadNome, setLeadNome] = useState<string>('');
@@ -663,6 +665,14 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
     return false;
   }, [currentHotel, quartosList.length, totalQuartosCount]);
 
+  const isHotelReivindicado = React.useMemo(() => {
+    if (!currentHotel) return false;
+    const notesLower = (currentHotel.notes || '').toLowerCase();
+    if (notesLower.includes('[reivindicado]')) return true;
+    if ((currentHotel as any).loginEmail && (currentHotel as any).loginEmail.trim() !== '') return true;
+    return false;
+  }, [currentHotel]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f8f9ff] flex flex-col items-center justify-center space-y-4">
@@ -728,6 +738,18 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
             >
               Fale Conosco
             </a>
+            {isHotelImportadoGoogle && !isHotelReivindicado && (
+              <button
+                type="button"
+                onClick={() => setIsClaimModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-xs font-extrabold transition-all shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
+                title="É o proprietário deste hotel? Reivindique seu cadastro gratuitamente"
+              >
+                <span className="material-symbols-outlined text-base">verified_user</span>
+                <span className="hidden sm:inline">Reivindicar Perfil</span>
+                <span className="sm:hidden">Reivindicar</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 if (onNavigateToLogin) onNavigateToLogin();
@@ -742,6 +764,33 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
 
         </div>
       </header>
+
+      {/* Top Banner de Alerta para Hotéis Importados Não Reivindicados */}
+      {isHotelImportadoGoogle && !isHotelReivindicado && (
+        <div className="pt-20 pb-2 px-4 max-w-7xl mx-auto">
+          <div className="bg-gradient-to-r from-amber-100 via-amber-50 to-orange-100/80 border border-amber-300 rounded-2xl p-4 text-xs font-medium text-amber-950 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5 text-center sm:text-left">
+              <span className="material-symbols-outlined text-amber-700 text-2xl shrink-0">info</span>
+              <div>
+                <p className="font-extrabold text-slate-900 text-xs sm:text-sm">
+                  Perfil importado do Google Maps. É o proprietário ou gerente de {currentHotel.name}?
+                </p>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  Assuma a administração oficial deste cadastro e ative o robô de reservas no WhatsApp.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsClaimModalOpen(true)}
+              className="px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0"
+            >
+              <span className="material-symbols-outlined text-base text-amber-400">verified</span>
+              <span>Reivindicar Perfil Gratuitamente</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* HEADER COMPACTO DO HOTEL (oculto para hotéis importados do Google Maps tanto em desktop quanto em mobile) */}
       {!isHotelImportadoGoogle && (
@@ -791,7 +840,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       )}
 
       {/* SEÇÃO PRINCIPAL: QUARTOS AGRUPADOS POR CATEGORIA */}
-      <main className={`px-4 sm:px-8 max-w-7xl mx-auto space-y-10 ${isHotelImportadoGoogle ? 'pt-24' : 'mt-8'}`}>
+      <main className={`px-4 sm:px-8 max-w-7xl mx-auto space-y-10 ${isHotelImportadoGoogle ? (!isHotelReivindicado ? 'mt-4' : 'pt-24') : 'mt-8'}`}>
         
         {quartosList.length > 0 ? (
           (() => {
@@ -1158,7 +1207,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
             </div>
 
             {/* Ações de Contato Direto */}
-            <div className="flex items-center justify-center pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               {currentHotel.whatsappPhone && (
                 <button
                   type="button"
@@ -1170,6 +1219,34 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                 </button>
               )}
             </div>
+
+            {/* Banner de Reivindicação do Hotel */}
+            {!isHotelReivindicado && (
+              <div className="p-5 sm:p-6 bg-gradient-to-br from-amber-50 via-orange-50/60 to-amber-50/40 border border-amber-200/90 rounded-2xl text-left flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-xs font-bold">
+                    <span className="material-symbols-outlined text-2xl">verified_user</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-1.5">
+                      É o proprietário ou gerente deste hotel?
+                    </h4>
+                    <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
+                      Assuma a administração oficial deste cadastro gratuitamente, ative o robô de reservas no WhatsApp e gerencie quartos, tarifas e hóspedes em seu painel exclusivo.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsClaimModalOpen(true)}
+                  className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 font-extrabold text-xs sm:text-sm shadow-xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex items-center justify-center gap-2 shrink-0"
+                >
+                  <span className="material-symbols-outlined text-lg">hotel</span>
+                  <span>Reivindicar meu Hotel</span>
+                </button>
+              </div>
+            )}
 
             {/* Localização & Avaliação do Google */}
             <div className="border-t border-slate-100 pt-6 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1394,6 +1471,30 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
           </div>
         </div>
       </footer>
+
+      {/* MODAL DE REIVINDICAÇÃO DO HOTEL */}
+      {currentHotel && (
+        <ModalReivindicarHotel
+          isOpen={isClaimModalOpen}
+          onClose={() => setIsClaimModalOpen(false)}
+          hotel={{
+            id: currentHotel.id,
+            name: currentHotel.name,
+            city: currentHotel.city,
+            uf: currentHotel.uf,
+            whatsappPhone: currentHotel.whatsappPhone || (currentHotel as any).whatsapp,
+            notes: currentHotel.notes,
+            cnpj: currentHotel.cnpj
+          }}
+          onSuccess={(updatedHotel) => {
+            setCurrentHotel(prev => prev ? ({
+              ...prev,
+              ...updatedHotel,
+              notes: `${prev.notes || ''} [REIVINDICADO]`
+            }) : prev);
+          }}
+        />
+      )}
 
     </div>
   );
