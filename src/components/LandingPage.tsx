@@ -1892,7 +1892,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 A inteligência que seu hotel precisa no canal que seu hóspede usa. Gestão operacional completa e motor de reservas diretas sem comissões.
               </p>
               <div className="text-xs text-white/40">
-                © 2026 Hotel no Zap Tecnologia Hoteleira Ltda.<br />Todos os direitos reservados • Em conformidade com a LGPD.
+                © 2026 Hotel no Zap CNPJ: 53.422.578/0001-00<br />Todos os direitos reservados • Em conformidade com a LGPD.
               </div>
             </div>
 

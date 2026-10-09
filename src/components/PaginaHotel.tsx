@@ -1293,7 +1293,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               <a href="/" className="flex items-center gap-3 group cursor-pointer hover:opacity-90 transition-opacity" title="Ir para a página inicial">
                 <ZapHotelLogo size={32} className="group-hover:scale-105 transition-transform" />
                 <div>
-                  <span className="font-bold text-white block">Hotel no Zap © 2026</span>
+                  <span className="font-bold text-white block">© 2026 Hotel no Zap CNPJ: 53.422.578/0001-00</span>
                   <span className="text-slate-500">Rede Inteligente de Pousadas e Hotéis</span>
                 </div>
               </a>

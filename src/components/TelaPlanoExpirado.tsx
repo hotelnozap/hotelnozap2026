@@ -268,7 +268,7 @@ export const TelaPlanoExpirado: React.FC<TelaPlanoExpiradoProps> = ({
       </div>
 
       <div className="text-center text-xs text-slate-500 pt-10">
-        Hotel no Zap • Sistema SaaS Hoteleiro Inteligente • Todos os direitos reservados.
+        © 2026 Hotel no Zap CNPJ: 53.422.578/0001-00 • Sistema SaaS Hoteleiro Inteligente • Todos os direitos reservados.
       </div>
     </div>
   );

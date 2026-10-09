@@ -426,6 +426,10 @@ export const PaginaInstitucional: React.FC<PaginaInstitucionalProps> = ({ tipo }
                     <span className="text-slate-900 font-semibold">Hotel no Zap</span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-slate-200/60">
+                    <span className="font-bold text-slate-700">CNPJ:</span>
+                    <span className="text-slate-900 font-semibold">53.422.578/0001-00</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-1 border-b border-slate-200/60">
                     <span className="font-bold text-slate-700">Segmento:</span>
                     <span className="text-slate-900 font-semibold">Tecnologia, SaaS e Hospitalidade Digital</span>
                   </div>
@@ -452,7 +456,7 @@ export const PaginaInstitucional: React.FC<PaginaInstitucionalProps> = ({ tipo }
       <footer className="w-full bg-slate-900 text-slate-400 py-10 border-t border-slate-800">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-white">Hotel no Zap © 2026</span>
+            <span className="font-bold text-white">© 2026 Hotel no Zap CNPJ: 53.422.578/0001-00</span>
             <span>•</span>
             <span>Rede Inteligente de Pousadas e Hotéis</span>
           </div>

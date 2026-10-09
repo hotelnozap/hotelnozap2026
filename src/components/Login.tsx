@@ -722,7 +722,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
         {/* Rodapé do Banner */}
         <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
-          <span>© 2026 Hotel no Zap</span>
+          <span>© 2026 Hotel no Zap CNPJ: 53.422.578/0001-00</span>
           <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             Sistemas 100% Operacionais

@@ -152,7 +152,7 @@ export const Pagina404: React.FC<Pagina404Props> = ({
       <footer className="relative z-10 w-full border-t border-slate-800 bg-slate-900/80 py-6 text-xs text-slate-500">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div>
-            Hotel no Zap © {new Date().getFullYear()} • Hospitalidade Digital & Automação Hoteleira
+            © 2026 Hotel no Zap CNPJ: 53.422.578/0001-00 • Hospitalidade Digital & Automação Hoteleira
           </div>
           <div className="flex items-center gap-3 font-semibold text-slate-400">
             <a href="/privacidade" className="hover:text-white transition-colors">Privacidade</a>

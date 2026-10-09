@@ -1737,7 +1737,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       <footer className="w-full py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500 mt-12">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex flex-col sm:flex-row items-center gap-2">
-            <span>Hotel no Zap © {new Date().getFullYear()} • Todos os direitos reservados.</span>
+            <span>© 2026 Hotel no Zap CNPJ: 53.422.578/0001-00 • Todos os direitos reservados.</span>
             <span className="hidden sm:inline text-slate-300">•</span>
             <div className="flex items-center gap-3 font-semibold text-slate-600">
               <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">Termos</a>

@@ -1310,7 +1310,7 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
 
       {/* Footer */}
       <footer className="border-t border-gray-200 py-5 text-center text-gray-400 text-xs bg-white space-y-2">
-        <p>Copyright {new Date().getFullYear()} Hotel no Zap - Sistema SaaS Hoteleiro - Todos os direitos reservados</p>
+        <p>© 2026 Hotel no Zap CNPJ: 53.422.578/0001-00 - Sistema SaaS Hoteleiro - Todos os direitos reservados</p>
         <div className="flex items-center justify-center gap-3 font-medium text-slate-500">
           <a href="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">Termos de Uso</a>
           <span>•</span>

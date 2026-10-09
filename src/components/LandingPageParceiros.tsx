@@ -1049,7 +1049,7 @@ export const LandingPageParceiros: React.FC<LandingPageParceirosProps> = ({
           </div>
 
           <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-slate-200 text-[11px] text-slate-500">
-            <span>© 2026 Hotel no Zap Tecnologia Hoteleira Ltda. Todos os direitos reservados.</span>
+            <span>© 2026 Hotel no Zap CNPJ: 53.422.578/0001-00 • Todos os direitos reservados.</span>
             <div className="flex items-center gap-1">
               <span className="material-symbols-outlined text-[#006c49] text-[16px]">lock</span>
               <span>Ambiente Seguro SSL 256-bit</span>
