@@ -40,3 +40,11 @@ textarea:focus::-moz-placeholder {
   color: transparent !important;
   opacity: 0 !important;
 }
+
+/* Ocultar selo flutuante do Google reCAPTCHA v3 mantendo a validação e pontuação ativas em segundo plano */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+

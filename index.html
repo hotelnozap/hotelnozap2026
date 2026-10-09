@@ -63,6 +63,14 @@
 
     <!-- Google reCAPTCHA v3 Invisível (Ativo em todas as páginas do sistema) -->
     <script src="https://www.google.com/recaptcha/api.js?render=6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8" async defer></script>
+    <style>
+      /* Oculta o selo flutuante visual do Google reCAPTCHA v3 mantendo a proteção 100% ativa em background */
+      .grecaptcha-badge {
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    </style>
 
     <!-- OneSignal Web Push SDK -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
