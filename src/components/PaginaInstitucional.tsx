@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ZapHotelLogo } from './ZapHotelLogo';
+import { getAppLoginUrl } from '../utils/partnerUrl';
 
 export type TipoPaginaInstitucional = 'privacidade' | 'termos' | 'empresa' | 'quem-somos' | 'fale-conosco';
 
@@ -8,6 +9,8 @@ interface PaginaInstitucionalProps {
 }
 
 export const PaginaInstitucional: React.FC<PaginaInstitucionalProps> = ({ tipo }) => {
+  const isLoggedIn = typeof window !== 'undefined' && Boolean(localStorage.getItem('hotelnozap_user_email'));
+
   useEffect(() => {
     switch (tipo) {
       case 'quem-somos':
@@ -32,45 +35,46 @@ export const PaginaInstitucional: React.FC<PaginaInstitucionalProps> = ({ tipo }
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col selection:bg-emerald-500 selection:text-white">
       {/* HEADER INSTITUCIONAL */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3 group">
-            <ZapHotelLogo size={40} className="group-hover:scale-105 transition-transform" />
-            <div>
-              <span className="font-extrabold text-lg text-slate-900 tracking-tight block leading-tight">
+        <div className="max-w-5xl mx-auto px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2">
+          <a href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
+            <ZapHotelLogo size={36} className="group-hover:scale-105 transition-transform shrink-0" />
+            <div className="flex flex-col">
+              <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-tight whitespace-nowrap">
                 Hotel no Zap
               </span>
-              <span className="text-[11px] text-[#006c49] font-bold uppercase tracking-wider">
+              <span className="text-[10px] sm:text-[11px] text-[#006c49] font-bold uppercase tracking-wider whitespace-nowrap leading-tight">
                 Hospitalidade Digital
               </span>
             </div>
           </a>
 
-          <div className="flex items-center gap-3 text-xs font-semibold">
+          <nav className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <a
               href="/quem-somos"
-              className={`px-3 py-2 rounded-xl transition-colors ${tipo === 'quem-somos' ? 'bg-[#006c49] text-white' : 'hover:bg-slate-100 text-slate-700'}`}
+              className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                tipo === 'quem-somos'
+                  ? 'bg-[#006c49] text-white shadow-xs'
+                  : 'hover:bg-slate-100 text-slate-700'
+              }`}
             >
               Quem Somos
             </a>
             <a
               href="/fale-conosco"
-              className={`px-3 py-2 rounded-xl transition-colors ${tipo === 'fale-conosco' ? 'bg-[#006c49] text-white' : 'hover:bg-slate-100 text-slate-700'}`}
+              className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                tipo === 'fale-conosco'
+                  ? 'bg-[#006c49] text-white shadow-xs'
+                  : 'hover:bg-slate-100 text-slate-700'
+              }`}
             >
               Fale Conosco
             </a>
-            <a
-              href="/"
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-base">home</span>
-              <span>Início</span>
-            </a>
-          </div>
+          </nav>
         </div>
       </header>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-24 lg:pb-14">
         
         {/* PÁGINA: FALE CONOSCO (CONTATO DIRETO, WHATSAPP, EMAIL E GOOGLE MAPS) */}
         {tipo === 'fale-conosco' && (
@@ -453,12 +457,12 @@ export const PaginaInstitucional: React.FC<PaginaInstitucionalProps> = ({ tipo }
       </main>
 
       {/* FOOTER DA PÁGINA INSTITUCIONAL */}
-      <footer className="w-full bg-slate-900 text-slate-400 py-10 border-t border-slate-800">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-2">
+      <footer className="w-full bg-slate-900 text-slate-400 py-10 pb-24 lg:pb-10 border-t border-slate-800">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-center sm:text-left">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <span className="font-bold text-white">© 2026 Hotel no Zap CNPJ: 53.422.578/0001-00</span>
-            <span>•</span>
-            <span>Rede Inteligente de Pousadas e Hotéis</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="text-slate-400">Rede Inteligente de Pousadas e Hotéis</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 text-slate-400 font-semibold">
             <a href="/privacidade" className="hover:text-white transition-colors">Privacidade</a>
@@ -469,6 +473,35 @@ export const PaginaInstitucional: React.FC<PaginaInstitucionalProps> = ({ tipo }
           </div>
         </div>
       </footer>
+
+      {/* ========================================================================= */}
+      {/* BARRA INFERIOR MOBILE FIXA (CONFORME PÁGINA INICIAL)                      */}
+      {/* ========================================================================= */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-6 py-2 flex items-center justify-around shadow-lg">
+        <a
+          href="/"
+          className="flex flex-col items-center gap-0.5 text-slate-500 hover:text-emerald-800 font-bold text-[10px] transition-colors"
+        >
+          <span className="material-symbols-outlined text-2xl">search</span>
+          <span>Explorar</span>
+        </a>
+
+        <a
+          href="/#destinos"
+          className="flex flex-col items-center gap-0.5 text-slate-500 hover:text-emerald-800 font-bold text-[10px] transition-colors"
+        >
+          <span className="material-symbols-outlined text-2xl">location_on</span>
+          <span>Destinos</span>
+        </a>
+
+        <a
+          href={isLoggedIn ? '/minhaconta' : getAppLoginUrl()}
+          className="flex flex-col items-center gap-0.5 text-slate-500 hover:text-emerald-800 font-bold text-[10px] transition-colors"
+        >
+          <span className="material-symbols-outlined text-2xl">account_circle</span>
+          <span>{isLoggedIn ? 'Perfil' : 'Entrar'}</span>
+        </a>
+      </nav>
     </div>
   );
 };
