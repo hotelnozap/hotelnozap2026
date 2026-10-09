@@ -206,9 +206,9 @@ export const trackingService = {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 4. GOOGLE reCAPTCHA (v2 / v3)
+    // 4. GOOGLE reCAPTCHA (v3 Invisível)
     // ─────────────────────────────────────────────────────────────
-    const siteKey = (conf.recaptchaSiteKey || '').trim();
+    const siteKey = (conf.recaptchaSiteKey || '').trim() || import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8';
     const recaptchaScriptId = 'hotelnozap-recaptcha-script';
     let existingRecaptchaScript = document.getElementById(recaptchaScriptId);
 
@@ -222,6 +222,36 @@ export const trackingService = {
         document.head.appendChild(script);
       }
     }
+  },
+
+  /**
+   * Executa a verificação invisível do Google reCAPTCHA v3 e retorna o token de segurança
+   */
+  async executeRecaptcha(action: string = 'page_view'): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
+    const conf = this.getConfig();
+    const siteKey = (conf.recaptchaSiteKey || '').trim() || import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8';
+
+    if (!siteKey || typeof window.grecaptcha === 'undefined') {
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      try {
+        window.grecaptcha.ready(async () => {
+          try {
+            const token = await window.grecaptcha.execute(siteKey, { action });
+            resolve(token);
+          } catch (e) {
+            console.warn('[reCAPTCHA] Falha ao executar ação:', e);
+            resolve(null);
+          }
+        });
+      } catch (err) {
+        console.warn('[reCAPTCHA] Erro na chamada grecaptcha.ready:', err);
+        resolve(null);
+      }
+    });
   },
 
   /**

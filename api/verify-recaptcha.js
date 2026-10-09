@@ -60,6 +60,10 @@ export default async function handler(req, res) {
   }
 
   if (!secretKey) {
+    secretKey = '6Ldg2eMtAAAAABA-ounkrgVFn4k4MQSe696c-M-1';
+  }
+
+  if (!secretKey) {
     console.warn('[RECAPTCHA] RECAPTCHA_SECRET_KEY não encontrada nas variáveis de ambiente nem no banco.');
     // Se a secret key não estiver definida, não bloqueia o login
     return res.status(200).json({

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { currentHotelService, HotelAtivo, usuariosService } from '../services/supabaseService';
+import { trackingService } from '../services/trackingService';
 import { ZapHotelLogo } from './ZapHotelLogo';
 
 declare global {
@@ -46,66 +47,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState('');
 
-  // Estados do Google reCAPTCHA v2 (Caixa Checkbox "Não sou um robô")
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const [recaptchaError, setRecaptchaError] = useState<string>('');
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  const recaptchaWidgetIdRef = useRef<number | null>(null);
-  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LegAuQtAAAAAKXZEeinjRJ8Yb0LrcRvArBgEXSc';
-
-  // Renderiza e inicializa o widget reCAPTCHA v2 Checkbox
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const renderRecaptchaWidget = () => {
-      if (
-        window.grecaptcha &&
-        typeof window.grecaptcha.render === 'function' &&
-        recaptchaContainerRef.current &&
-        recaptchaWidgetIdRef.current === null
-      ) {
-        try {
-          recaptchaContainerRef.current.innerHTML = '';
-          const widgetId = window.grecaptcha.render(recaptchaContainerRef.current, {
-            sitekey: recaptchaSiteKey,
-            callback: (token: string) => {
-              setRecaptchaToken(token);
-              setRecaptchaError('');
-            },
-            'expired-callback': () => {
-              setRecaptchaToken(null);
-            },
-            'error-callback': () => {
-              setRecaptchaToken(null);
-              setRecaptchaError('Não foi possível validar. Tente recarregar a página.');
-            }
-          });
-          recaptchaWidgetIdRef.current = widgetId;
-        } catch (e) {
-          console.warn('Erro ao renderizar widget reCAPTCHA v2:', e);
-        }
-      }
-    };
-
-    window.onRecaptchaLoaded = () => {
-      renderRecaptchaWidget();
-    };
-
-    if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
-      renderRecaptchaWidget();
-    } else {
-      const existingScript = document.getElementById('recaptcha-script');
-      if (existingScript) {
-        existingScript.remove();
-      }
-      const script = document.createElement('script');
-      script.id = 'recaptcha-script';
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit&hl=pt-BR';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
-  }, [recaptchaSiteKey]);
+  // Proteção Google reCAPTCHA v3 (Invisível) ativa globalmente em background
 
   // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente e checa bloqueio
   useEffect(() => {
@@ -385,33 +327,30 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       console.warn('Erro ao checar status de bloqueio inicial:', checkErr);
     }
 
-    // 0.1 VERIFICAÇÃO RECAPTCHA v2 (Caixa "Não sou um robô" obrigatória)
-    if (!recaptchaToken) {
-      setErrorMessage('Por favor, marque a caixa de verificação "Não sou um robô" para continuar.');
-      setRecaptchaError('Confirmação do reCAPTCHA obrigatória.');
-      return;
-    }
-
     setLoading(true);
 
+    // 0.1 VERIFICAÇÃO RECAPTCHA v3 INVISÍVEL (ANTI-BOT SILENCIOSO)
     try {
-      const verifyRes = await fetch('/api/verify-recaptcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: recaptchaToken })
-      });
-      const verifyData = await verifyRes.json();
-      if (verifyData && verifyData.success === false) {
-        setLoading(false);
-        setErrorMessage('Verificação de segurança falhou. Por favor, marque a caixa novamente.');
-        setRecaptchaToken(null);
-        if (window.grecaptcha && recaptchaWidgetIdRef.current !== null) {
-          try { window.grecaptcha.reset(recaptchaWidgetIdRef.current); } catch { /* ignore */ }
+      const token = await trackingService.executeRecaptcha('login');
+      if (token) {
+        try {
+          const verifyRes = await fetch('/api/verify-recaptcha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData && verifyData.success === false && verifyData.score !== undefined && verifyData.score < 0.3) {
+            setLoading(false);
+            setErrorMessage('Acesso bloqueado por suspeita de atividade automatizada (bot). Tente novamente mais tarde.');
+            return;
+          }
+        } catch (recaptchaNetErr) {
+          console.warn('Aviso: endpoint serverless de reCAPTCHA offline:', recaptchaNetErr);
         }
-        return;
       }
-    } catch (recaptchaNetErr) {
-      console.warn('Aviso: endpoint serverless de reCAPTCHA offline:', recaptchaNetErr);
+    } catch (tokenErr) {
+      console.warn('Aviso: falha na geração do token reCAPTCHA:', tokenErr);
     }
 
     let ultimoErroAuth: string | null = null;
@@ -976,22 +915,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                   </div>
 
-                  {/* Caixa de Verificação Google reCAPTCHA v2 ("Não sou um robô") */}
-                  <div className="pt-2 flex flex-col items-center justify-center">
-                    <div 
-                      ref={recaptchaContainerRef} 
-                      className="min-h-[78px] flex items-center justify-center overflow-x-auto w-full max-w-full"
-                    />
-                    {recaptchaError && (
-                      <p className="text-[11px] text-red-500 font-semibold mt-1 flex items-center gap-1 text-center">
-                        <span className="material-symbols-outlined text-xs">error</span>
-                        <span>{recaptchaError}</span>
-                      </p>
-                    )}
-                  </div>
-
                   {/* Botão de Ação Principal (Login) */}
-                  <div className="pt-1.5">
+                  <div className="pt-2">
                     <button
                       type="submit"
                       disabled={loading}
@@ -1003,6 +928,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
                     </button>
                   </div>
+
+                  {/* Aviso de Proteção Google reCAPTCHA v3 Invisível */}
+                  <p className="text-[10px] text-center text-slate-400 mt-2">
+                    Protegido por reCAPTCHA •{' '}
+                    <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Privacidade</a> e{' '}
+                    <a href="/termos" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Termos</a>
+                  </p>
                 </>
               )}
 
