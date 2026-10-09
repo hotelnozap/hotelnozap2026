@@ -1316,47 +1316,46 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
 
         {/* ========================================================================= */}
         {/* LAYOUT MOBILE (md:hidden)                                                 */}
-        {/* Centralizado: Logo + Nome + Slogan / Pesquisa abaixo                      */}
+        {/* Logo à esquerda / Quem Somos e Fale Conosco à direita / Pesquisa abaixo   */}
         {/* ========================================================================= */}
-        <div className="flex md:hidden flex-col w-full px-4 pt-3 pb-2.5 relative">
+        <div className="flex md:hidden flex-col w-full px-4 pt-3 pb-2.5">
           
-          {/* BOTÃO LOGIN/CONTA MOBILE (CANTO DIREITO) */}
-          <div className="absolute right-4 top-3.5 z-10 flex items-center">
-            {currentUser.isLoggedIn ? (
-              <button
-                onClick={() => setIsUserMenuOpen(prev => !prev)}
-                className="w-8 h-8 rounded-full bg-[#006c49] text-white flex items-center justify-center font-bold text-xs shadow-xs active:scale-95"
-                aria-label="Minha conta"
-              >
-                {currentUser.name.substring(0, 1).toUpperCase()}
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  if (onNavigateToLogin) onNavigateToLogin();
-                  else window.location.href = getAppLoginUrl();
-                }}
-                className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-700 bg-white shadow-xs active:scale-95"
-                aria-label="Entrar na conta"
-              >
-                <span className="material-symbols-outlined text-[20px]">account_circle</span>
-              </button>
-            )}
-          </div>
+          {/* TOPO: LOGO À ESQUERDA + QUEM SOMOS E FALE CONOSCO À DIREITA */}
+          <div className="flex items-center justify-between w-full gap-2">
+            {/* 1. LOGO, NOME E SLOGAN ALINHADOS À ESQUERDA */}
+            <a 
+              href="/" 
+              onClick={(e) => { e.preventDefault(); handleClearCityFilter(); }}
+              className="flex items-center gap-2 group cursor-pointer hover:opacity-90 transition-opacity shrink-0" 
+              title="Ir para a página inicial"
+            >
+              <ZapHotelLogo size={32} className="group-hover:scale-105 transition-transform" />
+              <div className="flex flex-col leading-none text-left">
+                <span className="font-extrabold text-base text-slate-900 tracking-tight">Hotel no Zap</span>
+                <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
+              </div>
+            </a>
 
-          {/* 1. LOGO, NOME E SLOGAN CENTRALIZADOS */}
-          <a 
-            href="/" 
-            onClick={(e) => { e.preventDefault(); handleClearCityFilter(); }}
-            className="flex flex-col items-center justify-center text-center w-full group cursor-pointer hover:opacity-90 transition-opacity" 
-            title="Ir para a página inicial"
-          >
-            <ZapHotelLogo size={34} className="group-hover:scale-105 transition-transform" />
-            <div className="flex items-center justify-center gap-2">
-              <span className="font-extrabold text-base text-slate-900 tracking-tight">Hotel no Zap</span>
+            {/* 2. QUEM SOMOS E FALE CONOSCO NO TOPO DIREITO */}
+            <div className="flex items-center gap-3 shrink-0 text-xs font-bold text-slate-800">
+              <a
+                href="/quem-somos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-emerald-700 transition-colors whitespace-nowrap"
+              >
+                Quem Somos
+              </a>
+              <a
+                href="/fale-conosco"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-emerald-700 transition-colors whitespace-nowrap"
+              >
+                Fale Conosco
+              </a>
             </div>
-            <span className="text-[9px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
-          </a>
+          </div>
 
           {/* 2. BARRA DE PESQUISA ABAIXO DA LOGO */}
           <div className="mt-2.5 w-full">
