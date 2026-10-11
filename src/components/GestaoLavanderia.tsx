@@ -379,7 +379,7 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
             className="flex-1 sm:flex-initial px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-md active:scale-95"
           >
             <span className="material-symbols-outlined text-lg">add_circle</span>
-            <span>+ Nova Entrada no Balcão</span>
+            <span>Nova Entrada no Balcão</span>
           </button>
 
           <button
