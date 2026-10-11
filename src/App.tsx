@@ -533,10 +533,11 @@ export const App: React.FC = () => {
     }
   });
 
-  // Limpeza imediata de resíduos de autoresponder / boas-vindas automáticas em todos os hotéis no localStorage
+  // Limpeza imediata de resíduos de autoresponder / alertas falsos de boas-vindas no localStorage
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
+        // 1. Desativa flags antigas de auto-boas-vindas
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
           if (k && k.startsWith('hotelnozap_automacoes_hotel_')) {
@@ -548,6 +549,22 @@ export const App: React.FC = () => {
                 localStorage.setItem(k, JSON.stringify(parsed));
               }
             }
+          }
+        }
+
+        // 2. Remove resíduos de atendimentos simulados
+        localStorage.removeItem('hotel_notificacoes_atendimentos');
+
+        // 3. Purgar hotel_notificacoes_pedidos de qualquer falso alerta residual
+        const rawPedidos = localStorage.getItem('hotel_notificacoes_pedidos');
+        if (rawPedidos) {
+          const pedidos = JSON.parse(rawPedidos);
+          if (Array.isArray(pedidos)) {
+            const limpos = pedidos.filter((p: any) => {
+              const txt = `${p.itemNome || ''} ${p.observacoes || ''} ${p.message || ''} ${p.title || ''}`.toLowerCase();
+              return !txt.includes('boas-vindas') && !txt.includes('boas vindas') && !txt.includes('atendimento whatsapp') && !txt.includes('everaldo souza');
+            });
+            localStorage.setItem('hotel_notificacoes_pedidos', JSON.stringify(limpos));
           }
         }
       }

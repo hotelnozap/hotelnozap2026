@@ -115,6 +115,23 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
           tipo: 'sucesso',
           texto: `Mensagem enviada com sucesso para o WhatsApp de ${hospedeNome} via ${res.instanceName}!`
         });
+
+        // Dispara notificação REAL para o sininho, som e popup desktop / modal mobile
+        if (typeof window !== 'undefined') {
+          const payload = {
+            id: `wa-real-${Date.now()}`,
+            title: 'Mensagem WhatsApp Enviada! 💬',
+            message: `Mensagem oficial entregue para ${hospedeNome} (${hospedeTelefone}).`,
+            hospedeNome,
+            telefone: hospedeTelefone,
+            targetTab: 'conexao'
+          };
+          window.dispatchEvent(new CustomEvent('hotel_notificacao_whatsapp_real', { detail: payload }));
+          try {
+            localStorage.setItem('hotel_notificacao_whatsapp_real_trigger', JSON.stringify(payload));
+          } catch {}
+        }
+
         if (onSuccess) {
           onSuccess(`Mensagem enviada para ${hospedeNome} via WhatsApp oficial!`);
         }

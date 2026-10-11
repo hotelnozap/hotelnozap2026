@@ -415,19 +415,17 @@ export class EvolutionApiService {
         return { success: false, error: 'Número de telefone inválido para envio via WhatsApp.' };
       }
 
-      // 🛑 TRAVA DE SEGURANÇA TOTAL: Bloqueia qualquer tentativa de envio de mensagens de autoresponder / boas-vindas automáticas
+      // 🛑 TRAVA DE SEGURANÇA: Bloqueia qualquer tentativa de envio de robô / autoresponder genérico
       if (
         text && (
-          text.includes('Seja Bem-vindo(a)') ||
-          text.includes('Bem-vindo(a) ao') ||
           text.includes('atendente virtual') ||
-          text.includes('resposta automática')
+          text.includes('resposta automática do robô')
         )
       ) {
-        console.warn(`[Evolution API] 🛑 Envio bloqueado por segurança: autoresponder/boas-vindas desativado permanentemente.`);
+        console.warn(`[Evolution API] 🛑 Envio bloqueado por segurança: robô automático desativado permanentemente.`);
         return {
           success: false,
-          error: 'Autoresponder desativado permanentemente no sistema.'
+          error: 'Robô automático desativado permanentemente no sistema.'
         };
       }
 

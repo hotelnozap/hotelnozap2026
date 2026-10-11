@@ -142,7 +142,19 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
           if (rawSaved) {
             const list = JSON.parse(rawSaved);
             if (Array.isArray(list)) {
-              initialSaved = list.map((solic: any) => {
+              // Descarta resíduos falsos e mensagens simuladas
+              const validos = list.filter((solic: any) => {
+                const txt = `${solic.itemNome || ''} ${solic.observacoes || ''} ${solic.message || ''} ${solic.title || ''}`.toLowerCase();
+                const isFalso = txt.includes('boas-vindas') || 
+                                txt.includes('boas vindas') || 
+                                txt.includes('atendimento whatsapp') ||
+                                (txt.includes('everaldo souza') && txt.includes('whatsapp'));
+                return !isFalso;
+              });
+              try {
+                localStorage.setItem('hotel_notificacoes_pedidos', JSON.stringify(validos));
+              } catch {}
+              initialSaved = validos.map((solic: any) => {
                 const isMensagem = solic.categoria === 'Mensagem Especial' || solic.tipo === 'whatsapp' || solic.origem === 'area_hospede_mensagem';
                 const sId = solic.id || `solic-${solic.quartoNumero || '100'}-${(solic.itemNome || '').substring(0, 15)}-${solic.horario || ''}`;
                 const isRead = solic.read === true || readIds.has(sId);
@@ -162,21 +174,10 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
           console.warn('Erro ao ler notificações salvas do storage:', sErr);
         }
 
-        let initialAtendimentos: NotificationItem[] = [];
+        // Purgar rigorosamente a chave antiga de atendimentos simulados residuais
         try {
-          const rawAtendimentos = localStorage.getItem('hotel_notificacoes_atendimentos');
-          if (rawAtendimentos) {
-            const list = JSON.parse(rawAtendimentos);
-            if (Array.isArray(list)) {
-              initialAtendimentos = list.map((at: any) => ({
-                ...at,
-                read: at.read === true || readIds.has(at.id)
-              }));
-            }
-          }
-        } catch (aErr) {
-          console.warn('Erro ao ler notificações de atendimento do storage:', aErr);
-        }
+          localStorage.removeItem('hotel_notificacoes_atendimentos');
+        } catch {}
 
         const reservas = await reservasService.getReservas();
         let initialReservas: NotificationItem[] = [];
@@ -196,8 +197,8 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
           });
         }
 
-        // Mesclar garantindo que atendimentos e solicitações de hóspedes apareçam no topo
-        const combined = [...initialAtendimentos, ...initialSaved];
+        // Mesclar garantindo que solicitações de hóspedes apareçam no topo
+        const combined = [...initialSaved];
         initialReservas.forEach(ir => {
           if (!combined.some(c => c.id === ir.id)) {
             combined.push(ir);
@@ -298,6 +299,8 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
         } else if (event.data?.type === 'NOTIFICATIONS_ALL_DELETED') {
           const delIds = new Set(event.data?.ids || []);
           setNotifications(prev => prev.filter(n => !delIds.has(n.id)));
+        } else if (event.data?.type === 'WHATSAPP_REAL_ENVIADO' && event.data?.data) {
+          handleRealWhatsAppSent({ detail: event.data.data });
         }
       };
     } catch (e) {
@@ -315,6 +318,11 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
         try {
           const payload = JSON.parse(event.newValue);
           handleLocalNovaReserva({ detail: payload });
+        } catch (err) {}
+      } else if (event.key === 'hotel_notificacao_whatsapp_real_trigger' && event.newValue) {
+        try {
+          const payload = JSON.parse(event.newValue);
+          handleRealWhatsAppSent({ detail: payload });
         } catch (err) {}
       }
     };
@@ -382,6 +390,42 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
       }
     };
     window.addEventListener('hotel_notifications_all_deleted', handleAllDeletedEvent);
+
+    // 5.1 Escuta envio REAL de mensagens WhatsApp (somente quando mensagem for disparada com sucesso para hóspede real)
+    const handleRealWhatsAppSent = (e: any) => {
+      const detail = e.detail || {};
+      const fone = (detail.telefone || detail.recipient || '').replace(/\D/g, '');
+      const hospede = detail.hospedeNome || detail.nome || 'Hóspede';
+      const notifId = detail.id || `wa-real-${Date.now()}`;
+      const readIds = getReadNotificationIds();
+
+      const newNotif: NotificationItem = {
+        id: notifId,
+        title: detail.title || 'Mensagem WhatsApp Enviada! 💬',
+        message: detail.message || `Mensagem oficial enviada com sucesso para ${hospede}${fone ? ` (${fone})` : ''}.`,
+        time: 'Agora mesmo',
+        type: 'whatsapp',
+        read: readIds.has(notifId),
+        targetTab: detail.targetTab || 'conexao',
+        metadata: {
+          phone: fone,
+          nome: hospede
+        }
+      };
+
+      setNotifications(prev => {
+        if (prev.some(n => n.id === notifId)) return prev;
+        return [newNotif, ...prev];
+      });
+
+      // Tocar som suave de recepção
+      playHotelChime();
+
+      // Ativar alerta flutuante (popup no desktop e modal centralizado no mobile)
+      setActiveToast(newNotif);
+      setTimeout(() => setActiveToast(null), 8000);
+    };
+    window.addEventListener('hotel_notificacao_whatsapp_real', handleRealWhatsAppSent);
 
 
 
@@ -486,6 +530,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
       window.removeEventListener('hotel_notifications_all_read', handleAllReadEvent);
       window.removeEventListener('hotel_notification_deleted', handleNotificationDeletedEvent);
       window.removeEventListener('hotel_notifications_all_deleted', handleAllDeletedEvent);
+      window.removeEventListener('hotel_notificacao_whatsapp_real', handleRealWhatsAppSent);
       if (channel) {
         try { supabase.removeChannel(channel); } catch (e) {}
       }
@@ -891,12 +936,71 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
         </div>
       )}
 
-      {/* TOAST NOTIFICATION FLUTUANTE EM TEMPO REAL */}
+      {/* MODAL DE NOTIFICAÇÃO CENTRALIZADO NO MODO MOBILE */}
+      {activeToast && isMobile && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200 lg:hidden">
+          <div className="bg-slate-900 border border-slate-700 text-white rounded-3xl p-5 shadow-2xl max-w-xs w-full animate-in zoom-in-95 duration-200 relative">
+            {/* Botão de Fechar no canto superior */}
+            <button
+              type="button"
+              onClick={() => setActiveToast(null)}
+              className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center cursor-pointer transition-colors"
+              title="Fechar notificação"
+            >
+              <span className="material-symbols-outlined text-base">close</span>
+            </button>
+
+            {/* Ícone Central em Destaque */}
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold mx-auto mb-3 shadow-lg shadow-emerald-500/25">
+              <span className="material-symbols-outlined text-3xl">
+                {activeToast.type === 'whatsapp' || activeToast.type === 'atendimento' ? 'chat' : activeToast.type === 'pedido' ? 'room_service' : 'bolt'}
+              </span>
+            </div>
+
+            {/* Tag e Título */}
+            <div className="text-center">
+              <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider mb-1.5">
+                Notificação em Tempo Real
+              </span>
+              <h3 className="text-sm font-black text-white leading-snug">
+                {activeToast.title}
+              </h3>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                {activeToast.message}
+              </p>
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveToast(null)}
+                className="w-full py-2.5 px-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700 hover:text-white transition-colors cursor-pointer text-center"
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  handleNavigateToTab(activeToast, e);
+                  setActiveToast(null);
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20 text-center"
+              >
+                <span>Acessar</span>
+                <span className="material-symbols-outlined text-sm font-black">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION FLUTUANTE EM TEMPO REAL NO MODO DESKTOP */}
       {activeToast && !isMobile && (
-        <div className="fixed bottom-6 right-6 z-[100] max-w-sm bg-slate-900 text-white rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-start gap-3 animate-in slide-in-from-bottom duration-300">
+        <div className="hidden lg:flex fixed bottom-6 right-6 z-[100] max-w-sm bg-slate-900 text-white rounded-2xl p-4 shadow-2xl border border-slate-700 items-start gap-3 animate-in slide-in-from-bottom duration-300">
           <div className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center shrink-0 font-bold shadow-lg shadow-emerald-500/20">
             <span className="material-symbols-outlined">
-              {activeToast.type === 'whatsapp' ? 'chat' : activeToast.type === 'pedido' ? 'room_service' : 'bolt'}
+              {activeToast.type === 'whatsapp' || activeToast.type === 'atendimento' ? 'chat' : activeToast.type === 'pedido' ? 'room_service' : 'bolt'}
             </span>
           </div>
           <div className="flex-1 min-w-0">
