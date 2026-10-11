@@ -6,23 +6,14 @@ import {
   PedidoLavanderia, 
   StatusLavanderia, 
   TipoCobrancaLavanderia, 
-  ItemLavanderia 
+  ItemLavanderia,
+  ItemCatalogoLavanderia
 } from '../services/lavanderiaService';
 
 export interface GestaoLavanderiaProps {
   activeHotel?: HotelAtivo;
   onBackToDashboard?: () => void;
 }
-
-// Itens rápidos predefinidos para facilitar a rotina do balcão
-const ITENS_RAPIDOS = [
-  { descricao: 'Camisa / Camiseta', valorUnitario: 8 },
-  { descricao: 'Calça / Bermuda', valorUnitario: 10 },
-  { descricao: 'Vestido / Peça Delicada', valorUnitario: 15 },
-  { descricao: 'Peça Íntima / Meias', valorUnitario: 4 },
-  { descricao: 'Lavagem por Quilo (kg)', valorUnitario: 22 },
-  { descricao: 'Casaco / Jaqueta', valorUnitario: 20 },
-];
 
 export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
   activeHotel,
@@ -35,6 +26,14 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
   const [termoBusca, setTermoBusca] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Estados do Catálogo de Itens da Lavanderia
+  const [itensCatalogo, setItensCatalogo] = useState<ItemCatalogoLavanderia[]>([]);
+  const [isModalItensAberto, setIsModalItensAberto] = useState<boolean>(false);
+  const [editandoItemId, setEditandoItemId] = useState<string | null>(null);
+  const [itemNome, setItemNome] = useState<string>('');
+  const [itemValor, setItemValor] = useState<string>('');
+  const [itemSalvando, setItemSalvando] = useState<boolean>(false);
 
   // Estados do Modal "Nova Entrada"
   const [isModalNovoAberto, setIsModalNovoAberto] = useState<boolean>(false);
@@ -68,13 +67,15 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
         return;
       }
 
-      const [dataPedidos, dataQuartos] = await Promise.all([
+      const [dataPedidos, dataQuartos, dataItens] = await Promise.all([
         lavanderiaService.getPedidos(hId),
-        quartosService.getQuartos(hId)
+        quartosService.getQuartos(hId),
+        lavanderiaService.getItensCatalogo(hId)
       ]);
 
       setPedidos(dataPedidos || []);
       setRooms(dataQuartos || []);
+      setItensCatalogo(dataItens || []);
     } catch (err) {
       console.warn('Erro ao carregar dados de lavanderia:', err);
     } finally {
@@ -86,16 +87,108 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
     carregarDados();
 
     const handleAtualizado = () => carregarDados();
+    const handleItensAtualizados = () => {
+      const hId = hotelId || currentHotelService.getCurrentHotel()?.id;
+      lavanderiaService.getItensCatalogo(hId).then(setItensCatalogo);
+    };
+
     window.addEventListener('hotel_lavanderia_atualizado', handleAtualizado);
+    window.addEventListener('hotel_lavanderia_itens_atualizados', handleItensAtualizados);
     window.addEventListener('hotel_changed', handleAtualizado);
 
     return () => {
       window.removeEventListener('hotel_lavanderia_atualizado', handleAtualizado);
+      window.removeEventListener('hotel_lavanderia_itens_atualizados', handleItensAtualizados);
       window.removeEventListener('hotel_changed', handleAtualizado);
     };
-  }, [carregarDados]);
+  }, [carregarDados, hotelId]);
 
-  // Quando o recepcionista seleciona um quarto no modal, auto-preenche o hóspede
+  // Manipuladores da Tabela de Itens / Preços da Lavanderia
+  const handleSalvarItemCatalogo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!itemNome.trim()) {
+      alert('Por favor, informe o nome da peça ou serviço de lavanderia.');
+      return;
+    }
+
+    const valorLimpo = parseFloat(itemValor.replace(',', '.'));
+    if (isNaN(valorLimpo) || valorLimpo < 0) {
+      alert('Informe um valor válido em reais (ex: 8,00 ou 15.50).');
+      return;
+    }
+
+    setItemSalvando(true);
+    try {
+      const hId = hotelId || currentHotelService.getCurrentHotel()?.id || '';
+      if (editandoItemId) {
+        await lavanderiaService.updateItemCatalogo(editandoItemId, {
+          nome: itemNome.trim(),
+          valor: valorLimpo
+        }, hId);
+        showToast(`Item "${itemNome.trim()}" atualizado com sucesso!`);
+      } else {
+        await lavanderiaService.createItemCatalogo({
+          nome: itemNome.trim(),
+          valor: valorLimpo,
+          hotelId: hId
+        }, hId);
+        showToast(`Item "${itemNome.trim()}" cadastrado com sucesso!`);
+      }
+
+      const atualizados = await lavanderiaService.getItensCatalogo(hId);
+      setItensCatalogo(atualizados);
+      setEditandoItemId(null);
+      setItemNome('');
+      setItemValor('');
+    } catch (err) {
+      console.warn('Erro ao salvar item no catálogo:', err);
+      alert('Erro ao salvar item. Tente novamente.');
+    } finally {
+      setItemSalvando(false);
+    }
+  };
+
+  const handleIniciarEdicaoItem = (item: ItemCatalogoLavanderia) => {
+    setEditandoItemId(item.id);
+    setItemNome(item.nome);
+    setItemValor(item.valor.toString().replace('.', ','));
+  };
+
+  const handleCancelarEdicaoItem = () => {
+    setEditandoItemId(null);
+    setItemNome('');
+    setItemValor('');
+  };
+
+  const handleExcluirItemCatalogo = async (id: string, nome: string) => {
+    if (!confirm(`Deseja realmente remover o item "${nome}" da tabela de lavanderia?`)) {
+      return;
+    }
+
+    try {
+      const hId = hotelId || currentHotelService.getCurrentHotel()?.id || '';
+      await lavanderiaService.deleteItemCatalogo(id, hId);
+      const atualizados = await lavanderiaService.getItensCatalogo(hId);
+      setItensCatalogo(atualizados);
+      if (editandoItemId === id) {
+        handleCancelarEdicaoItem();
+      }
+      showToast(`Item "${nome}" removido do catálogo.`);
+    } catch (err) {
+      console.warn('Erro ao excluir item do catálogo:', err);
+      alert('Erro ao excluir item. Tente novamente.');
+    }
+  };
+
+  // Quartos autorizados para lançamento de lavanderia: apenas 'ocupado' e 'ocupado_em_limpeza'
+  const quartosPermitidos = useMemo(() => {
+    return rooms.filter(r => {
+      const st = (r.status || '').toLowerCase().trim();
+      return st === 'ocupado' || st === 'ocupado_em_limpeza';
+    });
+  }, [rooms]);
+
+  // Quando seleciona um quarto no modal, auto-preenche o hóspede
   const handleSelecionarQuarto = (num: string) => {
     setQuartoSelecionado(num);
     const roomEncontrado = rooms.find(r => String(r.number) === String(num));
@@ -175,6 +268,14 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
       alert('Por favor, informe o quarto do hóspede.');
       return;
     }
+
+    const roomAlvo = rooms.find(r => String(r.number) === String(quartoSelecionado));
+    const stAlvo = (roomAlvo?.status || '').toLowerCase().trim();
+    if (!roomAlvo || (stAlvo !== 'ocupado' && stAlvo !== 'ocupado_em_limpeza')) {
+      alert('A lavanderia só pode ser lançada para quartos com status "Ocupado" ou "Ocupado em Limpeza".');
+      return;
+    }
+
     if (!hospedeNome.trim()) {
       alert('Por favor, informe o nome do hóspede.');
       return;
@@ -207,8 +308,14 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
       setHospedeNome('');
       setHospedeTelefone('');
       setPrevisaoEntrega('');
-      setObservacoes('');
-      setItensPedido([{ id: '1', descricao: 'Camisa / Camiseta', quantidade: 1, valorUnitario: 8, subtotal: 8 }]);
+      const primeiro = itensCatalogo[0];
+      setItensPedido([{
+        id: '1',
+        descricao: primeiro ? primeiro.nome : 'Camisa / Camiseta',
+        quantidade: 1,
+        valorUnitario: primeiro ? primeiro.valor : 8,
+        subtotal: primeiro ? primeiro.valor : 8
+      }]);
       carregarDados();
     } catch (err) {
       console.warn('Erro ao salvar pedido de lavanderia:', err);
@@ -372,7 +479,20 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
+        <div className="flex items-center gap-2.5 self-stretch sm:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              handleCancelarEdicaoItem();
+              setIsModalItensAberto(true);
+            }}
+            className="flex-1 sm:flex-initial px-3.5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 font-extrabold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-xs active:scale-95"
+            title="Cadastrar e gerenciar peças e valores da lavanderia"
+          >
+            <span className="material-symbols-outlined text-blue-700 text-lg">dry_cleaning</span>
+            <span>Cadastrar Itens</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setIsModalNovoAberto(true)}
@@ -386,7 +506,7 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
             type="button"
             onClick={() => carregarDados()}
             className="p-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition cursor-pointer shadow-xs active:scale-95"
-            title="Atualizar Pedidos"
+            title="Atualizar Pedidos e Itens"
           >
             <span className="material-symbols-outlined text-lg">sync</span>
           </button>
@@ -811,12 +931,29 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="">Selecione o Quarto...</option>
-                    {rooms.map(r => (
-                      <option key={r.id} value={r.number}>
-                        Quarto {r.number} {r.guestName ? `(${r.guestName})` : ''} - {r.category}
-                      </option>
-                    ))}
+                    {quartosPermitidos.length === 0 ? (
+                      <option disabled value="">Nenhum quarto ocupado no momento</option>
+                    ) : (
+                      quartosPermitidos.map(r => {
+                        const isOcupadoLimpeza = (r.status || '').toLowerCase().trim() === 'ocupado_em_limpeza';
+                        const statusNome = isOcupadoLimpeza ? 'Ocupado em Limpeza' : 'Ocupado';
+                        return (
+                          <option key={r.id} value={r.number}>
+                            Quarto {r.number} {r.guestName ? `(${r.guestName})` : ''} - {statusNome}
+                          </option>
+                        );
+                      })
+                    )}
                   </select>
+                  {quartosPermitidos.length === 0 ? (
+                    <p className="mt-1 text-[10px] text-amber-700 font-semibold">
+                      ⚠️ Não há quartos com status &quot;Ocupado&quot; ou &quot;Ocupado em Limpeza&quot; no momento.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[10px] text-slate-500 font-medium">
+                      Filtrado: Apenas quartos com hóspede ativo (Ocupado / Ocupado em Limpeza).
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -862,21 +999,52 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
 
               {/* Botões de Adição Rápida de Peças */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-800 mb-1.5 uppercase tracking-wider">
-                  Adicionar Peças Rápidas (1 Clique):
-                </label>
+                <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                  <label className="block text-[11px] font-bold text-slate-800 uppercase tracking-wider">
+                    Adicionar Peças Rápidas (1 Clique):
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCancelarEdicaoItem();
+                      setIsModalItensAberto(true);
+                    }}
+                    className="text-blue-700 hover:text-blue-900 font-bold text-[11px] flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-sm">settings</span>
+                    <span>Cadastrar / Gerenciar Itens</span>
+                  </button>
+                </div>
+
                 <div className="flex flex-wrap gap-1.5">
-                  {ITENS_RAPIDOS.map((rap, idx) => (
+                  {itensCatalogo.filter(i => i.ativo !== false).map((item) => (
                     <button
-                      key={idx}
+                      key={item.id}
                       type="button"
-                      onClick={() => handleAdicionarItemRapido(rap)}
+                      onClick={() => handleAdicionarItemRapido({ descricao: item.nome, valorUnitario: item.valor })}
                       className="px-2.5 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 hover:border-emerald-300 text-slate-800 border border-slate-200 rounded-lg text-[11px] font-semibold transition cursor-pointer flex items-center gap-1 active:scale-95"
                     >
                       <span className="material-symbols-outlined text-xs text-emerald-600">add</span>
-                      <span>{rap.descricao} (R$ {rap.valorUnitario},00)</span>
+                      <span>{item.nome} (R$ {item.valor.toFixed(2).replace('.', ',')})</span>
                     </button>
                   ))}
+
+                  {itensCatalogo.length === 0 && (
+                    <div className="text-[11px] text-slate-500 italic py-1">
+                      Nenhum item cadastrado no catálogo.{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleCancelarEdicaoItem();
+                          setIsModalItensAberto(true);
+                        }}
+                        className="text-blue-700 underline font-bold"
+                      >
+                        Clique aqui para cadastrar itens
+                      </button>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleAdicionarLinhaCustomizada}
@@ -1152,6 +1320,178 @@ export const GestaoLavanderia: React.FC<GestaoLavanderiaProps> = ({
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CADASTRAR ITENS / TABELA DE PREÇOS DA LAVANDERIA */}
+      {isModalItensAberto && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs animate-in fade-in overflow-y-auto">
+          <div className="w-full max-w-lg sm:max-w-xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92dvh] sm:max-h-[88vh]">
+            {/* Header */}
+            <div className="px-5 py-3.5 sm:py-4 flex items-center justify-between bg-[#003400] text-white shadow-md shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-400 text-xl">dry_cleaning</span>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white">Cadastrar Itens da Lavanderia</h3>
+                  <span className="text-[11px] text-emerald-300 font-medium block">Tabela de preços e peças para inserção rápida</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  handleCancelarEdicaoItem();
+                  setIsModalItensAberto(false);
+                }}
+                className="bg-[#b91c1c] text-white hover:bg-red-800 transition-colors p-1.5 rounded-xl cursor-pointer shadow-xs active:scale-95"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            {/* Conteúdo do Modal */}
+            <div className="p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto overscroll-contain flex-1 touch-pan-y text-xs">
+              {/* Formulário de Cadastro / Edição */}
+              <form onSubmit={handleSalvarItemCatalogo} className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-emerald-700 text-sm">
+                      {editandoItemId ? 'edit' : 'add_circle'}
+                    </span>
+                    <span>{editandoItemId ? 'Editar Item da Lavanderia' : 'Adicionar Novo Item'}</span>
+                  </span>
+                  {editandoItemId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelarEdicaoItem}
+                      className="text-slate-500 hover:text-slate-800 text-[11px] font-semibold underline"
+                    >
+                      Cancelar Edição
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Nome da Peça / Serviço *
+                    </label>
+                    <input
+                      type="text"
+                      value={itemNome}
+                      onChange={(e) => setItemNome(e.target.value)}
+                      placeholder="Ex: Terno Completo, Edredom Casal, Toalha..."
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Valor Unitário (R$) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs">R$</span>
+                      <input
+                        type="text"
+                        value={itemValor}
+                        onChange={(e) => setItemValor(e.target.value)}
+                        placeholder="0,00"
+                        required
+                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs bg-white font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={itemSalvando}
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {editandoItemId ? 'check' : 'add'}
+                    </span>
+                    <span>{editandoItemId ? 'Atualizar Item' : 'Cadastrar Item'}</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Lista dos Itens Cadastrados */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">
+                    Itens Ativos no Catálogo ({itensCatalogo.length})
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    Sincronizado automaticamente no Supabase
+                  </span>
+                </div>
+
+                {itensCatalogo.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    Nenhum item cadastrado no momento. Preencha o formulário acima para adicionar.
+                  </div>
+                ) : (
+                  <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 bg-white">
+                    {itensCatalogo.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-3 flex items-center justify-between transition ${
+                          editandoItemId === item.id ? 'bg-amber-50/70 border-l-4 border-l-amber-500' : 'hover:bg-slate-50/70'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-sm">dry_cleaning</span>
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-900 text-xs block">{item.nome}</span>
+                            <span className="text-[11px] text-emerald-700 font-extrabold">
+                              R$ {item.valor.toFixed(2).replace('.', ',')}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleIniciarEdicaoItem(item)}
+                            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                            title="Editar este item"
+                          >
+                            <span className="material-symbols-outlined text-base">edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleExcluirItemCatalogo(item.id, item.nome)}
+                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer"
+                            title="Excluir este item"
+                          >
+                            <span className="material-symbols-outlined text-base">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  handleCancelarEdicaoItem();
+                  setIsModalItensAberto(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs transition cursor-pointer shadow-xs active:scale-95"
+              >
+                Concluir &amp; Fechar
+              </button>
             </div>
           </div>
         </div>

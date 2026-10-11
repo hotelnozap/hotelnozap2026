@@ -966,6 +966,15 @@ export const App: React.FC = () => {
     userCargoClean.includes('gerente')
   ) && !userRoleClean.includes('admin') && !userRoleClean.includes('super');
 
+  const isPerfilHotel = isHotelUser && (
+    userRoleClean.includes('hotel') ||
+    userPerfilClean.includes('hotel') ||
+    (!isRecepcao && !isGerente && !userPerfilClean.includes('financeiro') && !userPerfilClean.includes('governan') && !userPerfilClean.includes('camareira') && !userRoleClean.includes('camareira'))
+  );
+
+  // Apenas perfis Hotel e Gerente (e Administrador SaaS) podem ter acesso ao menu de Lavanderia
+  const canAccessLavanderia = !isHotelUser || isPerfilHotel || isGerente;
+
 
 
   // Contagens consolidadas para a Sidebar do Super Admin Master
@@ -1114,7 +1123,8 @@ export const App: React.FC = () => {
           'cadastro-conta-pagar', 'cadastro-conta-receber',
           'cadastro-categoria-conta-pagar', 'cadastro-categoria-conta-receber',
           'config', 'config-hotel', 'config-mercado-pago',
-          'relatorios'
+          'relatorios',
+          'lavanderia'
         ];
         if (recepcaoBlockedTabs.includes(activeTab)) {
           setActiveTab('dashboard');
@@ -1131,6 +1141,12 @@ export const App: React.FC = () => {
           setActiveTab('dashboard');
           return;
         }
+      }
+
+      // Restrição estrita: Apenas Hotel e Gerente acessam Lavanderia
+      if (!canAccessLavanderia && activeTab === 'lavanderia') {
+        setActiveTab('dashboard');
+        return;
       }
 
       const adminOnlyTabs = [
@@ -1159,7 +1175,7 @@ export const App: React.FC = () => {
         setActiveTab('admin-dashboard');
       }
     }
-  }, [isHotelUser, isRecepcao, isGerente, activeTab]);
+  }, [isHotelUser, isRecepcao, isGerente, canAccessLavanderia, activeTab]);
 
   // Função para obter o link público do hotel logado na rota /hoteis/nomedohotel
   const getLoggedHotelUrl = () => {
@@ -1201,11 +1217,12 @@ export const App: React.FC = () => {
     { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
   ];
 
-  const filteredHotelMenuItems = isRecepcao
-    ? hotelMenuItems.filter(item => !['cupons', 'usuarios', 'caixa', 'config', 'relatorios'].includes(item.id))
-    : isGerente
-    ? hotelMenuItems.filter(item => !['config', 'usuarios'].includes(item.id))
-    : hotelMenuItems;
+  const filteredHotelMenuItems = hotelMenuItems.filter(item => {
+    if (item.id === 'lavanderia' && !canAccessLavanderia) return false;
+    if (isRecepcao && ['cupons', 'usuarios', 'caixa', 'config', 'relatorios', 'lavanderia'].includes(item.id)) return false;
+    if (isGerente && ['config', 'usuarios'].includes(item.id)) return false;
+    return true;
+  });
 
   const menuItems = !isHotelUser ? [
     { id: 'admin-dashboard', label: 'Área Administrativa', icon: 'admin_panel_settings' },
@@ -3312,7 +3329,7 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'lavanderia' && (
+          {activeTab === 'lavanderia' && canAccessLavanderia && (
             <GestaoLavanderia
               activeHotel={activeHotel}
               onBackToDashboard={() => setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard')}
