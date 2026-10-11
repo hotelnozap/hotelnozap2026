@@ -71,6 +71,8 @@ import { trackingService } from './services/trackingService';
 import LpNovoHotel from './components/LpNovoHotel';
 import LpAssinar from './components/LpAssinar';
 import PainelCamareira from './components/PainelCamareira';
+import GestaoGovernanca from './components/GestaoGovernanca';
+import GestaoLavanderia from './components/GestaoLavanderia';
 import CardapioHotel from './components/CardapioHotel';
 import { GestaoPedidosCardapio } from './components/GestaoPedidosCardapio';
 import { PaginaInstitucional } from './components/PaginaInstitucional';
@@ -442,6 +444,12 @@ export const App: React.FC = () => {
         break;
       case 'camareira':
         document.title = 'Minha Conta';
+        break;
+      case 'governanca':
+        document.title = 'Governança & Higienização';
+        break;
+      case 'lavanderia':
+        document.title = 'Lavanderia de Hóspedes';
         break;
       case 'quem-somos':
         document.title = 'Quem Somos';
@@ -1180,7 +1188,8 @@ export const App: React.FC = () => {
     { id: 'reservas', label: 'Reservas', icon: 'book_online' },
     { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
     { id: 'mapa', label: 'Mapa dos Quartos', icon: 'calendar_view_month' },
-    { id: 'camareira', label: 'Governança & Camareiras', icon: 'cleaning_services' },
+    { id: 'governanca', label: 'Governança & Camareiras', icon: 'cleaning_services' },
+    { id: 'lavanderia', label: 'Lavanderia de Hóspedes', icon: 'dry_cleaning' },
     { id: 'hospedes', label: 'Hóspedes', icon: 'group' },
     { id: 'cupons', label: 'Cupom de Desconto', icon: 'confirmation_number' },
     { id: 'usuarios', label: 'Usuários da Equipe', icon: 'manage_accounts' },
@@ -1193,7 +1202,7 @@ export const App: React.FC = () => {
   ];
 
   const filteredHotelMenuItems = isRecepcao
-    ? hotelMenuItems.filter(item => !['camareira', 'cupons', 'usuarios', 'caixa', 'config', 'relatorios'].includes(item.id))
+    ? hotelMenuItems.filter(item => !['cupons', 'usuarios', 'caixa', 'config', 'relatorios'].includes(item.id))
     : isGerente
     ? hotelMenuItems.filter(item => !['config', 'usuarios'].includes(item.id))
     : hotelMenuItems;
@@ -1726,7 +1735,7 @@ export const App: React.FC = () => {
   const isAdminUser = roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master') || roleLower.includes('administrador') || roleLower.includes('hotel') || roleLower.includes('gerente');
   const isCamareiraAuthorized = isCamareiraUser || isAdminUser;
 
-  const isCamareiraRoute = activeTab === 'camareira' || pathParts[0] === 'camareira';
+  const isCamareiraRoute = (activeTab === 'camareira' && isCamareiraUser) || pathParts[0] === 'camareira';
 
   if (isCamareiraRoute) {
     if (!isCamareiraAuthorized) {
@@ -3294,6 +3303,22 @@ export const App: React.FC = () => {
               onNavigateToDestaques={() => setActiveTab('destaques-quarto')}
             />
           )}
+
+          {activeTab === 'governanca' && (
+            <GestaoGovernanca
+              activeHotel={activeHotel}
+              onBackToDashboard={() => setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard')}
+              onNavigateToMapa={() => setActiveTab('mapa')}
+            />
+          )}
+
+          {activeTab === 'lavanderia' && (
+            <GestaoLavanderia
+              activeHotel={activeHotel}
+              onBackToDashboard={() => setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard')}
+            />
+          )}
+
           {activeTab === 'cadastro-quarto' && (
             <CadastroQuarto 
               onBack={() => {

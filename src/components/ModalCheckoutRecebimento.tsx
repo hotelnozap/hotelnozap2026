@@ -3,6 +3,7 @@ import { Reserva } from './ListagemReservas';
 import { caixaService } from '../services/caixaService';
 import { reservasService, currentHotelService } from '../services/supabaseService';
 import { templateMensagemService } from '../services/templateMensagemService';
+import { lavanderiaService } from '../services/lavanderiaService';
 
 export interface ModalCheckoutRecebimentoProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
   const [processando, setProcessando] = useState<boolean>(false);
   const [sucessoCheckout, setSucessoCheckout] = useState<boolean>(false);
   const [resumoFinal, setResumoFinal] = useState<{ total: number; metodo: string; troco: number } | null>(null);
+  const [lavanderiaPendente, setLavanderiaPendente] = useState<{ total: number; pedidosCount: number }>({ total: 0, pedidosCount: 0 });
 
   // Resetar ao abrir com nova reserva
   useEffect(() => {
@@ -52,7 +54,18 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
     setProcessando(false);
     setSucessoCheckout(false);
     setResumoFinal(null);
-  }, [reserva?.id]);
+
+    if (reserva?.quartoNome) {
+      const qNum = reserva.quartoNome.replace(/\D/g, '') || reserva.quartoNome;
+      lavanderiaService.getConsumoLavanderiaPorQuarto(qNum).then(res => {
+        if (res.totalPendente > 0) {
+          setLavanderiaPendente({ total: res.totalPendente, pedidosCount: res.pedidos.length });
+        } else {
+          setLavanderiaPendente({ total: 0, pedidosCount: 0 });
+        }
+      }).catch(() => {});
+    }
+  }, [reserva?.id, reserva?.quartoNome]);
 
   // Cálculos dinâmicos
   const consumoNum = parseFloat(valorConsumoExtra.replace(',', '.')) || 0;
@@ -376,6 +389,25 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
                       + Snack (R$ 25)
                     </button>
                   </div>
+
+                  {lavanderiaPendente.total > 0 && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 text-xs mt-2">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <span className="material-symbols-outlined text-sm text-blue-600">dry_cleaning</span>
+                        <span>Lavanderia: R$ {lavanderiaPendente.total.toFixed(2).replace('.', ',')} ({lavanderiaPendente.pedidosCount} pedido{lavanderiaPendente.pedidosCount > 1 ? 's' : ''})</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          adicionarConsumoRapido(lavanderiaPendente.total, `Lavanderia (${lavanderiaPendente.pedidosCount} pedido(s))`);
+                          setLavanderiaPendente({ total: 0, pedidosCount: 0 });
+                        }}
+                        className="px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded-md font-bold text-[10px] transition cursor-pointer shadow-xs active:scale-95"
+                      >
+                        + Lançar no Total
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Linha 3: Desconto */}

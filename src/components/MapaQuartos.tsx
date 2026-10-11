@@ -720,38 +720,6 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
     }
   };
 
-  // Obter informações detalhadas de governança/higienização para a gestão do hotel
-  const getHousekeepingDetails = (room: Room) => {
-    const hk = (room as any).items?.housekeeping;
-    let histRecord: any = null;
-    try {
-      const hId = currentHotelService.getCurrentHotel().id;
-      const raw = localStorage.getItem(`hotelnozap_historico_limpeza_${hId}`);
-      if (raw) {
-        const list = JSON.parse(raw);
-        if (Array.isArray(list)) {
-          histRecord = list.find((h: any) => h.quartoId === room.id || h.numero === room.number);
-        }
-      }
-    } catch {}
-
-    const ultima = hk?.ultima_higienizacao || (histRecord ? {
-      limpo_por: histRecord.limpoPor,
-      horario_inicio: histRecord.horarioInicio,
-      horario_conclusao: histRecord.horarioConclusao,
-      data_conclusao: histRecord.dataConclusao,
-      tempo_gasto_minutos: histRecord.tempoGastoMinutos,
-      servicos_realizados: histRecord.servicosRealizados,
-      observacoes: histRecord.observacoes
-    } : null);
-
-    return {
-      camareiraAtual: hk?.camareira_nome || null,
-      inicioLimpeza: hk?.inicio_limpeza || null,
-      ultimaHigienizacao: ultima
-    };
-  };
-
   return (
     <div className="p-4 sm:p-8 lg:p-10 w-full max-w-7xl mx-auto flex flex-col gap-5 pb-24 lg:pb-12 relative">
       {/* Toast de Notificação e Permissões */}
@@ -1518,10 +1486,10 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
       {/* MODAL: DETALHES DO QUARTO / ALTERAR STATUS */}
       {selectedRoom && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-md sm:max-w-xl bg-white rounded-2xl border border-slate-200/80 shadow-2xl overflow-hidden flex flex-col my-auto">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs animate-in fade-in overflow-y-auto">
+          <div className="w-full max-w-md sm:max-w-xl bg-white rounded-2xl border border-slate-200/80 shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92dvh] sm:max-h-[88vh]">
             {/* Header Escuro Padrão #003400 */}
-            <div className="px-5 py-4 flex items-center justify-between bg-[#003400] text-white shadow-md">
+            <div className="px-5 py-3.5 sm:py-4 flex items-center justify-between bg-[#003400] text-white shadow-md shrink-0">
               <div>
                 <span className="text-xs text-emerald-300 font-mono uppercase tracking-wider block">{selectedRoom.category} • {selectedRoom.floor}</span>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">Quarto {selectedRoom.number}</h3>
@@ -1536,7 +1504,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
               </button>
             </div>
 
-            <div className="p-6 flex flex-col gap-6">
+            <div className="p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 overflow-y-auto overscroll-contain flex-1 touch-pan-y">
               
               <div className="grid grid-cols-2 gap-4 bg-[#f8f9ff] p-4 rounded-xl border border-[#c6c6cd]/40 text-xs">
                 <div>
@@ -1557,94 +1525,6 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   </div>
                 )}
               </div>
-
-              {/* SEÇÃO GOVERNANÇA & HIGIENIZAÇÃO (GESTÃO DO HOTEL) */}
-              {(() => {
-                const hkInfo = getHousekeepingDetails(selectedRoom);
-                return (
-                  <div className="bg-[#f0fdf4] p-4 rounded-xl border border-emerald-200 text-xs space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-emerald-700 text-base">cleaning_services</span>
-                        Governança &amp; Higienização
-                      </span>
-                      {selectedRoom.status === 'limpeza' ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                          {hkInfo.camareiraAtual ? 'Em Andamento' : 'Aguardando Camareira'}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          Liberado / Limpo
-                        </span>
-                      )}
-                    </div>
-
-                    {selectedRoom.status === 'limpeza' ? (
-                      <div className="space-y-1.5 text-slate-700 bg-white/80 p-2.5 rounded-lg border border-emerald-100">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500 font-medium">Camareira Responsável:</span>
-                          <span className="font-bold text-slate-900">
-                            {hkInfo.camareiraAtual || 'Disponível para qualquer camareira'}
-                          </span>
-                        </div>
-                        {hkInfo.inicioLimpeza && (
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-slate-500">Iniciado às:</span>
-                            <span className="font-semibold text-slate-800">
-                              {new Date(hkInfo.inicioLimpeza).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} (há {Math.max(1, Math.round((Date.now() - new Date(hkInfo.inicioLimpeza).getTime()) / 60000))} min)
-                            </span>
-                          </div>
-                        )}
-                        {!hkInfo.camareiraAtual && (
-                          <p className="text-[11px] text-amber-800 font-medium">
-                            🔔 Quarto notificado para todas as camareiras da equipe do hotel.
-                          </p>
-                        )}
-                      </div>
-                    ) : hkInfo.ultimaHigienizacao ? (
-                      <div className="space-y-2 bg-white/80 p-3 rounded-lg border border-emerald-100">
-                        <div className="flex items-center justify-between text-slate-800">
-                          <span className="text-slate-500 font-medium">Quem limpou:</span>
-                          <span className="font-bold text-emerald-900 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs text-emerald-600">person</span>
-                            {hkInfo.ultimaHigienizacao.limpo_por || 'Camareira'}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-slate-800">
-                          <span className="text-slate-500 font-medium">Tempo de limpeza:</span>
-                          <span className="font-bold text-slate-900">
-                            ⏱️ {hkInfo.ultimaHigienizacao.tempo_gasto_minutos || 25} minutos
-                            {hkInfo.ultimaHigienizacao.horario_inicio && ` (${hkInfo.ultimaHigienizacao.horario_inicio} às ${hkInfo.ultimaHigienizacao.horario_conclusao})`}
-                          </span>
-                        </div>
-                        {hkInfo.ultimaHigienizacao.servicos_realizados && hkInfo.ultimaHigienizacao.servicos_realizados.length > 0 && (
-                          <div className="pt-1.5 border-t border-slate-100">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                              O que foi feito de limpeza:
-                            </span>
-                            <div className="flex flex-wrap gap-1">
-                              {hkInfo.ultimaHigienizacao.servicos_realizados.map((serv: string, sIdx: number) => (
-                                <span key={sIdx} className="text-[10px] bg-emerald-100/90 text-emerald-900 font-semibold px-2 py-0.5 rounded-md border border-emerald-200">
-                                  ✓ {serv}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {hkInfo.ultimaHigienizacao.observacoes && (
-                          <div className="text-[11px] text-slate-600 italic bg-amber-50/70 p-2 rounded border border-amber-200/60 mt-1">
-                            &quot;<strong>Observação da Camareira:</strong> {hkInfo.ultimaHigienizacao.observacoes}&quot;
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-slate-500 italic bg-white/70 p-2 rounded border border-emerald-100">
-                        Quarto higienizado e pronto para hospedagem. Histórico detalhado será atualizado nas próximas liberações.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
 
               {/* ALERTA DE MOTIVO / JUSTIFICATIVA REGISTRADA NO STATUS */}
               {selectedRoom.motivo_bloqueio && (
@@ -1839,7 +1719,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
             </div>
 
-            <div className="px-6 py-3 border-t border-[#c6c6cd]/40 flex justify-end bg-[#f8f9ff]">
+            <div className="px-5 sm:px-6 py-3 border-t border-[#c6c6cd]/40 flex justify-end bg-[#f8f9ff] shrink-0">
               <button 
                 onClick={() => setSelectedRoom(null)}
                 className="px-5 py-2 bg-[#b91c1c] hover:bg-red-800 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer active:scale-95 inline-flex items-center gap-1.5"
