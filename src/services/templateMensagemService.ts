@@ -188,20 +188,18 @@ export const templateMensagemService = {
         }
       }
 
-      if (hotelLink && (hotelLink.startsWith('http://') || hotelLink.startsWith('https://'))) {
-        return hotelLink;
+      let cleanSlug = '';
+      if (hotelLink) {
+        cleanSlug = hotelLink.replace(/^(https?:\/\/[^\/]+)?\/?(hotel|hoteis)\/?/i, '').replace(/[^a-z0-9]/g, '');
       }
-
-      const cleanSlug = (hotelLink && hotelLink.startsWith('/hoteis/'))
-        ? hotelLink.replace('/hoteis/', '')
-        : (hotelName
-            ? hotelName
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)+/g, '')
-            : 'hotel');
+      if (!cleanSlug && hotelName) {
+        cleanSlug = hotelName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, '');
+      }
+      if (!cleanSlug) cleanSlug = 'hotelmoradadalua';
 
       let domain = 'https://app.hotelnozap.com.br';
       if (typeof window !== 'undefined' && window.location && window.location.origin) {
@@ -211,8 +209,8 @@ export const templateMensagemService = {
       return `${domain}/hoteis/${cleanSlug}`;
     } catch {
       return typeof window !== 'undefined' && window.location?.origin
-        ? `${window.location.origin}/hoteis/hotel`
-        : 'https://app.hotelnozap.com.br/hoteis/hotel';
+        ? `${window.location.origin}/hoteis/hotelmoradadalua`
+        : 'https://app.hotelnozap.com.br/hoteis/hotelmoradadalua';
     }
   },
 

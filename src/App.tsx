@@ -1197,12 +1197,18 @@ export const App: React.FC = () => {
   // Função para obter o link público do hotel logado na rota /hoteis/nomedohotel
   const getLoggedHotelUrl = () => {
     const current = currentHotelService.getCurrentHotel();
+    const domain = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'https://app.hotelnozap.com.br';
+
     if (current?.link) {
-      if (current.link.startsWith('http://') || current.link.startsWith('https://')) {
-        return current.link;
+      const rawLink = current.link.trim();
+      if (rawLink.startsWith('http://') || rawLink.startsWith('https://')) {
+        const slugPart = rawLink.replace(/^https?:\/\/[^\/]+\/(hotel|hoteis)\/?/i, '').replace(/[^a-z0-9]/g, '');
+        if (slugPart) return `${domain}/hoteis/${slugPart}`;
+        return rawLink;
       }
-      if (current.link.startsWith('/hoteis/')) {
-        return current.link;
+      if (rawLink.startsWith('/hoteis/') || rawLink.startsWith('/hotel/')) {
+        const slugPart = rawLink.replace(/^\/(hotel|hoteis)\/?/i, '').replace(/[^a-z0-9]/g, '');
+        return `${domain}/hoteis/${slugPart || 'hotelmoradadalua'}`;
       }
     }
     const nameToUse = (current?.name && current.name.toLowerCase() !== 'hotel master')
@@ -1210,9 +1216,9 @@ export const App: React.FC = () => {
       : (hotelNomeFantasia && hotelNomeFantasia.toLowerCase() !== 'hotel master' ? hotelNomeFantasia : '');
 
     if (nameToUse) {
-      return `/hoteis/${slugify(nameToUse)}`;
+      return `${domain}/hoteis/${slugify(nameToUse)}`;
     }
-    return '/hoteis/nomedohotel';
+    return `${domain}/hoteis/hotelmoradadalua`;
   };
 
   // Menus distintos: Administrador tem menus globais SaaS, Usuário de Hotel tem menus operacionais

@@ -109,11 +109,12 @@ export function montarLinkPublicoHotel(hotel: any): string {
 
     const hotelLink = hotel?.link || (hotel as any)?.link_publico || '';
     if (hotelLink) {
+      const cleanSlug = hotelLink.replace(/^(https?:\/\/[^\/]+)?\/?(hotel|hoteis)\/?/i, '').replace(/[^a-z0-9]/g, '');
+      if (cleanSlug) {
+        return `${domain}/hoteis/${cleanSlug}`;
+      }
       if (hotelLink.startsWith('http://') || hotelLink.startsWith('https://')) {
         return hotelLink;
-      }
-      if (hotelLink.startsWith('/hoteis/')) {
-        return `${domain}${hotelLink}`;
       }
       return `${domain}/hoteis/${hotelLink.replace(/^\/+/, '')}`;
     }
@@ -124,14 +125,13 @@ export function montarLinkPublicoHotel(hotel: any): string {
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-      return `${domain}/hoteis/${slug || 'hotel'}`;
+        .replace(/[^a-z0-9]/g, '');
+      return `${domain}/hoteis/${slug || 'hotelmoradadalua'}`;
     }
 
-    return `${domain}/hoteis/hotel`;
+    return `${domain}/hoteis/hotelmoradadalua`;
   } catch {
-    return 'https://app.hotelnozap.com.br/hoteis/hotel';
+    return 'https://app.hotelnozap.com.br/hoteis/hotelmoradadalua';
   }
 }
 

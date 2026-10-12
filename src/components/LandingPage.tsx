@@ -543,7 +543,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         status: 'prospecto',
         partnerRef: 'HOTELNOZAP',
         notes: `Prospecto cadastrado na Landing Page (/lp) em ${new Date().toLocaleDateString('pt-BR')}. Plano escolhido: ${selectedPlanForProspect}. Parceiro: HOTELNOZAP. Observações: ${prospectForm.notes}`,
-        link: `/hoteis/${prospectForm.hotelName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
+        link: `/hoteis/${prospectForm.hotelName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')}`
       };
 
       const result = await hoteisService.createHotel(payload as any);
@@ -866,7 +866,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                       É só acessar nosso link oficial abaixo e fazer sua reserva em minutos:
                     </p>
                     <a
-                      href="https://hotelnozap.com.br/hoteis/hotelmoradalua"
+                      href="https://app.hotelnozap.com.br/hoteis/hotelmoradadalua"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block bg-white p-2 rounded-lg border border-emerald-300 shadow-xs hover:bg-emerald-50/50 transition-colors"
@@ -876,7 +876,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                         <span className="text-[10px] font-black text-[#003400] truncate">Hotel Morada da Lua</span>
                       </div>
                       <p className="text-[9px] text-blue-700 underline truncate font-medium">
-                        hotelnozap.com.br/hoteis/hotelmoradalua
+                        app.hotelnozap.com.br/hoteis/hotelmoradadalua
                       </p>
                       <span className="block bg-[#10b981] text-white font-bold text-[9px] py-1 px-2 rounded mt-1.5 text-center shadow-xs">
                         Acessar e Fazer Reserva em Minutos →

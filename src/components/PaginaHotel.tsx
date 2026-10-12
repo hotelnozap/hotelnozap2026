@@ -9,12 +9,11 @@ import { ZapHotelLogo } from './ZapHotelLogo';
 import { maskPhone } from '../utils/masks';
 
 export const slugify = (str: string): string => {
-  return str
+  return (str || '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '');
+    .replace(/[^a-z0-9]/g, '');
 };
 
 export interface QuartoCadastrado {
@@ -457,7 +456,23 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       }
 
       setCurrentHotel(targetHotel);
-      if (targetHotel) setActivePhoto(targetHotel.imageUrl);
+      if (targetHotel) {
+        setActivePhoto(targetHotel.imageUrl);
+
+        // Auto-normalização canônica de URL sem hífens (ex: de /hoteis/hotel-morada-da-lua para /hoteis/hotelmoradadalua)
+        if (typeof window !== 'undefined') {
+          const canonicalSlug = (targetHotel.link ? targetHotel.link.replace(/^(https?:\/\/[^\/]+)?\/?(hotel|hoteis)\/?/i, '') : slugify(targetHotel.name)).toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (canonicalSlug) {
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('-') || currentPath.startsWith('/hotel/')) {
+              const canonicalPath = `/hoteis/${canonicalSlug}`;
+              if (currentPath !== canonicalPath) {
+                window.history.replaceState({}, '', canonicalPath + window.location.search);
+              }
+            }
+          }
+        }
+      }
 
       // 1b. Carregar comodidades do hotel (nível estabelecimento) para repassar ao DetalhesQuarto via props
       if (targetHotel?.id) {
