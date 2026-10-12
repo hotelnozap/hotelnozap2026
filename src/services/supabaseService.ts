@@ -3304,7 +3304,9 @@ export const quartosService = {
               comodidades: (q.items && Array.isArray(q.items.comodidades)) ? q.items.comodidades : (q.comodidades || []),
               beds: Number(q.beds) || 1,
               type: savedTipo,
-              tipoQuarto: savedTipo
+              tipoQuarto: savedTipo,
+              hospede_atual: q.items?.hospede_atual || (q as any).hospede_atual || undefined,
+              guestName: q.items?.hospede_atual || (q as any).hospede_atual || undefined
             };
           });
 
@@ -3536,6 +3538,9 @@ export const quartosService = {
     if (changes.housekeeping !== undefined) {
       finalItems.housekeeping = changes.housekeeping;
     }
+    if (changes.hospede_atual !== undefined) {
+      finalItems.hospede_atual = changes.hospede_atual;
+    }
 
     const updated = local.map(q => (q.id === id || (changes.number && q.number === changes.number) || (changes.numero && q.number === changes.numero)) ? {
       ...q,
@@ -3546,7 +3551,9 @@ export const quartosService = {
       tipoQuarto: typeVal,
       videoUrl: videoUrl,
       video: videoUrl,
-      items: finalItems
+      items: finalItems,
+      guestName: changes.hospede_atual !== undefined ? changes.hospede_atual : (changes.guestName !== undefined ? changes.guestName : q.guestName),
+      hospede_atual: changes.hospede_atual !== undefined ? changes.hospede_atual : q.hospede_atual
     } : q);
     this.saveLocalQuartos(updated, hId);
 

@@ -21,6 +21,7 @@ export interface Room {
   status: string; // Dinâmico com base nos status cadastrados pelo admin
   floor: string;
   guestName?: string;
+  activeReserva?: any;
   capacity?: number;
   dailyPrice?: number;
   amenities?: string[];
@@ -70,6 +71,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   onEditQuarto,
 }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [allReservas, setAllReservas] = useState<Reserva[]>([]);
   const [items, setItems] = useState<RoomItem[]>([]);
   const [availableStatus, setAvailableStatus] = useState<StatusQuartoData[]>(INITIAL_STATUS_QUARTOS);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -134,10 +136,43 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   useEffect(() => {
     let isMounted = true;
     const fetchRooms = () => {
-      quartosService.getQuartos().then(data => {
-        if (isMounted) {
-          setRooms(data || []);
-        }
+      Promise.all([
+        quartosService.getQuartos(),
+        reservasService.getReservas().catch(() => [])
+      ]).then(([dataQuartos, dataReservas]) => {
+        if (!isMounted) return;
+        const resList = dataReservas || [];
+        setAllReservas(resList);
+
+        const mapped = (dataQuartos || []).map((q: any) => {
+          const qNum = String(q.number || q.numero || '').trim();
+          const qId = String(q.id || '').trim();
+
+          const activeRes = resList.find((r: any) => {
+            const rNum = String(r.numero_quarto || '').trim();
+            const rId = String(r.quarto_id || '').trim();
+            const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
+            if (!matchesRoom) return false;
+            const st = (r.status || '').toLowerCase();
+            return st === 'confirmada' || st === 'hospedado' || st === 'pendente';
+          }) || resList.find((r: any) => {
+            const rNum = String(r.numero_quarto || '').trim();
+            const rId = String(r.quarto_id || '').trim();
+            return (rId && rId === qId) || (rNum && rNum === qNum);
+          });
+
+          const guestName = q.guestName || (q as any).hospede_atual || (q.items && q.items.hospede_atual) || activeRes?.hospedeNome || (activeRes as any)?.nome_hospede || undefined;
+
+          return {
+            ...q,
+            guestName,
+            activeReserva: activeRes || undefined
+          };
+        });
+
+        setRooms(mapped);
+      }).catch(err => {
+        console.warn('Erro ao carregar quartos e reservas no Mapa:', err);
       });
     };
     fetchRooms();
@@ -434,7 +469,29 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
   const handleOpenRoomModal = (room: Room) => {
     loadStatus();
-    setSelectedRoom(room);
+    const qNum = String(room.number || '').trim();
+    const qId = String(room.id || '').trim();
+
+    const activeRes = room.activeReserva || allReservas.find((r: any) => {
+      const rNum = String(r.numero_quarto || '').trim();
+      const rId = String(r.quarto_id || '').trim();
+      const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
+      if (!matchesRoom) return false;
+      const st = (r.status || '').toLowerCase();
+      return st === 'confirmada' || st === 'hospedado' || st === 'pendente';
+    }) || allReservas.find((r: any) => {
+      const rNum = String(r.numero_quarto || '').trim();
+      const rId = String(r.quarto_id || '').trim();
+      return (rId && rId === qId) || (rNum && rNum === qNum);
+    });
+
+    const resolvedGuestName = room.guestName || (room as any).hospede_atual || (room.items && room.items.hospede_atual) || activeRes?.hospedeNome || (activeRes as any)?.nome_hospede || undefined;
+
+    setSelectedRoom({
+      ...room,
+      guestName: resolvedGuestName,
+      activeReserva: activeRes || undefined
+    });
   };
 
   const handleStartCheckinForRoom = async (room: Room) => {
@@ -676,7 +733,10 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       finalMotivo = undefined; // Quarto limpo e liberado, encerra qualquer motivo anterior
     }
 
-    const updatedGuestName = newStatus === 'ocupado' ? (newGuestName || 'Hóspede') : undefined;
+    const isStatusOcupadoOuReservado = newStatus === 'ocupado' || newStatus === 'reservado' || newStatus === 'ocupado_em_limpeza';
+    const updatedGuestName = isStatusOcupadoOuReservado
+      ? (newGuestName !== undefined ? (newGuestName || undefined) : targetRoom?.guestName || (newStatus === 'ocupado' ? 'Hóspede' : undefined))
+      : undefined;
 
     setRooms(rooms.map(r => {
       if (r.id === roomId) {
@@ -980,8 +1040,10 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
           let statusText = stInfo.nome;
           let details = `${room.capacity ? room.capacity + ' Pessoas' : 'Standard'} • ${room.floor}`;
 
-          if (room.status === 'ocupado') {
-            details = room.guestName ? `Hóspede: ${room.guestName}` : 'Hóspede Ativo';
+          if (room.status === 'ocupado' || room.status === 'reservado' || room.status === 'ocupado_em_limpeza') {
+            details = room.guestName 
+              ? `${room.status === 'reservado' ? 'Reserva' : 'Hóspede'}: ${room.guestName}` 
+              : (room.status === 'reservado' ? 'Quarto Reservado' : 'Hóspede Ativo');
           } else if (room.status === 'limpeza') {
             const hk = (room as any).items?.housekeeping;
             if (hk?.camareira_nome) {
@@ -1102,10 +1164,14 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
               </div>
 
               <div className="mt-4 flex justify-between items-end text-[#45464d]">
-                {room.status === 'ocupado' && room.guestName ? (
-                  <div className="flex items-center gap-1 truncate max-w-[120px]">
-                    <span className="material-symbols-outlined text-[#ba1a1a] text-base">person</span>
-                    <span className="text-xs font-semibold text-[#ba1a1a] truncate">{room.guestName}</span>
+                {(room.status === 'ocupado' || room.status === 'reservado' || room.status === 'ocupado_em_limpeza') && room.guestName ? (
+                  <div className="flex items-center gap-1 truncate max-w-[130px]" title={`${room.status === 'reservado' ? 'Reserva' : 'Hóspede'}: ${room.guestName}`}>
+                    <span className={`material-symbols-outlined text-base shrink-0 ${room.status === 'reservado' ? 'text-amber-700' : 'text-[#ba1a1a]'}`}>
+                      {room.status === 'reservado' ? 'bookmark' : 'person'}
+                    </span>
+                    <span className={`text-xs font-semibold truncate ${room.status === 'reservado' ? 'text-amber-800' : 'text-[#ba1a1a]'}`}>
+                      {room.guestName}
+                    </span>
                   </div>
                 ) : room.status === 'limpeza' && (room as any).items?.housekeeping?.camareira_nome ? (
                   <div className="flex items-center gap-1 truncate max-w-[140px] text-amber-800" title={`Em limpeza por ${(room as any).items.housekeeping.camareira_nome}`}>
@@ -1515,15 +1581,116 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   <span className="text-[#45464d] block mb-0.5">Capacidade</span>
                   <span className="font-bold text-[#0b1c30] text-sm">{selectedRoom.capacity || 2} Pessoas</span>
                 </div>
-                {selectedRoom.status === 'ocupado' && selectedRoom.guestName && (
-                  <div className="col-span-2 pt-2 border-t border-[#c6c6cd]/40">
-                    <span className="text-[#45464d] block mb-0.5">Hóspede Atual</span>
-                    <span className="font-bold text-[#ba1a1a] text-sm flex items-center gap-1">
-                      <span className="material-symbols-outlined text-base">person</span>
-                      {selectedRoom.guestName}
-                    </span>
-                  </div>
-                )}
+                {/* EXIBIÇÃO DO HÓSPEDE (OBRIGATÓRIO EM RESERVADO OU OCUPADO) */}
+                {(() => {
+                  const isReservadoOuOcupado = 
+                    selectedRoom.status === 'reservado' || 
+                    selectedRoom.status === 'ocupado' || 
+                    selectedRoom.status === 'ocupado_em_limpeza';
+
+                  if (!isReservadoOuOcupado && !selectedRoom.guestName) return null;
+
+                  const isReservado = selectedRoom.status === 'reservado';
+                  const guestLabel = isReservado ? 'Hóspede da Reserva' : 'Hóspede Atual';
+                  const displayGuestName = selectedRoom.guestName || selectedRoom.activeReserva?.hospedeNome || (selectedRoom.activeReserva as any)?.nome_hospede || null;
+
+                  return (
+                    <div className="col-span-2 pt-3 border-t border-[#c6c6cd]/40">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="text-[#45464d] font-bold text-xs flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-base text-slate-700">
+                            {isReservado ? 'bookmark' : 'person'}
+                          </span>
+                          {guestLabel}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const novoNome = prompt('Editar / Informar Nome do Hóspede:', displayGuestName || '');
+                            if (novoNome !== null) {
+                              handleUpdateStatus(selectedRoom.id, selectedRoom.status, novoNome.trim());
+                            }
+                          }}
+                          className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition cursor-pointer flex items-center gap-1 shadow-2xs active:scale-95"
+                          title="Alterar ou definir nome do hóspede"
+                        >
+                          <span className="material-symbols-outlined text-xs">edit</span>
+                          <span>{displayGuestName ? 'Editar Hóspede' : 'Informar Nome'}</span>
+                        </button>
+                      </div>
+
+                      {displayGuestName ? (
+                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                              isReservado ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-[#ba1a1a]'
+                            }`}>
+                              <span className="material-symbols-outlined text-base">
+                                {isReservado ? 'hotel_class' : 'person'}
+                              </span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className={`font-extrabold text-sm block truncate ${isReservado ? 'text-amber-950' : 'text-[#ba1a1a]'}`}>
+                                {displayGuestName}
+                              </span>
+                              <span className="text-[11px] text-slate-500 font-medium block">
+                                {isReservado ? 'Reserva confirmada no sistema' : 'Hóspede alocado no quarto'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Detalhes de Check-in e Check-out se houver reserva vinculada */}
+                          {selectedRoom.activeReserva && (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-700 pt-2 border-t border-slate-100 mt-0.5">
+                              {selectedRoom.activeReserva.checkIn && (
+                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                  <span className="material-symbols-outlined text-xs text-emerald-700">login</span>
+                                  <span>Entrada: <b>{new Date(selectedRoom.activeReserva.checkIn + 'T12:00:00').toLocaleDateString('pt-BR')}</b></span>
+                                </span>
+                              )}
+                              {selectedRoom.activeReserva.checkOut && (
+                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                  <span className="material-symbols-outlined text-xs text-rose-700">logout</span>
+                                  <span>Saída: <b>{new Date(selectedRoom.activeReserva.checkOut + 'T12:00:00').toLocaleDateString('pt-BR')}</b></span>
+                                </span>
+                              )}
+                              {selectedRoom.activeReserva.valorTotal && (
+                                <span className="flex items-center gap-1 text-emerald-800 font-bold ml-auto">
+                                  <span>{selectedRoom.activeReserva.valorTotal}</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-center justify-between gap-2 shadow-2xs">
+                          <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-amber-700 text-lg shrink-0">person_off</span>
+                            <div>
+                              <span className="font-bold block text-slate-900">Hóspede Não Vinculado</span>
+                              <span className="text-[11px] text-amber-800 leading-tight block">
+                                Este quarto está {isReservado ? 'reservado' : 'ocupado'}, mas o nome do hóspede ainda não foi informado.
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const novoNome = prompt('Informe o Nome do Hóspede:', '');
+                              if (novoNome !== null && novoNome.trim()) {
+                                handleUpdateStatus(selectedRoom.id, selectedRoom.status, novoNome.trim());
+                              }
+                            }}
+                            className="shrink-0 px-2.5 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-xs">add</span>
+                            <span>Informar Nome</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* ALERTA DE MOTIVO / JUSTIFICATIVA REGISTRADA NO STATUS */}
@@ -1673,6 +1840,11 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                                 if (name !== null) {
                                   handleUpdateStatus(selectedRoom.id, 'ocupado', name);
                                 }
+                              }
+                            } else if (st.slug === 'reservado') {
+                              const name = prompt('Nome do Hóspede para a Reserva (opcional):', selectedRoom.guestName || '');
+                              if (name !== null) {
+                                handleUpdateStatus(selectedRoom.id, 'reservado', name.trim() || undefined);
                               }
                             } else {
                               handleUpdateStatus(selectedRoom.id, st.slug);
