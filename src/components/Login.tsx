@@ -56,13 +56,17 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     import.meta.env.VITE_RECAPTCHA_SITE_KEY_V2 || 
     '6LegAuQtAAAAAKXZEeinjRJ8Yb0LrcRvArBgEXSc';
 
-  // Verifica se o usuário foi deslogado automaticamente por inatividade (30 min)
+  // Verifica se o usuário foi deslogado automaticamente por inatividade
   useEffect(() => {
     try {
       const reason = localStorage.getItem('hotelnozap_session_expired_reason');
-      if (reason === 'inactivity') {
+      if (reason) {
         localStorage.removeItem('hotelnozap_session_expired_reason');
-        setErrorMessage('Sua sessão foi encerrada automaticamente por inatividade (30 minutos sem interação). Faça login novamente.');
+        if (reason === 'inactivity_8h') {
+          setErrorMessage('Sua sessão foi encerrada após 8 horas de inatividade contínua. Faça login novamente para prosseguir.');
+        } else if (reason === 'inactivity_30m' || reason === 'inactivity') {
+          setErrorMessage('Sua sessão foi encerrada automaticamente por inatividade (30 minutos sem interação). Faça login novamente.');
+        }
       }
     } catch {}
   }, []);

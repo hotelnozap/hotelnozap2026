@@ -84,6 +84,7 @@ import { LandingPageParceiros } from './components/LandingPageParceiros';
 import { CheckoutParceiro } from './components/CheckoutParceiro';
 import { PortalParceiro } from './components/PortalParceiro';
 import { ZapHotelLogo } from './components/ZapHotelLogo';
+import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInatividadeModal';
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 import { autoCheckoutService } from './services/autoCheckoutService';
@@ -511,6 +512,22 @@ export const App: React.FC = () => {
     };
   }, []);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [autoLogoutEnabled, setAutoLogoutEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hotelnozap_auto_logout_enabled') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [autoLogoutDuration, setAutoLogoutDuration] = useState<'8h' | '30m'>(() => {
+    try {
+      const saved = localStorage.getItem('hotelnozap_auto_logout_duration');
+      return saved === '30m' ? '30m' : '8h';
+    } catch {
+      return '8h';
+    }
+  });
+  const [isInactivityConfigModalOpen, setIsInactivityConfigModalOpen] = useState(false);
   const [partnerToEdit, setPartnerToEdit] = useState<Partner | null>(null);
   const [preselectedPartner, setPreselectedPartner] = useState<Partner | null>(null);
   const [hotelToEdit, setHotelToEdit] = useState<Hotel | null>(null);
@@ -720,20 +737,35 @@ export const App: React.FC = () => {
     setActiveTab('login');
   };
 
+  const handleSalvarConfiguracaoInatividade = (enabled: boolean, duration: '8h' | '30m') => {
+    setAutoLogoutEnabled(enabled);
+    setAutoLogoutDuration(duration);
+    try {
+      localStorage.setItem('hotelnozap_auto_logout_enabled', enabled ? 'true' : 'false');
+      localStorage.setItem('hotelnozap_auto_logout_duration', duration);
+      localStorage.setItem('hotelnozap_last_active_timestamp', String(Date.now()));
+    } catch {}
+    setIsInactivityConfigModalOpen(false);
+  };
+
   // =========================================================================
-  //  CONTROLE DE INATIVIDADE (30 MINUTOS)
-  //  1. Monitora eventos do usuário (mousemove throttled, click, keydown, scroll, touch)
-  //  2. Sincroniza via localStorage para suportar múltiplas abas abertas simultâneas
-  //  3. Valida no retorno de foco / visibilidade (ex: fechar notebook ou trocar de janela)
-  //  4. Executa logout seguro caso decorram 30 minutos sem nenhuma atividade
+  //  CONTROLE DE INATIVIDADE (CONFIGURÁVEL: 8 HORAS TURNO, 30 MINUTOS OU 24H)
+  //  1. Se autoLogoutEnabled === false: Permanece ativo 24h sem deslogar (ideal para recepção ouvir alertas)
+  //  2. Se autoLogoutEnabled === true: Encerra após 8 horas ou 30 minutos de inatividade real
+  //  3. Monitora eventos do usuário (mousemove throttled, click, keydown, scroll, touch)
+  //  4. Sincroniza via localStorage para suportar múltiplas abas abertas simultâneas
+  //  5. Valida no retorno de foco / visibilidade (ex: fechar notebook ou trocar de janela)
   // =========================================================================
-  const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutos (1.800.000 ms)
   const STORAGE_KEY_LAST_ACTIVITY = 'hotelnozap_last_active_timestamp';
   const lastActivityRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    // Monitora apenas se houver usuário autenticado no painel
-    if (!currentUserRole) return;
+    // Se não houver usuário ou se o logout por inatividade estiver desativado (Modo Recepção 24h), não desloga
+    if (!currentUserRole || !autoLogoutEnabled) return;
+
+    const timeoutMs = autoLogoutDuration === '30m' 
+      ? 30 * 60 * 1000 // 30 minutos
+      : 8 * 60 * 60 * 1000; // 8 horas (Turno de Trabalho)
 
     const inicial = Date.now();
     try {
@@ -741,11 +773,11 @@ export const App: React.FC = () => {
       if (saved) {
         const parsed = parseInt(saved, 10);
         if (!isNaN(parsed)) {
-          // Se ao carregar ou trocar de aba já tiver passado de 30 minutos, desloga imediatamente
-          if (inicial - parsed >= INACTIVITY_TIMEOUT_MS) {
-            console.warn('[Segurança] Sessão expirada por inatividade de 30 minutos ao verificar.');
+          // Se ao carregar ou trocar de aba já tiver passado do limite configurado, desloga imediatamente
+          if (inicial - parsed >= timeoutMs) {
+            console.warn(`[Segurança] Sessão expirada por inatividade (${autoLogoutDuration}) ao verificar.`);
             try {
-              localStorage.setItem('hotelnozap_session_expired_reason', 'inactivity');
+              localStorage.setItem('hotelnozap_session_expired_reason', `inactivity_${autoLogoutDuration}`);
             } catch {}
             handleLogout();
             return;
@@ -784,10 +816,10 @@ export const App: React.FC = () => {
         }
       } catch {}
 
-      if (now - last >= INACTIVITY_TIMEOUT_MS) {
-        console.warn('[Segurança] 30 minutos de inatividade atingidos. Deslogando com segurança...');
+      if (now - last >= timeoutMs) {
+        console.warn(`[Segurança] Limite de inatividade (${autoLogoutDuration}) atingido. Deslogando com segurança...`);
         try {
-          localStorage.setItem('hotelnozap_session_expired_reason', 'inactivity');
+          localStorage.setItem('hotelnozap_session_expired_reason', `inactivity_${autoLogoutDuration}`);
         } catch {}
         handleLogout();
       }
@@ -828,7 +860,7 @@ export const App: React.FC = () => {
       window.removeEventListener('focus', verificarInatividade);
       clearInterval(intervalTimer);
     };
-  }, [currentUserRole]);
+  }, [currentUserRole, autoLogoutEnabled, autoLogoutDuration]);
 
   // ================================================================
   //  MANTÉM SESSÃO APÓS F5 / HOT RELOAD / NOVAS ABAS
@@ -2214,6 +2246,29 @@ export const App: React.FC = () => {
                     <span>Ajuda</span>
                   </button>
 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsInactivityConfigModalOpen(true);
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl flex items-center justify-between gap-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-base text-amber-600">timer</span>
+                      <span>Sessão & Inatividade</span>
+                    </div>
+                    <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
+                      !autoLogoutEnabled 
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                        : autoLogoutDuration === '8h' 
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                          : 'bg-blue-100 text-blue-800 border border-blue-200'
+                    }`}>
+                      {!autoLogoutEnabled ? '24h' : autoLogoutDuration === '8h' ? '8h' : '30m'}
+                    </span>
+                  </button>
+
                   <div className="border-t border-slate-100 my-1"></div>
 
                   <button
@@ -3336,6 +3391,32 @@ export const App: React.FC = () => {
                           </div>
                         </button>
 
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsInactivityConfigModalOpen(true);
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl flex items-center justify-between gap-3 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-lg text-amber-600">timer</span>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-900">Sessão & Inatividade</span>
+                              <span className="text-[10px] text-slate-400 font-normal">Tempo de auto-logout</span>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            !autoLogoutEnabled 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                              : autoLogoutDuration === '8h' 
+                                ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                                : 'bg-blue-100 text-blue-800 border border-blue-200'
+                          }`}>
+                            {!autoLogoutEnabled ? '24h Ativa' : autoLogoutDuration === '8h' ? '8 Horas' : '30 Min'}
+                          </span>
+                        </button>
+
                         <div className="border-t border-slate-100 my-1"></div>
 
                         <button
@@ -4137,6 +4218,15 @@ export const App: React.FC = () => {
           </>
         )}
       </nav>
+
+      {/* MODAL DE CONFIGURAÇÃO DE TEMPO DE INATIVIDADE */}
+      <ConfiguracaoInatividadeModal
+        isOpen={isInactivityConfigModalOpen}
+        onClose={() => setIsInactivityConfigModalOpen(false)}
+        initialEnabled={autoLogoutEnabled}
+        initialDuration={autoLogoutDuration}
+        onSave={handleSalvarConfiguracaoInatividade}
+      />
 
     </div>
   );
