@@ -196,6 +196,15 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
   const [submittingReserva, setSubmittingReserva] = useState<boolean>(false);
   const [isQuartoOcupado, setIsQuartoOcupado] = useState<boolean>(false);
   const [reservasQuarto, setReservasQuarto] = useState<any[]>([]);
+  const [todosQuartosHotel, setTodosQuartosHotel] = useState<QuartoCadastrado[]>([]);
+  const [todasReservasHotel, setTodasReservasHotel] = useState<any[]>([]);
+
+  // Estados da Fila de Espera VIP (para acomodação ocupada)
+  const [isFilaEsperaModalOpen, setIsFilaEsperaModalOpen] = useState<boolean>(false);
+  const [waitlistNome, setWaitlistNome] = useState<string>('');
+  const [waitlistWhatsapp, setWaitlistWhatsapp] = useState<string>('');
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState<boolean>(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState<boolean>(false);
 
   // Status Inteligente: Quarto em Limpeza
   const isQuartoEmLimpeza = (currentQuarto?.status || '').toLowerCase() === 'limpeza';
@@ -582,8 +591,8 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
         }
       }
 
-      // 2. Resolver Quarto se não veio via prop
-      if (!resolvedQuarto && resolvedHotel) {
+      // 2. Carregar todos os quartos cadastrados no hotel para navegação e sugestão de equivalentes
+      if (resolvedHotel) {
         const hotelIdForRooms = resolvedHotel.id || '11111111-1111-1111-1111-111111111111';
         const dbQuartos = await quartosService.getQuartos(hotelIdForRooms);
         let hotelQuartos: QuartoCadastrado[] = [];
@@ -632,14 +641,15 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
           });
         }
 
-
-
-        if (urlRoomSlug) {
-          resolvedQuarto = hotelQuartos.find(q => slugify(q.name) === urlRoomSlug || q.id === urlRoomSlug || q.number === urlRoomSlug) || null;
-        }
+        setTodosQuartosHotel(hotelQuartos);
 
         if (!resolvedQuarto) {
-          resolvedQuarto = hotelQuartos[0];
+          if (urlRoomSlug) {
+            resolvedQuarto = hotelQuartos.find(q => slugify(q.name) === urlRoomSlug || q.id === urlRoomSlug || q.number === urlRoomSlug) || null;
+          }
+          if (!resolvedQuarto) {
+            resolvedQuarto = hotelQuartos[0];
+          }
         }
 
         if (hotelQuartos.length > 0 && resolvedHotel) {
@@ -683,8 +693,8 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       if (resolvedQuarto?.imageUrl) setActivePhoto(resolvedQuarto.imageUrl);
       else if (resolvedHotel?.imageUrl) setActivePhoto(resolvedHotel.imageUrl);
 
-      // 4. Carregar reservas ativas deste quarto com datas para verificação dinâmica de períodos
-      if (resolvedQuarto && resolvedHotel?.id) {
+      // 4. Carregar reservas ativas deste hotel e deste quarto com datas para verificação dinâmica de períodos
+      if (resolvedHotel?.id) {
         try {
           const { data: activeRes } = await supabase
             .from('reservas')
@@ -692,14 +702,19 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
             .eq('hotel_id', resolvedHotel.id)
             .in('status', ['Confirmada', 'Hospedado', 'confirmada', 'hospedado']);
 
-          const roomRes = (activeRes || []).filter((r: any) => {
-            const matchId = r.quarto_id && String(r.quarto_id) === String(resolvedQuarto?.id);
-            const matchNum = r.numero_quarto && String(r.numero_quarto).trim() === String(resolvedQuarto?.number).trim();
-            return matchId || matchNum;
-          });
-          setReservasQuarto(roomRes);
+          const allRes = activeRes || [];
+          setTodasReservasHotel(allRes);
+
+          if (resolvedQuarto) {
+            const roomRes = allRes.filter((r: any) => {
+              const matchId = r.quarto_id && String(r.quarto_id) === String(resolvedQuarto?.id);
+              const matchNum = r.numero_quarto && String(r.numero_quarto).trim() === String(resolvedQuarto?.number).trim();
+              return matchId || matchNum;
+            });
+            setReservasQuarto(roomRes);
+          }
         } catch (occupancyErr) {
-          console.warn('Aviso ao carregar reservas do quarto:', occupancyErr);
+          console.warn('Aviso ao carregar reservas do hotel:', occupancyErr);
         }
       }
     } catch (err) {
@@ -736,6 +751,172 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
 
     setIsQuartoOcupado(temConflito);
   }, [checkInDate, checkOutDate, reservasQuarto, currentQuarto]);
+
+  // 1. Data em que o quarto atual estará livre com base no check-out da reserva conflitante
+  const infoLiberacaoQuarto = useMemo(() => {
+    if (!isQuartoOcupado || !reservasQuarto.length) return null;
+
+    const conflitos = reservasQuarto.filter((r: any) => {
+      const rIn = r.data_checkin ? String(r.data_checkin).split('T')[0] : '';
+      const rOut = r.data_checkout ? String(r.data_checkout).split('T')[0] : '';
+      if (!rIn || !rOut) return false;
+      return rIn < checkOutDate && rOut > checkInDate;
+    });
+
+    if (!conflitos.length) return null;
+
+    const checkouts = conflitos
+      .map((c: any) => c.data_checkout ? String(c.data_checkout).split('T')[0] : '')
+      .filter(Boolean);
+
+    checkouts.sort();
+    const proximaDataLivreIso = checkouts[checkouts.length - 1];
+    if (!proximaDataLivreIso) return null;
+
+    const parts = proximaDataLivreIso.split('-');
+    const dataBR = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : proximaDataLivreIso;
+
+    return {
+      dataIso: proximaDataLivreIso,
+      dataBR
+    };
+  }, [isQuartoOcupado, reservasQuarto, checkInDate, checkOutDate]);
+
+  // 2. Busca automática de outro quarto equivalente / similar livre nas mesmas datas selecionadas
+  const quartoEquivalenteLivre = useMemo(() => {
+    if (!isQuartoOcupado || !currentQuarto || !todosQuartosHotel.length) return null;
+
+    const isQuartoLivreNoPeriodo = (q: QuartoCadastrado) => {
+      const qStat = (q.status || '').toLowerCase();
+      if (qStat === 'bloqueado' || qStat === 'manutencao') return false;
+
+      const temConflito = todasReservasHotel.some(r => {
+        const matchId = r.quarto_id && String(r.quarto_id) === String(q.id);
+        const matchNum = r.numero_quarto && String(r.numero_quarto).trim() === String(q.number).trim();
+        if (!matchId && !matchNum) return false;
+
+        const rIn = r.data_checkin ? String(r.data_checkin).split('T')[0] : '';
+        const rOut = r.data_checkout ? String(r.data_checkout).split('T')[0] : '';
+        if (!rIn || !rOut) return false;
+
+        return rIn < checkOutDate && rOut > checkInDate;
+      });
+
+      return !temConflito;
+    };
+
+    const outrosQuartos = todosQuartosHotel.filter(q => String(q.id) !== String(currentQuarto.id));
+    const categoriaAtual = (currentQuarto.category || '').toUpperCase().trim();
+
+    // Prioridade 1: Mesma categoria (ex: CASAL) ou mesma capacidade
+    const mesmoTipoLivre = outrosQuartos.find(q => {
+      const cat = (q.category || '').toUpperCase().trim();
+      return (cat === categoriaAtual || q.capacity >= currentQuarto.capacity) && isQuartoLivreNoPeriodo(q);
+    });
+
+    if (mesmoTipoLivre) {
+      return {
+        quarto: mesmoTipoLivre,
+        isMesmaCategoria: true
+      };
+    }
+
+    // Prioridade 2: Qualquer outro quarto livre no hotel
+    const qualquerLivre = outrosQuartos.find(q => isQuartoLivreNoPeriodo(q));
+    if (qualquerLivre) {
+      return {
+        quarto: qualquerLivre,
+        isMesmaCategoria: false
+      };
+    }
+
+    return null;
+  }, [isQuartoOcupado, currentQuarto, todosQuartosHotel, todasReservasHotel, checkInDate, checkOutDate]);
+
+  // Ação de navegar para o quarto equivalente mantendo as datas
+  const handleMudarParaQuartoEquivalente = (q: QuartoCadastrado) => {
+    setCurrentQuarto(q);
+    if (q.imageUrl) setActivePhoto(q.imageUrl);
+    const hSlug = slugify(currentHotel?.name || '');
+    const qSlug = slugify(q.name);
+    const search = `?checkin=${checkInDate}&checkout=${checkOutDate}`;
+    window.history.pushState({}, '', `/hotel/${hSlug}/${qSlug}${search}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast(`Redirecionado para o ${q.name}!`);
+  };
+
+  // Ação de ajustar as datas com 1 clique para a próxima data liberada
+  const handleAjustarParaDataLiberada = () => {
+    if (!infoLiberacaoQuarto?.dataIso) return;
+    const novaEntrada = infoLiberacaoQuarto.dataIso;
+    
+    // Calcula novo check-out preservando as noites selecionadas (mínimo 1 noite)
+    const duracao = Math.max(1, totalNoites || 1);
+    const dOut = new Date(novaEntrada + 'T12:00:00');
+    dOut.setDate(dOut.getDate() + duracao);
+    const novaSaida = `${dOut.getFullYear()}-${String(dOut.getMonth() + 1).padStart(2, '0')}-${String(dOut.getDate()).padStart(2, '0')}`;
+
+    setCheckInDate(novaEntrada);
+    setCheckOutDate(novaSaida);
+
+    const hSlug = slugify(currentHotel?.name || '');
+    const qSlug = slugify(currentQuarto?.name || '');
+    const search = `?checkin=${novaEntrada}&checkout=${novaSaida}`;
+    window.history.replaceState({}, '', `/hotel/${hSlug}/${qSlug}${search}`);
+    showToast(`Datas ajustadas para ${infoLiberacaoQuarto.dataBR}! Quarto liberado.`);
+  };
+
+  // Submissão rápida da Fila de Espera VIP
+  const handleEnviarFilaEsperaModal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistNome.trim() || !waitlistWhatsapp.trim()) return;
+    setWaitlistSubmitting(true);
+
+    try {
+      const payloadWaitlist = {
+        id: `espera-${Date.now()}`,
+        hotelId: currentHotel?.id,
+        hotelNome: currentHotel?.name,
+        nome_hospede: waitlistNome.trim(),
+        hospedeNome: waitlistNome.trim(),
+        telefone: waitlistWhatsapp.trim(),
+        quartoNome: currentQuarto?.name,
+        periodoDesejado: `${formatarDataBR(checkInDate)} a ${formatarDataBR(checkOutDate)}`,
+        itemNome: `Fila de Espera: ${currentQuarto?.name} (${formatarDataBR(checkInDate)} a ${formatarDataBR(checkOutDate)})`,
+        categoria: 'Fila de Espera VIP',
+        horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        const bc = new BroadcastChannel('hotel_notifications_channel');
+        bc.postMessage({ type: 'NOVA_RESERVA_HOSPEDE', data: payloadWaitlist });
+        bc.close();
+      } catch {}
+
+      try {
+        localStorage.setItem('hotel_nova_reserva_trigger', JSON.stringify({
+          ...payloadWaitlist,
+          _triggerUid: `${Date.now()}_${Math.random()}`
+        }));
+      } catch {}
+
+      try {
+        const rtChannel = supabase.channel('realtime_hotel_notifications');
+        rtChannel.send({
+          type: 'broadcast',
+          event: 'solicitacao_hospede',
+          payload: payloadWaitlist
+        });
+      } catch {}
+
+      setWaitlistSuccess(true);
+    } catch (err) {
+      console.error('Erro ao registrar na fila de espera:', err);
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -1728,16 +1909,38 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 </div>
               </div>
 
-              {/* Botão de Reserva no Topo Mobile */}
+              {/* Ação Mobile: Alternativa Inteligente ou Reserva Online */}
               {isQuartoOcupado ? (
-                <button
-                  type="button"
-                  onClick={openWhatsAppReservation}
-                  className="w-full py-3 px-4 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md active:scale-98 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-base">chat</span>
-                  <span>Acomodação Ocupada (Consultar no Zap)</span>
-                </button>
+                <div className="space-y-2">
+                  {quartoEquivalenteLivre ? (
+                    <button
+                      type="button"
+                      onClick={() => handleMudarParaQuartoEquivalente(quartoEquivalenteLivre.quarto)}
+                      className="w-full py-3 px-4 rounded-xl bg-[#003400] hover:bg-[#002500] text-white font-black text-xs flex items-center justify-center gap-2 shadow-md active:scale-98 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">meeting_room</span>
+                      <span>Ver {quartoEquivalenteLivre.quarto.name} Disponível</span>
+                    </button>
+                  ) : infoLiberacaoQuarto ? (
+                    <button
+                      type="button"
+                      onClick={handleAjustarParaDataLiberada}
+                      className="w-full py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md active:scale-98 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">calendar_month</span>
+                      <span>Ajustar Reserva para {infoLiberacaoQuarto.dataBR}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsFilaEsperaModalOpen(true)}
+                      className="w-full py-3 px-4 rounded-xl bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md active:scale-98 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">notification_add</span>
+                      <span>Entrar na Fila de Espera VIP</span>
+                    </button>
+                  )}
+                </div>
               ) : (
                 <button
                   type="button"
@@ -2166,27 +2369,77 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
                 </div>
               </div>
 
-              {/* BOTÃO PRINCIPAL ALTO IMPACTO (RESERVAR AGORA OU AVISO DE OCUPADO) */}
-              <div className="space-y-2.5">
+              {/* PAINEL DE AÇÃO PRINCIPAL (RESERVA IMEDIATA OU ALTERNATIVAS INTELIGENTES) */}
+              <div className="space-y-3">
                 {isQuartoOcupado ? (
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5">
-                      <div className="flex items-center gap-2 font-black text-amber-900">
-                        <span className="material-symbols-outlined text-amber-600 text-lg">event_busy</span>
-                        <span>Acomodação Ocupada / Reservada</span>
+                  <div className="space-y-3 animate-in fade-in duration-200">
+                    
+                    {/* CARD INFORMATIVO COM DATA DE LIBERAÇÃO DO QUARTO */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/95 border border-amber-200 text-amber-950 text-xs space-y-2.5 shadow-xs">
+                      <div className="flex items-center gap-2 font-black text-amber-900 text-sm">
+                        <span className="material-symbols-outlined text-amber-600 text-xl">event_busy</span>
+                        <span>Acomodação Ocupada para este Período</span>
                       </div>
+
                       <p className="text-[11px] text-amber-800 leading-relaxed">
-                        Este quarto possui reserva confirmada para este período. Fale com a recepção no WhatsApp para consultar outras datas disponíveis ou entrar na lista de espera.
+                        Este quarto possui reserva confirmada para as datas selecionadas.
+                        {infoLiberacaoQuarto?.dataBR ? (
+                          <> Estará livre para novas reservas a partir de <strong className="text-amber-950 font-extrabold underline">{infoLiberacaoQuarto.dataBR}</strong>.</>
+                        ) : (
+                          <> Altere as datas acima para consultar períodos disponíveis.</>
+                        )}
                       </p>
+
+                      {/* Botão de Auto-Ajuste com 1 Clique para a Próxima Vaga */}
+                      {infoLiberacaoQuarto && (
+                        <button
+                          type="button"
+                          onClick={handleAjustarParaDataLiberada}
+                          className="w-full py-3 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-base">calendar_month</span>
+                          <span>Ajustar Reserva a partir de {infoLiberacaoQuarto.dataBR}</span>
+                        </button>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={openWhatsAppReservation}
-                      className="w-full py-4 px-4 rounded-2xl bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-xl">chat</span>
-                      <span>Consultar Vagas no WhatsApp</span>
-                    </button>
+
+                    {/* SUGESTÃO INTELIGENTE: OUTRO QUARTO LIVRE NO HOTEL NAS MESMAS DATAS */}
+                    {quartoEquivalenteLivre ? (
+                      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/80 text-emerald-950 space-y-2.5 shadow-sm">
+                        <div className="flex items-center gap-1.5 text-emerald-900 font-extrabold text-xs">
+                          <span className="material-symbols-outlined text-emerald-600 text-xl">meeting_room</span>
+                          <span>
+                            {quartoEquivalenteLivre.isMesmaCategoria 
+                              ? `Outro Quarto ${quartoEquivalenteLivre.quarto.category} Disponível!` 
+                              : `Outra Acomodação Disponível no Hotel!`}
+                          </span>
+                        </div>
+                        
+                        <p className="text-[11px] text-emerald-800 leading-relaxed">
+                          O <strong>{quartoEquivalenteLivre.quarto.name}</strong> está 100% livre para as suas datas ({formatarDataBR(checkInDate)} a {formatarDataBR(checkOutDate)}).
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => handleMudarParaQuartoEquivalente(quartoEquivalenteLivre.quarto)}
+                          className="w-full py-3.5 px-4 rounded-xl bg-[#003400] hover:bg-[#002500] text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-base">arrow_forward</span>
+                          <span>Ver {quartoEquivalenteLivre.quarto.name} e Reservar</span>
+                        </button>
+                      </div>
+                    ) : (
+                      /* BOTÃO DE FILA DE ESPERA SE NÃO HOUVER OUTRO QUARTO */
+                      <button
+                        type="button"
+                        onClick={() => setIsFilaEsperaModalOpen(true)}
+                        className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all active:scale-98 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-base">notification_add</span>
+                        <span>Entrar na Fila de Espera VIP</span>
+                      </button>
+                    )}
+
                   </div>
                 ) : (
                   <button
@@ -3093,6 +3346,107 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
             >
               Fechar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DA FILA DE ESPERA VIP (quando quarto ocupado) */}
+      {isFilaEsperaModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative space-y-5">
+            <button
+              onClick={() => {
+                setIsFilaEsperaModalOpen(false);
+                setWaitlistSuccess(false);
+              }}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+
+            <div className="text-center space-y-1.5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-2xl">event_busy</span>
+              </div>
+              <h3 className="text-lg font-black text-slate-900">
+                Fila de Espera Prioritária
+              </h3>
+              <p className="text-xs text-slate-600 max-w-xs mx-auto">
+                Para <strong>{currentQuarto?.name}</strong> de <strong>{formatarDataBR(checkInDate)}</strong> a <strong>{formatarDataBR(checkOutDate)}</strong>. Havendo cancelamento, chamaremos você no WhatsApp!
+              </p>
+            </div>
+
+            {waitlistSuccess ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center space-y-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-sm">
+                  <span className="material-symbols-outlined text-xl">check</span>
+                </div>
+                <h4 className="font-extrabold text-sm text-emerald-950">
+                  Cadastrado com Sucesso!
+                </h4>
+                <p className="text-xs text-emerald-800">
+                  Seus dados estão na nossa lista prioritária. Caso uma vaga abra para estas datas, avisaremos imediatamente.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFilaEsperaModalOpen(false);
+                    setWaitlistSuccess(false);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-all cursor-pointer"
+                >
+                  Concluir
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleEnviarFilaEsperaModal} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    Seu Nome Completo <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Carlos Eduardo Silva"
+                    value={waitlistNome}
+                    onChange={(e) => setWaitlistNome(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 text-xs sm:text-sm font-medium text-slate-800 outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    WhatsApp com DDD <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Ex: (81) 98765-4321"
+                    value={waitlistWhatsapp}
+                    onChange={(e) => setWaitlistWhatsapp(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 text-xs sm:text-sm font-medium text-slate-800 outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={waitlistSubmitting}
+                  className="w-full py-3.5 rounded-xl bg-[#003400] hover:bg-[#002500] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  {waitlistSubmitting ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-base">sync</span>
+                      <span>Cadastrando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">notification_add</span>
+                      <span>Entrar na Fila de Espera</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
