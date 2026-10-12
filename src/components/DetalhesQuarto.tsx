@@ -169,8 +169,22 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
     return `${year}-${month}-${day}`;
   };
 
-  const [checkInDate, setCheckInDate] = useState<string>(() => getTodayStr());
-  const [checkOutDate, setCheckOutDate] = useState<string>(() => getTomorrowStr());
+  const [checkInDate, setCheckInDate] = useState<string>(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const c = p.get('checkin');
+      if (c && /^\d{4}-\d{2}-\d{2}$/.test(c)) return c;
+    } catch {}
+    return getTodayStr();
+  });
+  const [checkOutDate, setCheckOutDate] = useState<string>(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const c = p.get('checkout');
+      if (c && /^\d{4}-\d{2}-\d{2}$/.test(c)) return c;
+    } catch {}
+    return getTomorrowStr();
+  });
 
   // Estados dos Modais Inteligentes de Reserva e Autenticação
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -181,6 +195,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
   const [reservaConfirmadaData, setReservaConfirmadaData] = useState<any>(null);
   const [submittingReserva, setSubmittingReserva] = useState<boolean>(false);
   const [isQuartoOcupado, setIsQuartoOcupado] = useState<boolean>(false);
+  const [reservasQuarto, setReservasQuarto] = useState<any[]>([]);
 
   // Status Inteligente: Quarto em Limpeza
   const isQuartoEmLimpeza = (currentQuarto?.status || '').toLowerCase() === 'limpeza';
@@ -668,26 +683,23 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       if (resolvedQuarto?.imageUrl) setActivePhoto(resolvedQuarto.imageUrl);
       else if (resolvedHotel?.imageUrl) setActivePhoto(resolvedHotel.imageUrl);
 
-      // 4. Verificar se este quarto possui reserva ativa ou status ocupado (quartos em limpeza estão LIBERADOS para reserva)
+      // 4. Carregar reservas ativas deste quarto com datas para verificação dinâmica de períodos
       if (resolvedQuarto && resolvedHotel?.id) {
         try {
           const { data: activeRes } = await supabase
             .from('reservas')
-            .select('id, status, numero_quarto, quarto_id')
+            .select('id, status, numero_quarto, quarto_id, data_checkin, data_checkout')
             .eq('hotel_id', resolvedHotel.id)
             .in('status', ['Confirmada', 'Hospedado', 'confirmada', 'hospedado']);
 
-          const isReserved = (activeRes || []).some((r: any) => {
+          const roomRes = (activeRes || []).filter((r: any) => {
             const matchId = r.quarto_id && String(r.quarto_id) === String(resolvedQuarto?.id);
             const matchNum = r.numero_quarto && String(r.numero_quarto).trim() === String(resolvedQuarto?.number).trim();
             return matchId || matchNum;
           });
-
-          const qStat = (resolvedQuarto.status || '').toLowerCase();
-          const isStatusOccupied = qStat === 'ocupado' || qStat === 'reservado';
-          setIsQuartoOcupado(isReserved || isStatusOccupied);
+          setReservasQuarto(roomRes);
         } catch (occupancyErr) {
-          console.warn('Aviso ao checar ocupação do quarto:', occupancyErr);
+          console.warn('Aviso ao carregar reservas do quarto:', occupancyErr);
         }
       }
     } catch (err) {
@@ -696,6 +708,34 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       setLoading(false);
     }
   };
+
+  // Recalcula reativamente se o quarto possui conflito para o período selecionado [checkInDate, checkOutDate]
+  useEffect(() => {
+    if (!currentQuarto) return;
+
+    // Se o quarto estiver em manutenção ou bloqueado fisicamente
+    const qStat = (currentQuarto.status || '').toLowerCase();
+    if (qStat === 'bloqueado' || qStat === 'manutencao') {
+      setIsQuartoOcupado(true);
+      return;
+    }
+
+    if (!checkInDate || !checkOutDate) {
+      setIsQuartoOcupado(false);
+      return;
+    }
+
+    const temConflito = reservasQuarto.some((r: any) => {
+      const rIn = r.data_checkin ? String(r.data_checkin).split('T')[0] : '';
+      const rOut = r.data_checkout ? String(r.data_checkout).split('T')[0] : '';
+      if (!rIn || !rOut) return false;
+
+      // Conflito de intervalo: rIn < checkOutDate && rOut > checkInDate
+      return rIn < checkOutDate && rOut > checkInDate;
+    });
+
+    setIsQuartoOcupado(temConflito);
+  }, [checkInDate, checkOutDate, reservasQuarto, currentQuarto]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

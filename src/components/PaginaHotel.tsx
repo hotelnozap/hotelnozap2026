@@ -129,13 +129,97 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [activePhoto, setActivePhoto] = useState<string>('');
   const [totalQuartosCount, setTotalQuartosCount] = useState<number>(0);
+  const [hotelReservas, setHotelReservas] = useState<any[]>([]);
 
-  // Estados para captura da Fila de Espera VIP (quando o hotel está 100% lotado)
+  // Estados de Datas de Hospedagem (Check-in e Check-out)
+  const getTodayStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getTomorrowStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const [filtroCheckIn, setFiltroCheckIn] = useState<string>(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const c = p.get('checkin');
+      if (c && /^\d{4}-\d{2}-\d{2}$/.test(c)) return c;
+    } catch {}
+    return getTodayStr();
+  });
+
+  const [filtroCheckOut, setFiltroCheckOut] = useState<string>(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const c = p.get('checkout');
+      if (c && /^\d{4}-\d{2}-\d{2}$/.test(c)) return c;
+    } catch {}
+    return getTomorrowStr();
+  });
+
+  // Estados para captura da Fila de Espera VIP (quando todas as acomodações estão ocupadas no período)
   const [leadNome, setLeadNome] = useState<string>('');
   const [leadWhatsapp, setLeadWhatsapp] = useState<string>('');
   const [leadEmail, setLeadEmail] = useState<string>('');
   const [leadSubmitting, setLeadSubmitting] = useState<boolean>(false);
   const [leadSuccess, setLeadSuccess] = useState<boolean>(false);
+  const [showFilaEsperaModal, setShowFilaEsperaModal] = useState<boolean>(false);
+
+  // Formatar data para padrão brasileiro DD/MM/AAAA
+  const formatarDataBR = (val?: string) => {
+    if (!val) return '';
+    const clean = val.split('T')[0];
+    const parts = clean.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return val;
+  };
+
+  // Checa se o quarto está ocupado para o período selecionado
+  const checkQuartoOcupadoNasDatas = (quarto: QuartoCadastrado): { ocupado: boolean; ateQuando?: string } => {
+    if (!filtroCheckIn || !filtroCheckOut) return { ocupado: false };
+
+    // Se o status físico no cadastro for bloqueado ou manutenção
+    const qStat = (quarto.status || '').toLowerCase();
+    if (qStat === 'bloqueado' || qStat === 'manutencao') {
+      return { ocupado: true, ateQuando: 'Em manutenção' };
+    }
+
+    // Busca se existe conflito com reservas confirmadas ou em hospedagem
+    const conflito = hotelReservas.find(r => {
+      const matchId = r.quarto_id && String(r.quarto_id) === String(quarto.id);
+      const matchNum = r.numero_quarto && String(r.numero_quarto).trim() === String(quarto.number).trim();
+      if (!matchId && !matchNum) return false;
+
+      const rIn = r.data_checkin ? String(r.data_checkin).split('T')[0] : '';
+      const rOut = r.data_checkout ? String(r.data_checkout).split('T')[0] : '';
+      if (!rIn || !rOut) return false;
+
+      // Conflito de intervalo: rIn < filtroCheckOut && rOut > filtroCheckIn
+      return rIn < filtroCheckOut && rOut > filtroCheckIn;
+    });
+
+    if (conflito) {
+      const rOut = conflito.data_checkout ? String(conflito.data_checkout).split('T')[0] : '';
+      let formatada = '';
+      if (rOut) {
+        const parts = rOut.split('-');
+        if (parts.length === 3) formatada = `${parts[2]}/${parts[1]}`;
+      }
+      return { ocupado: true, ateQuando: formatada };
+    }
+
+    return { ocupado: false };
+  };
 
   useEffect(() => {
     if (!currentHotel?.name) return;
@@ -492,17 +576,18 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       const hotelIdForRooms = targetHotel?.id || '';
       const dbQuartos = hotelIdForRooms ? await quartosService.getQuartos(hotelIdForRooms) : [];
 
-      // 2b. Carregar reservas ativas deste hotel (status 'Confirmada' ou 'Hospedado') para desocupação em tempo real
+      // 2b. Carregar reservas ativas deste hotel (status 'Confirmada' ou 'Hospedado') com datas para verificação de períodos
       let activeReservations: any[] = [];
       if (hotelIdForRooms) {
         try {
           const { data: resData, error: resErr } = await supabase
             .from('reservas')
-            .select('id, numero_quarto, quarto_id, status')
+            .select('id, numero_quarto, quarto_id, status, data_checkin, data_checkout')
             .eq('hotel_id', hotelIdForRooms)
             .in('status', ['Confirmada', 'Hospedado', 'confirmada', 'hospedado']);
           if (!resErr && resData) {
             activeReservations = resData;
+            setHotelReservas(resData);
           }
         } catch (e) {
           console.warn('Erro ao carregar reservas ativas do hotel:', e);
@@ -581,20 +666,9 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
         } catch {}
       }
 
-      // Filtra estritamente os quartos disponíveis (remove os que possuem reserva ativa ou status ocupado)
-      const isQuartoOcupado = (q: any) => {
-        const qStatus = (q.status || '').toLowerCase();
-        if (qStatus === 'ocupado' || qStatus === 'reservado') return true;
-        return activeReservations.some(r => {
-          const matchId = r.quarto_id && String(r.quarto_id) === String(q.id);
-          const matchNum = r.numero_quarto && String(r.numero_quarto).trim() === String(q.number || q.numero).trim();
-          return matchId || matchNum;
-        });
-      };
-
-      const quartosDisponiveis = mappedQuartos.filter(q => !isQuartoOcupado(q));
+      // Todos os quartos cadastrados no hotel são mantidos na vitrine permanente
       setTotalQuartosCount(mappedQuartos.length);
-      setQuartosList(quartosDisponiveis);
+      setQuartosList(mappedQuartos);
 
       if (mappedQuartos.length > 0) {
         const prices = mappedQuartos
@@ -626,7 +700,10 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
     if (!currentHotel) return;
     const rawPhone = currentHotel.whatsappPhone ? currentHotel.whatsappPhone.replace(/\D/g, '') : '5581998765432';
     const formattedPhone = rawPhone.startsWith('55') ? rawPhone : (rawPhone ? `55${rawPhone}` : '5581998765432');
-    const msgText = `Olá! Encontrei o hotel *${currentHotel.name}* no portal *Hotel no Zap* (${currentHotel.city}) e gostaria de verificar disponibilidade para a acomodação *${quarto.name}* (Diária R$ ${quarto.dailyPrice})!`;
+    const dIn = formatarDataBR(filtroCheckIn);
+    const dOut = formatarDataBR(filtroCheckOut);
+    const periodoStr = dIn && dOut ? ` para o período de *${dIn}* a *${dOut}*` : '';
+    const msgText = `Olá! Encontrei o hotel *${currentHotel.name}* no portal *Hotel no Zap* (${currentHotel.city}) e gostaria de verificar disponibilidade para a acomodação *${quarto.name}* (Diária R$ ${quarto.dailyPrice})${periodoStr}!`;
     const message = encodeURIComponent(msgText);
 
     webhookN8nService.dispararWebhookAtendimento({
@@ -803,8 +880,68 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       )}
 
       {/* SEÇÃO PRINCIPAL: QUARTOS AGRUPADOS POR CATEGORIA */}
-      <main className={`px-4 sm:px-8 max-w-7xl mx-auto space-y-10 ${isHotelImportadoGoogle ? 'pt-24' : 'mt-8'}`}>
-        
+      <main className={`px-4 sm:px-8 max-w-7xl mx-auto space-y-8 ${isHotelImportadoGoogle ? 'pt-24' : 'mt-8'}`}>
+
+        {/* BARRA DE DATAS DE HOSPEDAGEM INTELIGENTE */}
+        {!isHotelImportadoGoogle && (
+          <div className="bg-gradient-to-r from-emerald-950 via-[#003400] to-emerald-900 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-emerald-950/10 border border-emerald-800/40">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+              
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[11px] uppercase tracking-wider border border-emerald-400/20">
+                  <span className="material-symbols-outlined text-sm">calendar_month</span>
+                  Disponibilidade em Tempo Real
+                </span>
+                <h3 className="text-lg sm:text-xl font-black text-white">
+                  Consulte quartos para a data da sua viagem
+                </h3>
+                <p className="text-xs text-emerald-100/80 max-w-xl leading-relaxed">
+                  Informe o dia de entrada e saída para ver acomodações livres e reservar com confirmação imediata.
+                </p>
+              </div>
+
+              {/* Controles de Datas */}
+              <div className="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex-1 sm:w-48 bg-white/10 hover:bg-white/15 focus-within:bg-white/20 backdrop-blur-md rounded-2xl p-2.5 px-3.5 border border-white/20 transition-all">
+                  <label className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-wider block mb-0.5">
+                    Check-in (Entrada)
+                  </label>
+                  <input
+                    type="date"
+                    min={getTodayStr()}
+                    value={filtroCheckIn}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFiltroCheckIn(val);
+                      if (val && filtroCheckOut && val >= filtroCheckOut) {
+                        const d = new Date(val + 'T12:00:00');
+                        d.setDate(d.getDate() + 1);
+                        const nextDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        setFiltroCheckOut(nextDay);
+                      }
+                    }}
+                    className="w-full bg-transparent text-white font-bold text-xs sm:text-sm outline-none cursor-pointer [color-scheme:dark]"
+                  />
+                </div>
+
+                <div className="flex-1 sm:w-48 bg-white/10 hover:bg-white/15 focus-within:bg-white/20 backdrop-blur-md rounded-2xl p-2.5 px-3.5 border border-white/20 transition-all">
+                  <label className="text-[10px] font-extrabold text-emerald-300 uppercase tracking-wider block mb-0.5">
+                    Check-out (Saída)
+                  </label>
+                  <input
+                    type="date"
+                    min={filtroCheckIn || getTodayStr()}
+                    value={filtroCheckOut}
+                    onChange={(e) => setFiltroCheckOut(e.target.value)}
+                    className="w-full bg-transparent text-white font-bold text-xs sm:text-sm outline-none cursor-pointer [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {quartosList.length > 0 ? (
           (() => {
             // Agrupar quartos por categoria preservando a ordem de aparição
@@ -819,17 +956,47 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
               grouped[cat].push(q);
             });
 
+            // Verifica se todos os quartos estão ocupados especificamente para as datas selecionadas
+            const todosOcupadosNasDatas = quartosList.every(q => checkQuartoOcupadoNasDatas(q).ocupado);
+
             return (
               <>
+                {/* ALERTA SE TODAS AS ACOMODAÇÕES ESTIVEREM OCUPADAS NO PERÍODO SELECIONADO */}
+                {todosOcupadosNasDatas && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                        <span className="material-symbols-outlined text-2xl">event_busy</span>
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-sm sm:text-base text-slate-900 leading-tight">
+                          Acomodações reservadas de {formatarDataBR(filtroCheckIn)} a {formatarDataBR(filtroCheckOut)}
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          Altere as datas na barra acima para encontrar quartos livres ou entre na fila de espera para este período.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFilaEsperaModal(true)}
+                      className="px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-sm transition-all shrink-0 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">notification_add</span>
+                      <span>Entrar na Fila de Espera</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Cabeçalho geral */}
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <div>
                     <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
                       <span className="material-symbols-outlined text-[#006c49] text-2xl">meeting_room</span>
-                      Acomodações Disponíveis em {currentHotel.name}
+                      Acomodações em {currentHotel.name}
                     </h2>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Escolha a opção ideal e solicite disponibilidade diretamente pelo WhatsApp do hotel
+                      Período selecionado: <strong className="text-slate-700">{formatarDataBR(filtroCheckIn)} até {formatarDataBR(filtroCheckOut)}</strong>
                     </p>
                   </div>
                   <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-950 font-bold text-xs hidden sm:inline">
@@ -855,10 +1022,12 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                     {/* Cards desta categoria */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                       {grouped[cat].map((quarto) => {
+                        const statusDisp = checkQuartoOcupadoNasDatas(quarto);
+
                         const handleGoToRoom = () => {
                           const hSlug = slugify(currentHotel.name);
                           const qSlug = slugify(quarto.name);
-                          const search = window.location.search || '';
+                          const search = `?checkin=${filtroCheckIn}&checkout=${filtroCheckOut}`;
                           window.history.pushState({}, '', `/hotel/${hSlug}/${qSlug}${search}`);
                           if (onNavigateToRoom) {
                             onNavigateToRoom(quarto);
@@ -910,6 +1079,20 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                                   <span className="px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-bold">
                                     {quarto.category}
                                   </span>
+                                  
+                                  {/* Badge de Disponibilidade em Tempo Real para as Datas Selecionadas */}
+                                  {statusDisp.ocupado ? (
+                                    <span className="px-2.5 py-1 rounded-full bg-rose-600/95 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1 shadow-sm">
+                                      <span className="material-symbols-outlined text-[13px]">event_busy</span>
+                                      Ocupado até {statusDisp.ateQuando || 'breve'}
+                                    </span>
+                                  ) : (
+                                    <span className="px-2.5 py-1 rounded-full bg-emerald-600/95 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1 shadow-sm">
+                                      <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                                      Disponível
+                                    </span>
+                                  )}
+
                                   {quarto.status?.toLowerCase() === 'limpeza' && (
                                     <span className="px-2.5 py-1 rounded-full bg-amber-500/95 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1 shadow-sm">
                                       <span className="material-symbols-outlined text-[13px]">cleaning_services</span>
@@ -958,17 +1141,31 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
                                 <span className="text-[10px] text-emerald-700 uppercase font-bold">Sem Taxas Extras</span>
                               </div>
 
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleGoToRoom();
-                                }}
-                                className="w-full py-3 px-4 rounded-xl bg-[#003400] hover:bg-[#002500] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-[18px]">visibility</span>
-                                <span>Ver Quarto</span>
-                              </button>
+                              {statusDisp.ocupado ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleGoToRoom();
+                                  }}
+                                  className="w-full py-3 px-4 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                                  <span>Ver Quarto / Alterar Datas</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleGoToRoom();
+                                  }}
+                                  className="w-full py-3 px-4 rounded-xl bg-[#003400] hover:bg-[#002500] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">event_available</span>
+                                  <span>Reservar Quarto</span>
+                                </button>
+                              )}
                             </div>
 
                           </article>
@@ -1399,6 +1596,114 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
           </div>
         </div>
       </footer>
+
+      {/* MODAL INTELIGENTE DE FILA DE ESPERA (quando acionado pelo hóspede para o período selecionado) */}
+      {showFilaEsperaModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative space-y-6">
+            <button
+              onClick={() => setShowFilaEsperaModal(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-2xl">event_busy</span>
+              </div>
+              <h3 className="text-xl font-black text-slate-900">
+                Fila de Espera Prioritária
+              </h3>
+              <p className="text-xs text-slate-600 max-w-sm mx-auto">
+                Para o período de <strong>{formatarDataBR(filtroCheckIn)}</strong> a <strong>{formatarDataBR(filtroCheckOut)}</strong> no <strong>{currentHotel.name}</strong>. Havendo cancelamento, chamaremos você imediatamente no WhatsApp!
+              </p>
+            </div>
+
+            {leadSuccess ? (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center space-y-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-sm">
+                  <span className="material-symbols-outlined text-xl">check</span>
+                </div>
+                <h4 className="font-extrabold text-sm text-emerald-950">
+                  Cadastrado na Fila de Espera!
+                </h4>
+                <p className="text-xs text-emerald-800">
+                  Seus dados foram enviados. Você receberá uma notificação prioritária assim que uma vaga for liberada.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowFilaEsperaModal(false)}
+                  className="w-full py-2.5 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-all cursor-pointer"
+                >
+                  Concluir
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleEnviarFilaEspera} className="space-y-3.5">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    Nome Completo <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Carlos Eduardo Silva"
+                    value={leadNome}
+                    onChange={(e) => setLeadNome(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 text-xs sm:text-sm font-medium text-slate-800 outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    WhatsApp com DDD <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Ex: (81) 98765-4321"
+                    value={leadWhatsapp}
+                    onChange={(e) => setLeadWhatsapp(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 text-xs sm:text-sm font-medium text-slate-800 outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    E-mail (opcional)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Ex: seuemail@exemplo.com"
+                    value={leadEmail}
+                    onChange={(e) => setLeadEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-600 text-xs sm:text-sm font-medium text-slate-800 outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={leadSubmitting}
+                  className="w-full py-3.5 rounded-xl bg-[#003400] hover:bg-[#002500] text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  {leadSubmitting ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-base">sync</span>
+                      <span>Registrando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">notification_add</span>
+                      <span>Entrar na Fila de Espera</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );
