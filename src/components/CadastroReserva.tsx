@@ -98,8 +98,15 @@ export const CadastroReserva: React.FC<CadastroReservaProps> = ({
             dailyPrice: q.dailyPrice || 250
           }));
           setQuartosOptions(mappedQ);
-          setQuartoId(`Quarto ${mappedQ[0].number} - ${mappedQ[0].name}`);
-          setValorDiaria(mappedQ[0].dailyPrice);
+          const preselected = localStorage.getItem('hotelnozap_preselect_quarto');
+          let initialTarget = mappedQ[0];
+          if (preselected) {
+            try { localStorage.removeItem('hotelnozap_preselect_quarto'); } catch {}
+            const found = mappedQ.find(q => String(q.number).trim() === String(preselected).trim() || q.id === preselected);
+            if (found) initialTarget = found;
+          }
+          setQuartoId(`Quarto ${initialTarget.number} - ${initialTarget.name}`);
+          setValorDiaria(initialTarget.dailyPrice);
         } else {
           setQuartosOptions([
             { id: 'q1', number: '203', name: 'Luxo Duplo', dailyPrice: 160 },

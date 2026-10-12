@@ -3341,6 +3341,12 @@ export const App: React.FC = () => {
               onNavigateToCategorias={() => setActiveTab('categorias-quartos')}
               onNavigateToTiposQuarto={() => setActiveTab('tipos-quartos')}
               onNavigateToDestaques={() => setActiveTab('destaques-quarto')}
+              onNavigateToNovaReserva={(quartoNumero) => {
+                if (quartoNumero) {
+                  try { localStorage.setItem('hotelnozap_preselect_quarto', String(quartoNumero)); } catch {}
+                }
+                setActiveTab('cadastro-reserva');
+              }}
             />
           )}
 

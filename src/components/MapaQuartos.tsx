@@ -55,6 +55,7 @@ export interface MapaQuartosProps {
   onNavigateToTiposQuarto?: () => void;
   onNavigateToDestaques?: () => void;
   onEditQuarto?: (room: Room) => void;
+  onNavigateToNovaReserva?: (quartoNumero?: string) => void;
 }
 
 const INITIAL_ROOMS: Room[] = [];
@@ -69,6 +70,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   onNavigateToTiposQuarto,
   onNavigateToDestaques,
   onEditQuarto,
+  onNavigateToNovaReserva,
 }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [allReservas, setAllReservas] = useState<Reserva[]>([]);
@@ -760,6 +762,15 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       finalMotivo = resp.trim();
     } else if (newStatus === 'livre') {
       finalMotivo = undefined; // Quarto limpo e liberado, encerra qualquer motivo anterior
+    }
+
+    // Regra Anti-Reserva Órfã (Opção 2): Bloqueia colocar quarto em "Reservado" sem hóspede identificado
+    if (newStatus === 'reservado') {
+      const candidateName = newGuestName !== undefined ? newGuestName.trim() : (targetRoom?.guestName || '');
+      if (!candidateName) {
+        showToast(`⚠️ Quarto não reservado: É obrigatório identificar o hóspede para colocar o Quarto ${targetRoom?.number || ''} como Reservado.`);
+        return;
+      }
     }
 
     const isStatusOcupadoOuReservado = newStatus === 'ocupado' || newStatus === 'reservado' || newStatus === 'ocupado_em_limpeza';
@@ -1746,29 +1757,60 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                         )}
                       </div>
                     ) : (
-                      <div className="p-3 rounded-lg bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-center justify-between gap-2 shadow-2xs">
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-amber-700 text-lg shrink-0">person_off</span>
+                      <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-center gap-2.5">
+                          <span className="material-symbols-outlined text-amber-700 text-xl shrink-0">person_off</span>
                           <div>
-                            <span className="font-bold block text-slate-900">Hóspede Não Vinculado</span>
+                            <span className="font-bold block text-slate-900 text-xs sm:text-sm">Hóspede Não Vinculado</span>
                             <span className="text-[11px] text-amber-800 leading-tight block">
-                              Este quarto está {isReservado ? 'reservado' : 'ocupado'}, mas o nome do hóspede ainda não foi informado.
+                              Este quarto está {isReservado ? 'reservado' : 'ocupado'}, mas não possui reserva nem hóspede cadastrado.
                             </span>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const novoNome = prompt('Informe o Nome do Hóspede:', '');
-                            if (novoNome !== null && novoNome.trim()) {
-                              handleUpdateStatus(selectedRoom.id, selectedRoom.status, novoNome.trim());
-                            }
-                          }}
-                          className="shrink-0 px-2.5 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
-                        >
-                          <span className="material-symbols-outlined text-xs">add</span>
-                          <span>Informar Nome</span>
-                        </button>
+
+                        <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto justify-end">
+                          {isReservado && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleUpdateStatus(selectedRoom.id, 'livre');
+                              }}
+                              className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+                              title="Liberar este quarto para voltar a vender"
+                            >
+                              <span className="material-symbols-outlined text-xs">check_circle</span>
+                              <span>Liberar Quarto</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const novoNome = prompt(`Informe o Nome do Hóspede para o Quarto ${selectedRoom.number}:`, '');
+                              if (novoNome !== null && novoNome.trim()) {
+                                handleUpdateStatus(selectedRoom.id, selectedRoom.status, novoNome.trim());
+                              } else if (novoNome !== null) {
+                                alert('⚠️ O nome não pode ficar em branco.');
+                              }
+                            }}
+                            className="px-2.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-xs">person_add</span>
+                            <span>Informar Nome</span>
+                          </button>
+                          {onNavigateToNovaReserva && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onNavigateToNovaReserva(selectedRoom.number);
+                              }}
+                              className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs active:scale-95 flex items-center gap-1"
+                              title="Cadastrar reserva completa com datas e valor"
+                            >
+                              <span className="material-symbols-outlined text-xs">add_circle</span>
+                              <span>Criar Reserva</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1924,10 +1966,25 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                                 }
                               }
                             } else if (st.slug === 'reservado') {
-                              const name = prompt('Nome do Hóspede para a Reserva (opcional):', selectedRoom.guestName || '');
-                              if (name !== null) {
-                                handleUpdateStatus(selectedRoom.id, 'reservado', name.trim() || undefined);
+                              const currentGuest = selectedRoom.guestName || selectedRoom.activeReserva?.hospedeNome || '';
+                              const name = prompt(
+                                `🏨 Reservar Quarto ${selectedRoom.number}:\n\nPara colocar este quarto como "Reservado", informe o Nome do Hóspede:`,
+                                currentGuest
+                              );
+
+                              if (name === null) {
+                                return; // Operador cancelou
                               }
+
+                              const trimmed = name.trim();
+                              if (!trimmed) {
+                                alert(
+                                  `⚠️ Ação Cancelada!\n\nPara colocar o Quarto ${selectedRoom.number} como "Reservado", é obrigatório identificar o hóspede.\n\nO quarto permanece no status atual para evitar quartos travados sem vendas.`
+                                );
+                                return;
+                              }
+
+                              handleUpdateStatus(selectedRoom.id, 'reservado', trimmed);
                             } else {
                               handleUpdateStatus(selectedRoom.id, st.slug);
                             }
