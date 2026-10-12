@@ -883,11 +883,11 @@ export const templateMensagemService = {
       const mensagemProprietario =
         `Olá ${nomeProprietario}, você tem uma nova reserva\n\n` +
         `📌 Quarto: ${tipoQuarto} (${numeroQuarto})\n` +
-        `👤${hospedeNome}\n` +
+        `👤 ${hospedeNome}\n` +
         `📅 Check-in: ${checkinStr} às ${horarioCheckin}\n` +
         `📅 Check-out: ${checkoutStr} às ${horarioCheckout}\n` +
         `💰 Valor Total: ${valorStr}\n\n` +
-        `_Esta é uma mensagem automática do sistema, por favor não respoder!_`;
+        `_Esta é uma mensagem automática do sistema, por favor não responder!_`;
 
       // 8. Disparo via WhatsApp (Evolution API pela instância conectada do hotel)
       console.info(`[templateMensagemService] 🚀 Disparando notificação de nova reserva para o proprietário: ${proprietarioPhone}`);
