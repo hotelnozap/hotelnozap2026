@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { reservasService } from '../services/supabaseService';
+import { reservasService, quartosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { ModalCheckoutRecebimento } from './ModalCheckoutRecebimento';
 import { ModalCheckinEntrada } from './ModalCheckinEntrada';
@@ -49,6 +49,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos os Status');
   const [reservas, setReservas] = useState<Reserva[]>([]);
+  const [quartosList, setQuartosList] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   
   // Modais State
@@ -63,6 +64,46 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
 
   const reservasRef = useRef<Reserva[]>([]);
   reservasRef.current = reservas;
+
+  // Carregar quartos do hotel para resolução precisa do tipo (Casal, Solteiro, etc.)
+  useEffect(() => {
+    const loadQuartos = async () => {
+      try {
+        const q = await quartosService.getQuartos();
+        setQuartosList(q || []);
+      } catch {}
+    };
+    loadQuartos();
+
+    const handleQuartoChange = () => {
+      loadQuartos();
+    };
+    window.addEventListener('hotel_novo_quarto', handleQuartoChange);
+    window.addEventListener('hotel_quarto_modificado', handleQuartoChange);
+    window.addEventListener('hotel_changed', handleQuartoChange);
+    return () => {
+      window.removeEventListener('hotel_novo_quarto', handleQuartoChange);
+      window.removeEventListener('hotel_quarto_modificado', handleQuartoChange);
+      window.removeEventListener('hotel_changed', handleQuartoChange);
+    };
+  }, []);
+
+  const getTipoQuartoExibicao = (reserva?: Reserva | null): string => {
+    if (!reserva) return 'Casal';
+    const tipo = (reserva.quartoTipo || '').trim();
+    if (tipo && tipo !== 'Suíte / Quarto' && !tipo.toLowerCase().includes('suíte / quarto')) {
+      return tipo;
+    }
+    const qNum = String(reserva.numero_quarto || '').replace(/\D/g, '') || String(reserva.quartoNome || '').replace(/\D/g, '');
+    const qEnc = quartosList.find(q => 
+      (reserva.quarto_id && String(q.id) === String(reserva.quarto_id)) ||
+      (qNum && String(q.number || q.numero).replace(/\D/g, '') === qNum)
+    );
+    if (qEnc) {
+      return qEnc.type || qEnc.tipoQuarto || qEnc.tipo || qEnc.category || 'Casal';
+    }
+    return 'Casal';
+  };
 
   // Realiza o Check-out inteligente (manual pela recepção ou automático às 12:00)
   const handleExecutarCheckout = async (reserva: Reserva, isAutomatico: boolean = false) => {
@@ -566,7 +607,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 block tracking-wider">{reserva.reservaNumber}</span>
                   <h3 className="font-bold text-sm text-slate-900">{reserva.hospedeNome}</h3>
-                  <p className="text-xs text-slate-500">{reserva.quartoNome} • {reserva.quartoTipo}</p>
+                  <p className="text-xs text-slate-500">{reserva.quartoNome} • {getTipoQuartoExibicao(reserva)}</p>
                 </div>
                 <div>{getStatusBadge(reserva.status)}</div>
               </div>
@@ -771,7 +812,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                           {reserva.quartoNome}
                         </div>
                         <span className="text-[11px] text-slate-400 block font-normal truncate">
-                          {reserva.quartoTipo}
+                          {getTipoQuartoExibicao(reserva)}
                         </span>
                       </td>
                       <td className="px-2 py-3 text-slate-700 whitespace-nowrap text-xs sm:text-sm">
@@ -908,7 +949,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                             Acomodação
                           </span>
                           <span className="font-bold text-slate-800">
-                            {reserva.quartoNome} • {reserva.quartoTipo}
+                            {reserva.quartoNome} • {getTipoQuartoExibicao(reserva)}
                           </span>
                         </div>
 
@@ -1158,7 +1199,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                     Acomodação
                   </div>
                   <div className="text-base font-bold text-slate-900">{selectedReserva.quartoNome}</div>
-                  <div className="text-xs text-slate-600">Tipo: {selectedReserva.quartoTipo}</div>
+                  <div className="text-xs text-slate-600">Tipo: {getTipoQuartoExibicao(selectedReserva)}</div>
                 </div>
 
                 <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4 space-y-2">
@@ -1281,7 +1322,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
           hospedeNome={whatsappModalReserva.hospedeNome}
           hospedeTelefone={whatsappModalReserva.hospedeTelefone}
           quartoNome={whatsappModalReserva.quartoNome}
-          quartoTipo={whatsappModalReserva.quartoTipo}
+          quartoTipo={getTipoQuartoExibicao(whatsappModalReserva)}
           checkIn={formatDateBR(whatsappModalReserva.checkIn)}
           checkOut={formatDateBR(whatsappModalReserva.checkOut)}
           valorTotal={whatsappModalReserva.valorTotal}

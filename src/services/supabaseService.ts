@@ -3869,6 +3869,21 @@ export const reservasService = {
           .catch(() => {});
       }
 
+      // Buscar quartos para resolver dinamicamente o tipo de quarto real (ex: Casal, Solteiro, Triplo)
+      const quartosMap = new Map<string, any>();
+      try {
+        const dbQuartos = await quartosService.getQuartos(hotelId);
+        if (dbQuartos && dbQuartos.length > 0) {
+          dbQuartos.forEach((q: any) => {
+            if (q.id) quartosMap.set(String(q.id).toLowerCase(), q);
+            if (q.number) quartosMap.set(String(q.number).toLowerCase().trim(), q);
+            if (q.numero) quartosMap.set(String(q.numero).toLowerCase().trim(), q);
+          });
+        }
+      } catch (qErr) {
+        console.warn('Aviso ao carregar quartos para mapeamento de tipo em reservas:', qErr);
+      }
+
       return data.map((r: any) => {
         const checkInDate = r.data_checkin ? r.data_checkin.split('T')[0] : '';
         const checkOutDate = r.data_checkout ? r.data_checkout.split('T')[0] : '';
@@ -3899,6 +3914,20 @@ export const reservasService = {
         else if (rawStatus.includes('canc')) normalizedStatus = 'Cancelada';
         else normalizedStatus = 'Confirmada';
 
+        // Resolver tipo real do quarto (ex: Casal, Solteiro, Família)
+        const qIdKey = r.quarto_id ? String(r.quarto_id).toLowerCase() : '';
+        const qNumKey = r.numero_quarto ? String(r.numero_quarto).toLowerCase().trim() : '';
+        const qEncontrado = (qIdKey && quartosMap.get(qIdKey)) || (qNumKey && quartosMap.get(qNumKey));
+        const tipoResolvido = qEncontrado?.type 
+          || qEncontrado?.tipoQuarto 
+          || qEncontrado?.tipo 
+          || qEncontrado?.category
+          || qEncontrado?.categoria
+          || (r.quarto && (r.quarto.type || r.quarto.tipo))
+          || r.tipo_quarto 
+          || r.quarto_tipo 
+          || 'Casal';
+
         return {
           id: r.id,
           reservaNumber: `#RES-${shortId}`,
@@ -3907,7 +3936,7 @@ export const reservasService = {
           hospedeTelefone: '5581998765432',
           hospedeIniciais: (r.nome_hospede || 'Hóspede').substring(0, 2).toUpperCase(),
           quartoNome: r.numero_quarto ? `Quarto ${r.numero_quarto}` : 'Acomodação Principal',
-          quartoTipo: 'Suíte / Quarto',
+          quartoTipo: tipoResolvido,
           checkIn: checkInDate,
           checkOut: checkOutDate,
           noites: noites,
@@ -4130,6 +4159,18 @@ export const reservasService = {
 
       const shortId = data.id ? data.id.substring(0, 6).toUpperCase() : '202601';
 
+      let resolvedTipo = 'Casal';
+      try {
+        const dbQuartos = await quartosService.getQuartos(resolvedHotelId || undefined);
+        const qEnc = dbQuartos?.find((q: any) => 
+          (resolvedQuartoId && String(q.id) === String(resolvedQuartoId)) ||
+          (data.numero_quarto && String(q.number || q.numero).trim() === String(data.numero_quarto).trim())
+        );
+        if (qEnc) {
+          resolvedTipo = qEnc.type || qEnc.tipoQuarto || qEnc.tipo || qEnc.category || 'Casal';
+        }
+      } catch {}
+
       return {
         id: data.id,
         reservaNumber: `#RES-${shortId}`,
@@ -4138,7 +4179,7 @@ export const reservasService = {
         hospedeTelefone: '5581998765432',
         hospedeIniciais: data.nome_hospede.substring(0, 2).toUpperCase(),
         quartoNome: `Quarto ${data.numero_quarto}`,
-        quartoTipo: 'Suíte / Quarto',
+        quartoTipo: resolvedTipo,
         checkIn: data.data_checkin ? data.data_checkin.split('T')[0] : '',
         checkOut: data.data_checkout ? data.data_checkout.split('T')[0] : '',
         noites: 1,
