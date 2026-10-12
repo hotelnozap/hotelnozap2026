@@ -711,6 +711,7 @@ export const App: React.FC = () => {
       localStorage.removeItem('hotelnozap_user_name');
       localStorage.removeItem('hotelnozap_hotel_atual');
       localStorage.removeItem('hotelnozap_last_authenticated_at');
+      localStorage.removeItem('hotelnozap_last_active_timestamp');
     } catch { /* ignore */ }
     setCurrentUserRole('');
     setIsUserMenuOpen(false);
@@ -718,6 +719,116 @@ export const App: React.FC = () => {
     window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
     setActiveTab('login');
   };
+
+  // =========================================================================
+  //  CONTROLE DE INATIVIDADE (30 MINUTOS)
+  //  1. Monitora eventos do usuário (mousemove throttled, click, keydown, scroll, touch)
+  //  2. Sincroniza via localStorage para suportar múltiplas abas abertas simultâneas
+  //  3. Valida no retorno de foco / visibilidade (ex: fechar notebook ou trocar de janela)
+  //  4. Executa logout seguro caso decorram 30 minutos sem nenhuma atividade
+  // =========================================================================
+  const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutos (1.800.000 ms)
+  const STORAGE_KEY_LAST_ACTIVITY = 'hotelnozap_last_active_timestamp';
+  const lastActivityRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    // Monitora apenas se houver usuário autenticado no painel
+    if (!currentUserRole) return;
+
+    const inicial = Date.now();
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed)) {
+          // Se ao carregar ou trocar de aba já tiver passado de 30 minutos, desloga imediatamente
+          if (inicial - parsed >= INACTIVITY_TIMEOUT_MS) {
+            console.warn('[Segurança] Sessão expirada por inatividade de 30 minutos ao verificar.');
+            try {
+              localStorage.setItem('hotelnozap_session_expired_reason', 'inactivity');
+            } catch {}
+            handleLogout();
+            return;
+          }
+          lastActivityRef.current = parsed;
+        }
+      } else {
+        localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, String(inicial));
+        lastActivityRef.current = inicial;
+      }
+    } catch {
+      lastActivityRef.current = inicial;
+    }
+
+    let lastRecorded = 0;
+    const registrarAtividade = () => {
+      const now = Date.now();
+      // Throttling de 3 segundos para economizar processamento
+      if (now - lastRecorded > 3000) {
+        lastRecorded = now;
+        lastActivityRef.current = now;
+        try {
+          localStorage.setItem(STORAGE_KEY_LAST_ACTIVITY, String(now));
+        } catch {}
+      }
+    };
+
+    const verificarInatividade = () => {
+      const now = Date.now();
+      let last = lastActivityRef.current;
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
+        if (saved) {
+          const parsed = parseInt(saved, 10);
+          if (!isNaN(parsed)) last = Math.max(last, parsed);
+        }
+      } catch {}
+
+      if (now - last >= INACTIVITY_TIMEOUT_MS) {
+        console.warn('[Segurança] 30 minutos de inatividade atingidos. Deslogando com segurança...');
+        try {
+          localStorage.setItem('hotelnozap_session_expired_reason', 'inactivity');
+        } catch {}
+        handleLogout();
+      }
+    };
+
+    // Sincronização entre abas: se outra aba registrou atividade recente, sincroniza
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_LAST_ACTIVITY && e.newValue) {
+        const val = parseInt(e.newValue, 10);
+        if (!isNaN(val)) {
+          lastActivityRef.current = Math.max(lastActivityRef.current, val);
+        }
+      }
+    };
+
+    const userEvents = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    userEvents.forEach(evt => window.addEventListener(evt, registrarAtividade, { passive: true }));
+    window.addEventListener('mousemove', registrarAtividade, { passive: true });
+    window.addEventListener('storage', handleStorageChange);
+
+    // Valida imediatamente ao voltar para a aba ou desbloquear a tela do computador
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        verificarInatividade();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', verificarInatividade);
+
+    // Checagem periódica a cada 15 segundos
+    const intervalTimer = setInterval(verificarInatividade, 15000);
+
+    return () => {
+      userEvents.forEach(evt => window.removeEventListener(evt, registrarAtividade));
+      window.removeEventListener('mousemove', registrarAtividade);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', verificarInatividade);
+      clearInterval(intervalTimer);
+    };
+  }, [currentUserRole]);
 
   // ================================================================
   //  MANTÉM SESSÃO APÓS F5 / HOT RELOAD / NOVAS ABAS

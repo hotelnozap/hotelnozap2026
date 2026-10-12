@@ -56,6 +56,17 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     import.meta.env.VITE_RECAPTCHA_SITE_KEY_V2 || 
     '6LegAuQtAAAAAKXZEeinjRJ8Yb0LrcRvArBgEXSc';
 
+  // Verifica se o usuário foi deslogado automaticamente por inatividade (30 min)
+  useEffect(() => {
+    try {
+      const reason = localStorage.getItem('hotelnozap_session_expired_reason');
+      if (reason === 'inactivity') {
+        localStorage.removeItem('hotelnozap_session_expired_reason');
+        setErrorMessage('Sua sessão foi encerrada automaticamente por inatividade (30 minutos sem interação). Faça login novamente.');
+      }
+    } catch {}
+  }, []);
+
   // Renderiza e inicializa o widget reCAPTCHA v2 Checkbox ("Não sou um robô")
   useEffect(() => {
     if (typeof window === 'undefined') return;
