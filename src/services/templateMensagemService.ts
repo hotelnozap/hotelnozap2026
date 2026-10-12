@@ -865,23 +865,31 @@ export const templateMensagemService = {
       const hotelNome = hotelData?.nome || hotelData?.name || hotelData?.razao_social || 'Hotel no Zap';
       const statusStr = dados.status || 'Confirmada';
 
-      // 7. Montar mensagem conforme especificação do usuário
+      // Obter horários configurados do hotel ou defaults 14:00 / 12:00
+      let horarioCheckin = '14:00';
+      let horarioCheckout = '12:00';
+      try {
+        if (hotelData?.observacoes) {
+          const matchCfg = hotelData.observacoes.match(/<!-- HOTEL_CONFIG_JSON:(.*?):END_HOTEL_CONFIG -->/s);
+          if (matchCfg && matchCfg[1]) {
+            const cfg = JSON.parse(matchCfg[1]);
+            if (cfg.checkInHorario) horarioCheckin = cfg.checkInHorario;
+            if (cfg.checkOutHorario) horarioCheckout = cfg.checkOutHorario;
+          }
+        }
+      } catch {}
+
+      const nomeProprietario = hotelData?.nome_gerente || hotelData?.proprietario || 'Proprietário';
+
+      // 7. Montar mensagem conforme especificação exata do usuário
       const mensagemProprietario =
-        `🔔 *VOCÊ TEM UMA NOVA RESERVA!* 🏨\n\n` +
-        `Olá! Uma nova reserva acaba de ser registrada no *${hotelNome}*.\n\n` +
-        `📋 *DETALHES DA RESERVA:*\n` +
-        `• *Código:* ${reservaNum}\n` +
-        `• *Hóspede:* ${hospedeNome}\n` +
-        (hospedeTelefone ? `• *WhatsApp do Hóspede:* ${hospedeTelefone}\n` : '') +
-        (hospedeEmail ? `• *E-mail:* ${hospedeEmail}\n` : '') +
-        `• *Quarto / Acomodação:* ${tipoQuarto} (${numeroQuarto})\n` +
-        `• *Check-in:* ${checkinStr}\n` +
-        `• *Check-out:* ${checkoutStr}\n` +
-        `• *Valor da Reserva:* ${valorStr}\n` +
-        `• *Status:* ${statusStr}\n` +
-        (dados.observacoes ? `• *Observações:* ${dados.observacoes}\n` : '') +
-        `\n📲 Acesse o painel para gerenciar a acomodação:\n` +
-        `👉 https://app.hotelnozap.com.br/`;
+        `Olá ${nomeProprietario}, você tem uma nova reserva\n\n` +
+        `📌 Quarto: ${tipoQuarto} (${numeroQuarto})\n` +
+        `👤${hospedeNome}\n` +
+        `📅 Check-in: ${checkinStr} às ${horarioCheckin}\n` +
+        `📅 Check-out: ${checkoutStr} às ${horarioCheckout}\n` +
+        `💰 Valor Total: ${valorStr}\n\n` +
+        `_Esta é uma mensagem automática do sistema, por favor não respoder!_`;
 
       // 8. Disparo via WhatsApp (Evolution API pela instância conectada do hotel)
       console.info(`[templateMensagemService] 🚀 Disparando notificação de nova reserva para o proprietário: ${proprietarioPhone}`);
