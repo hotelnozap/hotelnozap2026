@@ -40,6 +40,7 @@ export interface CadastroQuartoProps {
   onBack: () => void;
   onSave?: (roomData: any) => void;
   editingQuarto?: EditingQuartoData | null;
+  cloningQuarto?: EditingQuartoData | null;
   onClearEditingQuarto?: () => void;
 }
 
@@ -82,7 +83,7 @@ const CATEGORY_ICON_OPTIONS: { icon: string; label: string }[] = [
   { icon: 'hot_tub', label: 'Ofurô / Hidro' },
 ];
 
-export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, editingQuarto, onClearEditingQuarto }) => {
+export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, editingQuarto, cloningQuarto, onClearEditingQuarto }) => {
   const isEditMode = !!editingQuarto;
   const [openIconPickerCatIdx, setOpenIconPickerCatIdx] = useState<number | null>(null);
   const [iconSearchTerm, setIconSearchTerm] = useState('');
@@ -99,6 +100,13 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
   const [observacoes, setObservacoes] = useState('');
   const [tiposQuartosList, setTiposQuartosList] = useState<RoomTypeData[]>([]);
   const [categoriasQuartosList, setCategoriasQuartosList] = useState<CategoriaQuartoData[]>([]);
+
+  // CLONAGEM DE QUARTOS
+  const [quartosExistentes, setQuartosExistentes] = useState<any[]>([]);
+  const [quartoSelecionadoParaClonar, setQuartoSelecionadoParaClonar] = useState<string>('');
+  const [cloneToast, setCloneToast] = useState<string | null>(null);
+  const numeroInputRef = React.useRef<HTMLInputElement>(null);
+  const nomeInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadTipos = () => {
@@ -349,6 +357,101 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
     };
     loadEditingDestaques();
   }, [editingQuarto]);
+
+  // CARREGAR LISTA DE QUARTOS DO HOTEL PARA CLONAGEM
+  useEffect(() => {
+    let isMounted = true;
+    const carregarQuartos = async () => {
+      try {
+        const qList = await quartosService.getQuartos();
+        if (isMounted) {
+          setQuartosExistentes(qList || []);
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar quartos para clonagem:', e);
+      }
+    };
+    carregarQuartos();
+    return () => { isMounted = false; };
+  }, []);
+
+  const aplicarDadosClonados = async (target: any) => {
+    if (!target) return;
+
+    // 1. Fotos
+    const targetPhotos = Array.isArray(target.photos) ? target.photos : [];
+    setFotos([...targetPhotos]);
+
+    // 2. Vídeo
+    const rawVideo = target.videoUrl || target.video || target.video_url || target.items?.videoUrl || target.items?.video || '';
+    setVideoUrl(rawVideo);
+
+    // 3. Andar, Categoria, Tipo, Capacidade, Camas, Valor Diária, Observações
+    setAndar(target.floor || target.andar || '1º Andar');
+
+    const rawCat = target.category || target.categoria || target.items?.categoria || target.items?.category || '';
+    const matchedCat = categoriasQuartosList.find(c => c.name.trim().toLowerCase() === rawCat.trim().toLowerCase());
+    setCategoria(matchedCat ? matchedCat.name : rawCat);
+
+    const rawTipo = target.type || target.tipo || target.tipoQuarto || target.items?.tipoQuarto || target.items?.type || '';
+    const matchedTipo = tiposQuartosList.find(t => t.name.trim().toLowerCase() === rawTipo.trim().toLowerCase());
+    setTipoQuarto(matchedTipo ? matchedTipo.name : rawTipo);
+
+    setCapacidade(String(target.capacity || target.capacidade || '2'));
+    setQuantidadeCamas(String(target.beds || target.quantidadeCamas || '1'));
+    setValorDiaria(String(target.dailyPrice || target.valorDiaria || target.valor_diaria || ''));
+    setObservacoes(target.notes || target.observacoes || '');
+
+    // 4. Comodidades (cópia profunda para evitar mutação)
+    if (target.comodidades && Array.isArray(target.comodidades) && target.comodidades.length > 0) {
+      setComodidadesCategorias(JSON.parse(JSON.stringify(target.comodidades)));
+    } else if (target.items?.comodidades && Array.isArray(target.items.comodidades) && target.items.comodidades.length > 0) {
+      setComodidadesCategorias(JSON.parse(JSON.stringify(target.items.comodidades)));
+    } else {
+      setComodidadesCategorias(comodidadesService.getSeedPadrao());
+    }
+
+    // 5. Destaques
+    try {
+      if (target.id) {
+        const ds = await destaquesQuartoService.getDestaquesDoQuarto(target.id);
+        if (ds && ds.length > 0) {
+          setQuartoDestaquesIds(ds.map(d => d.id));
+        } else if (target.destaquesIds && Array.isArray(target.destaquesIds)) {
+          setQuartoDestaquesIds(target.destaquesIds);
+        }
+      }
+    } catch (_) {
+      setQuartoDestaquesIds([]);
+    }
+
+    // 6. Nome e Número:
+    // O usuário solicitou que apenas precisará alterar o nome e número do quarto.
+    // Deixa o número limpo para obrigar o preenchimento do novo número.
+    setNumero('');
+    const numOriginal = String(target.number || target.numero || '').trim();
+    const nomeOriginal = String(target.name || '').trim();
+    const isGenericName = !nomeOriginal || (numOriginal && nomeOriginal.toLowerCase() === `quarto ${numOriginal}`.toLowerCase());
+    if (isGenericName) {
+      setNomeQuarto('');
+    } else {
+      setNomeQuarto(nomeOriginal);
+    }
+
+    setCloneToast(`✨ Dados do Quarto ${numOriginal || ''} clonados com sucesso! Informe o novo número e nome.`);
+    setTimeout(() => setCloneToast(null), 5000);
+
+    setTimeout(() => {
+      numeroInputRef.current?.focus();
+    }, 150);
+  };
+
+  useEffect(() => {
+    if (cloningQuarto) {
+      aplicarDadosClonados(cloningQuarto);
+      setQuartoSelecionadoParaClonar(cloningQuarto.id || '');
+    }
+  }, [cloningQuarto]);
 
   const handleToggleDestaqueSelection = (destaqueId: string) => {
     setQuartoDestaquesIds((prev) =>
@@ -670,6 +773,87 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
         {/* FORM CONTENT */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-8 flex flex-col gap-6 sm:gap-8 bg-white">
           
+          {/* TOAST DE SUCESSO DA CLONAGEM */}
+          {cloneToast && (
+            <div className="p-4 bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between shadow-md animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-xl">content_copy</span>
+                <span>{cloneToast}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCloneToast(null)}
+                className="p-1 hover:bg-white/20 rounded-lg transition-colors cursor-pointer"
+                title="Fechar"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+          )}
+
+          {/* PAINEL DE CLONAGEM DE QUARTO EXISTENTE */}
+          {!isEditMode && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-teal-50/40 to-blue-50/30 border border-emerald-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#006c49] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <span className="material-symbols-outlined text-2xl">content_copy</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm sm:text-base font-extrabold text-[#0b1c30]">
+                      Clonar Quarto Já Existente
+                    </h3>
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-[#006c49] border border-emerald-300">
+                      Preenchimento Rápido
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#45464d] mt-0.5 max-w-xl">
+                    Selecione um quarto existente como modelo para copiar fotos, vídeo, categoria, diária e comodidades. Você só precisará alterar o nome e número!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+                <div className="relative flex-1 md:w-72">
+                  <select
+                    value={quartoSelecionadoParaClonar}
+                    onChange={(e) => {
+                      const qId = e.target.value;
+                      setQuartoSelecionadoParaClonar(qId);
+                      if (qId) {
+                        const target = quartosExistentes.find(q => String(q.id) === String(qId));
+                        if (target) aplicarDadosClonados(target);
+                      }
+                    }}
+                    className="w-full h-10 pl-3 pr-8 bg-white border border-emerald-300 rounded-xl text-xs sm:text-sm font-semibold text-[#0b1c30] focus:outline-none focus:ring-2 focus:ring-[#006c49] shadow-2xs cursor-pointer"
+                  >
+                    <option value="">-- Selecione o quarto para clonar --</option>
+                    {quartosExistentes.map((q) => (
+                      <option key={q.id} value={q.id}>
+                        {q.number ? `Quarto ${q.number}` : q.name} • {q.category || q.categoria || 'Standard'} ({q.floor || '1º Andar'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {quartoSelecionadoParaClonar && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = quartosExistentes.find(q => String(q.id) === String(quartoSelecionadoParaClonar));
+                      if (target) aplicarDadosClonados(target);
+                    }}
+                    className="px-3.5 h-10 bg-[#006c49] hover:bg-[#005237] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                    title="Reaplicar dados deste quarto"
+                  >
+                    <span className="material-symbols-outlined text-base">sync</span>
+                    <span className="hidden sm:inline">Reaplicar</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* MEDIA UPLOAD AREA (PHOTOS & VIDEO) */}
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
@@ -949,6 +1133,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
               <label className="block text-xs sm:text-sm font-semibold text-[#0b1c30] mb-1.5">Nome do Quarto</label>
               <input 
                 type="text"
+                ref={nomeInputRef}
                 placeholder="Ex: Suíte Presidencial"
                 value={nomeQuarto}
                 onChange={(e) => setNomeQuarto(e.target.value)}
@@ -960,6 +1145,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
               <label className="block text-xs sm:text-sm font-semibold text-[#0b1c30] mb-1.5">Número *</label>
               <input 
                 type="text"
+                ref={numeroInputRef}
                 required
                 placeholder="Ex: 401"
                 value={numero}

@@ -55,6 +55,7 @@ export interface MapaQuartosProps {
   onNavigateToTiposQuarto?: () => void;
   onNavigateToDestaques?: () => void;
   onEditQuarto?: (room: Room) => void;
+  onCloneQuarto?: (room: Room) => void;
   onNavigateToNovaReserva?: (quartoNumero?: string) => void;
 }
 
@@ -70,6 +71,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   onNavigateToTiposQuarto,
   onNavigateToDestaques,
   onEditQuarto,
+  onCloneQuarto,
   onNavigateToNovaReserva,
 }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -389,6 +391,14 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
   const handleOpenEditRoom = (room: Room) => {
     onEditQuarto?.(room);
+  };
+
+  const handleCloneRoom = (room: Room) => {
+    if (onCloneQuarto) {
+      onCloneQuarto(room);
+    } else if (onNavigateToCadastroQuarto) {
+      onNavigateToCadastroQuarto();
+    }
   };
 
   const handleAskDeleteRoom = (room: Room) => {
@@ -1136,6 +1146,17 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
+                      handleCloneRoom(room);
+                    }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer"
+                    title="Clonar quarto (criar novo com os mesmos dados)"
+                  >
+                    <span className="material-symbols-outlined text-base">content_copy</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleOpenEditRoom(room);
                     }}
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
@@ -1235,6 +1256,17 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
                   return (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCloneRoom(room);
+                        }}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer shadow-xs"
+                        title="Clonar quarto (criar novo com os mesmos dados)"
+                      >
+                        <span className="material-symbols-outlined text-sm">content_copy</span>
+                      </button>
                       <button
                         type="button"
                         onClick={(e) => {
@@ -2030,7 +2062,36 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
             </div>
 
-            <div className="px-5 sm:px-6 py-3 border-t border-[#c6c6cd]/40 flex justify-end bg-[#f8f9ff] shrink-0">
+            <div className="px-5 sm:px-6 py-3 border-t border-[#c6c6cd]/40 flex items-center justify-between gap-2 bg-[#f8f9ff] shrink-0">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const r = selectedRoom;
+                    setSelectedRoom(null);
+                    handleCloneRoom(r);
+                  }}
+                  className="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs rounded-xl transition-colors cursor-pointer active:scale-95 inline-flex items-center gap-1.5 shadow-2xs"
+                  title="Clonar dados deste quarto para um novo cadastro"
+                >
+                  <span className="material-symbols-outlined text-base">content_copy</span>
+                  <span>Clonar Quarto</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const r = selectedRoom;
+                    setSelectedRoom(null);
+                    handleOpenEditRoom(r);
+                  }}
+                  className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs rounded-xl transition-colors cursor-pointer active:scale-95 inline-flex items-center gap-1.5 shadow-2xs"
+                  title="Editar quarto"
+                >
+                  <span className="material-symbols-outlined text-base">edit</span>
+                  <span>Editar</span>
+                </button>
+              </div>
+
               <button 
                 onClick={() => setSelectedRoom(null)}
                 className="px-5 py-2 bg-[#b91c1c] hover:bg-red-800 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer active:scale-95 inline-flex items-center gap-1.5"

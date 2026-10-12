@@ -522,6 +522,7 @@ export const App: React.FC = () => {
   const [tipoQuartoToEdit, setTipoQuartoToEdit] = useState<RoomTypeData | null>(null);
   const [planToEdit, setPlanToEdit] = useState<Plano | null>(null);
   const [quartoToEdit, setQuartoToEdit] = useState<EditingQuartoData | null>(null);
+  const [quartoToClone, setQuartoToClone] = useState<EditingQuartoData | null>(null);
   const [cupomToEdit, setCupomToEdit] = useState<CupomDesconto | null>(null);
   const [activeHotel, setActiveHotel] = useState<HotelAtivo>(() => currentHotelService.getCurrentHotel());
   const [globalWhatsappCount, setGlobalWhatsappCount] = useState<number>(() => {
@@ -3312,12 +3313,39 @@ export const App: React.FC = () => {
               onNavigateToDashboard={() => setActiveTab('dashboard')} 
               onNavigateToCadastroQuarto={() => {
                 setQuartoToEdit(null);
+                setQuartoToClone(null);
+                setActiveTab('cadastro-quarto');
+              }}
+              onCloneQuarto={(room) => {
+                const r = room as any;
+                const cat = r.category || r.categoria || r.items?.categoria || r.items?.category || '';
+                const tip = r.type || r.tipo || r.tipoQuarto || r.items?.tipoQuarto || r.items?.type || '';
+                setQuartoToEdit(null);
+                setQuartoToClone({
+                  id: room.id,
+                  number: '',
+                  name: room.name || `Quarto ${room.number}`,
+                  category: cat,
+                  floor: room.floor,
+                  capacity: room.capacity,
+                  dailyPrice: room.dailyPrice,
+                  active: room.active,
+                  status: 'livre',
+                  photos: r.photos,
+                  videoUrl: r.videoUrl || r.video,
+                  notes: r.notes,
+                  items: r.items,
+                  beds: r.beds,
+                  type: tip,
+                  comodidades: r.comodidades || r.items?.comodidades,
+                });
                 setActiveTab('cadastro-quarto');
               }}
               onEditQuarto={(room) => {
                 const r = room as any;
                 const cat = r.category || r.categoria || r.items?.categoria || r.items?.category || '';
                 const tip = r.type || r.tipo || r.tipoQuarto || r.items?.tipoQuarto || r.items?.type || '';
+                setQuartoToClone(null);
                 setQuartoToEdit({
                   id: room.id,
                   number: room.number,
@@ -3369,10 +3397,15 @@ export const App: React.FC = () => {
             <CadastroQuarto 
               onBack={() => {
                 setQuartoToEdit(null);
+                setQuartoToClone(null);
                 setActiveTab('mapa');
               }} 
               editingQuarto={quartoToEdit}
-              onClearEditingQuarto={() => setQuartoToEdit(null)}
+              cloningQuarto={quartoToClone}
+              onClearEditingQuarto={() => {
+                setQuartoToEdit(null);
+                setQuartoToClone(null);
+              }}
             />
           )}
           {activeTab === 'destaques-quarto' && (
