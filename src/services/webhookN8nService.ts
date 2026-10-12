@@ -429,7 +429,7 @@ export function montarPayloadUnificadoN8n(params: {
     instanciaWhatsapp = `${cleanInst}@s.whatsapp.net`;
   }
   const instanciaServidor = params.instanciaData?.servidor_evolution || 'https://painelevolution.hotelnozap.com.br';
-  const instanciaApiKey = params.instanciaData?.api_key || params.instanciaData?.apikey || hotelData?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm';
+  const instanciaApiKey = params.instanciaData?.api_key || params.instanciaData?.apikey || hotelData?.chave_api || 'D45D6901E2E9-4218-A667-AA493D7E80EE';
 
   const instanciaObj = {
     nome: instanciaNome,
@@ -679,8 +679,8 @@ export const webhookN8nService = {
         status: 'open',
         whatsapp_conectado: '',
         servidor_evolution: 'https://painelevolution.hotelnozap.com.br',
-        api_key: hotelData?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm',
-        apikey: hotelData?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm'
+        api_key: hotelData?.chave_api || 'D45D6901E2E9-4218-A667-AA493D7E80EE',
+        apikey: hotelData?.chave_api || 'D45D6901E2E9-4218-A667-AA493D7E80EE'
       };
 
       try {
@@ -838,8 +838,8 @@ export const webhookN8nService = {
         status: 'open',
         whatsapp_conectado: `${limparTelefoneComDDI(hotel?.whatsapp || hotel?.telefone || '556681585014')}@s.whatsapp.net`,
         servidor_evolution: 'https://painelevolution.hotelnozap.com.br',
-        api_key: hotel?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm',
-        apikey: hotel?.chave_api || 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm'
+        api_key: hotel?.chave_api || 'D45D6901E2E9-4218-A667-AA493D7E80EE',
+        apikey: hotel?.chave_api || 'D45D6901E2E9-4218-A667-AA493D7E80EE'
       }
     };
 

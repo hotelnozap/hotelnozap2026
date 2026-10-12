@@ -73,7 +73,7 @@ export const DEFAULT_CONFIG: HotelConfigData = {
   lazerFim: '20:00',
 
   politicaCancelamento: 'flexivel',
-  politicaCancelamentoTexto: 'Cancelamento gratuito até 7 dias antes do check-in. Após este prazo, cobrança da primeira diária.',
+  politicaCancelamentoTexto: 'Cancelamento gratuito até 3 horas antes do check-in. Após este prazo, cobrança de 50% do valor de uma única diária.',
   permitePet: 'sob_consulta',
   taxaPet: 50.0,
   proibidoFumar: true,
@@ -623,9 +623,9 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
                   onChange={e => updateField('politicaCancelamento', e.target.value as any)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 outline-none"
                 >
-                  <option value="flexivel">Flexível (Cancelamento grátis até 24h antes)</option>
-                  <option value="moderada">Moderada (Cancelamento grátis até 7 dias antes)</option>
-                  <option value="rigida">Rígida (Reembolso de 50% até 14 dias antes)</option>
+                  <option value="flexivel">Padrão Hotel no Zap (Grátis até 3h antes do check-in, após 50% de 1 diária)</option>
+                  <option value="moderada">Moderada (Cancelamento grátis até 24h antes)</option>
+                  <option value="rigida">Rígida (Cobrança de 1 diária integral se cancelado após prazo)</option>
                   <option value="personalizada">Personalizada pelo Hotel</option>
                 </select>
               </div>

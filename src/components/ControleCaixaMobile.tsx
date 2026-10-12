@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Wallet, ArrowDownRight, ArrowUpRight, PlusCircle, CheckCircle } from 'lucide-react';
 import { caixaService, CaixaMovimentacao } from '../services/caixaService';
+import { supabase } from '../lib/supabase';
 
 export const ControleCaixaMobile: React.FC = () => {
   const [movimentacoes, setMovimentacoes] = useState<CaixaMovimentacao[]>(() => caixaService.getMovimentacoes());
@@ -10,10 +11,25 @@ export const ControleCaixaMobile: React.FC = () => {
       setMovimentacoes(caixaService.getMovimentacoes());
     };
 
-    // Sincroniza reservas concluídas com o caixa
+    // 1. Carrega do banco no carregamento inicial
+    caixaService.carregarMovimentacoesDoBanco().then(data => {
+      setMovimentacoes(data);
+    });
+
+    // 2. Sincroniza reservas concluídas com o caixa
     caixaService.sincronizarReservasConcluidasComCaixa().then(() => {
       carregar();
     });
+
+    // 3. Realtime com o Supabase
+    const channel = supabase
+      .channel('caixa_mobile_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'caixa_movimentacoes' }, () => {
+        caixaService.carregarMovimentacoesDoBanco().then(data => {
+          setMovimentacoes(data);
+        });
+      })
+      .subscribe();
 
     const handleReservaModificada = (e: any) => {
       const reserva = e?.detail;
@@ -50,6 +66,7 @@ export const ControleCaixaMobile: React.FC = () => {
     } catch {}
 
     return () => {
+      supabase.removeChannel(channel);
       window.removeEventListener('hotel_caixa_atualizado', carregar);
       window.removeEventListener('hotel_reserva_modificada', handleReservaModificada);
       window.removeEventListener('storage', carregar);

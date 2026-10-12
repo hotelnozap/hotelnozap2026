@@ -3917,7 +3917,7 @@ export const reservasService = {
           valor_total: Number(r.valor_total || 0),
           status: normalizedStatus,
           observacao: r.observacoes || 'Reserva via Zap',
-          formaPagamento: 'PIX / WhatsApp'
+          formaPagamento: r.forma_pagamento || 'Dinheiro'
         };
       });
     } catch (err) {
@@ -3938,6 +3938,7 @@ export const reservasService = {
     valor_total: number;
     status?: string;
     observacoes?: string;
+    forma_pagamento?: string;
     hotel_id?: string;
     quarto_id?: string;
     hospede_id?: string;
@@ -4029,6 +4030,7 @@ export const reservasService = {
         valor_total: payload.valor_total || 0,
         status: payload.status || 'Confirmada',
         status_pagamento: 'pendente',
+        forma_pagamento: payload.forma_pagamento || 'Dinheiro',
         observacoes: payload.observacoes || 'Reserva enviada via portal público Hotel no Zap',
         hotel_id: resolvedHotelId,
         quarto_id: resolvedQuartoId,
@@ -4054,6 +4056,7 @@ export const reservasService = {
             valor_total: payload.valor_total || 0,
             status: payload.status || 'Confirmada',
             status_pagamento: 'pendente',
+            forma_pagamento: payload.forma_pagamento || 'Dinheiro',
             observacoes: payload.observacoes || 'Reserva enviada via portal público Hotel no Zap',
             hotel_id: resolvedHotelId
           }])
@@ -4136,7 +4139,7 @@ export const reservasService = {
         valorTotal: `R$ ${Number(data.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
         status: (data.status as any) || 'Confirmada',
         observacao: data.observacoes,
-        formaPagamento: 'PIX / WhatsApp'
+        formaPagamento: data.forma_pagamento || 'Dinheiro'
       };
     } catch (err) {
       console.error('Erro ao conectar com Supabase para criar reserva:', err);
@@ -4252,15 +4255,200 @@ export const reservasService = {
     }
   },
 
+  /**
+   * Calcula as condições de cancelamento conforme a regra oficial:
+   * - Até 3 horas antes do horário de check-in: Cancelamento 100% GRATUITO.
+   * - Menos de 3 horas antes do check-in (ou após): Cobrança de 50% de uma única diária.
+   */
+  calcularRegraCancelamento(reserva: {
+    data_checkin?: string;
+    checkIn?: string;
+    valor_total?: number;
+    valorTotal?: number;
+    diarias?: number;
+    checkInHorario?: string;
+  }, horarioCheckinPadrao = '14:00'): {
+    horasRestantesParaCheckin: number;
+    isCancelamentoGratuito: boolean;
+    valorMulta: number;
+    valorDiaria: number;
+    mensagemRegra: string;
+    limiteCheckinFormatado: string;
+  } {
+    const rawCheckin = reserva.data_checkin || reserva.checkIn || '';
+    const horario = reserva.checkInHorario || horarioCheckinPadrao || '14:00';
+
+    let ano = 0, mes = 0, dia = 0;
+    if (rawCheckin.includes('-')) {
+      const parts = rawCheckin.split('T')[0].split('-');
+      ano = parseInt(parts[0], 10);
+      mes = parseInt(parts[1], 10) - 1;
+      dia = parseInt(parts[2], 10);
+    } else if (rawCheckin.includes('/')) {
+      const parts = rawCheckin.split(' ')[0].split('/');
+      dia = parseInt(parts[0], 10);
+      mes = parseInt(parts[1], 10) - 1;
+      ano = parseInt(parts[2], 10);
+    }
+
+    const [hora, min] = horario.split(':').map(n => parseInt(n, 10) || 0);
+    const dataHoraCheckIn = (ano && dia) 
+      ? new Date(ano, mes, dia, hora, min, 0)
+      : new Date();
+
+    const agora = new Date();
+    const diffMs = dataHoraCheckIn.getTime() - agora.getTime();
+    const horasRestantes = diffMs / (1000 * 60 * 60);
+
+    const qtdDiarias = Math.max(Number(reserva.diarias) || 1, 1);
+    const total = Number(reserva.valor_total ?? reserva.valorTotal ?? 0);
+    const valorDiaria = qtdDiarias > 0 && total > 0 ? (total / qtdDiarias) : total;
+
+    // Regra oficial: até 3 horas antes do check-in é gratuito
+    const isCancelamentoGratuito = horasRestantes >= 3;
+    const valorMulta = isCancelamentoGratuito ? 0 : Number((valorDiaria * 0.5).toFixed(2));
+
+    const dataLimite = new Date(dataHoraCheckIn.getTime() - 3 * 60 * 60 * 1000);
+    const limiteFormatado = `${dataLimite.toLocaleDateString('pt-BR')} às ${String(dataLimite.getHours()).padStart(2, '0')}:${String(dataLimite.getMinutes()).padStart(2, '0')}`;
+
+    const mensagemRegra = isCancelamentoGratuito
+      ? 'Cancelamento Gratuito: solicitação realizada com mais de 3 horas de antecedência do horário de check-in.'
+      : `Cancelamento Tardio: cobrança de 50% de uma diária (R$ ${valorMulta.toFixed(2).replace('.', ',')}) por estar a menos de 3 horas do check-in.`;
+
+    return {
+      horasRestantesParaCheckin: horasRestantes,
+      isCancelamentoGratuito,
+      valorMulta,
+      valorDiaria,
+      mensagemRegra,
+      limiteCheckinFormatado: limiteFormatado,
+    };
+  },
+
+  /**
+   * Executa o cancelamento da reserva com a aplicação automática da regra de 3 horas / 50% de 1 diária
+   */
+  async cancelarReserva(reservaId: string, motivo = 'Cancelado a pedido'): Promise<{
+    success: boolean;
+    isGratuito: boolean;
+    valorMulta: number;
+    mensagem: string;
+    reserva?: any;
+  }> {
+    try {
+      const { data: resAtual, error: fetchErr } = await supabase
+        .from('reservas')
+        .select('*')
+        .eq('id', reservaId)
+        .single();
+
+      if (fetchErr || !resAtual) {
+        console.error('Reserva não encontrada para cancelamento:', fetchErr);
+        return { success: false, isGratuito: false, valorMulta: 0, mensagem: 'Reserva não encontrada.' };
+      }
+
+      const regra = this.calcularRegraCancelamento(resAtual);
+
+      const novaObservacao = resAtual.observacoes 
+        ? `${resAtual.observacoes} | [${regra.mensagemRegra}] (Motivo: ${motivo})`
+        : `[${regra.mensagemRegra}] (Motivo: ${motivo})`;
+
+      const updatePayload: any = {
+        status: 'Cancelada',
+        observacoes: novaObservacao,
+      };
+
+      if (!regra.isCancelamentoGratuito && regra.valorMulta > 0) {
+        updatePayload.valor_total = regra.valorMulta;
+        updatePayload.status_pagamento = 'multa_cancelamento_50_pct';
+      } else {
+        updatePayload.valor_total = 0;
+        updatePayload.status_pagamento = 'isento_cancelamento';
+      }
+
+      const { data: updated, error: updErr } = await supabase
+        .from('reservas')
+        .update(updatePayload)
+        .eq('id', reservaId)
+        .select('*')
+        .single();
+
+      if (updErr || !updated) {
+        return { success: false, isGratuito: false, valorMulta: 0, mensagem: 'Erro ao salvar cancelamento.' };
+      }
+
+      // Liberar o quarto no hotel
+      const qId = updated.quarto_id;
+      const qNum = updated.numero_quarto;
+      const hId = updated.hotel_id;
+      if (qId) await supabase.from('quartos').update({ status: 'livre' }).eq('id', qId);
+      if (qNum) {
+        let q = supabase.from('quartos').update({ status: 'livre' }).eq('numero', String(qNum));
+        if (hId) q = q.eq('hotel_id', hId);
+        await q;
+      }
+
+      // Lançar no caixa caso tenha gerado receita de multa de cancelamento (50% de 1 diária)
+      if (!regra.isCancelamentoGratuito && regra.valorMulta > 0) {
+        try {
+          await supabase.from('fluxo_caixa').insert({
+            hotel_id: hId,
+            tipo: 'entrada',
+            categoria: 'Multa de Cancelamento',
+            descricao: `Taxa 50% de 1 diária (Reserva Quarto ${updated.numero_quarto || ''} - ${updated.nome_hospede || 'Hóspede'})`,
+            valor: regra.valorMulta,
+            forma_pagamento: 'pix',
+            data_movimento: new Date().toISOString()
+          });
+        } catch (cErr) {
+          console.warn('Aviso ao registrar taxa de cancelamento no caixa:', cErr);
+        }
+      }
+
+      import('./webhookN8nService')
+        .then(({ webhookN8nService }) => {
+          webhookN8nService.dispararWebhookConfirmacaoReserva(updated);
+        })
+        .catch(() => {});
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: updated }));
+        window.dispatchEvent(new Event('hotel_quarto_modificado'));
+      }
+
+      return {
+        success: true,
+        isGratuito: regra.isCancelamentoGratuito,
+        valorMulta: regra.valorMulta,
+        mensagem: regra.mensagemRegra,
+        reserva: updated
+      };
+    } catch (err: any) {
+      console.error('Erro ao executar cancelamento no Supabase:', err);
+      return { success: false, isGratuito: false, valorMulta: 0, mensagem: err.message || 'Erro ao cancelar.' };
+    }
+  },
+
   async realizarCheckout(
     reservaId: string,
-    options?: { isAutomatico?: boolean }
+    options?: { isAutomatico?: boolean; formaPagamento?: string; valorPago?: number }
   ): Promise<{ success: boolean; reserva?: any; quartoNumero?: string }> {
     try {
+      const updatePayload: Record<string, any> = {
+        status: 'Concluída',
+        status_pagamento: 'pago'
+      };
+      if (options?.formaPagamento) {
+        updatePayload.forma_pagamento = options.formaPagamento;
+      }
+      if (typeof options?.valorPago === 'number' && options.valorPago > 0) {
+        updatePayload.valor_total = options.valorPago;
+      }
+
       // 1. Atualizar a reserva para 'Concluída'
       const { data: reservaAtualizada, error: resErr } = await supabase
         .from('reservas')
-        .update({ status: 'Concluída' })
+        .update(updatePayload)
         .eq('id', reservaId)
         .select('*')
         .single();
@@ -4277,7 +4465,7 @@ export const reservasService = {
 
       // 1.1 Registrar automaticamente no caixa do dia como entrada
       try {
-        caixaService.registrarReservaConcluida(reservaAtualizada, hotelId);
+        caixaService.registrarReservaConcluida(reservaAtualizada, hotelId, options?.formaPagamento);
       } catch (cErr) {
         console.warn('Aviso ao registrar reserva concluída no caixa durante checkout:', cErr);
       }
@@ -6519,7 +6707,7 @@ export const DEFAULT_HOTEL_CONFIG: HotelConfigData = {
   lazerInicio: '08:00',
   lazerFim: '20:00',
   politicaCancelamento: 'flexivel',
-  politicaCancelamentoTexto: 'Cancelamento gratuito até 7 dias antes do check-in. Após este prazo, cobrança da primeira diária.',
+  politicaCancelamentoTexto: 'Cancelamento gratuito até 3 horas antes do check-in. Após este prazo, cobrança de 50% do valor de uma única diária.',
   permitePet: 'sob_consulta',
   taxaPet: 50.0,
   proibidoFumar: true,
@@ -6583,7 +6771,9 @@ export const hotelConfigService = {
       lazerInicio: row.lazer_inicio || '08:00',
       lazerFim: row.lazer_fim || '20:00',
       politicaCancelamento: row.politica_cancelamento || 'flexivel',
-      politicaCancelamentoTexto: row.politica_cancelamento_texto || 'Cancelamento gratuito até 7 dias antes do check-in.',
+      politicaCancelamentoTexto: (!row.politica_cancelamento_texto || row.politica_cancelamento_texto.includes('7 dias'))
+        ? 'Cancelamento gratuito até 3 horas antes do check-in. Após este prazo, cobrança de 50% do valor de uma única diária.'
+        : row.politica_cancelamento_texto,
       permitePet: row.permite_pet || 'sob_consulta',
       taxaPet: Number(row.taxa_pet) || 50.0,
       proibidoFumar: row.proibido_fumar !== false,

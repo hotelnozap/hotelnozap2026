@@ -96,7 +96,14 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
 
     setProcessando(true);
     try {
-      // 1. Lança no Caixa obrigatoriamente
+      // 1. Conclui a reserva no banco de dados e altera quarto para 'limpeza', salvando a forma de pagamento real selecionada
+      await reservasService.realizarCheckout(reserva.id, { 
+        isAutomatico: false,
+        formaPagamento: metodoPagamento,
+        valorPago: totalReceber
+      });
+
+      // 2. Lança no Caixa obrigatoriamente
       if (totalReceber > 0) {
         caixaService.registrarRecebimentoCheckout({
           reservaId: reserva.id,
@@ -113,9 +120,6 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
           hotelId: reserva.hotel_id
         });
       }
-
-      // 2. Conclui a reserva no banco de dados e altera quarto para 'limpeza'
-      await reservasService.realizarCheckout(reserva.id, { isAutomatico: false });
 
       setResumoFinal({
         total: totalReceber,

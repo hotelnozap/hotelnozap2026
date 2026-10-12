@@ -442,21 +442,44 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'reservas' },
           (payload) => {
+            const newRes = payload.new || {};
+            const rId = `res-db-${newRes.id || Date.now()}`;
+            const shortId = newRes.id ? String(newRes.id).substring(0, 6).toUpperCase() : 'NOVA';
+            const quarto = newRes.numero_quarto ? `Quarto ${newRes.numero_quarto}` : 'Acomodação';
+            const hospede = newRes.nome_hospede || 'Hóspede';
+            const val = newRes.valor_total ? ` - R$ ${Number(newRes.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '';
+
             const newNotif: NotificationItem = {
-              id: `res-${payload.new?.id || Date.now()}`,
-              title: 'Nova Reserva Registrada! 🏨',
-              message: `${payload.new?.nome_hospede || 'Hóspede'} acabou de reservar o Quarto ${payload.new?.numero_quarto || '101'}.`,
+              id: rId,
+              title: `Nova Reserva #RES-${shortId}! 🏨`,
+              message: `${hospede} acabou de reservar o ${quarto}${val}.`,
               time: 'Agora mesmo',
               type: 'reserva',
               read: false,
               targetTab: 'reservas',
             };
+
             setNotifications(prev => {
-              if (prev.some(n => n.id === newNotif.id || n.message.includes(newNotif.message))) return prev;
+              if (prev.some(n => n.id === newNotif.id)) return prev;
               return [newNotif, ...prev];
             });
+
+            // 1. Tocar som de campainha da recepção
+            playHotelChime();
+
+            // 2. Disparar alerta flutuante (toast)
             setActiveToast(newNotif);
-            setTimeout(() => setActiveToast(null), 6000);
+            setTimeout(() => setActiveToast(null), 8000);
+
+            // 3. Atualizar dashboard e abas em tempo real
+            window.dispatchEvent(new CustomEvent('hotel_nova_reserva', { detail: newRes }));
+
+            // 4. Notificar multi-abas
+            try {
+              if (bc) {
+                bc.postMessage({ type: 'NOVA_RESERVA_HOSPEDE', data: newRes });
+              }
+            } catch (e) {}
           }
         )
         .on(
@@ -476,6 +499,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ onNaviga
             setNotifications(prev => [newNotif, ...prev]);
             setActiveToast(newNotif);
             setTimeout(() => setActiveToast(null), 6000);
+            window.dispatchEvent(new CustomEvent('hotel_nova_reserva', { detail: payload.new }));
           }
         )
         .on(

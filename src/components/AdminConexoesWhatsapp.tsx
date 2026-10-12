@@ -650,8 +650,8 @@ export const AdminConexoesWhatsapp: React.FC<AdminConexoesWhatsappProps> = ({
               <span className="text-xs text-slate-400 font-semibold">Global API Key:</span>
               <code className="text-xs bg-black/40 px-2.5 py-1 rounded-lg text-emerald-300 font-mono border border-white/10">
                 {showApiKey
-                  ? 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm'
-                  : 'wtwHLYfFxI9n1z••••••••••••••••••••••••••••'}
+                  ? 'D45D6901E2E9-4218-A667-AA493D7E80EE'
+                  : 'D45D6901E2E9••••••••••••••••••••••••••••'}
               </code>
               <button
                 type="button"
@@ -663,7 +663,7 @@ export const AdminConexoesWhatsapp: React.FC<AdminConexoesWhatsappProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText('wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm');
+                  navigator.clipboard.writeText('D45D6901E2E9-4218-A667-AA493D7E80EE');
                   showToast('Chave copiada para a área de transferência!');
                 }}
                 className="text-xs text-emerald-400 hover:text-emerald-300 underline cursor-pointer ml-1"

@@ -57,8 +57,8 @@ export interface ConnectionStateResponse {
 }
 
 // Configuração Centralizada da Evolution API
-const DEFAULT_API_URL = 'https://painelevolution.hotelnozap.com.br';
-const DEFAULT_GLOBAL_API_KEY = 'wtwHLYfFxI9n1zDR8zFFqNq8kVaWqdD2oLpcjVmXBm';
+const DEFAULT_API_URL = import.meta.env?.VITE_EVOLUTION_API_URL || 'https://painelevolution.hotelnozap.com.br';
+const DEFAULT_GLOBAL_API_KEY = import.meta.env?.VITE_EVOLUTION_API_KEY || 'D45D6901E2E9-4218-A667-AA493D7E80EE';
 
 export class EvolutionApiService {
   private apiUrl: string;

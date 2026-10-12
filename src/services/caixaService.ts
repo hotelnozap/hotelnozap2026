@@ -19,6 +19,23 @@ export interface CaixaMovimentacao {
 }
 
 const STORAGE_KEY_PREFIX = 'hotelnozap_caixa_movimentacoes_';
+const EXCLUIDOS_KEY = 'hotelnozap_caixa_excluidos_ids';
+
+function isValidUUID(id?: string | null): boolean {
+  if (!id) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 export const caixaService = {
   _getStorageKey(hotelId?: string): string {
@@ -43,19 +60,46 @@ export const caixaService = {
     return `${STORAGE_KEY_PREFIX}${hId || 'default'}`;
   },
 
+  getExcluidosIds(): Set<string> {
+    const set = new Set<string>();
+    if (typeof window === 'undefined') return set;
+    try {
+      const raw = localStorage.getItem(EXCLUIDOS_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          arr.forEach(id => {
+            if (id) set.add(String(id));
+          });
+        }
+      }
+    } catch {}
+    return set;
+  },
+
+  adicionarExcluidoId(id: string): void {
+    if (!id || typeof window === 'undefined') return;
+    try {
+      const set = this.getExcluidosIds();
+      set.add(String(id));
+      localStorage.setItem(EXCLUIDOS_KEY, JSON.stringify(Array.from(set)));
+    } catch {}
+  },
+
   getMovimentacoes(hotelId?: string): CaixaMovimentacao[] {
     try {
       if (typeof window === 'undefined') return [];
       const specificKey = this._getStorageKey(hotelId);
       const savedSpecific = localStorage.getItem(specificKey);
       const mapa = new Map<string, CaixaMovimentacao>();
+      const excluidos = this.getExcluidosIds();
 
       if (savedSpecific) {
         try {
           const parsed = JSON.parse(savedSpecific);
           if (Array.isArray(parsed)) {
             parsed.forEach((m: CaixaMovimentacao) => {
-              if (m.id) {
+              if (m.id && !excluidos.has(m.id) && (!m.reservaId || !excluidos.has(m.reservaId))) {
                 if (!hotelId || !m.hotelId || m.hotelId === hotelId) {
                   mapa.set(m.id, m);
                 }
@@ -77,7 +121,7 @@ export const caixaService = {
             const arr = JSON.parse(raw);
             if (Array.isArray(arr)) {
               arr.forEach((m: CaixaMovimentacao) => {
-                if (m.id && !mapa.has(m.id)) {
+                if (m.id && !mapa.has(m.id) && !excluidos.has(m.id) && (!m.reservaId || !excluidos.has(m.reservaId))) {
                   if (!hotelId || m.hotelId === hotelId) {
                     mapa.set(m.id, m);
                   }
@@ -102,6 +146,69 @@ export const caixaService = {
       console.warn('Erro ao ler movimentações do caixa:', err);
     }
     return [];
+  },
+
+  async carregarMovimentacoesDoBanco(hotelId?: string): Promise<CaixaMovimentacao[]> {
+    try {
+      let query = supabase
+        .from('caixa_movimentacoes')
+        .select('*')
+        .eq('excluido', false)
+        .order('criado_em', { ascending: false });
+
+      if (hotelId && hotelId !== 'default' && isValidUUID(hotelId)) {
+        query = query.or(`hotel_id.eq.${hotelId},hotel_id.is.null`);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.warn('Erro ao carregar movimentações do Supabase:', error);
+        return this.getMovimentacoes(hotelId);
+      }
+
+      if (data) {
+        const excluidos = this.getExcluidosIds();
+        const mapa = new Map<string, CaixaMovimentacao>();
+        data.forEach((row: any) => {
+          if (excluidos.has(row.id) || (row.reserva_id && excluidos.has(row.reserva_id))) {
+            return;
+          }
+          const m: CaixaMovimentacao = {
+            id: row.id,
+            time: row.hora || (row.criado_em ? new Date(row.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '12:00'),
+            date: row.data || (row.criado_em ? new Date(row.criado_em).toLocaleDateString('pt-BR') : 'Hoje'),
+            description: row.descricao,
+            details: row.detalhes || '',
+            category: row.categoria || 'Hospedagem',
+            categoryIcon: row.categoria_icone || (row.categoria === 'Hospedagem' ? 'hotel' : row.categoria === 'Frigobar' ? 'kitchen' : row.categoria === 'Sangria' ? 'outbox' : 'price_change'),
+            method: row.forma_pagamento || 'Dinheiro',
+            methodIcon: row.metodo_icone || (row.forma_pagamento === 'PIX' ? 'qr_code_2' : row.forma_pagamento === 'Dinheiro' ? 'payments' : row.forma_pagamento === 'Crédito' ? 'credit_score' : 'credit_card'),
+            operator: row.operador || 'Recepção',
+            type: row.tipo || 'entrada',
+            amount: Number(row.valor) || 0,
+            reservaId: row.reserva_id || undefined,
+            hotelId: row.hotel_id || undefined
+          };
+          mapa.set(m.id, m);
+        });
+
+        // Mescla com locais que ainda não subiram para o banco
+        const locais = this.getMovimentacoes(hotelId);
+        locais.forEach(l => {
+          if (!mapa.has(l.id) && !excluidos.has(l.id) && (!l.reservaId || !excluidos.has(l.reservaId))) {
+            mapa.set(l.id, l);
+            this._sincronizarComSupabase(l);
+          }
+        });
+
+        const listaFinal = Array.from(mapa.values());
+        this.saveMovimentacoes(listaFinal, hotelId);
+        return listaFinal;
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar movimentações do banco:', err);
+    }
+    return this.getMovimentacoes(hotelId);
   },
 
   saveMovimentacoes(movs: CaixaMovimentacao[], hotelId?: string): void {
@@ -141,14 +248,16 @@ export const caixaService = {
     const mins = String(now.getMinutes()).padStart(2, '0');
     const dataFormatada = now.toLocaleDateString('pt-BR');
 
+    const idFinal = (mov.id && isValidUUID(mov.id)) ? mov.id : generateUUID();
+
     const nova: CaixaMovimentacao = {
-      id: mov.id || `mov-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: idFinal,
       time: mov.time || `${hours}:${mins}`,
       date: mov.date || dataFormatada,
       description: mov.description,
       details: mov.details || '',
       category: mov.category,
-      categoryIcon: mov.categoryIcon || (mov.category === 'Hospedagem' ? 'hotel' : mov.category === 'Frigobar' ? 'kitchen' : 'price_change'),
+      categoryIcon: mov.categoryIcon || (mov.category === 'Hospedagem' ? 'hotel' : mov.category === 'Frigobar' ? 'kitchen' : mov.category === 'Sangria' ? 'outbox' : 'price_change'),
       method: mov.method,
       methodIcon: mov.methodIcon || (mov.method === 'PIX' ? 'qr_code_2' : mov.method === 'Dinheiro' ? 'payments' : mov.method === 'Crédito' ? 'credit_score' : 'credit_card'),
       operator: mov.operator || (typeof window !== 'undefined' ? localStorage.getItem('hotelnozap_user_name') : '') || 'Recepção',
@@ -161,14 +270,14 @@ export const caixaService = {
 
     const existentes = this.getMovimentacoes(hotelId);
 
-    // Idempotência: se já existe movimentação de entrada para esta reserva, não duplica
+    // Idempotência: se já existe movimentação de entrada para esta reserva, atualiza se necessário
     if (nova.reservaId) {
       const idxExistente = existentes.findIndex(
         m => m.reservaId === nova.reservaId && m.type === 'entrada'
       );
       if (idxExistente !== -1) {
         const jaLancada = existentes[idxExistente];
-        if (jaLancada.amount !== nova.amount || jaLancada.description !== nova.description) {
+        if (jaLancada.amount !== nova.amount || jaLancada.description !== nova.description || jaLancada.method !== nova.method) {
           existentes[idxExistente] = {
             ...jaLancada,
             amount: nova.amount,
@@ -178,38 +287,129 @@ export const caixaService = {
             category: nova.category || jaLancada.category
           };
           this.saveMovimentacoes(existentes, hotelId);
+          this._sincronizarComSupabase(existentes[idxExistente]);
           return existentes[idxExistente];
         }
         return jaLancada;
       }
     }
 
-    const atualizadas = [nova, ...existentes];
+    const atualizadas = [nova, ...existentes.filter(m => m.id !== nova.id)];
     this.saveMovimentacoes(atualizadas, hotelId);
-
-    // Tentar persistir no Supabase caso exista tabela caixa/fluxo_caixa
-    try {
-      Promise.resolve(
-        supabase.from('caixa_movimentacoes').insert([{
-          descricao: nova.description,
-          detalhes: nova.details,
-          categoria: nova.category,
-          forma_pagamento: nova.method,
-          tipo: nova.type,
-          valor: nova.amount,
-          operador: nova.operator,
-          reserva_id: nova.reservaId || null,
-          hotel_id: nova.hotelId || null
-        }])
-      ).catch(() => {});
-    } catch {}
+    this._sincronizarComSupabase(nova);
 
     return nova;
   },
 
+  async atualizarMovimentacao(mov: CaixaMovimentacao, hotelId?: string): Promise<void> {
+    try {
+      const existentes = this.getMovimentacoes(hotelId);
+      const atualizadas = existentes.map(m => (m.id === mov.id ? { ...m, ...mov } : m));
+      this.saveMovimentacoes(atualizadas, hotelId);
+
+      if (isValidUUID(mov.id)) {
+        await supabase
+          .from('caixa_movimentacoes')
+          .update({
+            descricao: mov.description,
+            detalhes: mov.details || '',
+            categoria: mov.category,
+            categoria_icone: mov.categoryIcon,
+            forma_pagamento: mov.method,
+            metodo_icone: mov.methodIcon,
+            tipo: mov.type,
+            valor: Number(mov.amount) || 0,
+            operador: mov.operator
+          })
+          .eq('id', mov.id);
+      }
+    } catch (err) {
+      console.warn('Erro ao atualizar movimentação no banco:', err);
+    }
+  },
+
+  async excluirMovimentacao(id: string, hotelId?: string, reservaId?: string): Promise<void> {
+    if (!id) return;
+    this.adicionarExcluidoId(id);
+    if (reservaId) {
+      this.adicionarExcluidoId(reservaId);
+    }
+
+    // 1. Remove de todas as chaves de localStorage
+    try {
+      if (typeof window !== 'undefined') {
+        const allKeys = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_KEY_PREFIX));
+        for (const k of allKeys) {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            try {
+              const arr = JSON.parse(raw);
+              if (Array.isArray(arr)) {
+                const filtrados = arr.filter((m: any) => m.id !== id && (!reservaId || m.reservaId !== reservaId));
+                localStorage.setItem(k, JSON.stringify(filtrados));
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Exclui do Supabase (marca como excluido: true E tenta deletar permanentemente)
+    try {
+      if (isValidUUID(id)) {
+        await supabase.from('caixa_movimentacoes').update({ excluido: true }).eq('id', id);
+        await supabase.from('caixa_movimentacoes').delete().eq('id', id);
+      }
+      if (reservaId && isValidUUID(reservaId)) {
+        await supabase.from('caixa_movimentacoes').update({ excluido: true }).eq('reserva_id', reservaId);
+        await supabase.from('caixa_movimentacoes').delete().eq('reserva_id', reservaId);
+      }
+    } catch (err) {
+      console.warn('Aviso ao excluir movimentação no Supabase:', err);
+    }
+
+    // 3. Dispara eventos de atualização imediata na interface
+    const restantes = this.getMovimentacoes(hotelId);
+    this.saveMovimentacoes(restantes, hotelId);
+  },
+
+  _sincronizarComSupabase(nova: CaixaMovimentacao): void {
+    try {
+      const dbPayload: any = {
+        id: nova.id,
+        descricao: nova.description,
+        detalhes: nova.details || '',
+        categoria: nova.category,
+        categoria_icone: nova.categoryIcon,
+        forma_pagamento: nova.method,
+        metodo_icone: nova.methodIcon,
+        tipo: nova.type,
+        valor: nova.amount,
+        operador: nova.operator,
+        data: nova.date,
+        hora: nova.time,
+        excluido: false
+      };
+      if (isValidUUID(nova.hotelId)) dbPayload.hotel_id = nova.hotelId;
+      if (isValidUUID(nova.reservaId)) dbPayload.reserva_id = nova.reservaId;
+
+      Promise.resolve(
+        supabase
+          .from('caixa_movimentacoes')
+          .upsert([dbPayload], { onConflict: 'id' })
+      )
+        .then(() => {})
+        .catch((err: any) => console.warn('Aviso ao sincronizar movimentação no Supabase:', err));
+    } catch {}
+  },
+
   // Registra automaticamente qualquer reserva concluída como ENTRADA no caixa do dia
-  registrarReservaConcluida(reserva: any, hotelId?: string): CaixaMovimentacao | null {
+  registrarReservaConcluida(reserva: any, hotelId?: string, formaPagamentoForcada?: string): CaixaMovimentacao | null {
     if (!reserva || !reserva.id) return null;
+
+    // Se o usuário já excluiu essa reserva do caixa, JAMAIS reinserir
+    const excluidos = this.getExcluidosIds();
+    if (excluidos.has(reserva.id)) return null;
 
     const targetHotelId = reserva.hotel_id || hotelId;
     const shortId = reserva.id ? reserva.id.substring(0, 6).toUpperCase() : 'RES';
@@ -239,16 +439,19 @@ export const caixaService = {
 
     if (valorNum <= 0) return null;
 
-    const fp = (reserva.formaPagamento || reserva.forma_pagamento || 'PIX').toString().toUpperCase();
-    let metodo: CaixaMovimentacao['method'] = 'PIX';
-    if (fp.includes('DINH') || fp.includes('ESPÉCIE') || fp.includes('ESPECIE') || fp.includes('CASH')) {
+    // Identificação precisa da forma de pagamento oficial (Dinheiro, PIX, Débito, Crédito)
+    const rawFp = (formaPagamentoForcada || reserva.forma_pagamento || reserva.formaPagamento || 'Dinheiro').toString().trim().toUpperCase();
+    let metodo: CaixaMovimentacao['method'] = 'Dinheiro';
+    if (rawFp.includes('DINH') || rawFp.includes('ESP') || rawFp.includes('CASH')) {
       metodo = 'Dinheiro';
-    } else if (fp.includes('DÉB') || fp.includes('DEB')) {
+    } else if (rawFp.includes('PIX')) {
+      metodo = 'PIX';
+    } else if (rawFp.includes('DÉB') || rawFp.includes('DEB')) {
       metodo = 'Débito';
-    } else if (fp.includes('CRÉD') || fp.includes('CRED') || fp.includes('CART') || fp.includes('CARD')) {
+    } else if (rawFp.includes('CRÉD') || rawFp.includes('CRED') || rawFp.includes('CART') || rawFp.includes('CARD')) {
       metodo = 'Crédito';
     } else {
-      metodo = 'PIX';
+      metodo = 'Dinheiro';
     }
 
     const noites = reserva.noites || 1;
@@ -281,19 +484,57 @@ export const caixaService = {
   // Sincroniza todas as reservas concluídas do banco com o Caixa do Dia
   async sincronizarReservasConcluidasComCaixa(hotelId?: string): Promise<number> {
     try {
+      const excluidos = this.getExcluidosIds();
+
+      // Busca reservas que já possuem lançamento no caixa (no banco ou localmente)
+      const existingReservaIds = new Set<string>();
+
+      try {
+        const { data: dbMovs } = await supabase
+          .from('caixa_movimentacoes')
+          .select('reserva_id')
+          .not('reserva_id', 'is', null);
+
+        if (dbMovs) {
+          dbMovs.forEach(m => {
+            if (m.reserva_id) existingReservaIds.add(m.reserva_id);
+          });
+        }
+      } catch {}
+
+      const locais = this.getMovimentacoes(hotelId);
+      locais.forEach(m => {
+        if (m.reservaId) existingReservaIds.add(m.reservaId);
+      });
+
+      // Busca apenas reservas concluídas (hospedagem completa)
       const { data, error } = await supabase
         .from('reservas')
         .select('*')
         .ilike('status', '%concl%');
 
-      if (error || !data || data.length === 0) return 0;
+      if (error || !data || data.length === 0) {
+        await this.carregarMovimentacoesDoBanco(hotelId);
+        return 0;
+      }
 
       let sincronizadas = 0;
       for (const res of data) {
+        if (!res.id) continue;
+        // Se a reserva foi excluída pelo usuário do caixa, não reinserir
+        if (excluidos.has(res.id)) continue;
+        // Se já foi lançada no caixa, não reinserir
+        if (existingReservaIds.has(res.id)) continue;
         if (hotelId && res.hotel_id && res.hotel_id !== hotelId) continue;
+
         const mov = this.registrarReservaConcluida(res, hotelId);
-        if (mov) sincronizadas++;
+        if (mov) {
+          sincronizadas++;
+          existingReservaIds.add(res.id);
+        }
       }
+
+      await this.carregarMovimentacoesDoBanco(hotelId);
       return sincronizadas;
     } catch (err) {
       console.warn('Erro ao sincronizar reservas concluídas com o caixa:', err);
@@ -319,7 +560,7 @@ export const caixaService = {
     const detalhesArray: string[] = [];
     detalhesArray.push(`Check-out ${dados.reservaNumber}`);
     detalhesArray.push(`Quarto ${dados.quartoNumero}`);
-    detalhesArray.push(`Diárias: R$ ${dados.valorDiarias.toFixed(2)}`);
+    detalhesArray.push(`Diárias: R$ ${dados.valorDiarias.toFixed(2)} (${dados.metodo})`);
 
     if (dados.valorConsumo && dados.valorConsumo > 0) {
       detalhesArray.push(`Consumo Frigobar/Extras: R$ ${dados.valorConsumo.toFixed(2)}`);
@@ -349,7 +590,7 @@ export const caixaService = {
     }, dados.hotelId);
   },
 
-  // Registra a entrada no caixa sincronizada com o check-in na entrada do hóspede
+  // Mantido para compatibilidade, mas regra oficial: apenas hospedagens concluídas vão para o caixa
   registrarRecebimentoCheckin(dados: {
     reservaId: string;
     reservaNumber: string;

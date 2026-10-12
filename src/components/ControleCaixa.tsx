@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { caixaService, CaixaMovimentacao } from '../services/caixaService';
+import { supabase } from '../lib/supabase';
 export type { CaixaMovimentacao };
 
 export interface ControleCaixaProps {
@@ -112,10 +113,25 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
       setMovimentacoes(caixaService.getMovimentacoes());
     };
 
-    // Sincroniza reservas concluídas do banco com o caixa automaticamente ao abrir
+    // 1. Carrega do banco no início e atualiza a listagem
+    caixaService.carregarMovimentacoesDoBanco().then(data => {
+      setMovimentacoes(data);
+    });
+
+    // 2. Sincroniza reservas concluídas do banco com o caixa automaticamente ao abrir
     caixaService.sincronizarReservasConcluidasComCaixa().then(() => {
       handleAtualizacao();
     });
+
+    // 3. Realtime com o Supabase para sincronização instantânea entre abas e dispositivos
+    const channel = supabase
+      .channel('caixa_realtime_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'caixa_movimentacoes' }, () => {
+        caixaService.carregarMovimentacoesDoBanco().then(data => {
+          setMovimentacoes(data);
+        });
+      })
+      .subscribe();
 
     const handleReservaModificada = (e: any) => {
       const reserva = e?.detail;
@@ -159,6 +175,7 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
     } catch {}
 
     return () => {
+      supabase.removeChannel(channel);
       window.removeEventListener('hotel_caixa_atualizado', handleAtualizacao);
       window.removeEventListener('hotel_reserva_modificada', handleReservaModificada);
       window.removeEventListener('focus', handleAtualizacao);
@@ -181,21 +198,14 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
     return filteredMovimentacoes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   }, [filteredMovimentacoes, currentPage, itemsPerPage]);
 
-  const handleCreateEntrada = (e: React.FormEvent) => {
+  const handleCreateEntrada = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formDesc || !formAmount) return;
 
     const val = parseFloat(formAmount);
     if (isNaN(val) || val <= 0) return;
 
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-
-    const newMov: CaixaMovimentacao = {
-      id: String(Date.now()),
-      time: `${hours}:${mins}`,
-      date: 'Hoje',
+    caixaService.adicionarMovimentacao({
       description: formDesc,
       details: formDetails || 'Lançamento manual de entrada',
       category: formCategory,
@@ -205,31 +215,22 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
       operator: loggedUserName,
       type: 'entrada',
       amount: val,
-    };
+    });
 
-    const atualizadas = [newMov, ...movimentacoes];
-    setMovimentacoes(atualizadas);
-    caixaService.saveMovimentacoes(atualizadas);
+    setMovimentacoes(caixaService.getMovimentacoes());
     setIsEntradaModalOpen(false);
     showToast('Lançamento de Entrada registrado com sucesso!');
     resetForm();
   };
 
-  const handleCreateSangria = (e: React.FormEvent) => {
+  const handleCreateSangria = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formDesc || !formAmount) return;
 
     const val = parseFloat(formAmount);
     if (isNaN(val) || val <= 0) return;
 
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-
-    const newMov: CaixaMovimentacao = {
-      id: String(Date.now()),
-      time: `${hours}:${mins}`,
-      date: 'Hoje',
+    caixaService.adicionarMovimentacao({
       description: formDesc,
       details: formDetails || 'Sangria / Retirada de caixa autorizada',
       category: 'Sangria',
@@ -239,49 +240,41 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
       operator: loggedUserName,
       type: 'saida',
       amount: val,
-    };
+    });
 
-    const atualizadas = [newMov, ...movimentacoes];
-    setMovimentacoes(atualizadas);
-    caixaService.saveMovimentacoes(atualizadas);
+    setMovimentacoes(caixaService.getMovimentacoes());
     setIsSangriaModalOpen(false);
     showToast('Sangria registrada com sucesso!');
     resetForm();
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMovForEdit) return;
 
     const val = parseFloat(formAmount);
     if (isNaN(val) || val <= 0) return;
 
-    const atualizadas = movimentacoes.map(m => {
-      if (m.id === selectedMovForEdit.id) {
-        return {
-          ...m,
-          description: formDesc,
-          details: formDetails,
-          amount: val,
-          category: formCategory,
-          method: formMethod,
-        };
-      }
-      return m;
-    });
+    const movAtualizada: CaixaMovimentacao = {
+      ...selectedMovForEdit,
+      description: formDesc,
+      details: formDetails,
+      amount: val,
+      category: formCategory,
+      method: formMethod,
+    };
 
-    setMovimentacoes(atualizadas);
-    caixaService.saveMovimentacoes(atualizadas);
+    await caixaService.atualizarMovimentacao(movAtualizada);
+    setMovimentacoes(caixaService.getMovimentacoes());
     setSelectedMovForEdit(null);
     showToast('Movimentação atualizada com sucesso!');
     resetForm();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!movToDelete) return;
-    const atualizadas = movimentacoes.filter(m => m.id !== movToDelete.id);
-    setMovimentacoes(atualizadas);
-    caixaService.saveMovimentacoes(atualizadas);
+    await caixaService.excluirMovimentacao(movToDelete.id, movToDelete.hotelId, movToDelete.reservaId);
+    setMovimentacoes(caixaService.getMovimentacoes());
     setMovToDelete(null);
     showToast('Lançamento excluído com sucesso!');
   };

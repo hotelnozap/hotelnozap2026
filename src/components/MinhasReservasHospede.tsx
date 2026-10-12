@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { hospedesService } from '../services/supabaseService';
+import { hospedesService, reservasService } from '../services/supabaseService';
 
 export interface MinhasReservasHospedeProps {
   userRole?: string;
@@ -105,13 +105,37 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
     return true;
   });
 
-  const handleConfirmCancel = () => {
+  const [isCanceling, setIsCanceling] = useState<boolean>(false);
+
+  const handleConfirmCancel = async () => {
     if (!cancelModalReserva) return;
-    setReservas(
-      reservas.map((r) => (r.id === cancelModalReserva.id ? { ...r, status: 'Cancelada', formaPagamento: 'Cancelado a pedido' } : r))
-    );
-    showToast(`Reserva ${cancelModalReserva.codigo} cancelada com sucesso.`);
-    setCancelModalReserva(null);
+    setIsCanceling(true);
+    try {
+      const resCancel = await reservasService.cancelarReserva(cancelModalReserva.id, 'Cancelado pelo hóspede no portal');
+      if (resCancel.success) {
+        setReservas(
+          reservas.map((r) =>
+            r.id === cancelModalReserva.id
+              ? {
+                  ...r,
+                  status: 'Cancelada',
+                  formaPagamento: resCancel.isGratuito ? 'Cancelado (Isento)' : `Cancelado (Multa R$ ${resCancel.valorMulta.toFixed(2).replace('.', ',')})`,
+                  valorTotal: resCancel.isGratuito ? 0 : resCancel.valorMulta,
+                }
+              : r
+          )
+        );
+        showToast(resCancel.mensagem);
+      } else {
+        showToast('Não foi possível cancelar a reserva no momento.');
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Erro ao processar cancelamento.');
+    } finally {
+      setIsCanceling(false);
+      setCancelModalReserva(null);
+    }
   };
 
   const handleRepeatBooking = (reserva: ReservaItemFull) => {
@@ -770,33 +794,80 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
       {/* ========================================================================= */}
       {/* MODAL DE CONFIRMAÇÃO DE CANCELAMENTO                                     */}
       {/* ========================================================================= */}
-      {cancelModalReserva && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
-              <span className="material-symbols-outlined text-3xl">warning</span>
-            </div>
-            <h3 className="text-lg font-extrabold text-slate-900">Cancelar Reserva {cancelModalReserva.codigo}?</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Você está prestes a cancelar a reserva da <strong>{cancelModalReserva.quartoNome}</strong> em {cancelModalReserva.hotelNome}. O reembolso será processado conforme a política do hotel.
-            </p>
-            <div className="flex items-center gap-3 pt-3">
-              <button
-                onClick={() => setCancelModalReserva(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-700 text-xs"
-              >
-                Manter Reserva
-              </button>
-              <button
-                onClick={handleConfirmCancel}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md"
-              >
-                Confirmar Cancelamento
-              </button>
+      {cancelModalReserva && (() => {
+        const regra = reservasService.calcularRegraCancelamento({
+          checkIn: cancelModalReserva.checkIn,
+          valorTotal: cancelModalReserva.valorTotal,
+          diarias: cancelModalReserva.diarias,
+        });
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-3xl">warning</span>
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-900">Cancelar Reserva {cancelModalReserva.codigo}?</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Você está prestes a cancelar a acomodação <strong>{cancelModalReserva.quartoNome}</strong> em {cancelModalReserva.hotelNome}.
+              </p>
+
+              {/* CARD DE POLÍTICA & DIAGNÓSTICO EM TEMPO REAL */}
+              {regra.isCancelamentoGratuito ? (
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-left space-y-1">
+                  <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-xs">
+                    <span className="material-symbols-outlined text-base">check_circle</span>
+                    Cancelamento 100% Gratuito
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Você está cancelando com mais de 3 horas de antecedência do horário de check-in (limite gratuito: <strong>{regra.limiteCheckinFormatado}</strong>). Nenhum valor será cobrado.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-2xl text-left space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
+                    <span className="material-symbols-outlined text-base text-amber-600">warning</span>
+                    Cobrança de 50% de 1 Diária
+                  </div>
+                  <p className="text-[11px] text-slate-700 leading-relaxed">
+                    A solicitação está ocorrendo a <strong>menos de 3 horas</strong> do horário de check-in. Conforme a política oficial do hotel, será cobrada uma taxa de 50% do valor de uma única diária.
+                  </p>
+                  <div className="flex items-center justify-between pt-1 border-t border-amber-200 text-xs font-bold text-slate-800">
+                    <span>Taxa cobrada (50% de 1 diária):</span>
+                    <span className="text-red-700 font-black text-sm">R$ {regra.valorMulta.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-3">
+                <button
+                  type="button"
+                  disabled={isCanceling}
+                  onClick={() => setCancelModalReserva(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-700 text-xs hover:bg-slate-50 transition-colors"
+                >
+                  Manter Reserva
+                </button>
+                <button
+                  type="button"
+                  disabled={isCanceling}
+                  onClick={handleConfirmCancel}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1"
+                >
+                  {isCanceling ? (
+                    <>
+                      <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                      Cancelando...
+                    </>
+                  ) : (
+                    'Confirmar Cancelamento'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

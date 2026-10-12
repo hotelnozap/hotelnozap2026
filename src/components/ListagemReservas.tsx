@@ -178,6 +178,22 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
       return;
     }
 
+    // Se for Cancelamento, executa a regra oficial de 3h e cobrança de 50% de 1 diária se aplicável
+    if (newStatus === 'Cancelada' && target) {
+      const resCancel = await reservasService.cancelarReserva(reservaId, 'Cancelado via painel de reservas');
+      if (resCancel.success) {
+        const novoValorStr = resCancel.isGratuito ? 'R$ 0,00' : `R$ ${resCancel.valorMulta.toFixed(2).replace('.', ',')}`;
+        setReservas((prev) => prev.map((r) => r.id === reservaId ? { ...r, status: 'Cancelada', valorTotal: novoValorStr } : r));
+        if (selectedReserva && selectedReserva.id === reservaId) {
+          setSelectedReserva((prev) => prev ? { ...prev, status: 'Cancelada', valorTotal: novoValorStr } : null);
+        }
+        showToast(resCancel.mensagem);
+      } else {
+        showToast('Erro ao cancelar reserva.');
+      }
+      return;
+    }
+
     const success = await reservasService.updateReservaStatus(reservaId, newStatus);
     if (success) {
       setReservas((prev) => prev.map((r) => r.id === reservaId ? { ...r, status: newStatus } : r));

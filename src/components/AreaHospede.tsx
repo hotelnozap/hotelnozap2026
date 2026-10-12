@@ -2001,8 +2001,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                       <span className="material-symbols-outlined text-blue-600 text-base mt-0.5">assignment_return</span>
                       <div>
                         <strong className="text-slate-800">Política de Cancelamento:</strong>
-                        <p className="text-slate-600 mt-0.5">
-                          {hotelConfig.politicaCancelamentoTexto || 'Cancelamento flexível até 7 dias antes do check-in.'}
+                        <p className="text-slate-600 mt-0.5 font-medium">
+                          {hotelConfig.politicaCancelamentoTexto && !hotelConfig.politicaCancelamentoTexto.includes('7 dias')
+                            ? hotelConfig.politicaCancelamentoTexto
+                            : 'Cancelamento gratuito até 3 horas antes do check-in. Após este prazo, cobrança de 50% do valor de uma única diária.'}
                         </p>
                       </div>
                     </div>
