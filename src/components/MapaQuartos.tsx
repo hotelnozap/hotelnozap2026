@@ -171,6 +171,11 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
         });
 
         setRooms(mapped);
+        setSelectedRoom(prev => {
+          if (!prev) return null;
+          const up = mapped.find(r => r.id === prev.id || String(r.number).trim() === String(prev.number).trim());
+          return up ? { ...prev, ...up } : prev;
+        });
       }).catch(err => {
         console.warn('Erro ao carregar quartos e reservas no Mapa:', err);
       });
@@ -467,24 +472,27 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [checkinModalReserva, setCheckinModalReserva] = useState<Reserva | null>(null);
 
-  const handleOpenRoomModal = (room: Room) => {
+  const handleOpenRoomModal = async (room: Room) => {
     loadStatus();
     const qNum = String(room.number || '').trim();
     const qId = String(room.id || '').trim();
 
-    const activeRes = room.activeReserva || allReservas.find((r: any) => {
-      const rNum = String(r.numero_quarto || '').trim();
-      const rId = String(r.quarto_id || '').trim();
-      const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
-      if (!matchesRoom) return false;
-      const st = (r.status || '').toLowerCase();
-      return st === 'confirmada' || st === 'hospedado' || st === 'pendente';
-    }) || allReservas.find((r: any) => {
-      const rNum = String(r.numero_quarto || '').trim();
-      const rId = String(r.quarto_id || '').trim();
-      return (rId && rId === qId) || (rNum && rNum === qNum);
-    });
+    const findRes = (list: any[]) => {
+      return (list || []).find((r: any) => {
+        const rNum = String(r.numero_quarto || '').trim();
+        const rId = String(r.quarto_id || '').trim();
+        const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
+        if (!matchesRoom) return false;
+        const st = (r.status || '').toLowerCase();
+        return st === 'confirmada' || st === 'hospedado' || st === 'pendente';
+      }) || (list || []).find((r: any) => {
+        const rNum = String(r.numero_quarto || '').trim();
+        const rId = String(r.quarto_id || '').trim();
+        return (rId && rId === qId) || (rNum && rNum === qNum);
+      });
+    };
 
+    const activeRes = room.activeReserva || findRes(allReservas);
     const resolvedGuestName = room.guestName || (room as any).hospede_atual || (room.items && room.items.hospede_atual) || activeRes?.hospedeNome || (activeRes as any)?.nome_hospede || undefined;
 
     setSelectedRoom({
@@ -492,6 +500,27 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       guestName: resolvedGuestName,
       activeReserva: activeRes || undefined
     });
+
+    try {
+      const freshList = await reservasService.getReservas();
+      if (freshList && freshList.length > 0) {
+        setAllReservas(freshList);
+        const freshRes = findRes(freshList);
+        if (freshRes) {
+          const freshName = freshRes.hospedeNome || (freshRes as any)?.nome_hospede || resolvedGuestName;
+          setSelectedRoom(prev => {
+            if (!prev || (prev.id !== room.id && String(prev.number).trim() !== qNum)) return prev;
+            return {
+              ...prev,
+              guestName: freshName,
+              activeReserva: freshRes
+            };
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar reservas atualizadas ao abrir modal:', err);
+    }
   };
 
   const handleStartCheckinForRoom = async (room: Room) => {
@@ -1040,11 +1069,14 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
           let statusText = stInfo.nome;
           let details = `${room.capacity ? room.capacity + ' Pessoas' : 'Standard'} • ${room.floor}`;
 
-          if (room.status === 'ocupado' || room.status === 'reservado' || room.status === 'ocupado_em_limpeza') {
+          const rSt = (room.status || '').toLowerCase().trim();
+          const isOcupadoOuReservado = rSt === 'ocupado' || rSt === 'reservado' || rSt === 'ocupado_em_limpeza' || rSt.includes('reserv') || rSt.includes('ocupad');
+          if (isOcupadoOuReservado) {
+            const isRes = rSt === 'reservado' || rSt.includes('reserv');
             details = room.guestName 
-              ? `${room.status === 'reservado' ? 'Reserva' : 'Hóspede'}: ${room.guestName}` 
-              : (room.status === 'reservado' ? 'Quarto Reservado' : 'Hóspede Ativo');
-          } else if (room.status === 'limpeza') {
+              ? `${isRes ? 'Reserva' : 'Hóspede'}: ${room.guestName}` 
+              : (isRes ? 'Quarto Reservado' : 'Hóspede Ativo');
+          } else if (rSt === 'limpeza') {
             const hk = (room as any).items?.housekeeping;
             if (hk?.camareira_nome) {
               statusText = `Limpeza: ${hk.camareira_nome}`;
@@ -1164,46 +1196,59 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
               </div>
 
               <div className="mt-4 flex justify-between items-end text-[#45464d]">
-                {(room.status === 'ocupado' || room.status === 'reservado' || room.status === 'ocupado_em_limpeza') && room.guestName ? (
-                  <div className="flex items-center gap-1 truncate max-w-[130px]" title={`${room.status === 'reservado' ? 'Reserva' : 'Hóspede'}: ${room.guestName}`}>
-                    <span className={`material-symbols-outlined text-base shrink-0 ${room.status === 'reservado' ? 'text-amber-700' : 'text-[#ba1a1a]'}`}>
-                      {room.status === 'reservado' ? 'bookmark' : 'person'}
-                    </span>
-                    <span className={`text-xs font-semibold truncate ${room.status === 'reservado' ? 'text-amber-800' : 'text-[#ba1a1a]'}`}>
-                      {room.guestName}
-                    </span>
-                  </div>
-                ) : room.status === 'limpeza' && (room as any).items?.housekeeping?.camareira_nome ? (
-                  <div className="flex items-center gap-1 truncate max-w-[140px] text-amber-800" title={`Em limpeza por ${(room as any).items.housekeeping.camareira_nome}`}>
-                    <span className="material-symbols-outlined text-amber-700 text-base">person</span>
-                    <span className="text-xs font-semibold truncate">{(room as any).items.housekeeping.camareira_nome}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenEditRoom(room);
-                      }}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer shadow-xs"
-                      title="Editar quarto"
-                    >
-                      <span className="material-symbols-outlined text-sm">edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAskDeleteRoom(room);
-                      }}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer shadow-xs"
-                      title="Excluir quarto"
-                    >
-                      <span className="material-symbols-outlined text-sm">delete</span>
-                    </button>
-                  </div>
-                )}
+                {(() => {
+                  const rSt = (room.status || '').toLowerCase().trim();
+                  const isOcupadoOuReservado = rSt === 'ocupado' || rSt === 'reservado' || rSt === 'ocupado_em_limpeza' || rSt.includes('reserv') || rSt.includes('ocupad');
+                  if (isOcupadoOuReservado && room.guestName) {
+                    const isRes = rSt === 'reservado' || rSt.includes('reserv');
+                    return (
+                      <div className="flex items-center gap-1 truncate max-w-[130px]" title={`${isRes ? 'Reserva' : 'Hóspede'}: ${room.guestName}`}>
+                        <span className={`material-symbols-outlined text-base shrink-0 ${isRes ? 'text-purple-700' : 'text-[#ba1a1a]'}`}>
+                          {isRes ? 'bookmark' : 'person'}
+                        </span>
+                        <span className={`text-xs font-semibold truncate ${isRes ? 'text-purple-800' : 'text-[#ba1a1a]'}`}>
+                          {room.guestName}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (rSt === 'limpeza' && (room as any).items?.housekeeping?.camareira_nome) {
+                    return (
+                      <div className="flex items-center gap-1 truncate max-w-[140px] text-amber-800" title={`Em limpeza por ${(room as any).items.housekeeping.camareira_nome}`}>
+                        <span className="material-symbols-outlined text-amber-700 text-base">person</span>
+                        <span className="text-xs font-semibold truncate">{(room as any).items.housekeeping.camareira_nome}</span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditRoom(room);
+                        }}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer shadow-xs"
+                        title="Editar quarto"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAskDeleteRoom(room);
+                        }}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer shadow-xs"
+                        title="Excluir quarto"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 <span 
                   style={{ color: stInfo.cor_texto }}
@@ -1572,6 +1617,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
 
             <div className="p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 overflow-y-auto overscroll-contain flex-1 touch-pan-y">
               
+              {/* Box 1: Informações Rápidas (Valor Diária e Capacidade) */}
               <div className="grid grid-cols-2 gap-4 bg-[#f8f9ff] p-4 rounded-xl border border-[#c6c6cd]/40 text-xs">
                 <div>
                   <span className="text-[#45464d] block mb-0.5">Valor Diária</span>
@@ -1581,117 +1627,153 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   <span className="text-[#45464d] block mb-0.5">Capacidade</span>
                   <span className="font-bold text-[#0b1c30] text-sm">{selectedRoom.capacity || 2} Pessoas</span>
                 </div>
-                {/* EXIBIÇÃO DO HÓSPEDE (OBRIGATÓRIO EM RESERVADO OU OCUPADO) */}
-                {(() => {
-                  const isReservadoOuOcupado = 
-                    selectedRoom.status === 'reservado' || 
-                    selectedRoom.status === 'ocupado' || 
-                    selectedRoom.status === 'ocupado_em_limpeza';
+              </div>
 
-                  if (!isReservadoOuOcupado && !selectedRoom.guestName) return null;
+              {/* Box 2: CARD DEDICADO DO HÓSPEDE E RESERVA (100% VISÍVEL SE RESERVADO, OCUPADO OU VINCULADO) */}
+              {(() => {
+                const stLower = (selectedRoom.status || '').toLowerCase().trim();
+                const isReservado = stLower === 'reservado' || stLower.includes('reserv');
+                const isOcupado = stLower === 'ocupado' || stLower === 'ocupado_em_limpeza' || stLower.includes('ocupad');
+                const isReservadoOuOcupado = isReservado || isOcupado;
 
-                  const isReservado = selectedRoom.status === 'reservado';
-                  const guestLabel = isReservado ? 'Hóspede da Reserva' : 'Hóspede Atual';
-                  const displayGuestName = selectedRoom.guestName || selectedRoom.activeReserva?.hospedeNome || (selectedRoom.activeReserva as any)?.nome_hospede || null;
+                // Busca cruzada ultra-robusta de reserva por quarto
+                const qNum = String(selectedRoom.number || '').trim();
+                const qId = String(selectedRoom.id || '').trim();
+                const matchedRes = selectedRoom.activeReserva || (allReservas || []).find((r: any) => {
+                  const rNum = String(r.numero_quarto || '').trim();
+                  const rId = String(r.quarto_id || '').trim();
+                  const matches = (rId && rId === qId) || (rNum && rNum === qNum);
+                  if (!matches) return false;
+                  const rSt = (r.status || '').toLowerCase();
+                  return rSt === 'confirmada' || rSt === 'hospedado' || rSt === 'pendente';
+                }) || (allReservas || []).find((r: any) => {
+                  const rNum = String(r.numero_quarto || '').trim();
+                  const rId = String(r.quarto_id || '').trim();
+                  return (rId && rId === qId) || (rNum && rNum === qNum);
+                });
 
-                  return (
-                    <div className="col-span-2 pt-3 border-t border-[#c6c6cd]/40">
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-[#45464d] font-bold text-xs flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-base text-slate-700">
-                            {isReservado ? 'bookmark' : 'person'}
-                          </span>
-                          {guestLabel}
+                const displayGuestName = 
+                  selectedRoom.guestName || 
+                  matchedRes?.hospedeNome || 
+                  (matchedRes as any)?.nome_hospede || 
+                  (selectedRoom as any)?.hospede_atual || 
+                  (selectedRoom.items && (selectedRoom.items as any).hospede_atual) || 
+                  null;
+
+                // Se não for reservado/ocupado e não houver hóspede, não renderiza este bloco
+                if (!isReservadoOuOcupado && !displayGuestName) return null;
+
+                const guestLabel = isReservado ? 'Hóspede da Reserva' : 'Hóspede Atual';
+
+                return (
+                  <div className={`p-4 rounded-xl border text-xs shadow-xs transition-all ${
+                    isReservado 
+                      ? 'bg-purple-50/70 border-purple-200 text-purple-950' 
+                      : 'bg-red-50/70 border-red-200 text-red-950'
+                  }`}>
+                    <div className="flex items-center justify-between gap-2 mb-2.5">
+                      <span className={`font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 ${
+                        isReservado ? 'text-purple-900' : 'text-[#ba1a1a]'
+                      }`}>
+                        <span className="material-symbols-outlined text-base">
+                          {isReservado ? 'hotel_class' : 'person'}
                         </span>
+                        {guestLabel}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const novoNome = prompt('Editar / Informar Nome do Hóspede:', displayGuestName || '');
+                          if (novoNome !== null) {
+                            handleUpdateStatus(selectedRoom.id, selectedRoom.status, novoNome.trim());
+                          }
+                        }}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1 shadow-2xs active:scale-95 ${
+                          isReservado 
+                            ? 'text-purple-900 bg-white hover:bg-purple-100 border-purple-200' 
+                            : 'text-red-900 bg-white hover:bg-red-100 border-red-200'
+                        }`}
+                        title="Alterar ou definir nome do hóspede"
+                      >
+                        <span className="material-symbols-outlined text-xs">edit</span>
+                        <span>{displayGuestName ? 'Editar Hóspede' : 'Informar Nome'}</span>
+                      </button>
+                    </div>
+
+                    {displayGuestName ? (
+                      <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs flex flex-col gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
+                            isReservado ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-[#ba1a1a]'
+                          }`}>
+                            <span className="material-symbols-outlined text-lg">
+                              {isReservado ? 'bookmark' : 'person'}
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className={`font-extrabold text-base block truncate ${
+                              isReservado ? 'text-purple-950' : 'text-[#ba1a1a]'
+                            }`}>
+                              {displayGuestName}
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-medium block">
+                              {isReservado ? 'Reserva confirmada no sistema' : 'Hóspede alocado no quarto'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Detalhes de Check-in e Check-out se houver reserva vinculada */}
+                        {matchedRes && (
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-700 pt-2 border-t border-slate-100 mt-1">
+                            {matchedRes.checkIn && (
+                              <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                <span className="material-symbols-outlined text-xs text-emerald-700">login</span>
+                                <span>Entrada: <b>{new Date(matchedRes.checkIn + 'T12:00:00').toLocaleDateString('pt-BR')}</b></span>
+                              </span>
+                            )}
+                            {matchedRes.checkOut && (
+                              <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                <span className="material-symbols-outlined text-xs text-rose-700">logout</span>
+                                <span>Saída: <b>{new Date(matchedRes.checkOut + 'T12:00:00').toLocaleDateString('pt-BR')}</b></span>
+                              </span>
+                            )}
+                            {matchedRes.valorTotal && (
+                              <span className="flex items-center gap-1 text-emerald-800 font-bold ml-auto">
+                                <span>{matchedRes.valorTotal}</span>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-lg bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-center justify-between gap-2 shadow-2xs">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-amber-700 text-lg shrink-0">person_off</span>
+                          <div>
+                            <span className="font-bold block text-slate-900">Hóspede Não Vinculado</span>
+                            <span className="text-[11px] text-amber-800 leading-tight block">
+                              Este quarto está {isReservado ? 'reservado' : 'ocupado'}, mas o nome do hóspede ainda não foi informado.
+                            </span>
+                          </div>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
-                            const novoNome = prompt('Editar / Informar Nome do Hóspede:', displayGuestName || '');
-                            if (novoNome !== null) {
+                            const novoNome = prompt('Informe o Nome do Hóspede:', '');
+                            if (novoNome !== null && novoNome.trim()) {
                               handleUpdateStatus(selectedRoom.id, selectedRoom.status, novoNome.trim());
                             }
                           }}
-                          className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition cursor-pointer flex items-center gap-1 shadow-2xs active:scale-95"
-                          title="Alterar ou definir nome do hóspede"
+                          className="shrink-0 px-2.5 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
                         >
-                          <span className="material-symbols-outlined text-xs">edit</span>
-                          <span>{displayGuestName ? 'Editar Hóspede' : 'Informar Nome'}</span>
+                          <span className="material-symbols-outlined text-xs">add</span>
+                          <span>Informar Nome</span>
                         </button>
                       </div>
-
-                      {displayGuestName ? (
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col gap-1.5">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
-                              isReservado ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-[#ba1a1a]'
-                            }`}>
-                              <span className="material-symbols-outlined text-base">
-                                {isReservado ? 'hotel_class' : 'person'}
-                              </span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <span className={`font-extrabold text-sm block truncate ${isReservado ? 'text-amber-950' : 'text-[#ba1a1a]'}`}>
-                                {displayGuestName}
-                              </span>
-                              <span className="text-[11px] text-slate-500 font-medium block">
-                                {isReservado ? 'Reserva confirmada no sistema' : 'Hóspede alocado no quarto'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Detalhes de Check-in e Check-out se houver reserva vinculada */}
-                          {selectedRoom.activeReserva && (
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-700 pt-2 border-t border-slate-100 mt-0.5">
-                              {selectedRoom.activeReserva.checkIn && (
-                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                                  <span className="material-symbols-outlined text-xs text-emerald-700">login</span>
-                                  <span>Entrada: <b>{new Date(selectedRoom.activeReserva.checkIn + 'T12:00:00').toLocaleDateString('pt-BR')}</b></span>
-                                </span>
-                              )}
-                              {selectedRoom.activeReserva.checkOut && (
-                                <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                                  <span className="material-symbols-outlined text-xs text-rose-700">logout</span>
-                                  <span>Saída: <b>{new Date(selectedRoom.activeReserva.checkOut + 'T12:00:00').toLocaleDateString('pt-BR')}</b></span>
-                                </span>
-                              )}
-                              {selectedRoom.activeReserva.valorTotal && (
-                                <span className="flex items-center gap-1 text-emerald-800 font-bold ml-auto">
-                                  <span>{selectedRoom.activeReserva.valorTotal}</span>
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-center justify-between gap-2 shadow-2xs">
-                          <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-amber-700 text-lg shrink-0">person_off</span>
-                            <div>
-                              <span className="font-bold block text-slate-900">Hóspede Não Vinculado</span>
-                              <span className="text-[11px] text-amber-800 leading-tight block">
-                                Este quarto está {isReservado ? 'reservado' : 'ocupado'}, mas o nome do hóspede ainda não foi informado.
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const novoNome = prompt('Informe o Nome do Hóspede:', '');
-                              if (novoNome !== null && novoNome.trim()) {
-                                handleUpdateStatus(selectedRoom.id, selectedRoom.status, novoNome.trim());
-                              }
-                            }}
-                            className="shrink-0 px-2.5 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
-                          >
-                            <span className="material-symbols-outlined text-xs">add</span>
-                            <span>Informar Nome</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* ALERTA DE MOTIVO / JUSTIFICATIVA REGISTRADA NO STATUS */}
               {selectedRoom.motivo_bloqueio && (
