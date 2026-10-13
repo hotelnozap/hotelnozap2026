@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { planosService, hoteisService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { maskPhone } from '../utils/masks';
+import { trackingService } from '../services/trackingService';
 
 interface LandingPageProps {
   onNavigateToLogin: () => void;
@@ -280,6 +281,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   });
   const [isSubmittingProspect, setIsSubmittingProspect] = useState(false);
   const [prospectSuccess, setProspectSuccess] = useState(false);
+
+  // Estados de Defesa Anti-Bot (Honeypot Trap, Timestamp Trap e reCAPTCHA v3)
+  const [honeypotLead, setHoneypotLead] = useState('');
+  const prospectLoadedAtRef = useRef<number>(Date.now());
 
   // Atualizar título e metatags dinamicamente na Landing Page B2B
   useEffect(() => {
@@ -601,6 +606,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     if (!prospectForm.hotelName.trim() || !prospectForm.phone.trim() || !prospectForm.email.trim()) {
       alert('Por favor, preencha o Nome do Hotel, WhatsApp e E-mail.');
       return;
+    }
+
+    // 0.0 DEFESA ANTI-BOT: HONEYPOT TRAP & TIMESTAMP TRAP
+    if (honeypotLead.trim() !== '') {
+      console.warn('[Anti-Bot] Lead descartado silenciosamente por Honeypot ativo.');
+      setProspectSuccess(true);
+      return;
+    }
+
+    const elapsedSeconds = (Date.now() - prospectLoadedAtRef.current) / 1000;
+    if (elapsedSeconds < 1.5) {
+      console.warn('[Anti-Bot] Submissão suspeita por velocidade extrema (< 1.5s).');
+      setProspectSuccess(true);
+      return;
+    }
+
+    // 0.1 VERIFICAÇÃO RECAPTCHA v3 INVISÍVEL
+    try {
+      const v3Token = await trackingService.executeRecaptcha('lead_prospect');
+      if (v3Token) {
+        const verifyRes = await fetch('/api/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: v3Token })
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyData && verifyData.success === false && verifyData.score !== undefined && verifyData.score < 0.25) {
+          alert('Não foi possível verificar a autenticidade da navegação. Por favor, tente novamente.');
+          return;
+        }
+      }
+    } catch (botErr) {
+      console.warn('[Anti-Bot] reCAPTCHA tolerado em caso de falha de rede:', botErr);
     }
 
     try {
@@ -2066,6 +2104,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </div>
 
                 <form onSubmit={handleRegisterProspect} className="space-y-4">
+                  {/* Honeypot Trap (Invisível para humanos, atrai bots automatizados) */}
+                  <div className="opacity-0 absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <input
+                      type="text"
+                      name="prospect_website_verify_field"
+                      value={honeypotLead}
+                      onChange={(e) => setHoneypotLead(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
                       Nome do Hotel ou Pousada *
@@ -2205,6 +2255,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
                   <p className="text-[11px] text-gray-400 text-center">
                     🔒 Sem fidelidade, cancele a qualquer momento. Seus dados estão protegidos pela LGPD.
+                  </p>
+                  <p className="text-[10px] text-gray-400 text-center leading-tight">
+                    Protegido pelo Google reCAPTCHA v3. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Privacidade</a> e <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Termos</a> aplicáveis.
                   </p>
                 </form>
               </>

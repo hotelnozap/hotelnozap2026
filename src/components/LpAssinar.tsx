@@ -8,6 +8,7 @@ import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotel
 import { CheckoutPlanoStep } from './CheckoutPlanoStep';
 import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
 import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
+import { trackingService } from '../services/trackingService';
 
 interface LpAssinarProps {
   onNavigateToLP?: () => void;
@@ -213,6 +214,10 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
   const [confirmSenha, setConfirmSenha] = useState('');
   const [showSenha, setShowSenha] = useState(false);
   const [aceitaTermos, setAceitaTermos] = useState(false);
+
+  // Estados Anti-Bot (Honeypot Trap, Timestamp Trap e reCAPTCHA v3)
+  const [honeypotValue, setHoneypotValue] = useState('');
+  const formLoadedAtRef = useRef<number>(Date.now());
   // Ler ref da URL (suporta ?ref=, ?cupom=, ?coupon= e parâmetros via hash)
   const refCode = useMemo(() => {
     try {
@@ -508,6 +513,42 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
     setIsSubmitting(true);
     setErrorMsg('');
 
+    // 0.0 DEFESA ANTI-BOT: HONEYPOT TRAP & TIMESTAMP TRAP
+    if (honeypotValue.trim() !== '') {
+      console.warn('[Anti-Bot] Cadastro descartado silenciosamente por Honeypot ativo.');
+      setStep(6);
+      setIsSubmitting(false);
+      return;
+    }
+
+    const elapsedSeconds = (Date.now() - formLoadedAtRef.current) / 1000;
+    if (elapsedSeconds < 2.0) {
+      console.warn('[Anti-Bot] Submissão rejeitada por velocidade desumana (< 2s).');
+      setStep(6);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 0.1 VERIFICAÇÃO RECAPTCHA v3 INVISÍVEL
+    try {
+      const v3Token = await trackingService.executeRecaptcha('assinar_hotel');
+      if (v3Token) {
+        const verifyRes = await fetch('/api/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: v3Token })
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyData && verifyData.success === false && verifyData.score !== undefined && verifyData.score < 0.25) {
+          setErrorMsg('Não foi possível verificar a segurança do navegador. Por favor, tente novamente.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    } catch (botErr) {
+      console.warn('[Anti-Bot] Verificação reCAPTCHA tolerada em caso de falha de rede:', botErr);
+    }
+
     // Validação de segurança final rigorosa (bloqueio de duplicidade de CNPJ, CPF e E-mail de Acesso)
     const secResult = await validateFinalStep();
     if (!secResult.allowed) {
@@ -779,6 +820,17 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
       {/* FORM CARD */}
       <div className="max-w-4xl mx-auto px-4 pb-20">
         <div ref={formCardRef} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Honeypot Trap (Invisível para humanos, atrai bots automatizados) */}
+          <div className="opacity-0 absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+            <input
+              type="text"
+              name="empresa_website_confirm"
+              value={honeypotValue}
+              onChange={(e) => setHoneypotValue(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
 
           {/* Card header */}
           {step < 6 && (
@@ -1376,6 +1428,12 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
               </div>
             ))}
           </div>
+        )}
+
+        {step < 6 && (
+          <p className="text-[10px] text-gray-400 text-center mt-3">
+            Protegido pelo Google reCAPTCHA v3. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Privacidade</a> e <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Termos</a> aplicáveis.
+          </p>
         )}
       </div>
 

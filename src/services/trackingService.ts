@@ -232,24 +232,67 @@ export const trackingService = {
     const conf = this.getConfig();
     const siteKey = (conf.recaptchaSiteKey || '').trim() || import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Ldg2eMtAAAAAEN2nszCuOjWQfSDwrXpm66xEGm8';
 
-    if (!siteKey || typeof window.grecaptcha === 'undefined') {
+    if (!siteKey || siteKey.length < 10) {
       return null;
     }
 
+    // Garante que o script do reCAPTCHA v3 está carregado dinamicamente
+    const recaptchaScriptId = 'hotelnozap-recaptcha-script';
+    if (!document.getElementById(recaptchaScriptId)) {
+      const script = document.createElement('script');
+      script.id = recaptchaScriptId;
+      script.async = true;
+      script.defer = true;
+      script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+      document.head.appendChild(script);
+    }
+
     return new Promise((resolve) => {
-      try {
-        window.grecaptcha.ready(async () => {
-          try {
-            const token = await window.grecaptcha.execute(siteKey, { action });
-            resolve(token);
-          } catch (e) {
-            console.warn('[reCAPTCHA] Falha ao executar ação:', e);
+      // Timeout seguro de 2.5s para NUNCA travar a submissão do usuário em caso de lentidão ou adblock
+      const timeout = setTimeout(() => {
+        resolve(null);
+      }, 2500);
+
+      const runExecute = () => {
+        try {
+          if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') {
+            window.grecaptcha.ready(async () => {
+              try {
+                const token = await window.grecaptcha.execute(siteKey, { action });
+                clearTimeout(timeout);
+                resolve(token);
+              } catch (e) {
+                console.warn('[reCAPTCHA] Falha ao executar ação:', e);
+                clearTimeout(timeout);
+                resolve(null);
+              }
+            });
+          } else {
+            clearTimeout(timeout);
             resolve(null);
           }
-        });
-      } catch (err) {
-        console.warn('[reCAPTCHA] Erro na chamada grecaptcha.ready:', err);
-        resolve(null);
+        } catch (err) {
+          console.warn('[reCAPTCHA] Erro na execução:', err);
+          clearTimeout(timeout);
+          resolve(null);
+        }
+      };
+
+      if (window.grecaptcha && typeof window.grecaptcha.execute === 'function') {
+        runExecute();
+      } else {
+        let tries = 0;
+        const interval = setInterval(() => {
+          tries++;
+          if (window.grecaptcha && typeof window.grecaptcha.execute === 'function') {
+            clearInterval(interval);
+            runExecute();
+          } else if (tries > 25) {
+            clearInterval(interval);
+            clearTimeout(timeout);
+            resolve(null);
+          }
+        }, 100);
       }
     });
   },

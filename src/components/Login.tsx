@@ -47,14 +47,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState('');
 
-  // Estados do Google reCAPTCHA v2 (Caixa Checkbox "Não sou um robô" exclusiva do Login)
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const [recaptchaError, setRecaptchaError] = useState<string>('');
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  const recaptchaWidgetIdRef = useRef<number | null>(null);
-  const recaptchaSiteKey = 
-    import.meta.env.VITE_RECAPTCHA_SITE_KEY_V2 || 
-    '6LegAuQtAAAAAKXZEeinjRJ8Yb0LrcRvArBgEXSc';
+  // Estados de Segurança Anti-Bot (Honeypot, Timestamp Trap e reCAPTCHA v3 Invisível)
+  const [honeypotLogin, setHoneypotLogin] = useState('');
+  const loginFormLoadedAtRef = useRef<number>(Date.now());
 
   // Verifica se o usuário foi deslogado automaticamente por inatividade
   useEffect(() => {
@@ -70,77 +65,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       }
     } catch {}
   }, []);
-
-  // Renderiza e inicializa o widget reCAPTCHA v2 Checkbox ("Não sou um robô")
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    let checkInterval: any = null;
-
-    const renderRecaptchaWidget = () => {
-      if (
-        window.grecaptcha &&
-        typeof window.grecaptcha.render === 'function' &&
-        recaptchaContainerRef.current &&
-        recaptchaWidgetIdRef.current === null
-      ) {
-        try {
-          recaptchaContainerRef.current.innerHTML = '';
-          const widgetId = window.grecaptcha.render(recaptchaContainerRef.current, {
-            sitekey: recaptchaSiteKey,
-            callback: (token: string) => {
-              setRecaptchaToken(token);
-              setRecaptchaError('');
-            },
-            'expired-callback': () => {
-              setRecaptchaToken(null);
-            },
-            'error-callback': () => {
-              setRecaptchaToken(null);
-              setRecaptchaError('Não foi possível validar. Tente recarregar a página.');
-            }
-          });
-          recaptchaWidgetIdRef.current = widgetId;
-          if (checkInterval) {
-            clearInterval(checkInterval);
-            checkInterval = null;
-          }
-        } catch (e) {
-          console.warn('Erro ao renderizar widget reCAPTCHA v2:', e);
-        }
-      }
-    };
-
-    window.onRecaptchaLoaded = () => {
-      renderRecaptchaWidget();
-    };
-
-    if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
-      renderRecaptchaWidget();
-    } else {
-      let attempts = 0;
-      checkInterval = setInterval(() => {
-        attempts++;
-        if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
-          renderRecaptchaWidget();
-          if (checkInterval) {
-            clearInterval(checkInterval);
-            checkInterval = null;
-          }
-        } else if (attempts > 50) {
-          if (checkInterval) {
-            clearInterval(checkInterval);
-            checkInterval = null;
-          }
-        }
-      }, 100);
-    }
-
-    return () => {
-      if (checkInterval) clearInterval(checkInterval);
-      recaptchaWidgetIdRef.current = null;
-    };
-  }, [recaptchaSiteKey]);
 
   // 1. Carrega credenciais salvas ("Lembrar meus dados") ao montar o componente e checa bloqueio
   useEffect(() => {
@@ -420,33 +344,40 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       console.warn('Erro ao checar status de bloqueio inicial:', checkErr);
     }
 
-    // 0.1 VERIFICAÇÃO RECAPTCHA v2 (Caixa "Não sou um robô" obrigatória no Login)
-    if (!recaptchaToken) {
-      setErrorMessage('Por favor, marque a caixa de verificação "Não sou um robô" para continuar.');
-      setRecaptchaError('Confirmação do reCAPTCHA obrigatória.');
+    // 0.0 DEFESA ANTI-BOT: HONEYPOT TRAP & TIMESTAMP TRAP
+    if (honeypotLogin.trim() !== '') {
+      console.warn('[Anti-Bot] Login bloqueado por Honeypot ativo.');
+      setErrorMessage('Credenciais inválidas. Verifique seu e-mail e senha.');
+      return;
+    }
+
+    const elapsedSeconds = (Date.now() - loginFormLoadedAtRef.current) / 1000;
+    if (elapsedSeconds < 0.8) {
+      console.warn('[Anti-Bot] Submissão suspeita por velocidade extrema (< 0.8s).');
+      setErrorMessage('Submissão rápida demais detectada. Por favor, tente novamente.');
       return;
     }
 
     setLoading(true);
 
+    // 0.1 VERIFICAÇÃO RECAPTCHA v3 INVISÍVEL
     try {
-      const verifyRes = await fetch('/api/verify-recaptcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: recaptchaToken })
-      });
-      const verifyData = await verifyRes.json();
-      if (verifyData && verifyData.success === false) {
-        setLoading(false);
-        setErrorMessage('Verificação de segurança falhou. Por favor, marque a caixa novamente.');
-        setRecaptchaToken(null);
-        if (window.grecaptcha && recaptchaWidgetIdRef.current !== null) {
-          try { window.grecaptcha.reset(recaptchaWidgetIdRef.current); } catch { /* ignore */ }
+      const v3Token = await trackingService.executeRecaptcha('login');
+      if (v3Token) {
+        const verifyRes = await fetch('/api/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: v3Token })
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyData && verifyData.success === false && verifyData.score !== undefined && verifyData.score < 0.25) {
+          setLoading(false);
+          setErrorMessage('Atividade automatizada suspeita detectada. Tente novamente mais tarde.');
+          return;
         }
-        return;
       }
     } catch (recaptchaNetErr) {
-      console.warn('Aviso: endpoint serverless de reCAPTCHA offline:', recaptchaNetErr);
+      console.warn('Aviso: endpoint serverless de reCAPTCHA offline ou tolerado:', recaptchaNetErr);
     }
 
     let ultimoErroAuth: string | null = null;
@@ -1083,18 +1014,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     </button>
                   </div>
  
-                  {/* Caixa de Verificação Google reCAPTCHA v2 ("Não sou um robô") */}
-                  <div className="pt-3 pb-1 flex flex-col items-center justify-center">
-                    <div 
-                      ref={recaptchaContainerRef} 
-                      className="min-h-[78px] flex items-center justify-center overflow-x-auto w-full max-w-full"
+                  {/* Honeypot Trap (Invisível para humanos, atrai bots automatizados) */}
+                  <div className="opacity-0 absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                    <input
+                      type="text"
+                      name="user_security_verification_field"
+                      value={honeypotLogin}
+                      onChange={(e) => setHoneypotLogin(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
                     />
-                    {recaptchaError && (
-                      <p className="text-[11px] text-red-500 font-semibold mt-1.5 flex items-center gap-1 text-center">
-                        <span className="material-symbols-outlined text-xs">error</span>
-                        <span>{recaptchaError}</span>
-                      </p>
-                    )}
                   </div>
 
                   {/* Botão de Ação Principal (Login) */}
@@ -1110,6 +1039,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
                     </button>
                   </div>
+
+                  <p className="text-[10px] text-slate-400 text-center mt-3 leading-tight">
+                    Protegido pelo Google reCAPTCHA v3. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Privacidade</a> e <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Termos</a> aplicáveis.
+                  </p>
                 </>
               )}
 

@@ -1,5 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Rate Limiter em memória para proteção contra flooding de Pix por bots (Sliding Window)
+const rateLimitMap = global._mpPixRateLimit || (global._mpPixRateLimit = new Map());
+
+function isRateLimited(ip, maxRequests = 5, windowMs = 60000) {
+  if (!ip || ip === 'unknown') return false;
+  const now = Date.now();
+  const timestamps = (rateLimitMap.get(ip) || []).filter(ts => now - ts < windowMs);
+  if (timestamps.length >= maxRequests) {
+    return true;
+  }
+  timestamps.push(now);
+  rateLimitMap.set(ip, timestamps);
+  return false;
+}
+
 export default async function handler(req, res) {
   // CORS configuration
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -102,6 +117,16 @@ export default async function handler(req, res) {
   // 1. AÇÃO: CRIAR PAGAMENTO PIX (VIA MERCADO PAGO SERVER-SIDE)
   // ─────────────────────────────────────────────────────────────────────────
   if (action === 'create') {
+    // 0. RATE LIMITING POR IP (máx. 5 criações de Pix por minuto por IP)
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.headers['x-real-ip'] || req.socket?.remoteAddress || 'unknown';
+    if (isRateLimited(clientIp, 5, 60000)) {
+      console.warn(`[MP-PIX] Bloqueio de Rate Limit ativado para IP=${clientIp}`);
+      return res.status(429).json({
+        success: false,
+        error: 'Muitas tentativas de geração de Pix em curto intervalo. Aguarde 1 minuto e tente novamente.'
+      });
+    }
+
     const { hotelId, hotelNome, planoNome, valor, pagadorEmail, pagadorNome, pagadorDoc } = body || {};
     const valorNum = Number(Number(valor || 1).toFixed(2));
 
