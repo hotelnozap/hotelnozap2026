@@ -281,6 +281,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
   const [isSubmittingProspect, setIsSubmittingProspect] = useState(false);
   const [prospectSuccess, setProspectSuccess] = useState(false);
 
+  // Atualizar título e metatags dinamicamente na Landing Page B2B
+  useEffect(() => {
+    const originalTitle = document.title;
+    const newTitle = 'Hotel no Zap | Gestão Hoteleira 90% Autônoma';
+    const newDesc = 'A plataforma de Gestão Hoteleira 90% autônoma mais completa do Brasil. Tenha o controle total do seu hotel na palma da sua mão!';
+    
+    document.title = newTitle;
+
+    const setMeta = (name: string, content: string, isProperty = false) => {
+      const attr = isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+      let el = document.querySelector(attr);
+      if (!el) {
+        el = document.createElement('meta');
+        if (isProperty) el.setAttribute('property', name);
+        else el.setAttribute('name', name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    setMeta('description', newDesc);
+    setMeta('og:title', newTitle, true);
+    setMeta('og:description', newDesc, true);
+    setMeta('og:url', 'https://lp.hotelnozap.com.br/', true);
+    setMeta('twitter:title', newTitle);
+    setMeta('twitter:description', newDesc);
+
+    return () => {
+      document.title = originalTitle;
+    };
+  }, []);
+
   // Carregar planos da tabela 'planos' no Supabase com sincronização em tempo real
   useEffect(() => {
     let isMounted = true;

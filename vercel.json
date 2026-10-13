@@ -124,6 +124,26 @@
       "destination": "/api/app-og"
     },
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "lp.hotelnozap.com.br"
+        }
+      ],
+      "destination": "/api/lp-og"
+    },
+    {
+      "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|woff2?|ttf|map)).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "lp.hotelnozap.com.br"
+        }
+      ],
+      "destination": "/api/lp-og"
+    },
+    {
       "source": "/(login|paineladmin)",
       "destination": "/api/app-og"
     },
