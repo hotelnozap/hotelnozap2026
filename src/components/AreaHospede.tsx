@@ -624,17 +624,17 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           </div>
 
           {/* Card Resumo do Quarto Atual / Status da Estadia (apenas exibido se houver estadia ativa) */}
-          {temEstadiaOuReserva && (
+          {perfil?.temCheckinAtivo && (
             <div className="mx-4 mt-5 p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
               <div className="w-11 h-11 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-lg shrink-0">
-                {perfil?.temCheckinAtivo ? (perfil?.quartoNumero || '100') : 'RES'}
+                {perfil?.quartoNumero || '100'}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs font-semibold uppercase tracking-wider ${perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-400'}`}>
-                    {perfil?.statusEstadia || (perfil?.temCheckinAtivo ? 'Hospedado' : 'Reserva Ativa')}
+                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                    {perfil?.statusEstadia || 'Hospedado'}
                   </span>
-                  {perfil?.temCheckinAtivo && <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>}
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 </div>
                 <p className="text-sm font-bold text-white truncate">
                   {perfil?.quartoNome || 'Quarto'}
@@ -657,11 +657,11 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               }`}
             >
               <span className={`material-symbols-outlined text-xl ${activeSubTab === 'dashboard' ? 'text-emerald-400' : 'text-slate-400'}`}>dashboard</span>
-              <span>{temEstadiaOuReserva ? 'Visão Geral & Estadia' : 'Visão Geral'}</span>
+              <span>{perfil?.temCheckinAtivo ? 'Visão Geral & Estadia' : 'Visão Geral'}</span>
             </button>
 
-            {/* Opções operacionais do hotel exibidas SOMENTE quando há reserva/estadia ativa */}
-            {temEstadiaOuReserva && (
+            {/* Opções operacionais do hotel exibidas SOMENTE quando há check-in ativo */}
+            {perfil?.temCheckinAtivo && (
               <button
                 onClick={() => setActiveSubTab('pedidos')}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
@@ -689,7 +689,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               }`}
             >
               <span className={`material-symbols-outlined text-xl ${activeSubTab === 'minhas-reservas' ? 'text-emerald-400' : 'text-slate-400'}`}>calendar_month</span>
-              <span>{temEstadiaOuReserva ? 'Minhas Reservas' : 'Histórico de Hospedagens'}</span>
+              <span>Minhas Reservas</span>
             </button>
 
             <button
@@ -709,7 +709,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               </span>
             </button>
 
-            {temEstadiaOuReserva && (
+            {perfil?.temCheckinAtivo && (
               <button
                 onClick={() => setActiveSubTab('horarios')}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
@@ -747,7 +747,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               <span>Segurança & Senha</span>
             </button>
 
-            {temEstadiaOuReserva && (
+            {perfil?.temCheckinAtivo && (
               <button
                 onClick={() => setActiveSubTab('consumo')}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
@@ -829,7 +829,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            {temEstadiaOuReserva && perfil?.hotelWifi && (
+            {perfil?.temCheckinAtivo && perfil?.hotelWifi && (
               <button
                 type="button"
                 onClick={() => showToast(`Wi-Fi: ${perfil.hotelWifi}`)}
@@ -896,10 +896,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
               {/* Corpo de navegação com rolagem independente */}
               <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3 space-y-1 overscroll-contain">
-                {temEstadiaOuReserva && (
+                {perfil?.temCheckinAtivo && (
                   <div className="mb-3 p-3 rounded-xl bg-white/10 border border-white/15">
-                    <span className={`text-[10px] uppercase font-bold ${perfil?.temCheckinAtivo ? 'text-emerald-300' : 'text-slate-300'}`}>
-                      {perfil?.temCheckinAtivo ? `Quarto ${perfil?.quartoNumero} • ${perfil?.statusEstadia}` : 'Reserva Ativa'}
+                    <span className="text-[10px] uppercase font-bold text-emerald-300">
+                      Quarto {perfil?.quartoNumero} • {perfil?.statusEstadia || 'Hospedado'}
                     </span>
                     <p className="text-sm font-bold text-white">{perfil?.quartoNome || 'Quarto'}</p>
                     {perfil?.hotelNome && (
@@ -915,10 +915,10 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">dashboard</span>
-                    {temEstadiaOuReserva ? 'Visão Geral & Estadia' : 'Visão Geral'}
+                    {perfil?.temCheckinAtivo ? 'Visão Geral & Estadia' : 'Visão Geral'}
                   </button>
 
-                  {temEstadiaOuReserva && (
+                  {perfil?.temCheckinAtivo && (
                     <button
                       type="button"
                       onClick={() => { setActiveSubTab('pedidos'); setIsMobileDrawerOpen(false); }}
@@ -938,7 +938,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 text-xs font-bold text-slate-200 cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-emerald-400 text-lg">calendar_month</span>
-                    {temEstadiaOuReserva ? 'Minhas Reservas' : 'Histórico de Hospedagens'}
+                    Minhas Reservas
                   </button>
 
                   <button
@@ -955,7 +955,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     </span>
                   </button>
 
-                  {temEstadiaOuReserva && (
+                  {perfil?.temCheckinAtivo && (
                     <button
                       type="button"
                       onClick={() => { setActiveSubTab('horarios'); setIsMobileDrawerOpen(false); }}
@@ -984,7 +984,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     Segurança & Senha
                   </button>
 
-                  {temEstadiaOuReserva && (
+                  {perfil?.temCheckinAtivo && (
                     <button
                       type="button"
                       onClick={() => { setActiveSubTab('consumo'); setIsMobileDrawerOpen(false); }}
@@ -1034,7 +1034,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            {temEstadiaOuReserva && perfil?.hotelWifi && (
+            {perfil?.temCheckinAtivo && perfil?.hotelWifi && (
               <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700">
                 <span className="material-symbols-outlined text-base text-emerald-600">wifi</span>
                 <span className="font-medium">
@@ -1106,761 +1106,322 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
         <main className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-8 space-y-6 lg:space-y-8 pb-24 lg:pb-8">
           
           {/* ================================================================= */}
-          {/* CONTEÚDO DINÂMICO: ABA VISÃO GERAL & ESTADIA                      */}
+          {/* CONTEÚDO DINÂMICO: ABA VISÃO GERAL (FORMATO FIXO ANEXO 1)        */}
           {/* ================================================================= */}
           {activeSubTab === 'dashboard' && (
-            temEstadiaOuReserva ? (
-              <>
-                {/* SITUAÇÃO 1: HÓSPEDE COM RESERVA OU CHECK-IN ATIVO */}
-                {/* BANNER HERO DE BOAS-VINDAS / ESTADIA EM ANDAMENTO */}
-              <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white shadow-xl border border-slate-800 p-5 lg:p-7">
-            <div className="absolute -right-10 -bottom-10 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
-            <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-              <div className="space-y-3 max-w-2xl">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide flex items-center gap-1.5 ${
-                    perfil?.temCheckinAtivo 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                      : perfil?.temReservaAtiva
-                      ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                      : 'bg-slate-700/60 text-slate-300 border border-slate-600/50'
-                  }`}>
-                    {perfil?.temCheckinAtivo && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>}
-                    {perfil?.temReservaAtiva && !perfil?.temCheckinAtivo && <span className="material-symbols-outlined text-sm text-blue-400">check_circle</span>}
-                    {perfil?.statusEstadia || (perfil?.temCheckinAtivo ? 'Estadia em Andamento' : 'Sem Estadia Ativa')}
-                  </span>
-                  {perfil?.reservaCodigo && perfil.reservaCodigo !== '—' && (
-                    <span className="text-xs text-slate-300 font-medium">Reserva {perfil.reservaCodigo}</span>
-                  )}
-                </div>
-                <h3 className="text-xl lg:text-3xl font-black tracking-tight text-white">
-                  {perfil?.temCheckinAtivo 
-                    ? `${perfil?.quartoNome} • ${perfil?.hotelNome}`
-                    : perfil?.temReservaAtiva
-                    ? `Sua Reserva: ${perfil?.quartoNome} • ${perfil?.hotelNome}`
-                    : `Bem-vindo(a) ao ${perfil?.hotelNome || 'Hotel'}!`
-                  }
-                </h3>
-                <p className="text-xs lg:text-sm text-slate-300 leading-relaxed">
-                  {perfil?.temCheckinAtivo ? (
-                    <>
-                      Check-in realizado em <strong>{perfil?.dataCheckin}</strong>. Seu check-out está previsto para <strong>{perfil?.dataCheckout}</strong> ({perfil?.totalDiarias} {perfil?.totalDiarias === 1 ? 'diária' : 'diárias'}). Aproveite sua estadia!
-                    </>
-                  ) : perfil?.temReservaAtiva ? (
-                    <>
-                      Sua reserva está <strong>confirmada e garantida</strong>! Check-in em <strong>{perfil?.dataCheckin}</strong> e check-out em <strong>{perfil?.dataCheckout}</strong> ({perfil?.totalDiarias} {perfil?.totalDiarias === 1 ? 'diária' : 'diárias'}).
-                    </>
-                  ) : (
-                    <>
-                      Você ainda não realizou check-in ou não possui hospedagem em andamento no momento. Consulte a recepção para consultar tarifas, realizar sua reserva ou dar entrada na sua acomodação!
-                    </>
-                  )}
-                </p>
-
-                {/* Comodidades do Quarto (quando houver check-in ativo) */}
-                {perfil?.temCheckinAtivo && perfil?.quartoComodidades && perfil.quartoComodidades.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {perfil.quartoComodidades.map((comod: string, idx: number) => (
-                      <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-slate-200 border border-white/10">
-                        <span className="material-symbols-outlined text-sm text-emerald-400">check_circle</span> {comod}
+            <>
+              {/* BANNER HERO NEUTRO DA CONTA DO HÓSPEDE (PADRÃO ANEXO 1 FIXO) */}
+              <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#002800] via-[#003800] to-slate-900 text-white shadow-xl border border-emerald-900/30 p-6 lg:p-8">
+                <div className="absolute -right-10 -bottom-10 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+                <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                  <div className="space-y-3 max-w-2xl">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-slate-800/90 text-slate-300 border border-slate-700/60 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                        Nenhuma Estadia Ativa
                       </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Box de Ação Rápida no Hero (Recepção 24h / WhatsApp) */}
-              <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/15 flex flex-col sm:flex-row xl:flex-col gap-4 min-w-[280px] shadow-lg">
-                <div>
-                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Atendimento & Suporte</div>
-                  <div className="text-xl lg:text-2xl font-black text-white flex items-center gap-2 mt-0.5">
-                    <span className="material-symbols-outlined text-emerald-400 text-2xl lg:text-3xl">support_agent</span>
-                    Recepção 24h
-                  </div>
-                  <p className="text-[11px] text-emerald-200/80 mt-1">Canal direto com a equipe do {perfil?.hotelNome || 'hotel'}</p>
-                </div>
-                <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
-                  <a
-                    href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
-                      perfil?.temCheckinAtivo 
-                        ? `Olá! Sou o hóspede ${perfil?.nome || userName} (${perfil?.quartoNome || 'Quarto'}) do ${perfil?.hotelNome || 'Hotel'} e gostaria de consultar informações sobre minha estadia.`
-                        : `Olá! Sou o hóspede ${perfil?.nome || userName} cadastrado no ${perfil?.hotelNome || 'Hotel'} e gostaria de consultar informações sobre minha reserva!`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-2.5 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md"
-                  >
-                    <span className="material-symbols-outlined text-base">chat</span>
-                    {perfil?.temCheckinAtivo ? 'Falar com Recepção (WhatsApp)' : 'Consultar Recepção (WhatsApp)'}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ================================================================= */}
-          {/* CARDS DE INDICADORES / ATALHOS DO HÓSPEDE (4 CARDS PADRÃO)       */}
-          {/* ================================================================= */}
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">hotel</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                {perfil?.totalHospedagens || 0} {(perfil?.totalHospedagens || 0) === 1 ? 'Hospedagem' : 'Hospedagens'}
-              </div>
-              <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
-                {(perfil?.totalHospedagens || 0) > 0 ? `${perfil?.totalHospedagens} estadias concluídas` : 'Nenhuma estadia concluída'}
-              </p>
-            </div>
-
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Pontos Fidelidade</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">workspace_premium</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                {(perfil?.pontosFidelidade || 0).toLocaleString('pt-BR')} Pontos
-              </div>
-              <p className="text-xs text-purple-700 font-medium mt-1">
-                {(perfil?.pontosFidelidade || 0) > 0 ? `${perfil?.pontosFidelidade} pts acumulados` : '10 pts por hospedagem concluída'}
-              </p>
-            </div>
-
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Estadia Atual</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">calendar_month</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                {perfil?.temCheckinAtivo ? `${perfil?.diariaAtual || 1} de ${perfil?.totalDiarias || 1} Diárias` : '0 Diárias'}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                {perfil?.temCheckinAtivo ? `Check-out: ${perfil?.dataCheckout}` : 'Nenhum check-in ativo'}
-              </p>
-            </div>
-
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Consumo Quarto</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">receipt_long</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                R$ {(perfil?.temCheckinAtivo ? totalConsumo : 0).toFixed(2).replace('.', ',')}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-slate-500">
-                  {perfil?.temCheckinAtivo ? 'Sem lançamentos pendentes' : 'Sem consumo registrado'}
-                </span>
-                <button onClick={() => setActiveSubTab('consumo')} className="text-xs text-emerald-700 font-bold hover:underline">
-                  Ver extrato
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* ================================================================= */}
-          {/* CARD DE DESTAQUE DA RESERVA (DIRETO NA PÁGINA INICIAL DO HÓSPEDE)  */}
-          {/* ================================================================= */}
-          {(perfil?.reservaPrincipal || (perfil?.historicoReservas && perfil.historicoReservas.length > 0)) && (() => {
-            const resDestaque = perfil?.reservaPrincipal || perfil.historicoReservas[0];
-            return (
-              <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 lg:p-5 hover:border-emerald-300 transition-all">
-                <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm border shadow-xs shrink-0 ${
-                    perfil?.temCheckinAtivo 
-                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-                      : 'bg-blue-50 text-blue-700 border-blue-200'
-                  }`}>
-                    #{resDestaque.quartoNumero || perfil?.quartoNumero || '—'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-extrabold text-slate-900 text-sm lg:text-base">
-                        {resDestaque.codigo || perfil?.reservaCodigo}
-                      </span>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                        perfil?.temCheckinAtivo 
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
-                          : 'bg-blue-100 text-blue-800 border border-blue-200'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${perfil?.temCheckinAtivo ? 'bg-emerald-600 animate-pulse' : 'bg-blue-600'}`}></span>
-                        {perfil?.temCheckinAtivo ? 'Estadia em Andamento' : 'Reserva Confirmada'}
-                      </span>
+                      <span className="text-xs text-emerald-300 font-semibold">Conta Oficial do Hóspede</span>
                     </div>
-                    <p className="text-xs font-semibold text-slate-700 mt-0.5 truncate">
-                      {resDestaque.quartoNome || resDestaque.quarto || perfil?.quartoNome}
-                    </p>
-                    <p className="text-[11px] text-slate-400 truncate">
-                      {resDestaque.hotelNome || resDestaque.hotel || perfil?.hotelNome} • {resDestaque.hotelCidade || perfil?.hotelCidadeUf}
+                    <h3 className="text-2xl lg:text-3xl font-black tracking-tight text-white">
+                      Olá, {perfil?.nome || formData.nome || userName}! Bem-vindo ao seu Portal
+                    </h3>
+                    <p className="text-xs lg:text-sm text-slate-200 leading-relaxed">
+                      Você não possui nenhuma hospedagem ou reserva em andamento no momento. Navegue pelos hotéis da rede para reservar sua próxima viagem ou consulte o histórico das suas estadias anteriores.
                     </p>
                   </div>
-                </div>
 
-                {/* Informações da Estadia */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-in</span>
-                    <span className="font-bold text-slate-800 text-xs sm:text-sm">
-                      {resDestaque.checkIn || perfil?.dataCheckin || '—'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-out</span>
-                    <span className="font-bold text-slate-800 text-xs sm:text-sm">
-                      {resDestaque.checkOut || perfil?.dataCheckout || '—'}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">
-                      {resDestaque.diarias || perfil?.totalDiarias || 1} {(resDestaque.diarias || perfil?.totalDiarias || 1) === 1 ? 'diária' : 'diárias'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Valor Total</span>
-                    <span className="font-extrabold text-slate-900 text-xs sm:text-sm">
-                      R$ {(resDestaque.valorTotal || 0).toFixed(2).replace('.', ',')}
-                    </span>
-                    <span className="text-[10px] text-emerald-600 font-semibold block">
-                      {resDestaque.formaPagamento || 'Confirmado no Hotel'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Atendimento</span>
+                  {/* Card de Ação Rápida */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 flex flex-col gap-3 min-w-[280px] shadow-lg">
+                    <div className="flex items-center gap-2 text-emerald-400">
+                      <span className="material-symbols-outlined text-2xl">travel_explore</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-white">Planejar Próxima Viagem</span>
+                    </div>
+                    <p className="text-xs text-slate-300">
+                      Encontre as melhores diárias com confirmação instantânea e check-in inteligente via WhatsApp.
+                    </p>
                     <a
-                      href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
-                        `Olá! Sou o hóspede ${perfil?.nome || userName} da Reserva ${resDestaque.codigo || perfil?.reservaCodigo} e gostaria de tirar uma dúvida.`
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-bold text-xs mt-0.5"
+                      href="https://hotelnozap.com.br"
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer no-underline"
                     >
-                      <span className="material-symbols-outlined text-[16px]">chat</span>
-                      Recepção WhatsApp
+                      <span className="material-symbols-outlined text-base">hotel</span>
+                      Explorar Hotéis & Reservar
                     </a>
                   </div>
-                </div>
-
-                {/* Botão Ver Reserva pegando a largura total do card */}
-                <div className="pt-2 border-t border-slate-100">
-                  <button
-                    onClick={() => setModalReservaComprovante(resDestaque)}
-                    className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer active:scale-[0.99]"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">visibility</span>
-                    Ver Reserva
-                  </button>
                 </div>
               </section>
-            );
-          })()}
 
-          {/* COLUNA PRINCIPAL DA VISÃO GERAL: PEDIDOS RÁPIDOS & CONSUMO */}
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
-            {/* COLUNA ESQUERDA: PEDIDOS RÁPIDOS & HISTÓRICO (7 COLUNAS) */}
-            <div className="lg:col-span-7 space-y-6">
-              {perfil?.temCheckinAtivo ? (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6">
-                  <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
-                    <div>
-                      <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-emerald-600">room_service</span>
-                        Ações Rápidas & Pedidos Frequentes
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">Solicite itens com 1 clique para entrega direta na sua acomodação.</p>
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                      Atendimento 24h
-                    </span>
-                  </div>
-
-                  {/* Grid de Pedidos Pré-definidos */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-                    <button
-                      onClick={() => handleFazerPedidoRapido('Toalhas Extras (Banho/Piscina)')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
-                        <span className="material-symbols-outlined text-lg">dry_cleaning</span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Toalhas Extras</div>
-                      <p className="text-[11px] text-slate-500">Banho / Piscina (Grátis)</p>
-                    </button>
-
-                    <button
-                      onClick={() => handleFazerPedidoRapido('Limpeza do Quarto')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
-                        <span className="material-symbols-outlined text-lg">cleaning_services</span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Limpeza do Quarto</div>
-                      <p className="text-[11px] text-slate-500">Camareira agora</p>
-                    </button>
-
-                    <button
-                      onClick={() => handleFazerPedidoRapido('Travesseiros Extras (Macio/Firme)')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
-                        <span className="material-symbols-outlined text-lg">bed</span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Travesseiros</div>
-                      <p className="text-[11px] text-slate-500">Macio / Firme (Grátis)</p>
-                    </button>
-
-                    <button
-                      onClick={() => handleFazerPedidoRapido('Kit Amenities (Shampoo & Sabonete)')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
-                        <span className="material-symbols-outlined text-lg">sanitizer</span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Kit Amenities</div>
-                      <p className="text-[11px] text-slate-500">Shampoo, sabonete</p>
-                    </button>
-
-                    <button
-                      onClick={() => handleFazerPedidoRapido('Água Mineral 500ml')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
-                        <span className="material-symbols-outlined text-lg">water_bottle</span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Água Mineral</div>
-                      <p className="text-[11px] text-slate-500">Com / Sem gás (R$ 6)</p>
-                    </button>
-
-                    <button
-                      onClick={() => handleFazerPedidoRapido('Balde de Gelo com Pinça')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
-                        <span className="material-symbols-outlined text-lg">ac_unit</span>
-                      </div>
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Balde de Gelo</div>
-                      <p className="text-[11px] text-slate-500">Entrega rápida</p>
-                    </button>
-                  </div>
-
-                  {/* Formulário de Pedido Personalizado */}
-                  <form onSubmit={handleEnviarPedidoPersonalizado} className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                    <label className="block text-xs font-bold text-slate-700">Outra solicitação ou observação especial para o quarto:</label>
-                    <textarea
-                      value={customRequestText}
-                      onChange={(e) => setCustomRequestText(e.target.value)}
-                      className="w-full text-xs rounded-lg border border-slate-300 p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
-                      placeholder="Ex: Por favor, enviar ferro de passar e tábua ao Quarto 204, ou não bater na porta antes das 10h..."
-                      rows={2}
-                    ></textarea>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-                      <div className="flex items-center gap-2 text-slate-500 text-[11px]">
-                        <span className="material-symbols-outlined text-sm text-emerald-600">bolt</span>
-                        Tempo médio de atendimento: 10 a 15 minutos
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={!customRequestText.trim()}
-                        className="px-4 py-2 bg-[#003400] hover:bg-[#002600] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-sm">send</span>
-                        Enviar Solicitação
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Histórico de Pedidos Desta Estadia */}
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h5 className="text-xs font-bold uppercase tracking-wider text-slate-600">Pedidos Desta Estadia</h5>
-                      <span className="text-xs text-slate-400">
-                        {perfil?.quartoNumero && perfil.quartoNumero !== '—' ? `Quarto ${perfil.quartoNumero}` : 'Acomodação Principal'}
-                      </span>
-                    </div>
-                    <div className="space-y-2.5">
-                      {pedidos.map((pedido) => (
-                        <div
-                          key={pedido.id}
-                          className={`flex items-center justify-between p-3 rounded-xl border text-xs ${
-                            pedido.status === 'Em Preparo' || pedido.status === 'Em Rota'
-                              ? 'bg-amber-50/70 border-amber-200/80'
-                              : 'bg-slate-50 border-slate-200'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
-                                pedido.status === 'Em Preparo' || pedido.status === 'Em Rota'
-                                  ? 'bg-amber-100 text-amber-700'
-                                  : 'bg-emerald-100 text-emerald-700'
-                              }`}
-                            >
-                              <span className="material-symbols-outlined text-base">
-                                {pedido.status === 'Em Preparo' ? 'hourglass_bottom' : pedido.status === 'Em Rota' ? 'local_shipping' : 'check_circle'}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-bold text-slate-800">{pedido.descricao}</p>
-                              <p className="text-[11px] text-slate-500">
-                                {pedido.solicitadoEm} • {pedido.responsavel}
-                              </p>
-                            </div>
-                          </div>
-                          <span
-                            className={`px-2.5 py-1 rounded-full font-extrabold text-[10px] uppercase tracking-wide ${
-                              pedido.status === 'Em Preparo' || pedido.status === 'Em Rota'
-                                ? 'bg-amber-200/60 text-amber-900'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {pedido.status}
-                          </span>
-                        </div>
-                      ))}
+              {/* CARDS DE INDICADORES DA CONTA PESSOAL (4 CARDS PADRÃO ANEXO 1) */}
+              <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+                {/* 1. Histórico */}
+                <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico</span>
+                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-lg lg:text-xl">hotel</span>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-7 space-y-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-2xl">room_service</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="text-base font-extrabold text-slate-900">
-                          Serviços de Quarto & Solicitações
-                        </h4>
-                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
-                          Liberado no Check-in
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        Pedidos de toalhas extras, limpeza de quarto, amenidades e serviços do hotel ficam disponíveis automaticamente assim que seu check-in for realizado na recepção em <strong>{perfil?.dataCheckin || 'sua data prevista'}</strong>.
-                      </p>
-                    </div>
+                  <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                    {perfil?.totalHospedagens || reservas.length || 0} {(perfil?.totalHospedagens || reservas.length || 0) === 1 ? 'Hospedagem' : 'Hospedagens'}
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-xs">
-                    <button
-                      onClick={() => setActiveSubTab('horarios')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all flex items-center gap-3 cursor-pointer group"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-xl">schedule</span>
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800 group-hover:text-emerald-900">Horários do Hotel</p>
-                        <p className="text-[11px] text-slate-400">Café da manhã, check-in e check-out</p>
-                      </div>
-                    </button>
-
-                    <a
-                      href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
-                        `Olá! Sou o hóspede ${perfil?.nome || userName} da Reserva ${perfil?.reservaCodigo || ''} e gostaria de avisar sobre minha previsão de chegada ao hotel.`
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all flex items-center gap-3 cursor-pointer group"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-xl">chat</span>
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800 group-hover:text-emerald-900">Recepção WhatsApp</p>
-                        <p className="text-[11px] text-slate-400">Avisar previsão de chegada ou dúvidas</p>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-
-              {/* COLUNA DIREITA: CONSUMO & HORÁRIOS DA POUSADA (5 COLUNAS) */}
-              <div className="lg:col-span-5 space-y-6">
-                {/* Card de Extrato de Frigobar e Consumo */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6">
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                    <div>
-                      <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-amber-600">receipt_long</span>
-                        Consumo & Frigobar
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {perfil?.quartoNumero && perfil?.quartoNumero !== '—' ? `Lançamentos acumulados no Quarto ${perfil.quartoNumero}` : 'Lançamentos acumulados da estadia'}
-                      </p>
-                    </div>
-                    <span className="text-base font-black text-slate-900">
-                      R$ {totalConsumo.toFixed(2).replace('.', ',')}
-                    </span>
-                  </div>
-
-                  {/* Tabela de Itens Consumidos */}
-                  <div className="divide-y divide-slate-100 text-xs mt-3">
-                    {consumo.map((item) => (
-                      <div key={item.id} className="py-2.5 flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-slate-800">{item.descricao}</div>
-                          <div className="text-[11px] text-slate-400">
-                            {item.dataHora} ({item.local})
-                          </div>
-                        </div>
-                        <span className="font-bold text-slate-700">R$ {item.valor.toFixed(2).replace('.', ',')}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Rodapé do Extrato */}
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-xs text-slate-500">Pagamento no check-out ou via PIX antecipado</span>
-                    <button
-                      onClick={() => setIsPixModalOpen(true)}
-                      className="px-3.5 py-2 rounded-lg bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                    >
-                      <span className="material-symbols-outlined text-base text-emerald-400">qr_code_2</span>
-                      Pagar via PIX
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </section>
-          </>
-        ) : (
-          <>
-            {/* ========================================================================= */}
-            {/* SITUAÇÃO 2: HÓSPEDE LOGADO SEM NENHUMA RESERVA E SEM CHECK-IN              */}
-            {/* O SISTEMA NÃO MOSTRA NADA DE NENHUM HOTEL. EXIBE A CONTA DO HÓSPEDE.      */}
-            {/* ========================================================================= */}
-
-            {/* BANNER HERO NEUTRO DA CONTA DO HÓSPEDE */}
-            <section className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#002800] via-[#003800] to-slate-900 text-white shadow-xl border border-emerald-900/30 p-6 lg:p-8">
-              <div className="absolute -right-10 -bottom-10 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
-              <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                <div className="space-y-3 max-w-2xl">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-slate-800/90 text-slate-300 border border-slate-700/60 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                      Nenhuma Estadia Ativa
-                    </span>
-                    <span className="text-xs text-emerald-300 font-semibold">Conta Oficial do Hóspede</span>
-                  </div>
-                  <h3 className="text-2xl lg:text-3xl font-black tracking-tight text-white">
-                    Olá, {perfil?.nome || formData.nome || userName}! Bem-vindo ao seu Portal
-                  </h3>
-                  <p className="text-xs lg:text-sm text-slate-200 leading-relaxed">
-                    Você não possui nenhuma hospedagem ou reserva em andamento no momento. Navegue pelos hotéis da rede para reservar sua próxima viagem ou consulte o histórico das suas estadias anteriores.
+                  <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
+                    {(perfil?.totalHospedagens || reservas.length || 0) > 0 ? `${perfil?.totalHospedagens || reservas.length} estadias no histórico` : 'Nenhuma estadia concluída'}
                   </p>
                 </div>
 
-                {/* Card de Ação Rápida */}
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 flex flex-col gap-3 min-w-[280px] shadow-lg">
-                  <div className="flex items-center gap-2 text-emerald-400">
-                    <span className="material-symbols-outlined text-2xl">travel_explore</span>
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-white">Planejar Próxima Viagem</span>
+                {/* 2. Pontos Fidelidade */}
+                <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Pontos Fidelidade</span>
+                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-lg lg:text-xl">workspace_premium</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-300">
-                    Encontre as melhores diárias com confirmação instantânea e check-in inteligente via WhatsApp.
+                  <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                    {(perfil?.pontosFidelidade || 0).toLocaleString('pt-BR')} Pontos
+                  </div>
+                  <p className="text-xs text-purple-700 font-medium mt-1">
+                    {(perfil?.pontosFidelidade || 0) > 0 ? `${perfil?.pontosFidelidade} pts acumulados` : '10 pts a cada hospedagem'}
                   </p>
-                  <a
-                    href="https://hotelnozap.com.br"
-                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer no-underline"
-                  >
-                    <span className="material-symbols-outlined text-base">hotel</span>
-                    Explorar Hotéis & Reservar
-                  </a>
                 </div>
-              </div>
-            </section>
 
-            {/* CARDS DE INDICADORES DA CONTA PESSOAL (SEM VÍNCULO A NENHUM HOTEL) */}
-            <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-              {/* 1. Histórico */}
-              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico</span>
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-lg lg:text-xl">hotel</span>
-                  </div>
-                </div>
-                <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                  {perfil?.totalHospedagens || 0} {(perfil?.totalHospedagens || 0) === 1 ? 'Hospedagem' : 'Hospedagens'}
-                </div>
-                <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
-                  {(perfil?.totalHospedagens || 0) > 0 ? `${perfil?.totalHospedagens} estadias no histórico` : 'Nenhuma estadia concluída'}
-                </p>
-              </div>
-
-              {/* 2. Pontos Fidelidade */}
-              <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Pontos Fidelidade</span>
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-lg lg:text-xl">workspace_premium</span>
-                  </div>
-                </div>
-                <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                  {(perfil?.pontosFidelidade || 0).toLocaleString('pt-BR')} Pontos
-                </div>
-                <p className="text-xs text-purple-700 font-medium mt-1">
-                  {(perfil?.pontosFidelidade || 0) > 0 ? `${perfil?.pontosFidelidade} pts acumulados` : '10 pts a cada hospedagem'}
-                </p>
-              </div>
-
-              {/* 3. Meus Dados */}
-              <div
-                onClick={() => setActiveSubTab('dados-cadastrais')}
-                className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Dados Cadastrais</span>
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <span className="material-symbols-outlined text-lg lg:text-xl">badge</span>
-                  </div>
-                </div>
-                <div className="text-base lg:text-lg font-bold text-slate-900">
-                  {formData.cpf ? 'Documento Salvo' : 'Cadastro Básico'}
-                </div>
-                <p className="text-xs text-emerald-700 font-medium mt-1 flex items-center gap-1">
-                  <span>Gerenciar meus dados</span>
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
-                </p>
-              </div>
-
-              {/* 4. Segurança */}
-              <div
-                onClick={() => setActiveSubTab('seguranca')}
-                className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Segurança</span>
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <span className="material-symbols-outlined text-lg lg:text-xl">lock</span>
-                  </div>
-                </div>
-                <div className="text-base lg:text-lg font-bold text-slate-900">
-                  Conta Protegida
-                </div>
-                <p className="text-xs text-slate-600 font-medium mt-1 flex items-center gap-1">
-                  <span>Alterar senha</span>
-                  <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
-                </p>
-              </div>
-            </section>
-
-            {/* SEÇÕES CENTRAIS: BENEFÍCIOS E HISTÓRICO RECENTE */}
-            <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
-              {/* COLUNA ESQUERDA: Benefícios da Plataforma (7 colunas) */}
-              <div className="lg:col-span-7 space-y-6">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6 space-y-5">
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                    <div>
-                      <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-emerald-600">stars</span>
-                        Vantagens do Hóspede Hotel no Zap
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">Benefícios exclusivos para reservas efetuadas na plataforma.</p>
+                {/* 3. Meus Dados */}
+                <div
+                  onClick={() => setActiveSubTab('dados-cadastrais')}
+                  className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Dados Cadastrais</span>
+                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <span className="material-symbols-outlined text-lg lg:text-xl">badge</span>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                      100% Digital
-                    </span>
                   </div>
+                  <div className="text-base lg:text-lg font-bold text-slate-900">
+                    {formData.cpf ? 'Documento Salvo' : 'Cadastro Básico'}
+                  </div>
+                  <p className="text-xs text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                    <span>Gerenciar meus dados</span>
+                    <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                  </p>
+                </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-lg">bolt</span>
+                {/* 4. Segurança */}
+                <div
+                  onClick={() => setActiveSubTab('seguranca')}
+                  className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Segurança</span>
+                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <span className="material-symbols-outlined text-lg lg:text-xl">lock</span>
+                    </div>
+                  </div>
+                  <div className="text-base lg:text-lg font-bold text-slate-900">
+                    Conta Protegida
+                  </div>
+                  <p className="text-xs text-slate-600 font-medium mt-1 flex items-center gap-1">
+                    <span>Alterar senha</span>
+                    <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                  </p>
+                </div>
+              </section>
+
+              {/* CARD DE DESTAQUE DA RESERVA (SE O HÓSPEDE TIVER RESERVA ATIVA OU CONFIRMADA) */}
+              {(perfil?.reservaPrincipal || (perfil?.historicoReservas && perfil.historicoReservas.length > 0) || reservas.length > 0) && (() => {
+                const resDestaque = perfil?.reservaPrincipal || (perfil?.historicoReservas && perfil.historicoReservas[0]) || reservas[0];
+                if (!resDestaque) return null;
+                return (
+                  <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 lg:p-5 hover:border-emerald-300 transition-all">
+                    <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm border shadow-xs shrink-0 ${
+                        perfil?.temCheckinAtivo 
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}>
+                        #{resDestaque.quartoNumero || perfil?.quartoNumero || '—'}
                       </div>
-                      <h5 className="text-xs font-bold text-slate-900">Check-in Imediato</h5>
-                      <p className="text-[11px] text-slate-600">Sem filas na recepção: confirme sua chegada pelo WhatsApp com 1 toque.</p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-lg">room_service</span>
-                      </div>
-                      <h5 className="text-xs font-bold text-slate-900">Serviços no Quarto</h5>
-                      <p className="text-[11px] text-slate-600">Peça toalhas, amenities e cardápio diretamente do celular durante sua estadia.</p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-lg">workspace_premium</span>
-                      </div>
-                      <h5 className="text-xs font-bold text-slate-900">Pontos de Fidelidade</h5>
-                      <p className="text-[11px] text-slate-600">Acumule 10 pontos por hospedagem concluída para resgates e descontos.</p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-lg">support_agent</span>
-                      </div>
-                      <h5 className="text-xs font-bold text-slate-900">Suporte 24 Horas</h5>
-                      <p className="text-[11px] text-slate-600">Equipe dedicada pronta para atender todas as suas necessidades.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* COLUNA DIREITA: Histórico Recente de Reservas (5 colunas) */}
-              <div className="lg:col-span-5 space-y-6">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6 space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-slate-600">receipt_long</span>
-                      Histórico de Hospedagens
-                    </h4>
-                    <button
-                      onClick={() => setActiveSubTab('minhas-reservas')}
-                      className="text-xs text-emerald-700 font-bold hover:underline cursor-pointer"
-                    >
-                      Ver todas
-                    </button>
-                  </div>
-
-                  {reservas.length > 0 ? (
-                    <div className="space-y-3">
-                      {reservas.slice(0, 4).map((res: any) => (
-                        <div key={res.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-colors">
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate">{res.hotel || res.hotelNome || 'Hotel'}</p>
-                            <p className="text-[11px] text-slate-500">{res.checkIn} — {res.checkOut} • {res.quarto || 'Quarto'}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">{res.codigo} • {res.hotelCidade || 'Rede Hotel no Zap'}</p>
-                          </div>
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
-                            {res.status?.toLowerCase().includes('conclu') ? 'Hospedagem Concluída' : (res.status || 'Hospedagem')}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-extrabold text-slate-900 text-sm lg:text-base">
+                            {resDestaque.codigo || perfil?.reservaCodigo}
+                          </span>
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                            perfil?.temCheckinAtivo 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                              : 'bg-blue-100 text-blue-800 border border-blue-200'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${perfil?.temCheckinAtivo ? 'bg-emerald-600 animate-pulse' : 'bg-blue-600'}`}></span>
+                            {perfil?.temCheckinAtivo ? 'Estadia em Andamento' : 'Reserva Confirmada'}
                           </span>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-8 text-center space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
-                        <span className="material-symbols-outlined text-2xl">luggage</span>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-700">Nenhuma hospedagem anterior</p>
-                        <p className="text-[11px] text-slate-500 max-w-xs mx-auto mt-0.5">
-                          Assim que você concluir uma estadia em um hotel da rede, todo o seu histórico de hospedagens e comprovantes aparecerão aqui automaticamente.
+                        <p className="text-xs font-semibold text-slate-700 mt-0.5 truncate">
+                          {resDestaque.quartoNome || resDestaque.quarto || perfil?.quartoNome}
+                        </p>
+                        <p className="text-[11px] text-slate-400 truncate">
+                          {resDestaque.hotelNome || resDestaque.hotel || perfil?.hotelNome} • {resDestaque.hotelCidade || perfil?.hotelCidadeUf}
                         </p>
                       </div>
                     </div>
-                  )}
+
+                    {/* Informações da Estadia */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-in</span>
+                        <span className="font-bold text-slate-800 text-xs sm:text-sm">
+                          {resDestaque.checkIn || perfil?.dataCheckin || '—'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-out</span>
+                        <span className="font-bold text-slate-800 text-xs sm:text-sm">
+                          {resDestaque.checkOut || perfil?.dataCheckout || '—'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">
+                          {resDestaque.diarias || perfil?.totalDiarias || 1} {(resDestaque.diarias || perfil?.totalDiarias || 1) === 1 ? 'diária' : 'diárias'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Valor Total</span>
+                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm">
+                          R$ {(resDestaque.valorTotal || 0).toFixed(2).replace('.', ',')}
+                        </span>
+                        <span className="text-[10px] text-emerald-600 font-semibold block">
+                          {resDestaque.formaPagamento || 'Confirmado no Hotel'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Atendimento</span>
+                        <a
+                          href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
+                            `Olá! Sou o hóspede ${perfil?.nome || userName} da Reserva ${resDestaque.codigo || perfil?.reservaCodigo} e gostaria de tirar uma dúvida.`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-bold text-xs mt-0.5"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">chat</span>
+                          Recepção WhatsApp
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Botão Ver Reserva pegando a largura total do card */}
+                    <div className="pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => setModalReservaComprovante(resDestaque)}
+                        className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer active:scale-[0.99]"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">visibility</span>
+                        Ver Reserva
+                      </button>
+                    </div>
+                  </section>
+                );
+              })()}
+
+              {/* SEÇÕES CENTRAIS: BENEFÍCIOS E HISTÓRICO RECENTE */}
+              <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+                {/* COLUNA ESQUERDA: Benefícios da Plataforma (7 colunas) */}
+                <div className="lg:col-span-7 space-y-6">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6 space-y-5">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                      <div>
+                        <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-emerald-600">stars</span>
+                          Vantagens do Hóspede Hotel no Zap
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5">Benefícios exclusivos para reservas efetuadas na plataforma.</p>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                        100% Digital
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-lg">bolt</span>
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-900">Check-in Imediato</h5>
+                        <p className="text-[11px] text-slate-600">Sem filas na recepção: confirme sua chegada pelo WhatsApp com 1 toque.</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-lg">room_service</span>
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-900">Serviços no Quarto</h5>
+                        <p className="text-[11px] text-slate-600">Peça toalhas, amenities e cardápio diretamente do celular durante sua estadia.</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-lg">workspace_premium</span>
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-900">Pontos de Fidelidade</h5>
+                        <p className="text-[11px] text-slate-600">Acumule 10 pontos por hospedagem concluída para resgates e descontos.</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-lg">support_agent</span>
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-900">Suporte 24 Horas</h5>
+                        <p className="text-[11px] text-slate-600">Equipe dedicada pronta para atender todas as suas necessidades.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </section>
-          </>
-        )
-      )}
+
+                {/* COLUNA DIREITA: Histórico Recente de Reservas (5 colunas) */}
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6 space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                      <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-slate-600">receipt_long</span>
+                        Histórico de Hospedagens
+                      </h4>
+                      <button
+                        onClick={() => setActiveSubTab('minhas-reservas')}
+                        className="text-xs text-emerald-700 font-bold hover:underline cursor-pointer"
+                      >
+                        Ver todas
+                      </button>
+                    </div>
+
+                    {reservas.length > 0 ? (
+                      <div className="space-y-3">
+                        {reservas.slice(0, 4).map((res: any) => (
+                          <div key={res.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-colors">
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate">{res.hotel || res.hotelNome || 'Hotel'}</p>
+                              <p className="text-[11px] text-slate-500">{res.checkIn} — {res.checkOut} • {res.quarto || 'Quarto'}</p>
+                              <p className="text-[10px] text-slate-400 font-medium">{res.codigo} • {res.hotelCidade || 'Rede Hotel no Zap'}</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                              {res.status?.toLowerCase().includes('conclu') ? 'Hospedagem Concluída' : (res.status || 'Hospedagem')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                          <span className="material-symbols-outlined text-2xl">luggage</span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-700">Nenhuma hospedagem anterior</p>
+                          <p className="text-[11px] text-slate-500 max-w-xs mx-auto mt-0.5">
+                            Assim que você concluir uma estadia em um hotel da rede, todo o seu histórico de hospedagens e comprovantes aparecerão aqui automaticamente.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
 
           {/* ================================================================= */}
           {/* ABA: PEDIDOS & RECEPÇÃO                                           */}
@@ -2417,13 +1978,13 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           >
             <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'dashboard' ? 'bg-emerald-100' : ''}`}>
               <span className="material-symbols-outlined text-[20px]">
-                {temEstadiaOuReserva ? 'hotel' : 'home'}
+                {perfil?.temCheckinAtivo ? 'hotel' : 'home'}
               </span>
             </div>
-            <span className="text-[10px] tracking-tight">{temEstadiaOuReserva ? 'Estadia' : 'Início'}</span>
+            <span className="text-[10px] tracking-tight">{perfil?.temCheckinAtivo ? 'Estadia' : 'Início'}</span>
           </button>
 
-          {temEstadiaOuReserva ? (
+          {perfil?.temCheckinAtivo ? (
             <>
               <button
                 onClick={() => setActiveSubTab('pedidos')}
@@ -2459,7 +2020,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               <div className={`w-8 h-7 rounded-full flex items-center justify-center mb-0.5 ${activeSubTab === 'minhas-reservas' ? 'bg-emerald-100' : ''}`}>
                 <span className="material-symbols-outlined text-[20px]">calendar_month</span>
               </div>
-              <span className="text-[10px] tracking-tight">{temEstadiaOuReserva ? 'Reservas' : 'Hospedagens'}</span>
+              <span className="text-[10px] tracking-tight">Hospedagens</span>
             </button>
           )}
 
