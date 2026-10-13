@@ -1205,59 +1205,39 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             const resDestaque = perfil?.reservaPrincipal || perfil.historicoReservas[0];
             return (
               <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 lg:p-5 hover:border-emerald-300 transition-all">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm border shadow-xs ${
-                      perfil?.temCheckinAtivo 
-                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-                        : 'bg-blue-50 text-blue-700 border-blue-200'
-                    }`}>
-                      #{resDestaque.quartoNumero || perfil?.quartoNumero || '—'}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-slate-900 text-sm lg:text-base">
-                          {resDestaque.codigo || perfil?.reservaCodigo}
-                        </span>
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                          perfil?.temCheckinAtivo 
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
-                            : 'bg-blue-100 text-blue-800 border border-blue-200'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${perfil?.temCheckinAtivo ? 'bg-emerald-600 animate-pulse' : 'bg-blue-600'}`}></span>
-                          {perfil?.temCheckinAtivo ? 'Estadia em Andamento' : 'Reserva Confirmada'}
-                        </span>
-                      </div>
-                      <p className="text-xs font-semibold text-slate-700 mt-0.5">
-                        {resDestaque.quartoNome || resDestaque.quarto || perfil?.quartoNome}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        {resDestaque.hotelNome || resDestaque.hotel || perfil?.hotelNome} • {resDestaque.hotelCidade || perfil?.hotelCidadeUf}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm border shadow-xs shrink-0 ${
+                    perfil?.temCheckinAtivo 
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    #{resDestaque.quartoNumero || perfil?.quartoNumero || '—'}
                   </div>
-
-                  <div className="flex items-center gap-2 self-start sm:self-center">
-                    <button
-                      onClick={() => setModalReservaComprovante(resDestaque)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
-                    >
-                      <span className="material-symbols-outlined text-[17px]">visibility</span>
-                      Ver Reserva
-                    </button>
-                    <button
-                      onClick={() => setActiveSubTab('minhas-reservas')}
-                      className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
-                      title="Ver todas as reservas"
-                    >
-                      <span className="material-symbols-outlined text-[17px] text-slate-500">calendar_month</span>
-                      <span className="hidden sm:inline">Histórico</span>
-                    </button>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-extrabold text-slate-900 text-sm lg:text-base">
+                        {resDestaque.codigo || perfil?.reservaCodigo}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        perfil?.temCheckinAtivo 
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                          : 'bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${perfil?.temCheckinAtivo ? 'bg-emerald-600 animate-pulse' : 'bg-blue-600'}`}></span>
+                        {perfil?.temCheckinAtivo ? 'Estadia em Andamento' : 'Reserva Confirmada'}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-700 mt-0.5 truncate">
+                      {resDestaque.quartoNome || resDestaque.quarto || perfil?.quartoNome}
+                    </p>
+                    <p className="text-[11px] text-slate-400 truncate">
+                      {resDestaque.hotelNome || resDestaque.hotel || perfil?.hotelNome} • {resDestaque.hotelCidade || perfil?.hotelCidadeUf}
+                    </p>
                   </div>
                 </div>
 
                 {/* Informações da Estadia */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 text-xs">
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-in</span>
                     <span className="font-bold text-slate-800 text-xs sm:text-sm">
@@ -1296,6 +1276,17 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                       Recepção WhatsApp
                     </a>
                   </div>
+                </div>
+
+                {/* Botão Ver Reserva pegando a largura total do card */}
+                <div className="pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => setModalReservaComprovante(resDestaque)}
+                    className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer active:scale-[0.99]"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">visibility</span>
+                    Ver Reserva
+                  </button>
                 </div>
               </section>
             );

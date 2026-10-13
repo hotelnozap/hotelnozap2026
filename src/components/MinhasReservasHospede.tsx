@@ -152,29 +152,7 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* HEADER MOBILE (Dispositivos móveis / < lg)                                */}
-      {/* ========================================================================= */}
-      <header className="lg:hidden sticky top-0 z-40 bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3.5 shadow-md flex items-center justify-between border-b border-emerald-950/40">
-        <div className="flex items-center gap-2.5">
-          <button onClick={onNavigateBack} className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/15 active:scale-95 flex items-center justify-center transition-transform">
-            <span className="material-symbols-outlined text-[22px]">arrow_back</span>
-          </button>
-          <div>
-            <span className="text-[10px] tracking-widest text-emerald-400 font-semibold block leading-none">PORTAL DO HÓSPEDE</span>
-            <h1 className="text-base font-extrabold tracking-wider leading-tight text-white uppercase">HOTEL NO ZAP</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => showToast('Sem novas notificações')} className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/15 active:scale-95 flex items-center justify-center relative transition-transform">
-            <span className="material-symbols-outlined text-[20px]">notifications</span>
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-400"></span>
-          </button>
-          <div className="w-9 h-9 rounded-lg bg-white/20 text-white font-bold text-xs flex items-center justify-center border border-white/20">
-            {(userName || 'HO').substring(0, 2).toUpperCase()}
-          </div>
-        </div>
-      </header>
+
 
       {/* CONTAINER PRINCIPAL */}
       <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6 pb-28 lg:pb-12">

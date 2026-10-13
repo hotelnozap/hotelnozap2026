@@ -223,25 +223,7 @@ export const MeusDadosCadastrais: React.FC<MeusDadosCadastraisProps> = ({
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* HEADER MOBILE (Dispositivos móveis / < lg)                                */}
-      {/* ========================================================================= */}
-      <header className="lg:hidden w-full bg-gradient-to-r from-[#003400] to-[#000000] text-white px-4 py-3 sticky top-0 z-40 shadow-md flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <button onClick={onNavigateBack} className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
-            <span className="material-symbols-outlined text-xl">arrow_back</span>
-          </button>
-          <span className="font-extrabold text-xs tracking-wider uppercase text-emerald-400">MEUS DADOS</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSaveAll}
-            className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition"
-          >
-            Salvar
-          </button>
-        </div>
-      </header>
+
 
       {/* ========================================================================= */}
       {/* CONTEÚDO PRINCIPAL (DESKTOP & TABLET CONTAINER)                           */}
