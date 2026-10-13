@@ -48,6 +48,7 @@ import {
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { supabase } from '../lib/supabase';
 import { maskPhone } from '../utils/masks';
+import { getPartnerReferralLink, getPartnerDirectCheckoutLink } from '../utils/partnerUrl';
 
 export interface IndicacaoHotel {
   id: string;
@@ -106,7 +107,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
   }>({
     nome: localStorage.getItem('hotelnozap_user_name') || 'Parceiro',
     email: localStorage.getItem('hotelnozap_user_email') || '',
-    cupom: '',
+    cupom: localStorage.getItem('hotelnozap_partner_ref') || 'HOTELNOZAP',
     documento: '',
     whatsapp: '',
     cidadeUf: '',
@@ -164,11 +165,12 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
       }
 
       if (parc) {
+        const cleanCupom = (parc.cupom || '').trim().toUpperCase() || 'HOTELNOZAP';
         const profileObj = {
           id: parc.id,
           nome: parc.nome || localStorage.getItem('hotelnozap_user_name') || 'Parceiro',
           email: parc.email || storedEmail,
-          cupom: parc.cupom || '',
+          cupom: cleanCupom,
           documento: parc.documento || '',
           whatsapp: parc.whatsapp || '',
           cidadeUf: parc.cidade_uf || (parc.cidade ? `${parc.cidade} / ${parc.uf}` : 'Polo Regional'),
@@ -266,6 +268,11 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
         });
 
         setHoteisIndicados(mappedHoteis);
+      } else {
+        setPartnerProfile(prev => ({
+          ...prev,
+          cupom: prev.cupom || 'HOTELNOZAP'
+        }));
       }
     } catch (err) {
       console.error('Erro ao carregar dados reais do portal do parceiro:', err);
@@ -279,14 +286,10 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
   }, []);
 
   // Link Oficial de Indicação da Franquia/Parceiro (Leva para a Landing Page de Alta Conversão)
-  const referralLink = partnerProfile.cupom
-    ? `https://lp.hotelnozap.com.br/?ref=${partnerProfile.cupom}`
-    : 'https://lp.hotelnozap.com.br';
+  const referralLink = getPartnerReferralLink(partnerProfile.cupom);
 
   // Link Direto para o Formulário de Assinatura/Cadastro
-  const directCheckoutLink = partnerProfile.cupom
-    ? `https://hotelnozap.com.br/parceiros/assinar?ref=${partnerProfile.cupom}`
-    : 'https://hotelnozap.com.br/parceiros/assinar';
+  const directCheckoutLink = getPartnerDirectCheckoutLink(partnerProfile.cupom);
 
   const handleCopiarLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -841,7 +844,7 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                         Operação Ativa
                       </span>
                       <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                        ID Parceiro: #{partnerProfile.cupom}
+                        ID Parceiro: #{partnerProfile.cupom || 'HOTELNOZAP'}
                       </span>
                     </div>
 

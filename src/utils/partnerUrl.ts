@@ -34,8 +34,20 @@ export const getAppLoginUrl = (): string => {
   return 'https://app.hotelnozap.com.br/';
 };
 
+/**
+ * Link Oficial de Divulgação do Parceiro:
+ * Leva para a Landing Page com o parâmetro ?ref=CUPOM (Fallback padrão: HOTELNOZAP)
+ */
 export const getPartnerReferralLink = (coupon?: string): string => {
-  const code = (coupon || 'HOTELNOZAP').trim();
+  const code = (coupon || 'HOTELNOZAP').trim().toUpperCase();
+  return `https://lp.hotelnozap.com.br/?ref=${encodeURIComponent(code)}`;
+};
+
+/**
+ * Link Direto de Checkout / Formulário de Assinatura (opcional)
+ */
+export const getPartnerDirectCheckoutLink = (coupon?: string): string => {
+  const code = (coupon || 'HOTELNOZAP').trim().toUpperCase();
   const baseUrl = getPartnerPublicBaseUrl();
   return `${baseUrl}/parceiros/assinar?ref=${encodeURIComponent(code)}`;
 };

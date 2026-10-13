@@ -6,6 +6,7 @@ import { mercadopagoService, PixMasterResult } from '../services/mercadopagoServ
 import { parceirosService, usuariosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { generateValidCpf } from '../utils/mockHotelData';
+import { getPartnerReferralLink } from '../utils/partnerUrl';
 
 interface CheckoutParceiroProps {
   onNavigateBack: () => void;
@@ -581,7 +582,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       const localidadeFormatada = `${cidade.trim()} - ${uf.trim().toUpperCase()}`;
       const code = generatePartnerCode(nome);
       setPartnerCode(code);
-      const referralUrl = `https://hotelnozap.com.br/parceiros/assinar?ref=${code}`;
+      const referralUrl = getPartnerReferralLink(code);
       setPartnerLink(referralUrl);
 
       let authUserId: string | null = null;
@@ -624,7 +625,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
             parceiroId = apiJson.parceiroId || null;
             if (apiJson.cupom) {
               setPartnerCode(apiJson.cupom);
-              setPartnerLink(`https://hotelnozap.com.br/parceiros/assinar?ref=${apiJson.cupom}`);
+              setPartnerLink(getPartnerReferralLink(apiJson.cupom));
             }
           }
         }
@@ -1599,7 +1600,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                   </div>
 
                   <div className="p-3 bg-white rounded-xl border border-slate-300 text-xs font-mono text-slate-700 break-all select-all">
-                    {partnerLink || `https://hotelnozap.com.br/parceiros/assinar?ref=${partnerCode}`}
+                    {partnerLink || getPartnerReferralLink(partnerCode)}
                   </div>
 
                   <button
