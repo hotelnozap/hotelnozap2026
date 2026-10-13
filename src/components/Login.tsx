@@ -1039,10 +1039,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
                     </button>
                   </div>
-
-                  <p className="text-[10px] text-slate-400 text-center mt-3 leading-tight">
-                    Protegido pelo Google reCAPTCHA v3. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Privacidade</a> e <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">Termos</a> aplicáveis.
-                  </p>
                 </>
               )}
 
