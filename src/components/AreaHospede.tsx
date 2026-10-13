@@ -1082,7 +1082,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               )}
             </div>
 
-            {temEstadiaOuReserva ? (
+            {perfil?.temCheckinAtivo ? (
               <button
                 onClick={() => setIsNewOrderModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold shadow-md shadow-[#003400]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -1369,6 +1369,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
             {/* COLUNA ESQUERDA: PEDIDOS RÁPIDOS & HISTÓRICO (7 COLUNAS) */}
             <div className="lg:col-span-7 space-y-6">
+              {perfil?.temCheckinAtivo ? (
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 lg:p-6">
                   <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
                     <div>
@@ -1387,7 +1388,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
                     <button
                       onClick={() => handleFazerPedidoRapido('Toalhas Extras (Banho/Piscina)')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group"
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
                         <span className="material-symbols-outlined text-lg">dry_cleaning</span>
@@ -1398,7 +1399,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                     <button
                       onClick={() => handleFazerPedidoRapido('Limpeza do Quarto')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group"
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
                         <span className="material-symbols-outlined text-lg">cleaning_services</span>
@@ -1409,7 +1410,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                     <button
                       onClick={() => handleFazerPedidoRapido('Travesseiros Extras (Macio/Firme)')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group"
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
                         <span className="material-symbols-outlined text-lg">bed</span>
@@ -1420,7 +1421,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                     <button
                       onClick={() => handleFazerPedidoRapido('Kit Amenities (Shampoo & Sabonete)')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group"
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
                         <span className="material-symbols-outlined text-lg">sanitizer</span>
@@ -1431,7 +1432,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                     <button
                       onClick={() => handleFazerPedidoRapido('Água Mineral 500ml')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group"
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
                         <span className="material-symbols-outlined text-lg">water_bottle</span>
@@ -1442,7 +1443,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
                     <button
                       onClick={() => handleFazerPedidoRapido('Balde de Gelo com Pinça')}
-                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group"
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all group cursor-pointer"
                     >
                       <div className="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-700 flex items-center justify-center mb-2">
                         <span className="material-symbols-outlined text-lg">ac_unit</span>
@@ -1470,7 +1471,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                       <button
                         type="submit"
                         disabled={!customRequestText.trim()}
-                        className="px-4 py-2 bg-[#003400] hover:bg-[#002600] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5"
+                        className="px-4 py-2 bg-[#003400] hover:bg-[#002600] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-sm">send</span>
                         Enviar Solicitação
@@ -1529,7 +1530,61 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-7 space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-2xl">room_service</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="text-base font-extrabold text-slate-900">
+                          Serviços de Quarto & Solicitações
+                        </h4>
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                          Liberado no Check-in
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Pedidos de toalhas extras, limpeza de quarto, amenidades e serviços do hotel ficam disponíveis automaticamente assim que seu check-in for realizado na recepção em <strong>{perfil?.dataCheckin || 'sua data prevista'}</strong>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-xs">
+                    <button
+                      onClick={() => setActiveSubTab('horarios')}
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all flex items-center gap-3 cursor-pointer group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-xl">schedule</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800 group-hover:text-emerald-900">Horários do Hotel</p>
+                        <p className="text-[11px] text-slate-400">Café da manhã, check-in e check-out</p>
+                      </div>
+                    </button>
+
+                    <a
+                      href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
+                        `Olá! Sou o hóspede ${perfil?.nome || userName} da Reserva ${perfil?.reservaCodigo || ''} e gostaria de avisar sobre minha previsão de chegada ao hotel.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all flex items-center gap-3 cursor-pointer group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-xl">chat</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800 group-hover:text-emerald-900">Recepção WhatsApp</p>
+                        <p className="text-[11px] text-slate-400">Avisar previsão de chegada ou dúvidas</p>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
 
               {/* COLUNA DIREITA: CONSUMO & HORÁRIOS DA POUSADA (5 COLUNAS) */}
               <div className="lg:col-span-5 space-y-6">
@@ -1813,7 +1868,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           {/* ABA: PEDIDOS & RECEPÇÃO                                           */}
           {/* ================================================================= */}
           {activeSubTab === 'pedidos' && (
-            temEstadiaOuReserva ? (
+            perfil?.temCheckinAtivo ? (
               <PedidosRecepcaoHospede
                 userRole={userRole}
                 userName={perfil?.nome || userName}
@@ -1825,12 +1880,12 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               />
             ) : (
               <div className="max-w-2xl mx-auto py-16 text-center space-y-4 animate-in fade-in duration-200">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 mx-auto flex items-center justify-center">
                   <span className="material-symbols-outlined text-3xl">room_service</span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">Pedidos e Serviços Indisponíveis</h3>
+                <h3 className="text-xl font-bold text-slate-900">Pedidos e Serviços de Quarto Indisponíveis</h3>
                 <p className="text-sm text-slate-500 max-w-md mx-auto">
-                  Você não possui nenhuma estadia ativa no momento. Pedidos de toalhas, amenities e refeições ficam disponíveis exclusivamente durante sua hospedagem no hotel.
+                  Você ainda não possui check-in ativo. Pedidos de toalhas, amenities, limpeza e refeições ficam liberados exclusivamente durante sua estadia no quarto.
                 </p>
                 <div className="pt-2">
                   <button
