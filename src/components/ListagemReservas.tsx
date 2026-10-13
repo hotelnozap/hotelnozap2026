@@ -466,7 +466,37 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
 
         const percentConfirmadas = totalReservasCount > 0 ? Math.round((confirmadasCount / totalReservasCount) * 100) : 0;
         const percentCanceladas = totalReservasCount > 0 ? ((canceladasCount / totalReservasCount) * 100).toFixed(1) : '0';
-        const taxaOcupacao = totalReservasCount > 0 ? Math.round(((confirmadasCount + hospedadosCount) / Math.max(totalReservasCount, 1)) * 100) : 0;
+
+        // Cálculo da Taxa de Ocupação Real do Hotel:
+        // Capacidade total = quantidade de quartos cadastrados no hotel
+        const totalQuartos = quartosList.length > 0 
+          ? quartosList.length 
+          : Math.max(new Set(reservas.map(r => r.numero_quarto || r.quartoNome).filter(Boolean)).size, 1);
+
+        // Identifica quartos únicos com reserva ativa (Confirmada ou Hospedado)
+        const quartosComReservaAtiva = new Set(
+          reservas
+            .filter(r => r.status === 'Confirmada' || r.status === 'Hospedado')
+            .map(r => String(r.quarto_id || r.numero_quarto || r.quartoNome).trim())
+            .filter(Boolean)
+        ).size;
+
+        const quartosOcupadosNoMapa = quartosList.filter(q => {
+          const st = (q.status || '').toLowerCase();
+          return st === 'ocupado' || st === 'reservado' || st === 'hospedado';
+        }).length;
+
+        const reservasAtivasCount = confirmadasCount + hospedadosCount;
+
+        // O total de quartos ocupados/reservados não excede o total de quartos do hotel
+        const totalOcupados = Math.min(
+          totalQuartos,
+          Math.max(quartosComReservaAtiva, quartosOcupadosNoMapa, reservasAtivasCount)
+        );
+
+        const taxaOcupacao = totalQuartos > 0 
+          ? Math.min(100, Math.round((totalOcupados / totalQuartos) * 100)) 
+          : 0;
 
         return (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4">
@@ -575,18 +605,21 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
               </div>
             </div>
 
-            {/* Card 6: Taxa de Ocupação */}
-            <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm">
+            {/* Card 6: Taxa de Ocupação Real */}
+            <div 
+              className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 sm:p-4 flex flex-col justify-between shadow-sm transition-all hover:shadow-md"
+              title={`Taxa de ocupação calculada sobre os ${totalQuartos} quartos cadastrados`}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-purple-700">Taxa de Ocupação</span>
-                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-indigo-800">Taxa de Ocupação</span>
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700">
                   <span className="material-symbols-outlined text-[18px] sm:text-[20px]">bed</span>
                 </div>
               </div>
               <div className="mt-2 sm:mt-3">
                 <div className="text-xl sm:text-2xl font-bold text-slate-900">{taxaOcupacao}%</div>
-                <p className="text-[10px] sm:text-xs text-purple-600 font-medium mt-0.5 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">hotel</span> Ocupação Real
+                <p className="text-[10px] sm:text-xs text-indigo-700 font-medium mt-0.5 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">hotel</span> {totalOcupados} de {totalQuartos} quartos
                 </p>
               </div>
             </div>
