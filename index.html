@@ -94,7 +94,7 @@
 
         // Solicita permissão nativa de notificação com delay suave no app instalado
         try {
-          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+          const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
           if (isStandalone) {
             setTimeout(async () => {
               if (OneSignal.Notifications && OneSignal.Notifications.permission !== true) {

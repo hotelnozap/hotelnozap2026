@@ -88,6 +88,8 @@ import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInativida
 import { supabase } from './lib/supabase';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 import { autoCheckoutService } from './services/autoCheckoutService';
+import { ModalPermissoesApp } from './components/ModalPermissoesApp';
+import { locationService } from './services/locationService';
 
 const checkIsAssinarUrl = (pathname: string, search: string, hash: string): boolean => {
   const parts = (pathname || '').toLowerCase().replace(/\\/g, '/').split('/').filter(Boolean);
@@ -307,6 +309,18 @@ export const App: React.FC = () => {
   });
   const [selectedHotelForPage, setSelectedHotelForPage] = useState<PublicHotel | null>(null);
   const [selectedQuartoForPage, setSelectedQuartoForPage] = useState<QuartoCadastrado | null>(null);
+
+  // Modal de onboarding de permissões (Notificações e Localização) na primeira abertura
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!locationService.hasAskedPermissions()) {
+      const timer = setTimeout(() => {
+        setIsPermissionsModalOpen(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -4226,6 +4240,12 @@ export const App: React.FC = () => {
         initialEnabled={autoLogoutEnabled}
         initialDuration={autoLogoutDuration}
         onSave={handleSalvarConfiguracaoInatividade}
+      />
+
+      {/* MODAL ONBOARDING DE PERMISSÕES DO APP (NOTIFICAÇÕES E LOCALIZAÇÃO) */}
+      <ModalPermissoesApp
+        isOpen={isPermissionsModalOpen}
+        onClose={() => setIsPermissionsModalOpen(false)}
       />
 
     </div>

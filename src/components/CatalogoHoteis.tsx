@@ -5,6 +5,7 @@ import { getAppLoginUrl } from '../utils/partnerUrl';
 import { navigateSpa } from '../utils/navigation';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { FALLBACK_HOTEIS_PRELOAD } from '../data/fallbackHoteisPreload';
+import { locationService, UserLocation } from '../services/locationService';
 
 export interface PublicHotel {
   id: string;
@@ -49,6 +50,7 @@ export interface CityGroup {
   hotels: PublicHotel[];
   customTitle?: string;
   isPaidWithRooms?: boolean;
+  isUserLocation?: boolean;
 }
 
 export const normalizeCitySlug = (str: string): string => {
@@ -365,6 +367,12 @@ const CityCarousel: React.FC<CityCarouselProps> = ({
             <span>{group.customTitle || `Hotéis e Pousadas em ${group.city} · ${group.uf}`}</span>
             <span className="material-symbols-outlined text-base sm:text-lg text-slate-400 group-hover:text-emerald-700 group-hover:translate-x-1 transition-all">arrow_forward</span>
           </h2>
+          {group.isUserLocation && (
+            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-black flex items-center gap-1 shadow-2xs shrink-0">
+              <span className="material-symbols-outlined text-xs sm:text-sm text-emerald-700" style={{ fontVariationSettings: "'FILL' 1" }}>near_me</span>
+              Sua Cidade
+            </span>
+          )}
           <span className="text-[11px] sm:text-xs text-slate-500 font-semibold inline shrink-0 bg-slate-100 sm:bg-transparent px-2 py-0.5 sm:p-0 rounded-full sm:rounded-none">
             ({group.hotels.length} {group.hotels.length === 1 ? 'acomodação' : 'acomodações'})
           </span>
@@ -460,6 +468,34 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   // Infinite Scroll / Lazy Loading de Cidades (começa com 14 cidades para preenchimento estável sem saltos)
   const [visibleCitiesCount, setVisibleCitiesCount] = useState<number>(14);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Localização do usuário detectada via GPS / Permissões
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(() => {
+    return locationService.getUserLocationFromStorage();
+  });
+
+  useEffect(() => {
+    const handleLocationUpdate = (e: any) => {
+      if (e.detail) {
+        setUserLocation(e.detail);
+      } else {
+        setUserLocation(locationService.getUserLocationFromStorage());
+      }
+    };
+    window.addEventListener('hotelnozap_location_updated', handleLocationUpdate);
+    return () => window.removeEventListener('hotelnozap_location_updated', handleLocationUpdate);
+  }, []);
+
+  // Verifica se a cidade do usuário possui acomodações cadastradas
+  const userCityHasHotels = useMemo(() => {
+    if (!userLocation?.city) return false;
+    const userSlug = normalizeCitySlug(userLocation.city);
+    return hoteisList.some(h => {
+      if (!h.city) return false;
+      const cSlug = normalizeCitySlug(h.city);
+      return cSlug === userSlug || (userSlug.length > 3 && (cSlug.includes(userSlug) || userSlug.includes(cSlug)));
+    });
+  }, [userLocation, hoteisList]);
 
   // Favoritos
   const [favorites, setFavorites] = useState<Set<string>>(() => {
@@ -773,17 +809,37 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     // Criar as seções das cidades da página inicial (uma para cada cidade com seus hotéis)
     const rawGroups = Object.values(map);
 
-    const formattedGroups: CityGroup[] = rawGroups.map(g => ({
-      city: g.city,
-      uf: g.uf,
-      slug: g.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-'),
-      isPaidWithRooms: g.hotels.some(h => h.hasActivePlan),
-      hotels: g.hotels
-    }));
+    const userCitySlug = userLocation?.city ? normalizeCitySlug(userLocation.city) : null;
 
-    // ORDEM ALFABÉTICA (A a Z) DE TODAS AS CIDADES NA PÁGINA INICIAL
-    return formattedGroups.sort((a, b) => a.city.localeCompare(b.city, 'pt-BR', { sensitivity: 'base' }));
-  }, [hoteisList, activeCategory, searchQuery]);
+    const formattedGroups: CityGroup[] = rawGroups.map(g => {
+      const gSlug = normalizeCitySlug(g.city);
+      const isUserLocation = Boolean(
+        userCitySlug && (
+          gSlug === userCitySlug ||
+          (userCitySlug.length > 3 && (gSlug.includes(userCitySlug) || userCitySlug.includes(gSlug)))
+        )
+      );
+
+      return {
+        city: g.city,
+        uf: g.uf,
+        slug: gSlug,
+        isPaidWithRooms: g.hotels.some(h => h.hasActivePlan),
+        hotels: g.hotels,
+        isUserLocation,
+        customTitle: isUserLocation ? `Hotéis e Pousadas em ${g.city} · ${g.uf} (Mais próximos de você)` : undefined
+      };
+    });
+
+    // ORDEM DAS CIDADES NA PÁGINA INICIAL:
+    // Se a cidade do usuário possui acomodações, ela é posicionada no TOPO ABSOLUTO (índice 0)!
+    // As demais cidades continuam em ordem alfabética (A a Z).
+    return formattedGroups.sort((a, b) => {
+      if (a.isUserLocation && !b.isUserLocation) return -1;
+      if (!a.isUserLocation && b.isUserLocation) return 1;
+      return a.city.localeCompare(b.city, 'pt-BR', { sensitivity: 'base' });
+    });
+  }, [hoteisList, activeCategory, searchQuery, userLocation]);
 
   // Lista de cidades disponíveis para o popover de busca
   const allDestinations = useMemo(() => {
@@ -1359,9 +1415,17 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
               <span className="material-symbols-outlined text-lg text-[#006c49] shrink-0">search</span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-extrabold text-slate-900 leading-tight truncate">
-                  {focusedCity ? `Destino: ${focusedCity}` : 'Inicie sua busca'}
+                  {focusedCity 
+                    ? `Destino: ${focusedCity}` 
+                    : userLocation?.city 
+                      ? `Perto de você em ${userLocation.city}` 
+                      : 'Inicie sua busca'}
                 </p>
-                <p className="text-[10px] text-slate-500 truncate">Qualquer destino • Qualquer semana</p>
+                <p className="text-[10px] text-slate-500 truncate">
+                  {userLocation?.city && !focusedCity
+                    ? `${userLocation.city} · ${userLocation.uf || 'Brasil'} • Ver acomodações`
+                    : 'Qualquer destino • Qualquer semana'}
+                </p>
               </div>
             </button>
           </div>
@@ -1385,8 +1449,44 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                 </button>
               </div>
 
+              {/* Botão de captura/atualização de GPS */}
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const loc = await locationService.requestUserLocation();
+                    if (loc && loc.city) {
+                      setUserLocation(loc);
+                      const matchingCity = findCityBySlug(loc.city, hoteisList);
+                      if (matchingCity) {
+                        handleOpenCityRoute(normalizeCitySlug(matchingCity), matchingCity);
+                      }
+                      setIsSearchPopoverOpen(false);
+                    }
+                  }}
+                  className="w-full p-2.5 rounded-xl bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/80 text-left flex items-center justify-between transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>near_me</span>
+                    </div>
+                    <div>
+                      <p className="font-extrabold text-xs text-emerald-950">
+                        {userLocation?.city ? `Localização atual: ${userLocation.city} · ${userLocation.uf}` : 'Usar minha localização atual (GPS)'}
+                      </p>
+                      <p className="text-[10px] text-emerald-700">
+                        {userLocation?.city ? 'Clique para atualizar acomodações mais próximas' : 'Detectar hotéis próximos automaticamente'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-sm text-emerald-700 group-hover:translate-x-0.5 transition-transform">
+                    my_location
+                  </span>
+                </button>
+              </div>
+
               {/* Input de filtro imediato */}
-              <div className="mt-3 relative">
+              <div className="mt-2.5 relative">
                 <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
                 <input
                   type="text"
@@ -1743,7 +1843,31 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
           /* MODO PÁGINA INICIAL: DIVIDIDO POR CIDADES COM CARROSSÉIS CONFORME AIRBNB  */
           /* ========================================================================= */
           <>
-            {/* CARROSSÉIS RENDERIZADOS POR CIDADE (ORDEM ALFABÉTICA) */}
+            {/* AVISO QUANDO A CIDADE DO USUÁRIO NÃO POSSUI HOTÉIS DIRETAMENTE */}
+            {userLocation?.city && !userCityHasHotels && (
+              <div className="bg-gradient-to-r from-emerald-50 via-teal-50/60 to-white border border-emerald-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>near_me</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                        Você está em {userLocation.city}{userLocation.uf ? ` · ${userLocation.uf}` : ''}
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                        GPS Ativo
+                      </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5">
+                      Ainda não temos acomodações cadastradas diretamente em {userLocation.city}. Confira abaixo os destinos parceiros mais procurados e próximos para sua estadia!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CARROSSÉIS RENDERIZADOS POR CIDADE (CIDADE DO GPS NO TOPO, DEMAIS DE A a Z) */}
             {cityGroups.slice(0, visibleCitiesCount).map((group) => (
               <CityCarousel
                 key={group.slug}
