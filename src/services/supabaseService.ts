@@ -2577,41 +2577,61 @@ export const dashboardService = {
         if (r.numero_quarto) quartosHospedadosNumeros.add(String(r.numero_quarto));
       });
 
-      // 2. Classificação dinâmica e precisa de cada quarto:
-      // Se o quarto tem hóspede com status Hospedado -> É 1 quarto OCUPADO.
-      // Quando o status do hóspede não for mais hospedado -> Se ainda em limpeza vai para LIMPEZA, e após liberado fica DISPONÍVEL para locação.
+      // 2. Identificar todas as reservas confirmadas aguardando entrada (Reservados)
+      const reservasConfirmadas = reservas.filter(r => {
+        const s = (r.status || '').toLowerCase();
+        return (s.includes('confirm') || s.includes('garant') || s.includes('pendent')) && !s.includes('hosped') && !s.includes('canc') && !s.includes('concl');
+      });
+
+      const quartosReservadosIds = new Set<string>();
+      const quartosReservadosNumeros = new Set<string>();
+      reservasConfirmadas.forEach(r => {
+        if (r.quarto_id) quartosReservadosIds.add(String(r.quarto_id));
+        if (r.numero_quarto) quartosReservadosNumeros.add(String(r.numero_quarto));
+      });
+
+      // 3. Classificação dinâmica e precisa de cada quarto:
       let ocupados = 0;
       let limpeza = 0;
-      let disponiveis = 0;
+      let reservados = 0;
       let manutencao = 0;
+      let disponiveis = 0;
 
       quartos.forEach(q => {
         const isHospedado = quartosHospedadosIds.has(String(q.id)) || quartosHospedadosNumeros.has(String(q.numero || q.number));
+        const isComReservaAtiva = quartosReservadosIds.has(String(q.id)) || quartosReservadosNumeros.has(String(q.numero || q.number));
         const rawStatus = (q.status || 'disponivel').toLowerCase();
 
-        if (isHospedado) {
-          // Tem hóspede ativo com check-in -> Quarto OCUPADO
+        if (isHospedado || rawStatus === 'ocupado') {
+          // Tem hóspede ativo ou status ocupado
           ocupados++;
-          if (rawStatus !== 'ocupado') {
+          if (rawStatus !== 'ocupado' && isHospedado) {
             supabase.from('quartos').update({ status: 'ocupado' }).eq('id', q.id).then();
           }
-        } else if (rawStatus === 'ocupado') {
-          // O hóspede não está mais hospedado (concluiu/saiu), portanto o quarto entra em LIMPEZA
+        } else if (rawStatus === 'reservado' || isComReservaAtiva) {
+          // Quarto reservado ou com reserva confirmada
+          reservados++;
+        } else if (rawStatus === 'limpeza' || rawStatus === 'ocupado_em_limpeza') {
           limpeza++;
-          supabase.from('quartos').update({ status: 'limpeza' }).eq('id', q.id).then();
-        } else if (rawStatus === 'limpeza') {
-          limpeza++;
-        } else if (rawStatus === 'manutencao') {
+        } else if (rawStatus === 'manutencao' || rawStatus === 'interditado') {
           manutencao++;
         } else {
           disponiveis++;
         }
       });
 
-      // O total de quartos ocupados considera todos os quartos vinculados a hóspedes hospedados
+      // Sincroniza totais considerando também as reservas ativas
+      const totalReservados = Math.max(reservados, reservasConfirmadas.length);
       const totalOcupados = Math.max(ocupados, reservasHospedadas.length);
       const totalQuartos = quartos.length;
-      const taxaOcupacao = totalQuartos > 0 ? Math.min(100, Math.round((totalOcupados / totalQuartos) * 100)) : 0;
+
+      // Quartos realmente livres para nova locação imediata:
+      const quartosRealmenteDisponiveis = Math.max(0, totalQuartos - (totalOcupados + totalReservados + limpeza + manutencao));
+
+      // Taxa de ocupação real hoteleira:
+      // Soma quartos ocupados + quartos reservados em relação à capacidade total do hotel
+      const totalComprometidos = Math.min(totalQuartos, totalOcupados + totalReservados);
+      const taxaOcupacao = totalQuartos > 0 ? Math.min(100, Math.round((totalComprometidos / totalQuartos) * 100)) : 0;
 
       const now = new Date();
       // Data local (YYYY-MM-DD) e hora local (fuso horário local)
@@ -2620,12 +2640,6 @@ export const dashboardService = {
       const dia = String(now.getDate()).padStart(2, '0');
       const todayStr = `${ano}-${mes}-${dia}`;
       const horaAtual = now.getHours();
-
-      // Reservas ativas / confirmadas aguardando entrada
-      const reservados = reservas.filter(r => {
-        const s = (r.status || '').toLowerCase();
-        return (s.includes('confirm') || s.includes('garant') || s.includes('pendent')) && !s.includes('hosped') && !s.includes('canc') && !s.includes('concl');
-      }).length;
 
       // Check-outs do dia (regra inteligente):
       // Todo check-out deve ser feito até meio-dia (12:00).
@@ -2805,9 +2819,9 @@ export const dashboardService = {
       });
 
       return {
-        quartosDisponiveis: disponiveis,
-        quartosOcupados: ocupados,
-        quartosReservados: reservados,
+        quartosDisponiveis: quartosRealmenteDisponiveis,
+        quartosOcupados: totalOcupados,
+        quartosReservados: totalReservados,
         emLimpeza: limpeza,
         emCheckOut: checkouts,
         faturamentoDia: faturamentoTotal,

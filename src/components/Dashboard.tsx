@@ -218,42 +218,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab, currentUser
         </div>
       </div>
 
-      {/* KPI Cards Grid (2 cols on mobile, 3 on tablet, 6 on desktop) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      {/* KPI Cards Grid (2 cols no mobile, 3 no tablet, 4 no desktop médio, 7 em telas grandes) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
         
-        {/* KPI 1: Quartos Disponíveis */}
+        {/* KPI 1: Quantidade de Quartos */}
         <div 
           onClick={() => onNavigateTab && onNavigateTab('mapa')}
-          className="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-emerald-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
-          title="Ver no Mapa de Quartos"
+          className="bg-slate-50/80 border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-slate-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
+          title="Ver todos os quartos no Mapa de Quartos"
         >
           <div className="flex items-start justify-between mb-2">
-            <span className="text-xs sm:text-sm font-medium text-slate-700">Quartos Disponíveis</span>
-            <span className="material-symbols-outlined text-[#006c49]">bed</span>
+            <span className="text-xs sm:text-sm font-medium text-slate-700">Quantidade de Quartos</span>
+            <span className="material-symbols-outlined text-slate-700">apartment</span>
           </div>
           <div>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900">{metrics.quartosDisponiveis}</div>
-            <div className="text-xs text-emerald-700 font-medium mt-0.5">Prontos para uso</div>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900">{metrics.totalQuartos}</div>
+            <div className="text-xs text-slate-500 font-medium mt-0.5">
+              {metrics.quartosDisponiveis > 0 
+                ? `${metrics.quartosDisponiveis} disponíveis` 
+                : '0 disponíveis agora'}
+            </div>
           </div>
         </div>
 
-        {/* KPI 2: Quartos Ocupados */}
-        <div 
-          onClick={() => onNavigateTab && onNavigateTab('mapa')}
-          className="bg-blue-50/70 border border-blue-200/70 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-blue-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
-          title="Ver no Mapa de Quartos"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <span className="text-xs sm:text-sm font-medium text-slate-700">Quartos Ocupados</span>
-            <span className="material-symbols-outlined text-blue-600">door_front</span>
-          </div>
-          <div>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900">{metrics.quartosOcupados}</div>
-            <div className="text-xs text-blue-700 font-medium mt-0.5">Hóspedes ativos</div>
-          </div>
-        </div>
-
-        {/* KPI 3: Quartos Reservados */}
+        {/* KPI 2: Quartos Reservados */}
         <div 
           onClick={() => onNavigateTab && onNavigateTab('reservas')}
           className="bg-indigo-50/70 border border-indigo-200/70 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-indigo-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
@@ -269,7 +257,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab, currentUser
           </div>
         </div>
 
-        {/* KPI 4: Em Limpeza */}
+        {/* KPI 3: Quartos Ocupados */}
+        <div 
+          onClick={() => onNavigateTab && onNavigateTab('mapa')}
+          className="bg-blue-50/70 border border-blue-200/70 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-blue-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
+          title="Ver no Mapa de Quartos"
+        >
+          <div className="flex items-start justify-between mb-2">
+            <span className="text-xs sm:text-sm font-medium text-slate-700">Quartos Ocupados</span>
+            <span className="material-symbols-outlined text-blue-600">door_front</span>
+          </div>
+          <div>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900">{metrics.quartosOcupados}</div>
+            <div className="text-xs text-blue-700 font-medium mt-0.5">Hóspedes ativos</div>
+          </div>
+        </div>
+
+        {/* KPI 4: Taxa de Ocupação Real */}
+        <div 
+          onClick={() => onNavigateTab && onNavigateTab('reservas')}
+          className="bg-teal-50/70 border border-teal-200/70 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-teal-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
+          title="Ver detalhes de ocupação nas Reservas"
+        >
+          <div className="flex items-start justify-between mb-2">
+            <span className="text-xs sm:text-sm font-medium text-slate-700">Taxa de Ocupação</span>
+            <span className="material-symbols-outlined text-teal-700">bed</span>
+          </div>
+          <div>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900">{metrics.taxaOcupacao}%</div>
+            <div className="text-xs text-teal-700 font-medium mt-0.5 flex items-center gap-1">
+              <span>Ocupação Real</span>
+              {metrics.taxaOcupacao === 100 && (
+                <span className="font-bold text-[10px] bg-teal-100 text-teal-800 px-1.5 py-0.2 rounded-full">Lotado</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 5: Em Limpeza */}
         <div 
           onClick={() => onNavigateTab && onNavigateTab('mapa')}
           className="bg-amber-50/70 border border-amber-200/70 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-amber-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
@@ -285,7 +310,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab, currentUser
           </div>
         </div>
 
-        {/* KPI 5: Em Check-Out */}
+        {/* KPI 6: Em Check-Out */}
         <div 
           onClick={() => onNavigateTab && onNavigateTab('reservas')}
           className="bg-rose-50/70 border border-rose-200/70 rounded-xl p-4 shadow-2xs flex flex-col justify-between cursor-pointer hover:border-rose-300 hover:shadow-xs active:scale-[0.98] transition-all duration-150"
@@ -303,7 +328,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab, currentUser
           </div>
         </div>
 
-        {/* KPI 6: Faturamento do Período */}
+        {/* KPI 7: Faturamento do Período */}
         <div 
           onClick={() => !isRecepcao && onNavigateTab && onNavigateTab('caixa')}
           className={`bg-emerald-50/90 border border-emerald-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between ${isRecepcao ? '' : 'cursor-pointer hover:border-emerald-300 hover:shadow-xs active:scale-[0.98]'} transition-all duration-150`}
