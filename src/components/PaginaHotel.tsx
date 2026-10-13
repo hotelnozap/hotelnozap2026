@@ -8,13 +8,8 @@ import { navigateSpa } from '../utils/navigation';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { maskPhone } from '../utils/masks';
 
-export const slugify = (str: string): string => {
-  return (str || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/g, '');
-};
+import { slugify } from '../utils/slugify';
+export { slugify };
 
 export interface QuartoCadastrado {
   id: string;

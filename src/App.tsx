@@ -1,95 +1,142 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import Dashboard from './components/Dashboard';
-import MapaQuartos, { Room } from './components/MapaQuartos';
-import CadastroQuarto, { EditingQuartoData } from './components/CadastroQuarto';
-import ListagemItens from './components/ListagemItens';
-import CadastroItem from './components/CadastroItem';
-import ListagemCategorias from './components/ListagemCategorias';
-import CadastroCategoriaitensquarto from './components/CadastroCategoriaitensquarto';
-import ListagemHospedes from './components/ListagemHospedes';
-import CadastroHospede from './components/CadastroHospede';
-import { ListagemCupons } from './components/ListagemCupons';
-import { CadastroCupom } from './components/CadastroCupom';
-import { CupomDesconto } from './services/cuponsService';
-import ListagemProdutos from './components/ListagemProdutos';
-import { CadastroProduto } from './components/CadastroProduto';
-import CategoriasProdutos from './components/CategoriasProdutos';
-import EstoqueProdutos from './components/EstoqueProdutos';
-import CadastroMovimentacaoEstoque from './components/CadastroMovimentacaoEstoque';
-import CadastroCategoriaProduto from './components/CadastroCategoriaProduto';
-import ListagemReservas from './components/ListagemReservas';
-import CadastroReserva from './components/CadastroReserva';
-import ListagemTiposQuartos from './components/ListagemTiposQuartos';
-import CadastroTipoQuarto from './components/CadastroTipoQuarto';
-import ControleCaixa from './components/ControleCaixa';
-import ListagemContasPagar from './components/ListagemContasPagar';
-import CategoriasContasPagar from './components/CategoriasContasPagar';
-import CadastroCategoriaContaPagar from './components/CadastroCategoriaContaPagar';
-import CadastroContaPagar from './components/CadastroContaPagar';
-import ListagemContasReceber from './components/ListagemContasReceber';
-import CategoriasContasReceber from './components/CategoriasContasReceber';
-import CadastroCategoriaContaReceber from './components/CadastroCategoriaContaReceber';
-import CadastroContaReceber from './components/CadastroContaReceber';
-import ConexoesWhatsapp from './components/ConexoesWhatsapp';
-import AdminConexoesWhatsapp from './components/AdminConexoesWhatsapp';
-import { evolutionApiService } from './services/evolutionApiService';
-import ListagemParceiros, { Partner } from './components/ListagemParceiros';
-import CadastroParceiro from './components/CadastroParceiro';
-import CadastroHoteis, { Hotel, INITIAL_HOTEIS } from './components/CadastroHoteis';
-import { FormHotel } from './components/FormHotel';
-import ListagemCategoriasHotel from './components/ListagemCategoriasHotel';
-import CadastroCategoriaHotel from './components/CadastroCategoriaHotel';
-import { GestaoCreditosSaaS } from './components/GestaoCreditosSaaS';
-import { TelaPlanoExpirado } from './components/TelaPlanoExpirado';
-import { creditosService } from './services/creditosService';
-import { ConfiguracoesMercadoPago } from './components/ConfiguracoesMercadoPago';
-import { ConfiguracoesHotel } from './components/ConfiguracoesHotel';
-import RelatoriosHotel from './components/RelatoriosHotel';
-import Tutoriais from './components/Tutoriais';
-import ListagemUsuarios, { Usuario } from './components/ListagemUsuarios';
-import FormUsuario from './components/FormUsuario';
-import ListagemTiposUsuarios from './components/ListagemTiposUsuarios';
-import FormTipoUsuario from './components/FormTipoUsuario';
-import { TipoUsuarioDB } from './services/supabaseService';
-import Login from './components/Login';
-import CatalogoHoteis, { PublicHotel } from './components/CatalogoHoteis';
-import PaginaHotel, { QuartoCadastrado, slugify } from './components/PaginaHotel';
-import { DetalhesQuarto } from './components/DetalhesQuarto';
-import CadastroDestaquesQuarto from './components/CadastroDestaquesQuarto';
-import NotificationSystem from './components/NotificationSystem';
-import ListagemPlanos, { Plano } from './components/ListagemPlanos';
-import CadastroPlano from './components/CadastroPlano';
-import AreaHospede from './components/AreaHospede';
-import { HotelSelector } from './components/HotelSelector';
-import { CategoriaQuartoData, CategoriaHotelData, RoomItemData, RoomTypeData, currentHotelService, hoteisService, parceirosService, planosService, HotelAtivo, reservasService, usuariosService } from './services/supabaseService';
-import { AdminMasterDashboard } from './components/AdminMasterDashboard';
-import { LandingPage } from './components/LandingPage';
-import { PaginaEmConstrucao } from './components/PaginaEmConstrucao';
-import ReceitaRepasses from './components/ReceitaRepasses';
-import { ParametrosSistema } from './components/ParametrosSistema';
-import { trackingService } from './services/trackingService';
-import LpNovoHotel from './components/LpNovoHotel';
-import LpAssinar from './components/LpAssinar';
-import PainelCamareira from './components/PainelCamareira';
-import GestaoGovernanca from './components/GestaoGovernanca';
-import GestaoLavanderia from './components/GestaoLavanderia';
-import CardapioHotel from './components/CardapioHotel';
-import { GestaoPedidosCardapio } from './components/GestaoPedidosCardapio';
-import { PaginaInstitucional } from './components/PaginaInstitucional';
-import { Pagina404 } from './components/Pagina404';
-import { ListagemStatusQuartos } from './components/ListagemStatusQuartos';
-import { LogsSistema } from './components/LogsSistema';
-import { NotificacoesPushAdmin } from './components/NotificacoesPushAdmin';
-import { LandingPageParceiros } from './components/LandingPageParceiros';
-import { CheckoutParceiro } from './components/CheckoutParceiro';
-import { PortalParceiro } from './components/PortalParceiro';
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
+
+// Shared small components & modals (kept synchronous for instant UX)
 import { ZapHotelLogo } from './components/ZapHotelLogo';
+import NotificationSystem from './components/NotificationSystem';
 import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInatividadeModal';
+import { ModalPermissoesApp } from './components/ModalPermissoesApp';
+
+// Services & utilities
 import { supabase } from './lib/supabase';
+import { evolutionApiService } from './services/evolutionApiService';
+import { creditosService } from './services/creditosService';
+import {
+  currentHotelService,
+  hoteisService,
+  parceirosService,
+  planosService,
+  reservasService,
+  usuariosService
+} from './services/supabaseService';
+import type {
+  CategoriaQuartoData,
+  CategoriaHotelData,
+  RoomItemData,
+  RoomTypeData,
+  HotelAtivo,
+  TipoUsuarioDB
+} from './services/supabaseService';
+import { trackingService } from './services/trackingService';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 import { autoCheckoutService } from './services/autoCheckoutService';
-import { ModalPermissoesApp } from './components/ModalPermissoesApp';
 import { locationService } from './services/locationService';
+import { slugify } from './utils/slugify';
+
+// Types only (erased at runtime, zero bundle cost)
+import type { EditingQuartoData } from './components/CadastroQuarto';
+import type { CupomDesconto } from './services/cuponsService';
+import type { Partner } from './components/ListagemParceiros';
+import type { Hotel } from './components/CadastroHoteis';
+import type { Usuario } from './components/ListagemUsuarios';
+import type { PublicHotel } from './components/CatalogoHoteis';
+import type { QuartoCadastrado } from './components/PaginaHotel';
+import type { Plano } from './components/ListagemPlanos';
+
+// ── Code Splitting / Lazy Loading ──────────────────────────────────────────
+// Public & Landing Pages
+const LandingPage = lazy(() => import('./components/LandingPage').then(m => ({ default: m.LandingPage })));
+const CatalogoHoteis = lazy(() => import('./components/CatalogoHoteis'));
+const PaginaHotel = lazy(() => import('./components/PaginaHotel'));
+const DetalhesQuarto = lazy(() => import('./components/DetalhesQuarto').then(m => ({ default: m.DetalhesQuarto })));
+const CardapioHotel = lazy(() => import('./components/CardapioHotel'));
+const AreaHospede = lazy(() => import('./components/AreaHospede'));
+const Login = lazy(() => import('./components/Login'));
+const LpNovoHotel = lazy(() => import('./components/LpNovoHotel'));
+const LpAssinar = lazy(() => import('./components/LpAssinar'));
+const LandingPageParceiros = lazy(() => import('./components/LandingPageParceiros').then(m => ({ default: m.LandingPageParceiros })));
+const CheckoutParceiro = lazy(() => import('./components/CheckoutParceiro').then(m => ({ default: m.CheckoutParceiro })));
+const PortalParceiro = lazy(() => import('./components/PortalParceiro'));
+const PainelCamareira = lazy(() => import('./components/PainelCamareira'));
+const PaginaInstitucional = lazy(() => import('./components/PaginaInstitucional').then(m => ({ default: m.PaginaInstitucional })));
+const Pagina404 = lazy(() => import('./components/Pagina404').then(m => ({ default: m.Pagina404 })));
+const TelaPlanoExpirado = lazy(() => import('./components/TelaPlanoExpirado').then(m => ({ default: m.TelaPlanoExpirado })));
+
+// Admin & Hotel Operational Dashboards
+const AdminMasterDashboard = lazy(() => import('./components/AdminMasterDashboard').then(m => ({ default: m.AdminMasterDashboard })));
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const MapaQuartos = lazy(() => import('./components/MapaQuartos'));
+const CadastroQuarto = lazy(() => import('./components/CadastroQuarto'));
+const CadastroDestaquesQuarto = lazy(() => import('./components/CadastroDestaquesQuarto'));
+const ListagemItens = lazy(() => import('./components/ListagemItens'));
+const CadastroItem = lazy(() => import('./components/CadastroItem'));
+const ListagemCategorias = lazy(() => import('./components/ListagemCategorias'));
+const CadastroCategoriaitensquarto = lazy(() => import('./components/CadastroCategoriaitensquarto'));
+const ListagemHospedes = lazy(() => import('./components/ListagemHospedes'));
+const CadastroHospede = lazy(() => import('./components/CadastroHospede'));
+const ListagemCupons = lazy(() => import('./components/ListagemCupons').then(m => ({ default: m.ListagemCupons })));
+const CadastroCupom = lazy(() => import('./components/CadastroCupom').then(m => ({ default: m.CadastroCupom })));
+const ListagemProdutos = lazy(() => import('./components/ListagemProdutos'));
+const CadastroProduto = lazy(() => import('./components/CadastroProduto').then(m => ({ default: m.CadastroProduto })));
+const CategoriasProdutos = lazy(() => import('./components/CategoriasProdutos'));
+const EstoqueProdutos = lazy(() => import('./components/EstoqueProdutos'));
+const CadastroMovimentacaoEstoque = lazy(() => import('./components/CadastroMovimentacaoEstoque'));
+const CadastroCategoriaProduto = lazy(() => import('./components/CadastroCategoriaProduto'));
+const ListagemReservas = lazy(() => import('./components/ListagemReservas'));
+const CadastroReserva = lazy(() => import('./components/CadastroReserva'));
+const ListagemTiposQuartos = lazy(() => import('./components/ListagemTiposQuartos'));
+const CadastroTipoQuarto = lazy(() => import('./components/CadastroTipoQuarto'));
+const ListagemStatusQuartos = lazy(() => import('./components/ListagemStatusQuartos').then(m => ({ default: m.ListagemStatusQuartos })));
+const GestaoGovernanca = lazy(() => import('./components/GestaoGovernanca'));
+const GestaoLavanderia = lazy(() => import('./components/GestaoLavanderia'));
+const GestaoPedidosCardapio = lazy(() => import('./components/GestaoPedidosCardapio').then(m => ({ default: m.GestaoPedidosCardapio })));
+const ControleCaixa = lazy(() => import('./components/ControleCaixa'));
+const ListagemContasPagar = lazy(() => import('./components/ListagemContasPagar'));
+const CategoriasContasPagar = lazy(() => import('./components/CategoriasContasPagar'));
+const CadastroCategoriaContaPagar = lazy(() => import('./components/CadastroCategoriaContaPagar'));
+const CadastroContaPagar = lazy(() => import('./components/CadastroContaPagar'));
+const ListagemContasReceber = lazy(() => import('./components/ListagemContasReceber'));
+const CategoriasContasReceber = lazy(() => import('./components/CategoriasContasReceber'));
+const CadastroCategoriaContaReceber = lazy(() => import('./components/CadastroCategoriaContaReceber'));
+const CadastroContaReceber = lazy(() => import('./components/CadastroContaReceber'));
+const ConexoesWhatsapp = lazy(() => import('./components/ConexoesWhatsapp'));
+const AdminConexoesWhatsapp = lazy(() => import('./components/AdminConexoesWhatsapp'));
+const ListagemParceiros = lazy(() => import('./components/ListagemParceiros'));
+const CadastroParceiro = lazy(() => import('./components/CadastroParceiro'));
+const CadastroHoteis = lazy(() => import('./components/CadastroHoteis'));
+const FormHotel = lazy(() => import('./components/FormHotel').then(m => ({ default: m.FormHotel })));
+const ListagemCategoriasHotel = lazy(() => import('./components/ListagemCategoriasHotel'));
+const CadastroCategoriaHotel = lazy(() => import('./components/CadastroCategoriaHotel'));
+const ListagemPlanos = lazy(() => import('./components/ListagemPlanos'));
+const CadastroPlano = lazy(() => import('./components/CadastroPlano'));
+const GestaoCreditosSaaS = lazy(() => import('./components/GestaoCreditosSaaS').then(m => ({ default: m.GestaoCreditosSaaS })));
+const ReceitaRepasses = lazy(() => import('./components/ReceitaRepasses'));
+const ParametrosSistema = lazy(() => import('./components/ParametrosSistema').then(m => ({ default: m.ParametrosSistema })));
+const LogsSistema = lazy(() => import('./components/LogsSistema').then(m => ({ default: m.LogsSistema })));
+const NotificacoesPushAdmin = lazy(() => import('./components/NotificacoesPushAdmin').then(m => ({ default: m.NotificacoesPushAdmin })));
+const ConfiguracoesMercadoPago = lazy(() => import('./components/ConfiguracoesMercadoPago').then(m => ({ default: m.ConfiguracoesMercadoPago })));
+const ConfiguracoesHotel = lazy(() => import('./components/ConfiguracoesHotel').then(m => ({ default: m.ConfiguracoesHotel })));
+const RelatoriosHotel = lazy(() => import('./components/RelatoriosHotel'));
+const Tutoriais = lazy(() => import('./components/Tutoriais'));
+const ListagemUsuarios = lazy(() => import('./components/ListagemUsuarios'));
+const FormUsuario = lazy(() => import('./components/FormUsuario'));
+const ListagemTiposUsuarios = lazy(() => import('./components/ListagemTiposUsuarios'));
+const FormTipoUsuario = lazy(() => import('./components/FormTipoUsuario'));
+
+// ── Fallback Loading Spinners ───────────────────────────────────────────────
+const PageLoadingFallback: React.FC = () => (
+  <div className="fixed inset-0 min-h-screen w-screen bg-slate-900 bg-gradient-to-br from-[#003400] to-black flex flex-col items-center justify-center z-[100] select-none text-white p-4">
+    <div className="w-14 h-14 rounded-full border-4 border-emerald-400/20 border-t-emerald-400 animate-spin mb-4" />
+    <span className="text-white text-xl font-black tracking-widest uppercase">HOTEL NO ZAP</span>
+    <span className="text-emerald-400 text-xs font-semibold tracking-wider mt-1">Carregando...</span>
+  </div>
+);
+
+const RouteLoadingFallback: React.FC = () => (
+  <div className="w-full min-h-[400px] flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-200">
+    <div className="w-10 h-10 rounded-full border-3 border-emerald-500/20 border-t-emerald-500 animate-spin mb-3" />
+    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Carregando painel...</span>
+  </div>
+);
 
 const checkIsAssinarUrl = (pathname: string, search: string, hash: string): boolean => {
   const parts = (pathname || '').toLowerCase().replace(/\\/g, '/').split('/').filter(Boolean);
@@ -1436,27 +1483,29 @@ export const App: React.FC = () => {
 
   if (isAssinarRoute) {
     return (
-      <LpAssinar
-        onNavigateToLP={() => {
-          if (isLpDomain()) {
-            window.history.pushState({}, '', '/');
-            setActiveTab('landingpage');
-          } else if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://lp.hotelnozap.com.br';
-          } else {
-            window.history.pushState({}, '', '/lp');
-            setActiveTab('landingpage');
-          }
-        }}
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <LpAssinar
+          onNavigateToLP={() => {
+            if (isLpDomain()) {
+              window.history.pushState({}, '', '/');
+              setActiveTab('landingpage');
+            } else if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://lp.hotelnozap.com.br';
+            } else {
+              window.history.pushState({}, '', '/lp');
+              setActiveTab('landingpage');
+            }
+          }}
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1465,70 +1514,72 @@ export const App: React.FC = () => {
 
   if (is404Route) {
     return (
-      <Pagina404
-        onNavigateHome={() => {
-          if (isParceirosDomain()) {
-            window.history.pushState({}, '', '/');
-            setActiveTab('landingpage-parceiros');
-          } else if (isLpDomain()) {
-            window.history.pushState({}, '', '/');
-            setActiveTab('landingpage');
-          } else if (isAppDomain()) {
-            window.history.pushState({}, '', '/');
-            const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
-            const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
-            if (savedRole && savedEmail) {
-              const rLower = savedRole.toLowerCase();
-              if (rLower.includes('parceiro') || rLower.includes('franqueado')) {
-                setActiveTab('portal-parceiro');
-              } else if (rLower.includes('camareira') || rLower.includes('governanca')) {
-                setActiveTab('camareira');
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Pagina404
+          onNavigateHome={() => {
+            if (isParceirosDomain()) {
+              window.history.pushState({}, '', '/');
+              setActiveTab('landingpage-parceiros');
+            } else if (isLpDomain()) {
+              window.history.pushState({}, '', '/');
+              setActiveTab('landingpage');
+            } else if (isAppDomain()) {
+              window.history.pushState({}, '', '/');
+              const savedRole = localStorage.getItem('hotelnozap_user_role') || '';
+              const savedEmail = localStorage.getItem('hotelnozap_user_email') || '';
+              if (savedRole && savedEmail) {
+                const rLower = savedRole.toLowerCase();
+                if (rLower.includes('parceiro') || rLower.includes('franqueado')) {
+                  setActiveTab('portal-parceiro');
+                } else if (rLower.includes('camareira') || rLower.includes('governanca')) {
+                  setActiveTab('camareira');
+                } else {
+                  setActiveTab(rLower.includes('admin') || rLower.includes('super') ? 'admin-dashboard' : 'dashboard');
+                }
               } else {
-                setActiveTab(rLower.includes('admin') || rLower.includes('super') ? 'admin-dashboard' : 'dashboard');
+                setActiveTab('login');
               }
             } else {
+              window.history.pushState({}, '', '/');
+              setActiveTab('catalogo-hoteis');
+            }
+          }}
+          onNavigateCatalog={() => {
+            window.history.pushState({}, '', '/hoteis');
+            setActiveTab('catalogo-hoteis');
+          }}
+          onNavigateLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
               setActiveTab('login');
             }
-          } else {
-            window.history.pushState({}, '', '/');
-            setActiveTab('catalogo-hoteis');
-          }
-        }}
-        onNavigateCatalog={() => {
-          window.history.pushState({}, '', '/hoteis');
-          setActiveTab('catalogo-hoteis');
-        }}
-        onNavigateLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-      />
+          }}
+        />
+      </Suspense>
     );
   }
 
   // ── Rotas Institucionais do Hotel no Zap: /privacidade, /termos, /empresa, /quem-somos, /fale-conosco ──
   if (activeTab === 'privacidade' || pathParts[0] === 'privacidade') {
-    return <PaginaInstitucional tipo="privacidade" />;
+    return <Suspense fallback={<PageLoadingFallback />}><PaginaInstitucional tipo="privacidade" /></Suspense>;
   }
 
   if (activeTab === 'termos' || pathParts[0] === 'termos') {
-    return <PaginaInstitucional tipo="termos" />;
+    return <Suspense fallback={<PageLoadingFallback />}><PaginaInstitucional tipo="termos" /></Suspense>;
   }
 
   if (activeTab === 'informacoes-empresa' || pathParts[0] === 'empresa' || pathParts[0] === 'informacoes-empresa') {
-    return <PaginaInstitucional tipo="empresa" />;
+    return <Suspense fallback={<PageLoadingFallback />}><PaginaInstitucional tipo="empresa" /></Suspense>;
   }
 
   if (activeTab === 'quem-somos' || pathParts[0] === 'quem-somos' || pathParts[0] === 'quemsomos') {
-    return <PaginaInstitucional tipo="quem-somos" />;
+    return <Suspense fallback={<PageLoadingFallback />}><PaginaInstitucional tipo="quem-somos" /></Suspense>;
   }
 
   if (activeTab === 'fale-conosco' || pathParts[0] === 'fale-conosco' || pathParts[0] === 'faleconosco' || pathParts[0] === 'contato') {
-    return <PaginaInstitucional tipo="fale-conosco" />;
+    return <Suspense fallback={<PageLoadingFallback />}><PaginaInstitucional tipo="fale-conosco" /></Suspense>;
   }
 
   // ── Rota: /lpnovohotel ou /lp/lpnovohotel — Formulário de Cadastro de Hotel (Standalone) ──
@@ -1538,24 +1589,26 @@ export const App: React.FC = () => {
 
   if (isLpNovoHotelRoute) {
     return (
-      <LpNovoHotel
-        onNavigateToLP={() => {
-          if (isLpDomain()) {
-            window.history.pushState({}, '', '/');
-          } else {
-            window.history.pushState({}, '', '/lp');
-          }
-          setActiveTab('landingpage');
-        }}
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <LpNovoHotel
+          onNavigateToLP={() => {
+            if (isLpDomain()) {
+              window.history.pushState({}, '', '/');
+            } else {
+              window.history.pushState({}, '', '/lp');
+            }
+            setActiveTab('landingpage');
+          }}
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1565,32 +1618,34 @@ export const App: React.FC = () => {
 
   if (isLandingPageRoute) {
     return (
-      <LandingPage
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-        onNavigateToSystem={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('dashboard');
-          }
-        }}
-        onNavigateToNovoHotel={() => {
-          if (isLpDomain()) {
-            window.history.pushState({}, '', '/lpnovohotel');
-          } else {
-            window.history.pushState({}, '', '/lp/lpnovohotel');
-          }
-          setActiveTab('lp-novo-hotel');
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <LandingPage
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+          onNavigateToSystem={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('dashboard');
+            }
+          }}
+          onNavigateToNovoHotel={() => {
+            if (isLpDomain()) {
+              window.history.pushState({}, '', '/lpnovohotel');
+            } else {
+              window.history.pushState({}, '', '/lp/lpnovohotel');
+            }
+            setActiveTab('lp-novo-hotel');
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1602,31 +1657,33 @@ export const App: React.FC = () => {
 
   if (isParceirosCheckoutRoute) {
     return (
-      <CheckoutParceiro
-        onNavigateBack={() => {
-          if (isParceirosDomain()) {
-            window.history.pushState({}, '', '/');
-          } else {
-            window.history.pushState({}, '', '/parceiros');
-          }
-          setActiveTab('landingpage-parceiros');
-        }}
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-        onNavigateToDashboard={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            setActiveTab('portal-parceiro');
-          }
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <CheckoutParceiro
+          onNavigateBack={() => {
+            if (isParceirosDomain()) {
+              window.history.pushState({}, '', '/');
+            } else {
+              window.history.pushState({}, '', '/parceiros');
+            }
+            setActiveTab('landingpage-parceiros');
+          }}
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+          onNavigateToDashboard={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              setActiveTab('portal-parceiro');
+            }
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1639,32 +1696,34 @@ export const App: React.FC = () => {
 
   if (isParceirosLandingRoute) {
     return (
-      <LandingPageParceiros
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-        onNavigateToHome={() => {
-          if (isParceirosDomain()) {
-            window.location.href = 'https://hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/');
-            setActiveTab('catalogo-hoteis');
-          }
-        }}
-        onNavigateToCheckout={() => {
-          if (isParceirosDomain()) {
-            window.history.pushState({}, '', '/checkout');
-          } else {
-            window.history.pushState({}, '', '/parceiros/checkout');
-          }
-          setActiveTab('checkout-parceiro');
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <LandingPageParceiros
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+          onNavigateToHome={() => {
+            if (isParceirosDomain()) {
+              window.location.href = 'https://hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/');
+              setActiveTab('catalogo-hoteis');
+            }
+          }}
+          onNavigateToCheckout={() => {
+            if (isParceirosDomain()) {
+              window.history.pushState({}, '', '/checkout');
+            } else {
+              window.history.pushState({}, '', '/parceiros/checkout');
+            }
+            setActiveTab('checkout-parceiro');
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1672,31 +1731,33 @@ export const App: React.FC = () => {
 
   if (isRoomRoute) {
     return (
-      <DetalhesQuarto 
-        hotel={selectedHotelForPage}
-        quarto={selectedQuartoForPage}
-        onNavigateToHotel={() => {
-          const hSlug = selectedHotelForPage ? slugify(selectedHotelForPage.name) : (pathParts[1] || 'hotel');
-          window.history.pushState({}, '', `/hotel/${hSlug}`);
-          setActiveTab('pagina-hotel');
-        }}
-        onNavigateToCatalog={() => {
-          window.history.pushState({}, '', '/hoteis');
-          setActiveTab('catalogo-hoteis');
-        }}
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-        onNavigateToMinhaConta={() => {
-          window.history.pushState({}, '', '/minhaconta');
-          setActiveTab('minhaconta');
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <DetalhesQuarto 
+          hotel={selectedHotelForPage}
+          quarto={selectedQuartoForPage}
+          onNavigateToHotel={() => {
+            const hSlug = selectedHotelForPage ? slugify(selectedHotelForPage.name) : (pathParts[1] || 'hotel');
+            window.history.pushState({}, '', `/hotel/${hSlug}`);
+            setActiveTab('pagina-hotel');
+          }}
+          onNavigateToCatalog={() => {
+            window.history.pushState({}, '', '/hoteis');
+            setActiveTab('catalogo-hoteis');
+          }}
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+          onNavigateToMinhaConta={() => {
+            window.history.pushState({}, '', '/minhaconta');
+            setActiveTab('minhaconta');
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1707,13 +1768,15 @@ export const App: React.FC = () => {
   if (isCardapioRoute) {
     const cardapioSlug = pathParts[1] === 'cardapio' ? (pathParts[2] || '') : (pathParts[0] === 'cardapio' ? pathParts[1] || '' : '');
     return (
-      <CardapioHotel
-        hotelSlug={cardapioSlug}
-        onNavigateHome={() => {
-          window.history.pushState({}, '', '/');
-          setActiveTab('catalogo-hoteis');
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <CardapioHotel
+          hotelSlug={cardapioSlug}
+          onNavigateHome={() => {
+            window.history.pushState({}, '', '/');
+            setActiveTab('catalogo-hoteis');
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1724,36 +1787,40 @@ export const App: React.FC = () => {
   if (isHotelRoute) {
     const hotelSlug = pathParts.length >= 2 ? pathParts[1] : '';
     return (
-      <PaginaHotel 
-        hotel={selectedHotelForPage}
-        hotelSlug={hotelSlug}
-        onNavigateBack={() => {
-          window.history.pushState({}, '', '/hoteis');
-          setActiveTab('catalogo-hoteis');
-        }}
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-        onNavigateToRoom={(quarto) => {
-          setSelectedQuartoForPage(quarto);
-          setActiveTab('detalhes-quarto');
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <PaginaHotel 
+          hotel={selectedHotelForPage}
+          hotelSlug={hotelSlug}
+          onNavigateBack={() => {
+            window.history.pushState({}, '', '/hoteis');
+            setActiveTab('catalogo-hoteis');
+          }}
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+          onNavigateToRoom={(quarto) => {
+            setSelectedQuartoForPage(quarto);
+            setActiveTab('detalhes-quarto');
+          }}
+        />
+      </Suspense>
     );
   }
 
 
   if (activeTab === 'catalogo-hoteis' || (!isAppDomain() && !isLpDomain() && !isParceirosDomain() && (pathParts.length === 0 || (pathParts[0] === 'hoteis' && pathParts.length <= 1) || pathParts[0] === 'cidades' || pathParts[0] === 'cidade'))) {
     return (
-      <CatalogoHoteis 
-        onNavigateToLogin={handleNavigateToLoginFromCatalogo}
-        onNavigateToHotel={handleNavigateToHotelFromCatalogo}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <CatalogoHoteis 
+          onNavigateToLogin={handleNavigateToLoginFromCatalogo}
+          onNavigateToHotel={handleNavigateToHotelFromCatalogo}
+        />
+      </Suspense>
     );
   }
 
@@ -1783,108 +1850,110 @@ export const App: React.FC = () => {
       window.history.replaceState({}, '', '/minhaconta');
     }
     return (
-      <AreaHospede
-        userRole={currentUserRole || 'hospede'}
-        userName={localStorage.getItem('hotelnozap_user_name') || 'Hóspede'}
-        userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
-        onNavigateToHotel={async (hotelIdentifier: string, codigoCupom?: string, cupomObj?: any) => {
-          const query = codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : '';
-          
-          try {
-            const allHoteis = await hoteisService.getHoteis();
-            const rawId = (cupomObj?.hotel_id || hotelIdentifier || '').replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0].trim();
-            const targetName = (cupomObj?.hotel_nome || hotelIdentifier || '').trim();
-            const normCleanName = targetName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-            const safeSlugFromInput = slugify(rawId || targetName);
+      <Suspense fallback={<PageLoadingFallback />}>
+        <AreaHospede
+          userRole={currentUserRole || 'hospede'}
+          userName={localStorage.getItem('hotelnozap_user_name') || 'Hóspede'}
+          userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
+          onNavigateToHotel={async (hotelIdentifier: string, codigoCupom?: string, cupomObj?: any) => {
+            const query = codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : '';
+            
+            try {
+              const allHoteis = await hoteisService.getHoteis();
+              const rawId = (cupomObj?.hotel_id || hotelIdentifier || '').replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0].trim();
+              const targetName = (cupomObj?.hotel_nome || hotelIdentifier || '').trim();
+              const normCleanName = targetName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+              const safeSlugFromInput = slugify(rawId || targetName);
 
-            const matched = (allHoteis || []).find((h: any) => {
-              if (rawId && h.id === rawId) return true;
-              if (cupomObj?.hotel_id && h.id === cupomObj.hotel_id) return true;
-              if (h.name && h.name.toLowerCase() === targetName.toLowerCase()) return true;
-              const hNorm = h.name ? h.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') : '';
-              if (hNorm && normCleanName && (hNorm === normCleanName || hNorm.includes(normCleanName) || normCleanName.includes(hNorm))) return true;
-              const hSlug = h.name ? slugify(h.name) : '';
-              if (hSlug && (hSlug === safeSlugFromInput || hSlug.includes(safeSlugFromInput))) return true;
-              return false;
-            });
+              const matched = (allHoteis || []).find((h: any) => {
+                if (rawId && h.id === rawId) return true;
+                if (cupomObj?.hotel_id && h.id === cupomObj.hotel_id) return true;
+                if (h.name && h.name.toLowerCase() === targetName.toLowerCase()) return true;
+                const hNorm = h.name ? h.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') : '';
+                if (hNorm && normCleanName && (hNorm === normCleanName || hNorm.includes(normCleanName) || normCleanName.includes(hNorm))) return true;
+                const hSlug = h.name ? slugify(h.name) : '';
+                if (hSlug && (hSlug === safeSlugFromInput || hSlug.includes(safeSlugFromInput))) return true;
+                return false;
+              });
 
-            if (matched) {
-              const matchedPublic: PublicHotel = {
-                id: matched.id,
-                name: matched.name,
-                link: matched.link,
-                category: matched.category || 'Hotel & Pousada',
-                city: matched.city || matched.cityUf?.split('/')[0]?.trim() || '',
-                uf: matched.uf || matched.cityUf?.split('/')[1]?.trim() || '',
-                neighborhood: matched.neighborhood || 'Centro',
-                imageUrl: matched.imageUrl || '',
-                rating: 4.90,
-                reviewsCount: 45,
-                pricePerNight: 0,
-                whatsappPhone: (matched.whatsapp ? matched.whatsapp.replace(/\D/g, '') : ''),
-                instagram: matched.instagram,
-                facebook: matched.facebook,
-                tiktok: matched.tiktok,
-                whatsapp: matched.whatsapp,
-                cancellationText: 'Cancelamento flexível via Zap',
-                capacity: 0,
-                roomTitle: 'Contato Direto',
-                amenities: []
-              };
-              setSelectedHotelForPage(matchedPublic);
-              const targetSlug = matched.link ? matched.link.replace(/^\/(hotel|hoteis)\/?/, '') : slugify(matched.name);
-              const targetUrl = `/hoteis/${targetSlug}${query}`;
-              window.history.pushState({}, '', targetUrl);
-              setActiveTab('pagina-hotel');
-              return;
+              if (matched) {
+                const matchedPublic: PublicHotel = {
+                  id: matched.id,
+                  name: matched.name,
+                  link: matched.link,
+                  category: matched.category || 'Hotel & Pousada',
+                  city: matched.city || matched.cityUf?.split('/')[0]?.trim() || '',
+                  uf: matched.uf || matched.cityUf?.split('/')[1]?.trim() || '',
+                  neighborhood: matched.neighborhood || 'Centro',
+                  imageUrl: matched.imageUrl || '',
+                  rating: 4.90,
+                  reviewsCount: 45,
+                  pricePerNight: 0,
+                  whatsappPhone: (matched.whatsapp ? matched.whatsapp.replace(/\D/g, '') : ''),
+                  instagram: matched.instagram,
+                  facebook: matched.facebook,
+                  tiktok: matched.tiktok,
+                  whatsapp: matched.whatsapp,
+                  cancellationText: 'Cancelamento flexível via Zap',
+                  capacity: 0,
+                  roomTitle: 'Contato Direto',
+                  amenities: []
+                };
+                setSelectedHotelForPage(matchedPublic);
+                const targetSlug = matched.link ? matched.link.replace(/^\/(hotel|hoteis)\/?/, '') : slugify(matched.name);
+                const targetUrl = `/hoteis/${targetSlug}${query}`;
+                window.history.pushState({}, '', targetUrl);
+                setActiveTab('pagina-hotel');
+                return;
+              }
+            } catch (e) {
+              console.warn('Erro ao resolver hotel para navegação em Área do Hóspede:', e);
             }
-          } catch (e) {
-            console.warn('Erro ao resolver hotel para navegação em Área do Hóspede:', e);
-          }
 
-          const fallbackSlug = slugify(hotelIdentifier.replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0]);
-          const targetUrl = `/hoteis/${fallbackSlug}${query}`;
-          window.history.pushState({}, '', targetUrl);
-          setActiveTab('pagina-hotel');
-        }}
-        onNavigateToSystem={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
-            setActiveTab('dashboard');
-          }
-        }}
-        onNavigateToLogin={() => {
-          if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
-            window.location.href = 'https://app.hotelnozap.com.br/';
-          } else {
-            window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
-            setActiveTab('login');
-          }
-        }}
-        onLogout={async () => {
-          try {
-            await supabase.auth.signOut();
-          } catch { /* ignore */ }
-          try {
-            localStorage.removeItem('hotelnozap_user_role');
-            localStorage.removeItem('hotelnozap_user_email');
-            localStorage.removeItem('hotelnozap_user_name');
-            localStorage.removeItem('hotelnozap_current_user');
-            localStorage.removeItem('hotelnozap_sb_session');
-            localStorage.removeItem('hotelnozap_hotel_atual');
-            localStorage.removeItem('hotelnozap_last_authenticated_at');
-            sessionStorage.clear();
-          } catch { /* ignore */ }
-          setCurrentUserRole('');
-          
-          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-          const defaultProd = import.meta.env?.VITE_APP_BASE_URL || 'https://app.hotelnozap.com.br/';
-          const targetHome = isLocalhost ? `${window.location.protocol}//${window.location.host}/` : (window.location.origin || defaultProd);
-          window.location.href = targetHome;
-        }}
-      />
+            const fallbackSlug = slugify(hotelIdentifier.replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0]);
+            const targetUrl = `/hoteis/${fallbackSlug}${query}`;
+            window.history.pushState({}, '', targetUrl);
+            setActiveTab('pagina-hotel');
+          }}
+          onNavigateToSystem={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
+              setActiveTab('dashboard');
+            }
+          }}
+          onNavigateToLogin={() => {
+            if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+              window.location.href = 'https://app.hotelnozap.com.br/';
+            } else {
+              window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
+              setActiveTab('login');
+            }
+          }}
+          onLogout={async () => {
+            try {
+              await supabase.auth.signOut();
+            } catch { /* ignore */ }
+            try {
+              localStorage.removeItem('hotelnozap_user_role');
+              localStorage.removeItem('hotelnozap_user_email');
+              localStorage.removeItem('hotelnozap_user_name');
+              localStorage.removeItem('hotelnozap_current_user');
+              localStorage.removeItem('hotelnozap_sb_session');
+              localStorage.removeItem('hotelnozap_hotel_atual');
+              localStorage.removeItem('hotelnozap_last_authenticated_at');
+              sessionStorage.clear();
+            } catch { /* ignore */ }
+            setCurrentUserRole('');
+            
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const defaultProd = import.meta.env?.VITE_APP_BASE_URL || 'https://app.hotelnozap.com.br/';
+            const targetHome = isLocalhost ? `${window.location.protocol}//${window.location.host}/` : (window.location.origin || defaultProd);
+            window.location.href = targetHome;
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1900,30 +1969,32 @@ export const App: React.FC = () => {
 
   if (activeTab === 'login') {
     return (
-      <Login 
-        onLoginSuccess={(userData) => {
-          if (userData?.role) {
-            setCurrentUserRole(userData.role);
-          }
-          const roleLower = (userData?.role || '').toLowerCase();
-          if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
-            setActiveTab('portal-parceiro');
-            return;
-          }
-          if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
-            window.history.pushState({}, '', '/minhaconta');
-            setActiveTab('minhaconta');
-            return;
-          }
-          if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
-            window.history.pushState({}, '', '/camareira');
-            setActiveTab('camareira');
-            return;
-          }
-          const isAdm = roleLower.includes('admin') || roleLower.includes('super');
-          setActiveTab(isAdm ? 'admin-dashboard' : 'dashboard');
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Login 
+          onLoginSuccess={(userData) => {
+            if (userData?.role) {
+              setCurrentUserRole(userData.role);
+            }
+            const roleLower = (userData?.role || '').toLowerCase();
+            if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
+              setActiveTab('portal-parceiro');
+              return;
+            }
+            if (roleLower.includes('hospede') || roleLower.includes('hóspede')) {
+              window.history.pushState({}, '', '/minhaconta');
+              setActiveTab('minhaconta');
+              return;
+            }
+            if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
+              window.history.pushState({}, '', '/camareira');
+              setActiveTab('camareira');
+              return;
+            }
+            const isAdm = roleLower.includes('admin') || roleLower.includes('super');
+            setActiveTab(isAdm ? 'admin-dashboard' : 'dashboard');
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -1986,15 +2057,17 @@ export const App: React.FC = () => {
     }
 
     return (
-      <PainelCamareira
-        currentUserRole={currentUserRole}
-        activeHotel={activeHotel}
-        onNavigateBack={isAdminUser ? () => {
-          window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
-          setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard');
-        } : undefined}
-        onLogout={() => handleLogout()}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <PainelCamareira
+          currentUserRole={currentUserRole}
+          activeHotel={activeHotel}
+          onNavigateBack={isAdminUser ? () => {
+            window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
+            setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard');
+          } : undefined}
+          onLogout={() => handleLogout()}
+        />
+      </Suspense>
     );
   }
 
@@ -2051,15 +2124,17 @@ export const App: React.FC = () => {
     }
 
     return (
-      <PortalParceiro
-        onLogout={async () => {
-          await handleLogout();
-          setActiveTab('login');
-        }}
-        onNavigateHome={() => {
-          setActiveTab('catalogo-hoteis');
-        }}
-      />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <PortalParceiro
+          onLogout={async () => {
+            await handleLogout();
+            setActiveTab('login');
+          }}
+          onNavigateHome={() => {
+            setActiveTab('catalogo-hoteis');
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -2087,42 +2162,44 @@ export const App: React.FC = () => {
 
   if (isHotelExpired && hotelCreditInfo) {
     return (
-      <TelaPlanoExpirado
-        hotel={activeHotel}
-        infoCredito={hotelCreditInfo}
-        onPlanSubscribed={async () => {
-          try {
-            const dbHoteis = await hoteisService.getHoteis();
-            if (dbHoteis && dbHoteis.length > 0) {
-              const matched = dbHoteis.find(h => h.id === activeHotel.id);
-              if (matched) {
-                const freshActive: HotelAtivo = {
-                  id: matched.id,
-                  name: matched.name,
-                  category: matched.category,
-                  cityUf: matched.cityUf,
-                  cnpj: matched.cnpj,
-                  status: matched.status,
-                  imageUrl: matched.imageUrl,
-                  plan: matched.plan,
-                  managerName: matched.managerName,
-                  managerEmail: matched.managerEmail,
-                  managerPhone: matched.managerPhone,
-                  managerCpf: matched.managerCpf,
-                  loginEmail: matched.loginEmail,
-                  whatsapp: matched.whatsapp,
-                  notes: (matched as any).notes || (matched as any).observacoes,
-                  isImportedFromGoogle: (matched as any).isImportedFromGoogle
-                };
-                currentHotelService.setCurrentHotel(freshActive);
-                setActiveHotel(freshActive);
+      <Suspense fallback={<PageLoadingFallback />}>
+        <TelaPlanoExpirado
+          hotel={activeHotel}
+          infoCredito={hotelCreditInfo}
+          onPlanSubscribed={async () => {
+            try {
+              const dbHoteis = await hoteisService.getHoteis();
+              if (dbHoteis && dbHoteis.length > 0) {
+                const matched = dbHoteis.find(h => h.id === activeHotel.id);
+                if (matched) {
+                  const freshActive: HotelAtivo = {
+                    id: matched.id,
+                    name: matched.name,
+                    category: matched.category,
+                    cityUf: matched.cityUf,
+                    cnpj: matched.cnpj,
+                    status: matched.status,
+                    imageUrl: matched.imageUrl,
+                    plan: matched.plan,
+                    managerName: matched.managerName,
+                    managerEmail: matched.managerEmail,
+                    managerPhone: matched.managerPhone,
+                    managerCpf: matched.managerCpf,
+                    loginEmail: matched.loginEmail,
+                    whatsapp: matched.whatsapp,
+                    notes: (matched as any).notes || (matched as any).observacoes,
+                    isImportedFromGoogle: (matched as any).isImportedFromGoogle
+                  };
+                  currentHotelService.setCurrentHotel(freshActive);
+                  setActiveHotel(freshActive);
+                }
               }
-            }
-          } catch { /* ignore */ }
-          setActiveTab('dashboard');
-        }}
-        onLogout={() => handleLogout()}
-      />
+            } catch { /* ignore */ }
+            setActiveTab('dashboard');
+          }}
+          onLogout={() => handleLogout()}
+        />
+      </Suspense>
     );
   }
 
@@ -3452,7 +3529,8 @@ export const App: React.FC = () => {
 
         {/* VIEW ROUTER */}
         <div className="flex-1 overflow-y-auto" ref={mainContentRef}>
-          {activeTab === 'admin-dashboard' && !isHotelUser && (
+          <Suspense fallback={<RouteLoadingFallback />}>
+            {activeTab === 'admin-dashboard' && !isHotelUser && (
             <AdminMasterDashboard
               hideSidebar={true}
               adminName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Administrador'; } catch { return 'Administrador'; } })()}
@@ -3998,19 +4076,24 @@ export const App: React.FC = () => {
           {activeTab === 'admin-conexoes' && !isHotelUser && (
             <AdminConexoesWhatsapp
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
-              onNavigateToHotel={(hotelId) => {
-                const targetHotel = (INITIAL_HOTEIS || []).find((h) => h.id === hotelId);
-                if (targetHotel) {
-                  currentHotelService.setCurrentHotel({
-                    id: targetHotel.id,
-                    name: targetHotel.name,
-                    category: targetHotel.category,
-                    cnpj: targetHotel.cnpj,
-                    cityUf: targetHotel.cityUf,
-                    status: targetHotel.status as any,
-                    imageUrl: targetHotel.imageUrl
-                  });
-                  setActiveTab('dashboard');
+              onNavigateToHotel={async (hotelId) => {
+                try {
+                  const dbHoteis = await hoteisService.getHoteis();
+                  const targetHotel = (dbHoteis || []).find((h) => h.id === hotelId);
+                  if (targetHotel) {
+                    currentHotelService.setCurrentHotel({
+                      id: targetHotel.id,
+                      name: targetHotel.name,
+                      category: targetHotel.category,
+                      cnpj: targetHotel.cnpj,
+                      cityUf: targetHotel.cityUf,
+                      status: targetHotel.status as any,
+                      imageUrl: targetHotel.imageUrl
+                    });
+                    setActiveTab('dashboard');
+                  }
+                } catch (e) {
+                  console.error('Erro ao navegar para hotel:', e);
                 }
               }}
             />
@@ -4120,6 +4203,7 @@ export const App: React.FC = () => {
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>
             </div>
           )}
+          </Suspense>
         </div>
       </main>
 

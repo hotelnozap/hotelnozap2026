@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
             req.on('data', chunk => { body += chunk; });
             req.on('end', async () => {
               try {
+                const data = JSON.parse(body || '{}');
                 const appId = env.ONESIGNAL_APP_ID || '40809032-1904-4b7c-80cb-f1e2e00992f4';
                 const restApiKey = env.ONESIGNAL_REST_KEY;
 
@@ -76,5 +77,26 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    build: {
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('@supabase') || id.includes('supabase')) {
+                return 'vendor-supabase';
+              }
+              if (id.includes('lucide-react')) {
+                return 'vendor-icons';
+              }
+              return 'vendor-utils';
+            }
+          }
+        }
+      }
+    }
   };
 });
