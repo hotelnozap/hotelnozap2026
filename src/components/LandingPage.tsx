@@ -313,6 +313,45 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     };
   }, []);
 
+  // Rastreamento e Persistência do Parceiro Indicador (?ref= ou ?cupom=)
+  const [partnerRef, setPartnerRef] = useState<string>('HOTELNOZAP');
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlRef = params.get('ref') || params.get('cupom') || params.get('coupon');
+      if (urlRef && urlRef.trim()) {
+        const cleanRef = urlRef.trim().toUpperCase();
+        setPartnerRef(cleanRef);
+        localStorage.setItem('hotelnozap_partner_ref', cleanRef);
+        return;
+      }
+
+      if (window.location.hash && window.location.hash.includes('?')) {
+        const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+        const hashRef = hashParams.get('ref') || hashParams.get('cupom') || hashParams.get('coupon');
+        if (hashRef && hashRef.trim()) {
+          const cleanHashRef = hashRef.trim().toUpperCase();
+          setPartnerRef(cleanHashRef);
+          localStorage.setItem('hotelnozap_partner_ref', cleanHashRef);
+          return;
+        }
+      }
+
+      // Se não veio na URL, recupera indicação prévia salva no navegador
+      const savedRef = localStorage.getItem('hotelnozap_partner_ref');
+      if (savedRef && savedRef.trim()) {
+        setPartnerRef(savedRef.trim().toUpperCase());
+        return;
+      }
+
+      // Acesso direto sem indicação: parceiro oficial Hotel no Zap
+      setPartnerRef('HOTELNOZAP');
+    } catch {
+      setPartnerRef('HOTELNOZAP');
+    }
+  }, []);
+
   // Carregar planos da tabela 'planos' no Supabase com sincronização em tempo real
   useEffect(() => {
     let isMounted = true;
@@ -535,14 +574,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
     };
   }, [roomsCount, dailyRate, occupancyRate]);
 
-  // Handler para navegar para o formulário de cadastro completo do hotel
+  // Gera a URL de assinatura/checkout vinculada ao parceiro indicador atual
+  const getAssinarUrl = (planName?: string) => {
+    const cleanRef = partnerRef || 'HOTELNOZAP';
+    const params = new URLSearchParams();
+    params.set('ref', cleanRef);
+    if (planName) {
+      const cleanPlan = planName.split('•')[0].replace(/\s*\([^)]*\)/g, '').trim();
+      params.set('plano', cleanPlan);
+    }
+    return `https://hotelnozap.com.br/parceiros/assinar?${params.toString()}`;
+  };
+
+  // Handler para navegar para o formulário de cadastro/assinatura com o cupom do parceiro
   const handleOpenProspectModal = (planName?: string) => {
-    // Abrir a página de cadastro multi-etapas /lp/lpnovohotel em nova aba passando o plano selecionado
-    const cleanPlan = planName ? planName.split('•')[0].trim() : '';
-    const url = cleanPlan 
-      ? `/lp/lpnovohotel?plano=${encodeURIComponent(cleanPlan)}` 
-      : '/lp/lpnovohotel';
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const url = getAssinarUrl(planName);
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!win) {
+      window.location.href = url;
+    }
   };
 
   // Submissão do Prospecto no Supabase (tabela hoteis com status: 'prospecto')
@@ -573,8 +623,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         managerEmail: prospectForm.email.trim(),
         loginEmail: prospectForm.email.trim(),
         status: 'prospecto',
-        partnerRef: 'HOTELNOZAP',
-        notes: `Prospecto cadastrado na Landing Page (/lp) em ${new Date().toLocaleDateString('pt-BR')}. Plano escolhido: ${selectedPlanForProspect}. Parceiro: HOTELNOZAP. Observações: ${prospectForm.notes}`,
+        partnerRef: partnerRef || 'HOTELNOZAP',
+        notes: `Prospecto cadastrado na Landing Page (/lp) em ${new Date().toLocaleDateString('pt-BR')}. Plano escolhido: ${selectedPlanForProspect}. Parceiro: ${partnerRef || 'HOTELNOZAP'}. Observações: ${prospectForm.notes}`,
         link: `/hoteis/${prospectForm.hotelName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')}`
       };
 
@@ -630,7 +680,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
               Entrar
             </button>
             <a
-              href="/lp/lpnovohotel"
+              href={getAssinarUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs xl:text-sm px-3 sm:px-4 py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
@@ -695,7 +745,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 Acessar Login
               </button>
               <a
-                href="/lp/lpnovohotel"
+                href={getAssinarUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}
@@ -727,7 +777,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
 
             <div className="flex justify-center mb-6">
               <a
-                href="/lp/lpnovohotel"
+                href={getAssinarUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#003400] hover:bg-[#002000] text-white font-bold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
@@ -1510,7 +1560,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                     Com <strong className="text-[#6cf8bb]">{occupancyRate}% de ocupação</strong> ({totalDiariasMes} diárias/mês), seu faturamento bruto é de cerca de <strong>R$ {Math.round(faturamentoEstimado).toLocaleString('pt-BR')},00/mês</strong>. Sem o Hotel no Zap, você deixaria cerca de <strong className="text-[#FDB116]">R$ {Math.round(economiaAnual).toLocaleString('pt-BR')},00 por ano</strong> em comissões para intermediários. Esse lucro agora fica 100% no seu caixa!
                   </p>
                   <a
-                    href="/lp/lpnovohotel"
+                    href={getAssinarUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-black text-xs sm:text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
@@ -1881,7 +1931,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
               <a
-                href="/lp/lpnovohotel"
+                href={getAssinarUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#FDB116] hover:bg-[#e59f10] text-[#0b1c30] font-extrabold text-sm sm:text-base px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"

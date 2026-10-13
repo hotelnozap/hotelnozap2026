@@ -218,13 +218,28 @@ const LpAssinar: React.FC<LpAssinarProps> = ({ onNavigateToLP, onNavigateToLogin
     try {
       const params = new URLSearchParams(window.location.search);
       const val = params.get('ref') || params.get('cupom') || params.get('coupon');
-      if (val) return val.trim().toUpperCase();
+      if (val && val.trim()) {
+        const cleanVal = val.trim().toUpperCase();
+        localStorage.setItem('hotelnozap_partner_ref', cleanVal);
+        return cleanVal;
+      }
 
       if (window.location.hash && window.location.hash.includes('?')) {
         const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
         const hVal = hashParams.get('ref') || hashParams.get('cupom') || hashParams.get('coupon');
-        if (hVal) return hVal.trim().toUpperCase();
+        if (hVal && hVal.trim()) {
+          const cleanHVal = hVal.trim().toUpperCase();
+          localStorage.setItem('hotelnozap_partner_ref', cleanHVal);
+          return cleanHVal;
+        }
       }
+
+      // Se não veio na URL, recupera indicação salva no localStorage
+      const savedRef = localStorage.getItem('hotelnozap_partner_ref');
+      if (savedRef && savedRef.trim()) {
+        return savedRef.trim().toUpperCase();
+      }
+
       return 'HOTELNOZAP';
     } catch {
       return 'HOTELNOZAP';

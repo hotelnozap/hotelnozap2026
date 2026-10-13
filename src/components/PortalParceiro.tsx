@@ -278,8 +278,13 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
     carregarDadosDoBanco();
   }, []);
 
-  // Link Oficial de Indicação
+  // Link Oficial de Indicação da Franquia/Parceiro (Leva para a Landing Page de Alta Conversão)
   const referralLink = partnerProfile.cupom
+    ? `https://lp.hotelnozap.com.br/?ref=${partnerProfile.cupom}`
+    : 'https://lp.hotelnozap.com.br';
+
+  // Link Direto para o Formulário de Assinatura/Cadastro
+  const directCheckoutLink = partnerProfile.cupom
     ? `https://hotelnozap.com.br/parceiros/assinar?ref=${partnerProfile.cupom}`
     : 'https://hotelnozap.com.br/parceiros/assinar';
 
