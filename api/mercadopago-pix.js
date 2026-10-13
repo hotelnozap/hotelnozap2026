@@ -298,22 +298,75 @@ export default async function handler(req, res) {
           if (mpData.status === 'approved') {
             if (hotelId && supabaseAdmin) {
               try {
-                const { data: alreadyUsed } = await supabaseAdmin
+                const { data: currentH } = await supabaseAdmin
                   .from('hoteis')
-                  .select('id, nome')
-                  .like('notes', `%MP_ID=${paymentId}%`)
+                  .select('id, nome, plano, observacoes')
+                  .eq('id', hotelId)
                   .maybeSingle();
 
-                if (alreadyUsed && alreadyUsed.id !== hotelId) {
-                  console.warn(`[MP-PIX] FASE2A: Pagamento ${paymentId} já consumido por outro hotel (${alreadyUsed.id}).`);
-                  return res.status(400).json({ approved: false, error: 'Este pagamento já foi vinculado a outro hotel.' });
+                const cleanObs = (currentH?.observacoes || '').replace(/\s*<!-- HOTEL_CREDITOS_JSON:.*?:END_HOTEL_CREDITOS -->\s*/gs, '').trim();
+                
+                // Extrai créditos anteriores
+                const matchOld = (currentH?.observacoes || '').match(/<!-- HOTEL_CREDITOS_JSON:(.*?):END_HOTEL_CREDITOS -->/s);
+                let existingCreds = null;
+                if (matchOld && matchOld[1]) {
+                  try { existingCreds = JSON.parse(matchOld[1]); } catch {}
                 }
+
+                // Calcula dias
+                const valorTrans = Number(mpData.transaction_amount || valorEsperado || 0);
+                const descTrans = String(mpData.description || currentH?.plano || '').toLowerCase();
+                let totalDias = 45;
+                let creditosQtd = 1;
+                let nomePlano = currentH?.plano || '1 Crédito';
+
+                if (descTrans.includes('12') || descTrans.includes('anual') || valorTrans >= 2000) {
+                  totalDias = 425; creditosQtd = 12; nomePlano = '12 Créditos (Anual)';
+                } else if (descTrans.includes('8') || valorTrans >= 1500) {
+                  totalDias = 270; creditosQtd = 8; nomePlano = '8 Créditos';
+                } else if (descTrans.includes('7') || valorTrans >= 1300) {
+                  totalDias = 210; creditosQtd = 7; nomePlano = '7 Créditos';
+                } else if (descTrans.includes('6') || descTrans.includes('semest') || valorTrans >= 1100) {
+                  totalDias = 225; creditosQtd = 6; nomePlano = '6 Créditos (Semestral)';
+                } else if (descTrans.includes('5') || valorTrans >= 900) {
+                  totalDias = 180; creditosQtd = 5; nomePlano = '5 Créditos';
+                } else if (descTrans.includes('4') || valorTrans >= 700) {
+                  totalDias = 150; creditosQtd = 4; nomePlano = '4 Créditos';
+                } else if (descTrans.includes('3') || descTrans.includes('trimest') || valorTrans >= 500) {
+                  totalDias = 120; creditosQtd = 3; nomePlano = '3 Créditos (Trimestre de Ouro)';
+                } else if (descTrans.includes('2') || descTrans.includes('bimest') || valorTrans >= 300) {
+                  totalDias = 75; creditosQtd = 2; nomePlano = '2 Créditos (Bimestral)';
+                }
+
+                let baseTime = Date.now();
+                if (existingCreds && existingCreds.expiracao) {
+                  const currExp = new Date(existingCreds.expiracao).getTime();
+                  if (currExp > baseTime) baseTime = currExp;
+                }
+                const novaExpiracao = new Date(baseTime + totalDias * 24 * 60 * 60 * 1000);
+
+                const creditosInfo = {
+                  saldoCreditos: (existingCreds?.saldoCreditos || 0) + creditosQtd,
+                  expiracao: novaExpiracao.toISOString(),
+                  dataCompra: new Date().toISOString().split('T')[0],
+                  emDegustacao: false,
+                  plano: nomePlano,
+                  valor: valorTrans,
+                  paymentId: String(paymentId),
+                  metodo: 'pix_mercadopago',
+                  origem: 'api_check'
+                };
+
+                const auditMsg = `[PAGAMENTO APROVADO] Plano "${nomePlano}" ativado via API Check (ID: ${paymentId}) em ${new Date().toLocaleString('pt-BR')}. Validade: ${novaExpiracao.toLocaleDateString('pt-BR')} (+${totalDias} dias).`;
+                const tagCred = `<!-- HOTEL_CREDITOS_JSON:${JSON.stringify(creditosInfo)}:END_HOTEL_CREDITOS -->`;
+                const finalObs = cleanObs ? `${cleanObs}\n${auditMsg}\n${tagCred}` : `${auditMsg}\n${tagCred}`;
 
                 await supabaseAdmin.from('hoteis').update({ 
                   status: 'ativo',
-                  notes: `Ativação via paymentId MP_ID=${paymentId} em ${new Date().toLocaleString('pt-BR')}`
+                  plano: nomePlano,
+                  observacoes: finalObs
                 }).eq('id', hotelId); 
-                console.log(`[MP-PIX] action=check FASE2A hotel ${hotelId} status atualizado PARA ATIVO via paymentId MP.`); 
+                console.log(`[MP-PIX] action=check FASE2A hotel ${hotelId} ATIVADO + CRÉDITOS SALVOS até ${novaExpiracao.toISOString()}`); 
               } catch (uerr) { console.warn('[MP-PIX] FASE2A update erro:', uerr); }
             }
             return res.status(200).json({ approved: true, status: 'approved', source: 'mercadopago_payment_id', mpStatus: mpData.status });

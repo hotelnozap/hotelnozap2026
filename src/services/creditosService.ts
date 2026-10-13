@@ -183,6 +183,17 @@ export interface InfoCreditoHotel {
 
 const STORAGE_CREDITOS_KEY = 'hotelnozap_creditos_hoteis_v1';
 
+export const extractCreditosFromObservacoes = (observacoes?: string | null): any | null => {
+  if (!observacoes) return null;
+  const match = observacoes.match(/<!-- HOTEL_CREDITOS_JSON:(.*?):END_HOTEL_CREDITOS -->/s);
+  if (!match || !match[1]) return null;
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    return null;
+  }
+};
+
 export const creditosService = {
   getPacotes(): PacoteCredito[] {
     return PACOTES_CREDITOS_MODELO_1;
@@ -277,7 +288,33 @@ export const creditosService = {
     let emDegustacao = true;
     let dataCompraStr = new Date().toISOString().split('T')[0];
 
-    if (stored && stored.expiracao) {
+    // 1. Verifica se existem créditos gravados diretamente no banco de dados (via Webhook Server-side)
+    const serverCreditos = extractCreditosFromObservacoes(hotel?.observacoes || hotel?.notes);
+
+    if (serverCreditos && serverCreditos.expiracao) {
+      const serverExp = new Date(serverCreditos.expiracao);
+      const storedExp = stored?.expiracao ? new Date(stored.expiracao) : null;
+      // Sincroniza se o servidor for mais recente ou se o cliente ainda estava em degustação
+      if (!storedExp || serverExp.getTime() > storedExp.getTime() || (stored && stored.emDegustacao && !serverCreditos.emDegustacao)) {
+        expiracaoDate = serverExp;
+        saldoCreditos = serverCreditos.saldoCreditos || 1;
+        emDegustacao = Boolean(serverCreditos.emDegustacao);
+        if (serverCreditos.dataCompra) {
+          dataCompraStr = serverCreditos.dataCompra;
+        }
+        this.saveCreditoHotel(hotelId, saldoCreditos, expiracaoDate.toISOString(), emDegustacao, dataCompraStr);
+      } else if (stored && stored.expiracao) {
+        expiracaoDate = new Date(stored.expiracao);
+        saldoCreditos = stored.saldoCreditos || 1;
+        emDegustacao = Boolean(stored.emDegustacao);
+        if (stored.dataCompra) dataCompraStr = stored.dataCompra;
+      } else {
+        expiracaoDate = serverExp;
+        saldoCreditos = serverCreditos.saldoCreditos || 1;
+        emDegustacao = Boolean(serverCreditos.emDegustacao);
+        if (serverCreditos.dataCompra) dataCompraStr = serverCreditos.dataCompra;
+      }
+    } else if (stored && stored.expiracao) {
       expiracaoDate = new Date(stored.expiracao);
       saldoCreditos = stored.saldoCreditos || 1;
       emDegustacao = Boolean(stored.emDegustacao);

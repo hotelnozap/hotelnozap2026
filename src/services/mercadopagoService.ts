@@ -647,14 +647,7 @@ export const mercadopagoService = {
     if (!hotelId) return false;
 
     try {
-      // 1. Atualizar hotel para 'ativo' no Supabase
-      const updateOk = await hoteisService.updateHotel(hotelId, {
-        status: 'ativo',
-        plan: plano?.name || 'Plano Oficial',
-        notes: `Conta ativada automaticamente com pagamento aprovado via ${metodo} (Ref: ${paymentId}) em ${new Date().toLocaleString('pt-BR')}. Valor: R$ ${valor.toFixed(2)}.`
-      } as any);
-
-      // 2. Calcular validade e registrar créditos SaaS
+      // 1. Calcular validade e registrar créditos SaaS
       const cicloDays = Number(plano?.cicloDays || 30);
       const bonusDays = Number(plano?.bonusDays || 15);
       const totalDias = cicloDays + bonusDays;
@@ -665,6 +658,26 @@ export const mercadopagoService = {
       const todayStr = now.toISOString().split('T')[0];
 
       creditosService.saveCreditoHotel(hotelId, creditos, expDate.toISOString(), false, todayStr);
+
+      const creditosInfo = {
+        saldoCreditos: creditos,
+        expiracao: expDate.toISOString(),
+        dataCompra: todayStr,
+        emDegustacao: false,
+        plano: plano?.name || 'Plano Oficial',
+        valor,
+        paymentId: String(paymentId),
+        metodo,
+        origem: 'client_service'
+      };
+      const creditosTag = `<!-- HOTEL_CREDITOS_JSON:${JSON.stringify(creditosInfo)}:END_HOTEL_CREDITOS -->`;
+
+      // 2. Atualizar hotel para 'ativo' no Supabase
+      const updateOk = await hoteisService.updateHotel(hotelId, {
+        status: 'ativo',
+        plan: plano?.name || 'Plano Oficial',
+        notes: `Conta ativada automaticamente com pagamento aprovado via ${metodo} (Ref: ${paymentId}) em ${new Date().toLocaleString('pt-BR')}. Valor: R$ ${valor.toFixed(2)}.\n${creditosTag}`
+      } as any);
 
       // 3. Registrar auditoria no Log do Sistema
       await systemLogsService.addLog({
