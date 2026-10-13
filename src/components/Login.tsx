@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { currentHotelService, HotelAtivo, usuariosService } from '../services/supabaseService';
 import { trackingService } from '../services/trackingService';
 import { ZapHotelLogo } from './ZapHotelLogo';
+import { maskPhone } from '../utils/masks';
 
 declare global {
   interface Window {
@@ -16,6 +17,23 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+  // Modo de Acesso: 'hotel' (Equipe / Hoteleiro com E-mail + Senha) vs 'hospede' (Consulta de Reserva sem Senha)
+  const [loginMode, setLoginMode] = useState<'hotel' | 'hospede'>(() => {
+    if (typeof window !== 'undefined') {
+      const s = (window.location.search || '').toLowerCase();
+      const h = (window.location.hash || '').toLowerCase();
+      if (s.includes('tipo=hospede') || s.includes('hospede') || h.includes('hospede')) {
+        return 'hospede';
+      }
+    }
+    return 'hotel';
+  });
+
+  // Estados do modo Hóspede
+  const [hospedeIdentifier, setHospedeIdentifier] = useState('');
+  const [loadingHospede, setLoadingHospede] = useState(false);
+  const [hospedeNotFound, setHospedeNotFound] = useState(false);
+
   // Estado das credenciais (inicia em branco para não preencher indevidamente)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -751,6 +769,168 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  const handleHospedeInputChange = (val: string) => {
+    setHospedeNotFound(false);
+    setErrorMessage('');
+    const cleanDigits = val.replace(/\D/g, '');
+    if (/^[\d\s()+-]+$/.test(val)) {
+      if (cleanDigits.length <= 11) {
+        setHospedeIdentifier(maskPhone(val));
+        return;
+      }
+    }
+    setHospedeIdentifier(val);
+  };
+
+  // ── Login / Consulta Rápida de Hóspede via WhatsApp ou Código da Reserva ──
+  const handleConsultarReservaHospede = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+    setHospedeNotFound(false);
+
+    const inputRaw = (hospedeIdentifier || '').trim();
+    if (!inputRaw) {
+      setErrorMessage('Por favor, informe seu número de WhatsApp ou o código da sua reserva.');
+      return;
+    }
+
+    setLoadingHospede(true);
+
+    try {
+      const cleanDigits = inputRaw.replace(/\D/g, '');
+      const isPhone = cleanDigits.length >= 8;
+
+      let matchedReserva: any = null;
+
+      // 1. Busca por ID da reserva ou código direto
+      if (!isPhone || inputRaw.includes('-') || inputRaw.toLowerCase().startsWith('res')) {
+        try {
+          const { data: resByCode } = await supabase
+            .from('reservas')
+            .select('*')
+            .or(`id.eq.${inputRaw},observacoes.ilike.%${inputRaw}%`)
+            .order('criado_em', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (resByCode) {
+            matchedReserva = resByCode;
+          }
+        } catch { /* ignore */ }
+      }
+
+      // 2. Busca por WhatsApp / Telefone nas observações ou através da tabela de hóspedes
+      if (!matchedReserva && isPhone) {
+        const lastDigits = cleanDigits.slice(-8);
+
+        // A. Primeiro tenta achar direto na tabela hospedes por telefone
+        try {
+          const { data: hospedeMatches } = await supabase
+            .from('hospedes')
+            .select('id, nome, email, telefone')
+            .or(`telefone.ilike.%${lastDigits}%,telefone.ilike.%${cleanDigits}%`)
+            .limit(5);
+
+          if (hospedeMatches && hospedeMatches.length > 0) {
+            const hospedeIds = hospedeMatches.map((h: any) => h.id);
+            const { data: resByHospede } = await supabase
+              .from('reservas')
+              .select('*')
+              .in('hospede_id', hospedeIds)
+              .order('criado_em', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (resByHospede) {
+              matchedReserva = resByHospede;
+            }
+          }
+        } catch { /* ignore */ }
+
+        // B. Se não encontrou por hospede_id, busca nas observações da reserva
+        if (!matchedReserva) {
+          try {
+            const { data: resByObs } = await supabase
+              .from('reservas')
+              .select('*')
+              .or(`observacoes.ilike.%${lastDigits}%,observacoes.ilike.%${cleanDigits}%`)
+              .order('criado_em', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (resByObs) {
+              matchedReserva = resByObs;
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      // 3. Busca por E-mail caso o usuário tenha digitado o e-mail no campo de hóspede
+      if (!matchedReserva && inputRaw.includes('@')) {
+        const cleanEmailInput = inputRaw.toLowerCase();
+        try {
+          const { data: resByEmail } = await supabase
+            .from('reservas')
+            .select('*')
+            .or(`observacoes.ilike.%${cleanEmailInput}%,nome_hospede.ilike.%${cleanEmailInput}%`)
+            .order('criado_em', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (resByEmail) {
+            matchedReserva = resByEmail;
+          }
+        } catch { /* ignore */ }
+      }
+
+      if (!matchedReserva) {
+        setHospedeNotFound(true);
+        setErrorMessage('Nenhuma reserva ativa foi localizada com este WhatsApp ou Código. Verifique se o número digitado está correto.');
+        setLoadingHospede(false);
+        return;
+      }
+
+      // Reserva encontrada com sucesso!
+      const nomeHospede = matchedReserva.nome_hospede || 'Hóspede';
+      const emailHospede = matchedReserva.email || (cleanDigits ? `${cleanDigits}@hospede.hotelnozap.com.br` : 'hospede@hotelnozap.com.br');
+
+      // Salva sessão localmente para entrar na Área do Hóspede
+      try {
+        localStorage.setItem('hotelnozap_user_role', 'Hóspede');
+        localStorage.setItem('hotelnozap_user_name', nomeHospede);
+        localStorage.setItem('hotelnozap_user_email', emailHospede);
+        localStorage.setItem('hotelnozap_user_perfil', 'Hóspede');
+        localStorage.setItem('hotelnozap_last_authenticated_at', Date.now().toString());
+        localStorage.setItem('hotelnozap_current_user', JSON.stringify({
+          role: 'Hóspede',
+          email: emailHospede,
+          name: nomeHospede,
+          nome: nomeHospede,
+          hotel_id: matchedReserva.hotel_id
+        }));
+      } catch {}
+
+      setSuccessMessage(`Reserva localizada com sucesso! Bem-vindo(a), ${nomeHospede}.`);
+
+      setTimeout(() => {
+        if (onLoginSuccess) {
+          onLoginSuccess({
+            name: nomeHospede,
+            email: emailHospede,
+            role: 'Hóspede'
+          });
+        }
+      }, 500);
+
+    } catch (err: any) {
+      console.error('Erro ao consultar reserva do hóspede:', err);
+      setErrorMessage(err.message || 'Falha ao buscar sua reserva. Tente novamente.');
+    } finally {
+      setLoadingHospede(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 h-screen w-screen bg-white font-sans text-slate-800 antialiased selection:bg-emerald-500 selection:text-white overflow-hidden flex flex-col lg:grid lg:grid-cols-12 z-50">
       
@@ -861,15 +1041,120 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </a>
             </div>
 
-            <div className="mb-5 sm:mb-6">
-              <h2 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight">Bem-vindo de volta! 👋</h2>
-              <p className="text-slate-500 text-xs sm:text-sm mt-1.5 leading-relaxed">
-                Insira suas credenciais corporativas para acessar o painel de gerenciamento.
-              </p>
+            {/* SELETOR DE MODO: HOTEL/EQUIPE vs HÓSPEDE */}
+            <div className="flex p-1 bg-slate-100/90 rounded-2xl mb-5 border border-slate-200/80 shadow-inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginMode('hotel');
+                  setErrorMessage('');
+                  setHospedeNotFound(false);
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  loginMode === 'hotel'
+                    ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span className="material-symbols-outlined text-base sm:text-lg">apartment</span>
+                <span>Hotel & Equipe</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginMode('hospede');
+                  setErrorMessage('');
+                  setHospedeNotFound(false);
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  loginMode === 'hospede'
+                    ? 'bg-white text-emerald-800 shadow-sm border border-slate-200/60'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span className="material-symbols-outlined text-base sm:text-lg text-emerald-600">luggage</span>
+                <span>Sou Hóspede</span>
+              </button>
             </div>
 
-            {/* Formulário de Login */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {loginMode === 'hospede' ? (
+              /* FORMULÁRIO DO HÓSPEDE (BUSCA POR WHATSAPP / CÓDIGO SEM SENHA) */
+              <>
+                <div className="mb-5 sm:mb-6">
+                  <h2 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                    Acesse sua Reserva 🧳
+                  </h2>
+                  <p className="text-slate-500 text-xs sm:text-sm mt-1.5 leading-relaxed">
+                    Consulte seu voucher, faturas, consumo e realize o check-in online de forma rápida e segura.
+                  </p>
+                </div>
+
+                <form onSubmit={handleConsultarReservaHospede} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2" htmlFor="hospede-identifier">
+                      WhatsApp ou Código da Reserva <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative rounded-xl shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <span className="material-symbols-outlined text-xl">
+                          {hospedeIdentifier.includes('(') || hospedeIdentifier.replace(/\D/g, '').length >= 8 ? 'call' : 'tag'}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        id="hospede-identifier"
+                        value={hospedeIdentifier}
+                        onChange={(e) => handleHospedeInputChange(e.target.value)}
+                        placeholder="Ex: (66) 98158-5014 ou Código"
+                        required
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003400] focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs text-emerald-600">lock_open</span>
+                      Acesso sem senha: use o mesmo WhatsApp informado no momento da reserva.
+                    </p>
+                  </div>
+
+                  {hospedeNotFound && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                      <span className="material-symbols-outlined text-lg text-amber-600 shrink-0 mt-0.5">help</span>
+                      <div>
+                        <p className="font-semibold text-amber-950">Não encontrou sua reserva?</p>
+                        <p className="mt-0.5 text-amber-800">
+                          Certifique-se de digitar o DDD + WhatsApp cadastrado, ou o código enviado pelo hotel. Se precisar de suporte, estamos à disposição.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={loadingHospede}
+                      className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-[#003400] to-[#052e16] hover:from-[#052e16] hover:to-[#000000] text-white text-sm font-bold shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer disabled:opacity-60"
+                    >
+                      <span className="material-symbols-outlined text-xl">
+                        {loadingHospede ? 'progress_activity' : 'search'}
+                      </span>
+                      <span>{loadingHospede ? 'Localizando Reserva...' : 'Localizar Minha Reserva'}</span>
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              /* FORMULÁRIO DO HOTEL / EQUIPE (E-MAIL E SENHA) */
+              <>
+                <div className="mb-5 sm:mb-6">
+                  <h2 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight">Bem-vindo de volta! 👋</h2>
+                  <p className="text-slate-500 text-xs sm:text-sm mt-1.5 leading-relaxed">
+                    Insira suas credenciais corporativas para acessar o painel de gerenciamento.
+                  </p>
+                </div>
+
+                {/* Formulário de Login */}
+                <form onSubmit={handleSubmit} className="space-y-4">
               
               {/* Campo E-mail / Usuário */}
               <div>
@@ -1041,8 +1326,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   </div>
                 </>
               )}
-
             </form>
+          </>
+        )}
 
             {/* Divisor */}
             <div className="relative my-4 sm:my-5">
