@@ -1199,6 +1199,77 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           </section>
 
           {/* ================================================================= */}
+          {/* CARDS DE INDICADORES / ATALHOS DO HÓSPEDE (4 CARDS PADRÃO)       */}
+          {/* ================================================================= */}
+          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico</span>
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-lg lg:text-xl">hotel</span>
+                </div>
+              </div>
+              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                {perfil?.totalHospedagens || 0} {(perfil?.totalHospedagens || 0) === 1 ? 'Hospedagem' : 'Hospedagens'}
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
+                {(perfil?.totalHospedagens || 0) > 0 ? `${perfil?.totalHospedagens} estadias concluídas` : 'Nenhuma estadia concluída'}
+              </p>
+            </div>
+
+            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Pontos Fidelidade</span>
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-lg lg:text-xl">workspace_premium</span>
+                </div>
+              </div>
+              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                {(perfil?.pontosFidelidade || 0).toLocaleString('pt-BR')} Pontos
+              </div>
+              <p className="text-xs text-purple-700 font-medium mt-1">
+                {(perfil?.pontosFidelidade || 0) > 0 ? `${perfil?.pontosFidelidade} pts acumulados` : '10 pts por hospedagem concluída'}
+              </p>
+            </div>
+
+            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Estadia Atual</span>
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-lg lg:text-xl">calendar_month</span>
+                </div>
+              </div>
+              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                {perfil?.temCheckinAtivo ? `${perfil?.diariaAtual || 1} de ${perfil?.totalDiarias || 1} Diárias` : '0 Diárias'}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {perfil?.temCheckinAtivo ? `Check-out: ${perfil?.dataCheckout}` : 'Nenhum check-in ativo'}
+              </p>
+            </div>
+
+            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Consumo Quarto</span>
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-lg lg:text-xl">receipt_long</span>
+                </div>
+              </div>
+              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
+                R$ {(perfil?.temCheckinAtivo ? totalConsumo : 0).toFixed(2).replace('.', ',')}
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-xs text-slate-500">
+                  {perfil?.temCheckinAtivo ? 'Sem lançamentos pendentes' : 'Sem consumo registrado'}
+                </span>
+                <button onClick={() => setActiveSubTab('consumo')} className="text-xs text-emerald-700 font-bold hover:underline">
+                  Ver extrato
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* ================================================================= */}
           {/* CARD DE DESTAQUE DA RESERVA (DIRETO NA PÁGINA INICIAL DO HÓSPEDE)  */}
           {/* ================================================================= */}
           {(perfil?.reservaPrincipal || (perfil?.historicoReservas && perfil.historicoReservas.length > 0)) && (() => {
@@ -1291,79 +1362,6 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
               </section>
             );
           })()}
-
-
-
-          {/* ================================================================= */}
-          {/* CARDS DE INDICADORES / ATALHOS DO HÓSPEDE (4 CARDS PADRÃO)       */}
-          {/* ================================================================= */}
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">hotel</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                {perfil?.totalHospedagens || 0} {(perfil?.totalHospedagens || 0) === 1 ? 'Hospedagem' : 'Hospedagens'}
-              </div>
-              <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm text-emerald-600">verified</span>
-                {(perfil?.totalHospedagens || 0) > 0 ? `${perfil?.totalHospedagens} estadias concluídas` : 'Nenhuma estadia concluída'}
-              </p>
-            </div>
-
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Pontos Fidelidade</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">workspace_premium</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                {(perfil?.pontosFidelidade || 0).toLocaleString('pt-BR')} Pontos
-              </div>
-              <p className="text-xs text-purple-700 font-medium mt-1">
-                {(perfil?.pontosFidelidade || 0) > 0 ? `${perfil?.pontosFidelidade} pts acumulados` : '10 pts por hospedagem concluída'}
-              </p>
-            </div>
-
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Estadia Atual</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">calendar_month</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                {perfil?.temCheckinAtivo ? `${perfil?.diariaAtual || 1} de ${perfil?.totalDiarias || 1} Diárias` : '0 Diárias'}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                {perfil?.temCheckinAtivo ? `Check-out: ${perfil?.dataCheckout}` : 'Nenhum check-in ativo'}
-              </p>
-            </div>
-
-            <div className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] lg:text-xs font-bold text-slate-500 uppercase tracking-wider">Consumo Quarto</span>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-lg lg:text-xl">receipt_long</span>
-                </div>
-              </div>
-              <div className="text-xl lg:text-2xl font-extrabold text-slate-900">
-                R$ {(perfil?.temCheckinAtivo ? totalConsumo : 0).toFixed(2).replace('.', ',')}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-slate-500">
-                  {perfil?.temCheckinAtivo ? 'Sem lançamentos pendentes' : 'Sem consumo registrado'}
-                </span>
-                <button onClick={() => setActiveSubTab('consumo')} className="text-xs text-emerald-700 font-bold hover:underline">
-                  Ver extrato
-                </button>
-              </div>
-            </div>
-          </section>
 
           {/* COLUNA PRINCIPAL DA VISÃO GERAL: PEDIDOS RÁPIDOS & CONSUMO */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-7">
