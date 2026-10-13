@@ -199,7 +199,7 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
             </div>
             <p className="text-xs md:text-sm text-slate-500">
               {reservas.some(r => r.isAtiva)
-                ? `Histórico completo, estadias ativas e vouchers confirmados para ${userName}.`
+                ? `Histórico completo, estadias ativas e reservas confirmadas para ${userName}.`
                 : `Histórico completo de todas as estadias anteriores realizadas na rede Hotel no Zap para ${userName}.`}
             </p>
           </div>
@@ -484,10 +484,10 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
                         <button
                           onClick={() => setSelectedVoucher(reserva)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#2563EB] text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
-                          title="Ver Detalhes do Voucher"
+                          title="Ver Reserva"
                         >
                           <span className="material-symbols-outlined text-[16px]">visibility</span>
-                          Ver
+                          Ver Reserva
                         </button>
 
                         {reserva.status === 'Hospedado' && (
@@ -643,7 +643,7 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
                   className="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform"
                 >
                   <span className="material-symbols-outlined text-[16px]">visibility</span>
-                  Voucher
+                  Ver Reserva
                 </button>
 
                 {res.isAtiva && (
@@ -773,12 +773,12 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => {
-                  showToast('Voucher impresso em PDF!');
+                  showToast('Comprovante da reserva impresso em PDF!');
                   setSelectedVoucher(null);
                 }}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-700 text-xs"
+                className="px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-700 text-xs hover:bg-slate-50 transition-colors"
               >
-                Imprimir Voucher
+                Imprimir Comprovante
               </button>
               <button
                 onClick={() => setSelectedVoucher(null)}

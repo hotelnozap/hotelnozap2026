@@ -85,6 +85,7 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
 
   // Estados de formulário de pedido personalizado
   const [customRequestText, setCustomRequestText] = useState('');
+  const [modalReservaComprovante, setModalReservaComprovante] = useState<any | null>(null);
 
   // Perfil Real do Hóspede carregado do Supabase
   const [perfil, setPerfil] = useState<any>(null);
@@ -1120,25 +1121,34 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                   <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide flex items-center gap-1.5 ${
                     perfil?.temCheckinAtivo 
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                      : perfil?.temReservaAtiva
+                      ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                       : 'bg-slate-700/60 text-slate-300 border border-slate-600/50'
                   }`}>
                     {perfil?.temCheckinAtivo && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>}
+                    {perfil?.temReservaAtiva && !perfil?.temCheckinAtivo && <span className="material-symbols-outlined text-sm text-blue-400">check_circle</span>}
                     {perfil?.statusEstadia || (perfil?.temCheckinAtivo ? 'Estadia em Andamento' : 'Sem Estadia Ativa')}
                   </span>
-                  {perfil?.temCheckinAtivo && perfil?.reservaCodigo && perfil.reservaCodigo !== '—' && (
+                  {perfil?.reservaCodigo && perfil.reservaCodigo !== '—' && (
                     <span className="text-xs text-slate-300 font-medium">Reserva {perfil.reservaCodigo}</span>
                   )}
                 </div>
                 <h3 className="text-xl lg:text-3xl font-black tracking-tight text-white">
                   {perfil?.temCheckinAtivo 
                     ? `${perfil?.quartoNome} • ${perfil?.hotelNome}`
+                    : perfil?.temReservaAtiva
+                    ? `Sua Reserva: ${perfil?.quartoNome} • ${perfil?.hotelNome}`
                     : `Bem-vindo(a) ao ${perfil?.hotelNome || 'Hotel'}!`
                   }
                 </h3>
                 <p className="text-xs lg:text-sm text-slate-300 leading-relaxed">
                   {perfil?.temCheckinAtivo ? (
                     <>
-                      Check-in em <strong>{perfil?.dataCheckin}</strong>. Seu check-out está previsto para <strong>{perfil?.dataCheckout}</strong> ({perfil?.totalDiarias} diárias). Aproveite sua estadia!
+                      Check-in realizado em <strong>{perfil?.dataCheckin}</strong>. Seu check-out está previsto para <strong>{perfil?.dataCheckout}</strong> ({perfil?.totalDiarias} {perfil?.totalDiarias === 1 ? 'diária' : 'diárias'}). Aproveite sua estadia!
+                    </>
+                  ) : perfil?.temReservaAtiva ? (
+                    <>
+                      Sua reserva está <strong>confirmada e garantida</strong>! Check-in em <strong>{perfil?.dataCheckin}</strong> e check-out em <strong>{perfil?.dataCheckout}</strong> ({perfil?.totalDiarias} {perfil?.totalDiarias === 1 ? 'diária' : 'diárias'}).
                     </>
                   ) : (
                     <>
@@ -1174,19 +1184,122 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                     href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
                       perfil?.temCheckinAtivo 
                         ? `Olá! Sou o hóspede ${perfil?.nome || userName} (${perfil?.quartoNome || 'Quarto'}) do ${perfil?.hotelNome || 'Hotel'} e gostaria de consultar informações sobre minha estadia.`
-                        : `Olá! Sou o hóspede ${perfil?.nome || userName} cadastrado no ${perfil?.hotelNome || 'Hotel'} e gostaria de consultar informações sobre tarifas e disponibilidade de reservas!`
+                        : `Olá! Sou o hóspede ${perfil?.nome || userName} cadastrado no ${perfil?.hotelNome || 'Hotel'} e gostaria de consultar informações sobre minha reserva!`
                     )}`}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full py-2.5 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md"
                   >
                     <span className="material-symbols-outlined text-base">chat</span>
-                    {perfil?.temCheckinAtivo ? 'Falar com Recepção (WhatsApp)' : 'Consultar Reservas & Tarifas'}
+                    {perfil?.temCheckinAtivo ? 'Falar com Recepção (WhatsApp)' : 'Consultar Recepção (WhatsApp)'}
                   </a>
                 </div>
               </div>
             </div>
           </section>
+
+          {/* ================================================================= */}
+          {/* CARD DE DESTAQUE DA RESERVA (DIRETO NA PÁGINA INICIAL DO HÓSPEDE)  */}
+          {/* ================================================================= */}
+          {(perfil?.reservaPrincipal || (perfil?.historicoReservas && perfil.historicoReservas.length > 0)) && (() => {
+            const resDestaque = perfil?.reservaPrincipal || perfil.historicoReservas[0];
+            return (
+              <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 lg:p-5 hover:border-emerald-300 transition-all">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm border shadow-xs ${
+                      perfil?.temCheckinAtivo 
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                        : 'bg-blue-50 text-blue-700 border-blue-200'
+                    }`}>
+                      #{resDestaque.quartoNumero || perfil?.quartoNumero || '—'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-slate-900 text-sm lg:text-base">
+                          {resDestaque.codigo || perfil?.reservaCodigo}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          perfil?.temCheckinAtivo 
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${perfil?.temCheckinAtivo ? 'bg-emerald-600 animate-pulse' : 'bg-blue-600'}`}></span>
+                          {perfil?.temCheckinAtivo ? 'Estadia em Andamento' : 'Reserva Confirmada'}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-700 mt-0.5">
+                        {resDestaque.quartoNome || resDestaque.quarto || perfil?.quartoNome}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        {resDestaque.hotelNome || resDestaque.hotel || perfil?.hotelNome} • {resDestaque.hotelCidade || perfil?.hotelCidadeUf}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    <button
+                      onClick={() => setModalReservaComprovante(resDestaque)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[17px]">visibility</span>
+                      Ver Reserva
+                    </button>
+                    <button
+                      onClick={() => setActiveSubTab('minhas-reservas')}
+                      className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                      title="Ver todas as reservas"
+                    >
+                      <span className="material-symbols-outlined text-[17px] text-slate-500">calendar_month</span>
+                      <span className="hidden sm:inline">Histórico</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Informações da Estadia */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-in</span>
+                    <span className="font-bold text-slate-800 text-xs sm:text-sm">
+                      {resDestaque.checkIn || perfil?.dataCheckin || '—'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Check-out</span>
+                    <span className="font-bold text-slate-800 text-xs sm:text-sm">
+                      {resDestaque.checkOut || perfil?.dataCheckout || '—'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">
+                      {resDestaque.diarias || perfil?.totalDiarias || 1} {(resDestaque.diarias || perfil?.totalDiarias || 1) === 1 ? 'diária' : 'diárias'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Valor Total</span>
+                    <span className="font-extrabold text-slate-900 text-xs sm:text-sm">
+                      R$ {(resDestaque.valorTotal || 0).toFixed(2).replace('.', ',')}
+                    </span>
+                    <span className="text-[10px] text-emerald-600 font-semibold block">
+                      {resDestaque.formaPagamento || 'Confirmado no Hotel'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Atendimento</span>
+                    <a
+                      href={`https://wa.me/55${(perfil?.hotelWhatsapp || '66981585014').replace(/\D/g, '')}?text=${encodeURIComponent(
+                        `Olá! Sou o hóspede ${perfil?.nome || userName} da Reserva ${resDestaque.codigo || perfil?.reservaCodigo} e gostaria de tirar uma dúvida.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-bold text-xs mt-0.5"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">chat</span>
+                      Recepção WhatsApp
+                    </a>
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
 
 
 
@@ -2588,6 +2701,81 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL DE COMPROVANTE DE RESERVA (VER RESERVA NA PÁGINA INICIAL)           */}
+      {/* ========================================================================= */}
+      {modalReservaComprovante && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 relative animate-in fade-in zoom-in-95 duration-150">
+            <button 
+              onClick={() => setModalReservaComprovante(null)} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-lg border border-emerald-200">
+                #{modalReservaComprovante.quartoNumero || perfil?.quartoNumero || '—'}
+              </div>
+              <div>
+                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                  {modalReservaComprovante.status || 'Confirmada'}
+                </span>
+                <h3 className="text-lg font-extrabold text-slate-900 mt-0.5">
+                  {modalReservaComprovante.codigo || perfil?.reservaCodigo}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {modalReservaComprovante.hotelNome || perfil?.hotelNome}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 text-xs">
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Acomodação:</span>
+                <span className="font-bold text-slate-800">{modalReservaComprovante.quartoNome || modalReservaComprovante.quarto || perfil?.quartoNome}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Período:</span>
+                <span className="font-bold text-slate-800">{modalReservaComprovante.checkIn || perfil?.dataCheckin} até {modalReservaComprovante.checkOut || perfil?.dataCheckout}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Hóspedes:</span>
+                <span className="font-bold text-slate-800">{modalReservaComprovante.hospedes || '1 Hóspede'}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Pagamento:</span>
+                <span className="font-bold text-emerald-700">{modalReservaComprovante.formaPagamento || 'Confirmado no Hotel'}</span>
+              </div>
+              <div className="flex justify-between pt-1 text-sm font-extrabold">
+                <span className="text-slate-900">Valor Total:</span>
+                <span className="text-emerald-900">R$ {(modalReservaComprovante.valorTotal || 0).toFixed(2).replace('.', ',')}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setToastMessage('Comprovante da reserva impresso em PDF!');
+                  setTimeout(() => setToastMessage(null), 3500);
+                  setModalReservaComprovante(null);
+                }}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-700 text-xs hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Imprimir Comprovante
+              </button>
+              <button
+                onClick={() => setModalReservaComprovante(null)}
+                className="px-5 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white font-bold text-xs transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}

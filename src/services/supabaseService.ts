@@ -1798,7 +1798,27 @@ export const hospedesService = {
       totalHospedagens,
       pontosFidelidade,
       totalConsumo: 0.00,
-      historicoReservas
+      historicoReservas,
+      reservaPrincipal: temEstadiaOuReserva && reservaAtivaPrincipal ? {
+        id: reservaAtivaPrincipal.id,
+        codigo: `#RES-${reservaAtivaPrincipal.id.substring(0, 6).toUpperCase()}`,
+        quartoNumero: reservaAtivaPrincipal.numero_quarto || quartoNumero || '—',
+        quartoNome: quartoNome,
+        hotelNome: hotelNome,
+        hotelCidade: hotelCidadeUf,
+        checkIn: reservaAtivaPrincipal.data_checkin ? new Date(reservaAtivaPrincipal.data_checkin).toLocaleDateString('pt-BR') : '',
+        checkOut: reservaAtivaPrincipal.data_checkout ? new Date(reservaAtivaPrincipal.data_checkout).toLocaleDateString('pt-BR') : '',
+        diarias: reservaAtivaPrincipal.diarias || 1,
+        valorTotal: Number(reservaAtivaPrincipal.valor_total) || 0,
+        formaPagamento: 'Confirmado no Hotel',
+        hospedes: '1 Hóspede',
+        status: reservaAtivaPrincipal.status || 'Confirmada'
+      } : (historicoReservas && historicoReservas[0] ? {
+        ...historicoReservas[0],
+        quartoNome: historicoReservas[0].quarto || quartoNome,
+        formaPagamento: 'Confirmado no Hotel',
+        hospedes: '1 Hóspede'
+      } : null)
     };
   },
 
