@@ -36,6 +36,15 @@
       ]
     },
     {
+      "source": "/(robots.txt|sitemap.xml)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
       "source": "/.well-known/assetlinks.json",
       "headers": [
         {
@@ -92,6 +101,10 @@
   ],
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/hoteis/cardapio/:slug*",
       "destination": "/index.html"
     },
@@ -114,7 +127,7 @@
       "destination": "/api/app-og"
     },
     {
-      "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|woff2?|ttf|map)).*)",
+      "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|robots\\.txt|sitemap\\.xml|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|xml|txt|woff2?|ttf|map)).*)",
       "has": [
         {
           "type": "host",
@@ -134,7 +147,7 @@
       "destination": "/api/lp-og"
     },
     {
-      "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|woff2?|ttf|map)).*)",
+      "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|robots\\.txt|sitemap\\.xml|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|xml|txt|woff2?|ttf|map)).*)",
       "has": [
         {
           "type": "host",

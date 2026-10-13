@@ -1,0 +1,50 @@
+# Robots.txt - Hotel no Zap (https://hotelnozap.com.br)
+# O jeito mais inteligente de se hospedar e reservar via WhatsApp
+
+User-agent: *
+Allow: /
+Allow: /cidades
+Allow: /cidades/*
+Allow: /cidade/*
+Allow: /hoteis
+Allow: /hoteis/*
+Allow: /hotel/*
+Allow: /quem-somos
+Allow: /fale-conosco
+Allow: /informacoes-empresa
+Allow: /termos
+Allow: /privacidade
+Allow: /parceiros
+Allow: /assinar
+Allow: /cardapio/*
+
+# Bloqueio de áreas administrativas e autenticadas
+Disallow: /api/
+Disallow: /login
+Disallow: /paineladmin
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /camareira
+Disallow: /minhaconta
+Disallow: /checkout
+Disallow: /portal-parceiro
+
+# Permissão explícita para Rastreadores de Busca por IA (GEO - Generative Engine Optimization)
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# Sitemap Oficial
+Sitemap: https://hotelnozap.com.br/sitemap.xml
+Host: https://hotelnozap.com.br
