@@ -96,6 +96,17 @@ export const findCityBySlug = (slug: string, hotels: PublicHotel[]): string | nu
   return null;
 };
 
+// Identifica se um hotel é o Hotel Morada da Lua (ambiente de teste/demonstração)
+export const isHotelMoradaDaLua = (h: { id?: string; name?: string; link?: string } | null | undefined): boolean => {
+  if (!h) return false;
+  if (h.id === '3c18756c-d41d-4d7f-873f-57e87e3e2c78') return true;
+  const name = (h.name || '').toLowerCase();
+  if (name.includes('morada da lua')) return true;
+  const link = (h.link || '').toLowerCase();
+  if (link.includes('hotelmoradadalua') || link.includes('moradadalua')) return true;
+  return false;
+};
+
 // Cidades populares pré-cadastradas por estado
 export const CIDADES_POR_ESTADO: Record<string, string[]> = {
   'PE': ['Ipojuca (Porto de Galinhas)', 'Recife', 'Gravatá', 'Tamandaré (Praia dos Carneiros)', 'Olinda', 'Fernando de Noronha'],
@@ -448,12 +459,12 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+            return parsed.filter(h => !isHotelMoradaDaLua(h));
           }
         }
       }
     } catch {}
-    return FALLBACK_HOTEIS_PRELOAD;
+    return FALLBACK_HOTEIS_PRELOAD.filter(h => !isHotelMoradaDaLua(h));
   });
 
   // Zero loading no catálogo: os hotéis já aparecem instantaneamente na tela
@@ -491,6 +502,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     if (!userLocation?.city) return false;
     const userSlug = normalizeCitySlug(userLocation.city);
     return hoteisList.some(h => {
+      if (isHotelMoradaDaLua(h)) return false;
       if (!h.city) return false;
       const cSlug = normalizeCitySlug(h.city);
       return cSlug === userSlug || (userSlug.length > 3 && (cSlug.includes(userSlug) || userSlug.includes(cSlug)));
@@ -731,7 +743,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             (h.notes && (h.notes.includes('[TOP10]') || h.notes.includes('TOP 10') || h.notes.includes('TOP_10')))
           )
         };
-      });
+      }).filter(h => !isHotelMoradaDaLua(h));
 
       if (mappedDbHoteis && mappedDbHoteis.length > 0) {
         setHoteisList(prev => {
@@ -764,6 +776,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     const map: Record<string, { city: string; uf: string; hotels: PublicHotel[] }> = {};
 
     hoteisList.forEach(h => {
+      if (isHotelMoradaDaLua(h)) return;
       const c = (h.city || '').trim();
       const u = (h.uf || '').trim();
       if (!c) return;
@@ -861,6 +874,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   const allDestinations = useMemo(() => {
     const set = new Map<string, { city: string; uf: string; slug: string; count: number }>();
     hoteisList.forEach(h => {
+      if (isHotelMoradaDaLua(h)) return;
       const c = (h.city || '').trim();
       const u = (h.uf || '').trim();
       if (!c) return;
@@ -889,6 +903,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   const searchResultHotels = useMemo<PublicHotel[]>(() => {
     if (!isSearchActive) return [];
     return hoteisList.filter(h => {
+      if (isHotelMoradaDaLua(h)) return false;
       // Filtro de cidade se focusedCity estiver ativo
       if (focusedCity) {
         const c = (h.city || '').toLowerCase().trim();

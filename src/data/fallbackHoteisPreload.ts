@@ -11659,44 +11659,6 @@ export const FALLBACK_HOTEIS_PRELOAD = [
     "isImportedFromGoogle": true,
     "hasActivePlan": false,
     "isTop10": false
-  },
-  {
-    "id": "3c18756c-d41d-4d7f-873f-57e87e3e2c78",
-    "name": "Hotel Morada da Lua",
-    "category": "Hotel Urbano / Executivo",
-    "city": "Vila Rica",
-    "uf": "MT",
-    "neighborhood": "Setor Sul",
-    "imageUrl": "https://obkvgluunbnktzulzjfg.supabase.co/storage/v1/object/public/hotelnozap/quartos/1789498705224_j5f4wf.avif",
-    "rating": 4.92,
-    "reviewsCount": 28,
-    "pricePerNight": 160,
-    "whatsappPhone": "(66) 98158-5014",
-    "cancellationText": "Cancelamento gratuito",
-    "capacity": 3,
-    "amenities": [
-      {
-        "icon": "wifi",
-        "label": "Wi-Fi Grátis"
-      },
-      {
-        "icon": "ac_unit",
-        "label": "Ar Condicionado"
-      },
-      {
-        "icon": "free_breakfast",
-        "label": "Café da Manhã"
-      },
-      {
-        "icon": "local_parking",
-        "label": "Estacionamento"
-      }
-    ],
-    "hasRooms": true,
-    "notes": "Prorrogação de +15 dias aplicada em 01/10/2026. Motivo: Bônus rápido +15d.[TOP10]\n<!-- HOTEL_CONFIG_JSON:{\"checkInHorario\":\"12:00\",\"checkOutHorario\":\"13:00\",\"toleranciaCheckOutMinutos\":60,\"cafeInicio\":\"06:30\",\"cafeFim\":\"08:30\",\"silencioInicio\":\"21:00\",\"silencioFim\":\"07:00\",\"recepcao24Horas\":true,\"recepcaoInicio\":\"07:00\",\"recepcaoFim\":\"23:00\",\"lazerInicio\":\"08:00\",\"lazerFim\":\"19:00\",\"politicaCancelamento\":\"flexivel\",\"politicaCancelamentoTexto\":\"Cancelamento gratuito até 7 dias antes do check-in. Após este prazo, cobrança da primeira diária.\",\"permitePet\":\"sob_consulta\",\"taxaPet\":50,\"proibidoFumar\":true,\"idadeMinimaCheckin\":18,\"permiteVisitantes\":true,\"regrasGeraisTexto\":\"Prezado hóspede, respeite os horários de silêncio e as áreas de convivência. É vedado o uso de caixas de som nas áreas comuns.\",\"dpoNome\":\"Encarregado de Privacidade\",\"dpoEmail\":\"privacidade@hotelnozap.com.br\",\"dpoTelefone\":\"(11) 99999-9999\",\"exigirConsentimentoCheckin\":true,\"prazoRetencaoAnos\":5,\"enviarAvisoPrivacidadeWhatsapp\":true,\"politicaPrivacidadeTexto\":\"Seus dados pessoais coletados durante a estadia são utilizados exclusivamente para cumprimento de obrigações legais (FNRH/Embratur, emissão fiscal) e comunicação direta via WhatsApp sobre sua reserva, em total conformidade com a LGPD (Lei nº 13.709/2018).\",\"mpEnvironment\":\"production\",\"mpPublicKey\":\"APP_USR-78291048-2910-4819-b291-891028401928\",\"mpAccessToken\":\"APP_USR-9812401928409182-091219-4829104819284019-918240\",\"mpClientId\":\"4829104819284019\",\"mpClientSecret\":\"SecretKey_MP_2026_Master_Hotel\",\"mpEnablePix\":true,\"mpEnableCreditCard\":true,\"mpEnableBoleto\":false,\"mpMaxInstallments\":\"12\",\"metaTitulo\":\"\",\"metaDescricao\":\"\",\"metaImagem\":\"\"}:END_HOTEL_CONFIG -->",
-    "plan": "2 Créditos (Bimestral)",
-    "isImportedFromGoogle": false,
-    "hasActivePlan": true,
-    "isTop10": true
   }
 ];
+
