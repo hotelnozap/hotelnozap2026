@@ -66,7 +66,7 @@ export const trackingService = {
         return {
           metaPixelId: p.metaPixelId || p.pixelId || '',
           googleMetaTag: p.googleMetaTag || '',
-          googleAnalyticsId: p.googleAnalyticsId || 'G-8VQJQCXSQP',
+          googleAnalyticsId: p.googleAnalyticsId || import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-8VQJQCXSQP',
           recaptchaSiteKey: p.recaptchaSiteKey || '',
           recaptchaSecretKey: p.recaptchaSecretKey || ''
         };
@@ -76,7 +76,7 @@ export const trackingService = {
     }
 
     return {
-      googleAnalyticsId: 'G-8VQJQCXSQP'
+      googleAnalyticsId: import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-8VQJQCXSQP'
     };
   },
 
