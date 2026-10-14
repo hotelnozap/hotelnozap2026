@@ -1500,19 +1500,19 @@ export const App: React.FC = () => {
   const hotelMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'reservas', label: 'Reservas', icon: 'book_online' },
-    { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
     { id: 'mapa', label: 'Mapa dos Quartos', icon: 'calendar_view_month' },
+    { id: 'caixa', label: 'Controle de Caixa', icon: 'account_balance_wallet' },
+    { id: 'usuarios', label: 'Usuários da Equipe', icon: 'manage_accounts' },
+    { id: 'hospedes', label: 'Hóspedes', icon: 'group' },
     { id: 'governanca', label: 'Governança & Camareiras', icon: 'cleaning_services' },
     { id: 'lavanderia', label: 'Lavanderia de Hóspedes', icon: 'dry_cleaning' },
-    { id: 'hospedes', label: 'Hóspedes', icon: 'group' },
-    { id: 'cupons', label: 'Cupom de Desconto', icon: 'confirmation_number' },
-    { id: 'usuarios', label: 'Usuários da Equipe', icon: 'manage_accounts' },
     { id: 'produto', label: 'Cadastro de Produtos', icon: 'inventory_2' },
-    { id: 'caixa', label: 'Controle de Caixa', icon: 'account_balance_wallet' },
+    { id: 'cupons', label: 'Cupom de Desconto', icon: 'confirmation_number' },
     { id: 'conexao', label: 'Conexão WhatsApp', icon: 'sync' },
-    { id: 'config', label: 'Configurações', icon: 'settings' },
     { id: 'relatorios', label: 'Relatórios', icon: 'assessment' },
+    { id: 'config', label: 'Configurações', icon: 'settings' },
     { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
+    { id: 'catalogo-hoteis', label: 'Catálogo Público', icon: 'travel_explore' },
   ];
 
   const filteredHotelMenuItems = hotelMenuItems.filter(item => {
@@ -3285,7 +3285,7 @@ export const App: React.FC = () => {
 
           {/* Menu Navigation */}
           <nav className="flex-1 min-h-0 flex flex-col gap-1 overflow-y-auto no-scrollbar pb-2">
-            {menuItems.map((item) => {
+            {menuItems.filter(item => item.id !== 'catalogo-hoteis').map((item) => {
               const isProdutoMenu = item.id === 'produto';
               const isConfigMenu = item.id === 'config';
               const isActive = activeTab === item.id || 
@@ -3467,6 +3467,21 @@ export const App: React.FC = () => {
             <div className="flex items-center gap-4 text-sm">
               <span className="text-[#45464d] hidden sm:inline mr-2">{currentDateTime}</span>
               <div className="flex items-center gap-2">
+                {/* Botão Ver Catálogo Público (Desktop) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = getLoggedHotelUrl();
+                    window.open(url, '_blank');
+                  }}
+                  className="relative px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-950 border border-blue-200 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  title="Abrir Catálogo Público do Hotel em nova aba"
+                >
+                  <span className="material-symbols-outlined text-base text-blue-700">travel_explore</span>
+                  <span>Catálogo Público</span>
+                  <span className="material-symbols-outlined text-xs text-blue-500">open_in_new</span>
+                </button>
+
                 {/* Botão Reservas do Dia (Desktop) */}
                 <button
                   type="button"
