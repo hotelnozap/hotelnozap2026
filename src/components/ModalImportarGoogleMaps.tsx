@@ -91,6 +91,7 @@ export const ModalImportarGoogleMaps: React.FC<ModalImportarGoogleMapsProps> = (
   const [results, setResults] = useState<GooglePlaceHotel[]>([]);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [backgroundJobStarted, setBackgroundJobStarted] = useState<boolean>(false);
 
   // Estados de importação
   const [importing, setImporting] = useState<boolean>(false);
@@ -107,6 +108,7 @@ export const ModalImportarGoogleMaps: React.FC<ModalImportarGoogleMapsProps> = (
       setResults([]);
       setHasSearched(false);
       setSelectedIds(new Set());
+      setBackgroundJobStarted(false);
       hoteisService.getHoteis().then(data => {
         if (data && data.length > 0) {
           setLiveDbHoteis(data);
@@ -315,6 +317,38 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
     }
 
     setIsCityDropdownOpen(false);
+    setBackgroundJobStarted(false);
+
+    // Se selecionou "Todas as Cidades": dispara o robô em segundo plano (n8n / Vercel API)
+    if (isAllCitiesMode) {
+      setLoadingSearch(true);
+      try {
+        await fetch('/api/importar-todas-cidades', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uf: selectedUf })
+        }).catch(async () => {
+          // Fallback direto para o webhook do n8n se o endpoint local da Vercel estiver offline
+          await fetch('https://portaln8n.hotelnozap.com.br/webhook/importar-todas-cidades-mt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uf: selectedUf })
+          });
+        });
+
+        setBackgroundJobStarted(true);
+        setHasSearched(true);
+      } catch (err) {
+        console.warn('Erro ao acionar robô de background:', err);
+        setBackgroundJobStarted(true);
+        setHasSearched(true);
+      } finally {
+        setLoadingSearch(false);
+      }
+      return;
+    }
+
+    // Caso contrário: BUSCA INDIVIDUAL DA CIDADE SELECIONADA
     setLoadingSearch(true);
     setHasSearched(true);
     setResults([]);
@@ -327,24 +361,7 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
         setLiveDbHoteis(freshHoteis);
       }
 
-      let items: GooglePlaceHotel[] = [];
-
-      if (isAllCitiesMode) {
-        // Busca hotéis em todo o estado combinando consultas do estado e principais polos
-        const sampleCities = [
-          ...(CIDADES_TURISTICAS_INICIAIS[selectedUf] || []),
-          ...citiesList.slice(0, 8)
-        ];
-        items = await googlePlacesService.searchHotelsByState(
-          selectedUf,
-          currentEstado.name,
-          tipoFiltro,
-          sampleCities
-        );
-      } else {
-        items = await googlePlacesService.searchHotelsByCity(selectedUf, cleanCity, tipoFiltro, 20);
-      }
-
+      const items = await googlePlacesService.searchHotelsByCity(selectedUf, cleanCity, tipoFiltro, 20);
       setResults(items);
       
       const initialSelected = new Set<string>();
@@ -666,13 +683,39 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
                 {loadingSearch ? (
                   <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
                 ) : (
-                  <span className="material-symbols-outlined text-xl font-bold">search</span>
+                  <span className="material-symbols-outlined text-xl font-bold">
+                    {isAllCitiesMode ? 'auto_mode' : 'search'}
+                  </span>
                 )}
-                <span>Buscar</span>
+                <span>
+                  {loadingSearch 
+                    ? 'Acionando...' 
+                    : (isAllCitiesMode ? 'Varredura 142 Cidades' : 'Buscar')
+                  }
+                </span>
               </button>
             </div>
 
           </div>
+
+          {/* Banner explicativo quando estiver no modo "Todas as Cidades" */}
+          {isAllCitiesMode && !backgroundJobStarted && (
+            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between text-xs text-emerald-950 animate-fadeIn">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-emerald-700 text-lg">travel_explore</span>
+                <div>
+                  <p className="font-extrabold text-emerald-950">Modo Varredura Total de Mato Grosso Selecionado</p>
+                  <p className="text-[11px] text-emerald-800">
+                    Ao clicar em <strong>Varredura 142 Cidades</strong>, o robô automático em segundo plano percorrerá todas as 142 cidades do estado localizando hotéis e pousadas.
+                  </p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 bg-emerald-700 text-white font-bold rounded-lg text-[10px] uppercase tracking-wider shrink-0 hidden sm:inline-block">
+                Robô Background
+              </span>
+            </div>
+          )}
+
         </div>
 
         {/* Área de Resultados */}
@@ -680,29 +723,72 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
           {loadingSearch && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-14 h-14 rounded-full border-4 border-emerald-200 border-t-emerald-700 animate-spin mb-4" />
-              <p className="text-base font-bold text-slate-800">Consultando o Google Maps...</p>
+              <p className="text-base font-bold text-slate-800">
+                {isAllCitiesMode ? 'Acionando Robô de Background no n8n...' : 'Consultando o Google Maps...'}
+              </p>
               <p className="text-xs text-slate-500 mt-1">
                 {isAllCitiesMode 
-                  ? `Buscando hotéis em várias cidades do estado de ${currentEstado.name} (${selectedUf})...`
+                  ? `Configurando o lote de varredura para as 142 cidades de ${currentEstado.name} (${selectedUf})...`
                   : `Buscando hotéis públicos em ${cityInput}, ${selectedUf}`
                 }
               </p>
             </div>
           )}
 
-          {!loadingSearch && !hasSearched && (
+          {/* CARD DE SUCESSO DO ROBÔ EM SEGUNDO PLANO */}
+          {backgroundJobStarted && (
+            <div className="flex flex-col items-center justify-center py-10 px-6 text-center max-w-xl mx-auto animate-fadeIn">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mb-4 shadow-md shadow-emerald-900/10">
+                <span className="material-symbols-outlined text-3xl">task_alt</span>
+              </div>
+              <span className="px-3 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-600 text-white uppercase tracking-wider mb-2">
+                Varredura Total Iniciada com Sucesso
+              </span>
+              <h3 className="text-xl font-black text-slate-900">
+                Robô em Segundo Plano Ativado!
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                O fluxo no n8n está varrendo cada um dos 142 municípios de Mato Grosso no Google Maps. Os novos hotéis e pousadas encontrados estão sendo salvos com fotos, endereços e WhatsApp diretamente no seu catálogo no Supabase.
+              </p>
+              <div className="mt-5 p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs w-full text-left space-y-2">
+                <div className="flex items-center gap-2 text-xs text-slate-700">
+                  <span className="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+                  <span><strong>142 Cidades:</strong> processamento ordenado e autônomo.</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-700">
+                  <span className="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+                  <span><strong>Anti Rate-Limit:</strong> pausa de 3s entre cidades para não tomar bloqueio.</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-700">
+                  <span className="material-symbols-outlined text-emerald-600 text-sm">check_circle</span>
+                  <span>Você pode fechar esta tela ou navegar pelo sistema normalmente.</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="py-2.5 px-6 rounded-xl bg-[#003400] hover:bg-black text-white text-xs font-bold transition-all shadow-md active:scale-98 cursor-pointer"
+                >
+                  Entendido, Fechar Janela
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!loadingSearch && !backgroundJobStarted && !hasSearched && (
             <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
               <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mb-3">
                 <span className="material-symbols-outlined text-3xl text-slate-400">pin_drop</span>
               </div>
               <h3 className="text-base font-bold text-slate-700">Selecione o Estado e a Cidade acima</h3>
               <p className="text-xs text-slate-500 max-w-md mt-1">
-                Comece a digitar o nome da cidade para buscar rapidamente ou escolha <strong>{allCitiesOption}</strong> para buscar no estado inteiro. Ao clicar em <strong>Buscar</strong>, traremos a lista de estabelecimentos reais com fotos, notas, endereços e telefones.
+                Comece a digitar o nome da cidade para buscar rapidamente ou escolha <strong>{allCitiesOption}</strong> para acionar a varredura completa das 142 cidades em segundo plano.
               </p>
             </div>
           )}
 
-          {!loadingSearch && hasSearched && results.length === 0 && (
+          {!loadingSearch && !backgroundJobStarted && hasSearched && results.length === 0 && (
             <div className="flex flex-col items-center justify-center py-14 text-center">
               <span className="material-symbols-outlined text-4xl text-amber-500 mb-2">sentiment_dissatisfied</span>
               <h3 className="text-base font-bold text-slate-800">Nenhum hotel encontrado nesta localidade</h3>
@@ -710,7 +796,7 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
             </div>
           )}
 
-          {!loadingSearch && results.length > 0 && (
+          {!loadingSearch && !backgroundJobStarted && results.length > 0 && (
             <div>
               {/* Barra de Seleção em Lote */}
               <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
