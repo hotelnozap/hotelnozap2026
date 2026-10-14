@@ -3954,7 +3954,7 @@ export const quartosService = {
           hotelId: q.hotel_id || '',
           number: q.numero || String(q.numero || q.number || ''),
           name: q.nome || q.name || '',
-          category: q.categoria || q.category || '',
+          category: q.tipo || q.categoria || q.category || q.items?.tipoQuarto || q.items?.type || q.items?.categoria || 'Padrão',
           status: (q.status || '').toLowerCase() === 'ocupado' ? 'ocupado'
             : (q.status || '').toLowerCase() === 'limpeza' ? 'limpeza'
             : (q.status || '').toLowerCase() === 'manutencao' || (q.status || '').toLowerCase() === 'manutenção' ? 'manutenção'

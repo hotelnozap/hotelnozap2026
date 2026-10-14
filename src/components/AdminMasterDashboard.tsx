@@ -334,37 +334,28 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
     return entries.sort((a, b) => b.qtd - a.qtd);
   }, [hoteis, totalHoteis]);
 
-  // 8. Composição dos Quartos da Rede (baseado em categoria real quando disponível)
+  // 8. Composição dos Quartos da Rede (100% dinâmica baseada nos tipos/categorias reais dos quartos cadastrados)
   const composicaoQuartos = useMemo(() => {
-    if (totalQuartos === 0) {
-      return { suites: 0, standard: 0, bangalos: 0 };
-    }
+    if (totalQuartos === 0) return [];
 
-    let suites = 0;
-    let bangalos = 0;
-    let standard = 0;
-    let qtdComCategoria = 0;
+    const map = new Map<string, number>();
 
     quartosRede.forEach(q => {
-      const cat = (q.category || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-      if (!cat) return;
-      qtdComCategoria++;
-      if (cat.includes('suite') || cat.includes('master') || cat.includes('luxo') || cat.includes('presidencial') || cat.includes('deluxe') || cat.includes('premium')) {
-        suites++;
-      } else if (cat.includes('bangalo') || cat.includes('bungalo') || cat.includes('cabana') || cat.includes('chale') || cat.includes('chalé')) {
-        bangalos++;
-      } else {
-        standard++;
-      }
+      let raw = (q.category || (q as any).tipo || (q as any).name || 'Padrão').trim();
+      if (!raw) raw = 'Padrão';
+      // Formata: primeira letra maiúscula, restante minúscula (ex: CASAL -> Casal, SOLTEIRO -> Solteiro)
+      const nomeFormatado = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+      map.set(nomeFormatado, (map.get(nomeFormatado) || 0) + 1);
     });
 
-    if (qtdComCategoria === 0) {
-      suites = Math.round(totalQuartos * 0.30);
-      bangalos = Math.round(totalQuartos * 0.20);
-      standard = Math.max(totalQuartos - suites - bangalos, 0);
-    }
+    const items: { nome: string; qtd: number; pct: number }[] = [];
+    map.forEach((qtd, nome) => {
+      const pct = Math.round((qtd / totalQuartos) * 100);
+      items.push({ nome, qtd, pct });
+    });
 
-    return { suites, standard, bangalos };
+    // Ordenar do maior para o menor
+    return items.sort((a, b) => b.qtd - a.qtd);
   }, [quartosRede, totalQuartos]);
 
   // 9. Histórico de Evolução Mensal (Últimos 6 meses)
@@ -1276,23 +1267,23 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                   )}
                 </div>
 
-                {/* Composição Real dos Quartos da Rede */}
+                {/* Composição Real dos Quartos Cadastrados */}
                 <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2 text-xs">
                   <span className="font-bold text-slate-700 block uppercase text-[10px] tracking-wider">
                     Composição dos {totalQuartos} Quartos Cadastrados
                   </span>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Suítes Master / Luxo (~30%):</span>
-                    <span className="font-bold text-slate-800">{composicaoQuartos.suites} unidades</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Apartamentos Standard (~50%):</span>
-                    <span className="font-bold text-slate-800">{composicaoQuartos.standard} unidades</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Bangalôs &amp; Chalés (~20%):</span>
-                    <span className="font-bold text-slate-800">{composicaoQuartos.bangalos} unidades</span>
-                  </div>
+                  {composicaoQuartos.length > 0 ? (
+                    composicaoQuartos.map((item) => (
+                      <div key={item.nome} className="flex justify-between items-center text-slate-600">
+                        <span>{item.nome} ({item.pct}%):</span>
+                        <span className="font-bold text-slate-800">
+                          {item.qtd} {item.qtd === 1 ? 'unidade' : 'unidades'}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-slate-400 py-1 text-center">Nenhum quarto cadastrado</div>
+                  )}
                 </div>
               </div>
 
