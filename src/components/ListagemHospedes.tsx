@@ -506,10 +506,19 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
                         </div>
                       </td>
 
-                      <td className="px-2.5 py-3.5 whitespace-nowrap text-slate-600 font-medium text-xs sm:text-sm">{g.cpfCnpj}</td>
+                      <td className="px-2.5 py-3.5 whitespace-nowrap text-slate-600 font-medium text-xs sm:text-sm">{maskCpfCnpj(g.cpfCnpj)}</td>
                       <td className="px-2.5 py-3.5 whitespace-nowrap text-slate-600 text-xs sm:text-sm max-w-[150px] lg:max-w-[190px] truncate">{g.email}</td>
                       <td className="px-2.5 py-3.5 whitespace-nowrap text-slate-600 text-xs sm:text-sm">{maskPhone(g.phone)}</td>
-                      <td className="px-2.5 py-3.5 whitespace-nowrap text-slate-600 text-xs sm:text-sm">{g.lastStay}</td>
+                      <td className="px-2.5 py-3.5 whitespace-nowrap text-xs sm:text-sm">
+                        <div className="font-semibold text-slate-800">
+                          {g.lastStay || 'Sem estadias'}
+                        </div>
+                        {g.cidadeOrigem && (
+                          <div className="text-[11px] text-slate-400 font-normal">
+                            {g.cidadeOrigem}
+                          </div>
+                        )}
+                      </td>
 
                       <td className="px-2.5 py-3.5 whitespace-nowrap">
                         <span className={
@@ -729,7 +738,7 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
                     <div className="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400 font-medium">CPF/CNPJ:</span>
-                        <span className="font-bold text-slate-800">{g.cpfCnpj || 'Não informado'}</span>
+                        <span className="font-bold text-slate-800">{g.cpfCnpj ? maskCpfCnpj(g.cpfCnpj) : 'Não informado'}</span>
                       </div>
                       <div className="flex items-center justify-between truncate">
                         <span className="text-slate-400 font-medium">E-mail:</span>
@@ -741,7 +750,9 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400 font-medium">Última Estadia:</span>
-                        <span className="font-medium text-slate-700">{g.lastStay || 'Nenhuma'}</span>
+                        <span className="font-medium text-slate-700">
+                          {g.lastStay || 'Nenhuma'} {g.cidadeOrigem ? `(${g.cidadeOrigem})` : ''}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -847,7 +858,7 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
               <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-xs font-semibold text-slate-500">CPF / CNPJ:</span>
-                  <span className="font-bold text-slate-900">{selectedGuestForView.cpfCnpj}</span>
+                  <span className="font-bold text-slate-900">{selectedGuestForView.cpfCnpj ? maskCpfCnpj(selectedGuestForView.cpfCnpj) : 'Não informado'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs font-semibold text-slate-500">Telefone:</span>
@@ -861,6 +872,12 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
                   <span className="text-xs font-semibold text-slate-500">Última Estadia:</span>
                   <span className="font-bold text-slate-900">{selectedGuestForView.lastStay}</span>
                 </div>
+                {selectedGuestForView.cidadeOrigem && (
+                  <div className="flex justify-between">
+                    <span className="text-xs font-semibold text-slate-500">Cidade / Origem:</span>
+                    <span className="font-bold text-slate-900">{selectedGuestForView.cidadeOrigem}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-semibold text-slate-500">Perfil de Acesso:</span>
                   <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full text-[11px]">

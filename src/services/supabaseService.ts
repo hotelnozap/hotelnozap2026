@@ -1072,7 +1072,6 @@ export const hospedesService = {
 
   async getHospedes(hotelId?: string): Promise<GuestData[]> {
     const hId = hotelId || currentHotelService.getCurrentHotel().id;
-    const local = this.getLocalHospedes(hId);
 
     try {
       let query = supabase.from('hospedes').select('*').order('criado_em', { ascending: false });
@@ -1081,7 +1080,35 @@ export const hospedesService = {
       }
       const { data, error } = await query;
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
+        // Busca o histórico de reservas para extrair a data real da última estadia de cada hóspede
+        const reservasMap: Record<string, string> = {};
+        try {
+          let resQuery = supabase
+            .from('reservas')
+            .select('hospede_id, checkin, data_checkin, checkout, data_checkout, criado_em')
+            .order('data_checkin', { ascending: false });
+          if (hId && !hId.startsWith('hotel-master')) {
+            resQuery = resQuery.eq('hotel_id', hId);
+          }
+          const { data: dbRes } = await resQuery;
+          if (dbRes) {
+            for (const r of dbRes) {
+              if (r.hospede_id && !reservasMap[r.hospede_id]) {
+                const rawDate = r.data_checkin || r.checkin || r.criado_em;
+                if (rawDate) {
+                  const d = new Date(rawDate);
+                  if (!isNaN(d.getTime())) {
+                    reservasMap[r.hospede_id] = d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                  }
+                }
+              }
+            }
+          }
+        } catch (rErr) {
+          console.warn('Aviso ao carregar histórico de reservas para estadias:', rErr);
+        }
+
         const mapped: GuestData[] = data.map((h: any) => ({
           id: h.id,
           name: h.nome,
@@ -1089,25 +1116,29 @@ export const hospedesService = {
           cpfCnpj: h.cpf_passaporte || h.cpf || '',
           phone: maskPhone(h.telefone || ''),
           initials: (h.nome || 'H').substring(0, 2).toUpperCase(),
-          lastStay: h.cidade_uf || '',
+          lastStay: reservasMap[h.id] || 'Sem estadias',
           cidadeOrigem: h.cidade_uf || '',
           placaVeiculo: h.placa_veiculo || '',
           status: h.status || 'ativo'
         }));
-        // Merge seguro: mantém itens locais que possam ser novos
-        const merged = [...local];
-        mapped.forEach(m => {
-          const idx = merged.findIndex(l => l.id === m.id);
-          if (idx >= 0) merged[idx] = m;
-          else merged.push(m);
-        });
-        this.saveLocalHospedes(merged, hId);
-        return merged;
+
+        // Deduplicação defensiva caso existam resíduos por CPF ou E-mail
+        const uniqueGuests: GuestData[] = [];
+        const seenDocs = new Set<string>();
+        for (const g of mapped) {
+          const docKey = g.cpfCnpj ? g.cpfCnpj.replace(/\D/g, '') : (g.email ? g.email.toLowerCase().trim() : g.id);
+          if (docKey && seenDocs.has(docKey)) continue;
+          if (docKey) seenDocs.add(docKey);
+          uniqueGuests.push(g);
+        }
+
+        this.saveLocalHospedes(uniqueGuests, hId);
+        return uniqueGuests;
       }
     } catch (err) {
       console.warn('Erro ao conectar ao Supabase para hóspedes:', err);
     }
-    return local;
+    return this.getLocalHospedes(hId);
   },
 
   async createHospede(hospede: Partial<GuestData>, hotelId?: string): Promise<boolean> {
@@ -1267,9 +1298,36 @@ export const hospedesService = {
         try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* ignore */ }
       }
 
-      const { error: hErr } = await supabase.from('hospedes').insert([
-        {
-          hotel_id: hId.startsWith('hotel-master') ? null : hId,
+      // Proteção contra duplicação: verifica se já existe hóspede com este CPF ou e-mail no hotel
+      let existingHospedeId: string | null = null;
+      try {
+        let qDup = supabase.from('hospedes').select('id, hotel_id, cpf_passaporte, email');
+        if (hId && !hId.startsWith('hotel-master')) {
+          qDup = qDup.eq('hotel_id', hId);
+        }
+
+        const cleanCpf = cpf.replace(/\D/g, '');
+        if (cleanCpf && cleanCpf.length >= 11) {
+          const { data: byCpf } = await qDup.ilike('cpf_passaporte', `%${cleanCpf}%`).maybeSingle();
+          if (byCpf?.id) existingHospedeId = byCpf.id;
+        }
+
+        if (!existingHospedeId && email && !email.includes('hospede_')) {
+          const { data: byEmail } = await supabase
+            .from('hospedes')
+            .select('id')
+            .eq('hotel_id', hId)
+            .ilike('email', email)
+            .maybeSingle();
+          if (byEmail?.id) existingHospedeId = byEmail.id;
+        }
+      } catch (checkErr) {
+        console.warn('Aviso ao checar hóspede duplicado:', checkErr);
+      }
+
+      if (existingHospedeId) {
+        // Atualiza o cadastro existente em vez de gerar duplicação
+        const { error: updErr } = await supabase.from('hospedes').update({
           nome: nome,
           email: email,
           cpf_passaporte: cpf,
@@ -1281,11 +1339,32 @@ export const hospedesService = {
           logradouro: payload.logradouro || null,
           bairro: payload.bairro || null,
           numero: payload.numero || null
-        }
-      ]);
+        }).eq('id', existingHospedeId);
 
-      if (hErr) {
-        return { success: false, error: `Falha ao salvar hóspede na tabela: ${hErr.message || hErr}` };
+        if (updErr) {
+          return { success: false, error: `Falha ao atualizar hóspede existente: ${updErr.message || updErr}` };
+        }
+      } else {
+        const { error: hErr } = await supabase.from('hospedes').insert([
+          {
+            hotel_id: hId.startsWith('hotel-master') ? null : hId,
+            nome: nome,
+            email: email,
+            cpf_passaporte: cpf,
+            telefone: telefone,
+            cidade_uf: cidadeUf,
+            status: status,
+            observacoes: payload.observacoes || null,
+            cep: payload.cep || null,
+            logradouro: payload.logradouro || null,
+            bairro: payload.bairro || null,
+            numero: payload.numero || null
+          }
+        ]);
+
+        if (hErr) {
+          return { success: false, error: `Falha ao salvar hóspede na tabela: ${hErr.message || hErr}` };
+        }
       }
 
       // Garante que todo cadastro de hóspede feito pelos hotéis tenha usuário com perfil 'Hóspede'
