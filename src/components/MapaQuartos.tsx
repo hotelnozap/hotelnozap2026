@@ -193,7 +193,13 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       }
     }) : () => {};
 
-    window.addEventListener('hotel_changed', fetchRooms);
+    const handleHotelChanged = () => {
+      quartosService.invalidateCache();
+      reservasService.invalidateCache();
+      fetchRooms();
+    };
+
+    window.addEventListener('hotel_changed', handleHotelChanged);
     window.addEventListener('hotel_status_quartos_atualizado', loadStatus);
     window.addEventListener('hotel_novo_quarto', fetchRooms);
     window.addEventListener('hotel_quarto_modificado', fetchRooms);
@@ -329,7 +335,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('focus', handleVisibility);
       clearInterval(heartbeatInterval);
-      window.removeEventListener('hotel_changed', fetchRooms);
+      window.removeEventListener('hotel_changed', handleHotelChanged);
       window.removeEventListener('hotel_novo_quarto', fetchRooms);
       window.removeEventListener('hotel_quarto_modificado', fetchRooms);
       window.removeEventListener('hotel_quarto_atualizado', handleStatusEvent);

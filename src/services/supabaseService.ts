@@ -3282,7 +3282,25 @@ const SEED_QUARTOS_PADRAO: any[] = [
   { id: 'q-202', number: '202', name: 'Quarto 202', category: 'PREMIUM', status: 'limpeza', floor: '2º Andar', capacity: 4, dailyPrice: 680, active: true },
 ];
 
+// =========================================================================
+// CACHE EM MEMÓRIA DE ALTA PERFORMANCE PARA QUARTOS (STALE-WHILE-REVALIDATE)
+// =========================================================================
+interface QuartosCacheEntry {
+  key: string;
+  data: any[];
+  timestamp: number;
+}
+let _quartosMemoryCache: QuartosCacheEntry | null = null;
+const QUARTOS_CACHE_TTL_MS = 25000; // 25s de cache em memória
+
 export const quartosService = {
+  /**
+   * Invalida o cache em memória para forçar uma nova leitura fresca do Supabase
+   */
+  invalidateCache(): void {
+    _quartosMemoryCache = null;
+  },
+
   notifyQuartoAlterado(data: { 
     quartoId: string; 
     numero?: string; 
@@ -3299,6 +3317,7 @@ export const quartosService = {
     observacoes?: string;
     [key: string]: any;
   }) {
+    _quartosMemoryCache = null;
     // 1. Notifica subscribers locais registrados no mesmo processo
     _quartosSubscribers.forEach(cb => {
       try { cb(data); } catch {}
@@ -3371,9 +3390,16 @@ export const quartosService = {
     } catch { /* ignore */ }
   },
 
-  async getQuartos(hotelId?: string): Promise<any[]> {
+  async getQuartos(hotelId?: string, forceRefresh = false): Promise<any[]> {
     const hId = hotelId || currentHotelService.getCurrentHotel().id;
     const dbHotelId = resolveHotelDbId(hId);
+    const cacheKey = `quartos_${hId}`;
+
+    // 1. Retorno imediato do cache em memória se válido (0ms)
+    const now = Date.now();
+    if (!forceRefresh && _quartosMemoryCache && _quartosMemoryCache.key === cacheKey && (now - _quartosMemoryCache.timestamp) < QUARTOS_CACHE_TTL_MS) {
+      return _quartosMemoryCache.data;
+    }
 
     try {
       let query = supabase.from('quartos').select('*').order('numero', { ascending: true });
@@ -3424,6 +3450,13 @@ export const quartosService = {
           });
 
           this.saveLocalQuartos(mapped, hId);
+
+          _quartosMemoryCache = {
+            key: cacheKey,
+            data: mapped,
+            timestamp: Date.now()
+          };
+
           return mapped;
         } else {
           // Se a tabela no Supabase não tiver quartos:
@@ -3622,6 +3655,7 @@ export const quartosService = {
     } catch (err) {
       console.warn('Erro ao criar quarto no Supabase:', err);
     }
+    this.invalidateCache();
     return true;
   },
 
@@ -3741,6 +3775,7 @@ export const quartosService = {
       hospede_atual: changes.hospede_atual !== undefined ? changes.hospede_atual : currentLocal?.hospede_atual
     });
 
+    this.invalidateCache();
     return true;
   },
 
@@ -3763,6 +3798,7 @@ export const quartosService = {
         await delQuery.eq('numero', target.number);
       }
     } catch { /* ignore */ }
+    this.invalidateCache();
     return true;
   },
 
