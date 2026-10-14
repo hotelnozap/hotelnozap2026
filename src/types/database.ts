@@ -278,6 +278,7 @@ export interface HotelConfigData {
   checkInHorario: string;
   checkOutHorario: string;
   toleranciaCheckOutMinutos: number;
+  toleranciaCheckInHoras?: number; // Padrão: 8 horas de tolerância após o check-in antes do No-Show
   cafeInicio: string;
   cafeFim: string;
   silencioInicio: string;

@@ -4,9 +4,11 @@
  * 
  * Regra de Negócio Oficial:
  * - Horário padrão de check-in: 12:00 (ou o configurado no hotel)
- * - Tolerância máxima de comparecimento: 1 hora (limite: 13:00 do dia de check-in)
- * - Se a data de check-in for anterior a hoje, OU for hoje e já passou das 13:00:
- *   1. O status da reserva 'Confirmada' passa para 'cancelada' com justificativa de No-Show.
+ * - Tolerância padrão de comparecimento: 8 horas após o horário de check-in (ex: 12:00 -> até 20:00)
+ * - Proteção de Atraso Comunicado: Se o hóspede avisou sobre imprevisto (carro quebrou, trânsito, etc.),
+ *   a reserva é protegida contra cancelamento automático de No-Show no mesmo dia.
+ * - Se a tolerância expirar sem comparecimento nem aviso:
+ *   1. O status da reserva 'Confirmada' passa para 'Cancelada' com justificativa de No-Show.
  *   2. O quarto vinculado volta imediatamente para 'disponivel'.
  *   3. Dispara alerta via WhatsApp para o hóspede informando o cancelamento e a liberação do quarto.
  *   4. Registra alerta para a recepção/hotel para ser exibido no Modal de Abertura.
@@ -14,7 +16,7 @@
  */
 
 import { supabase } from '../lib/supabase';
-import { currentHotelService, reservasService, quartosService } from './supabaseService';
+import { currentHotelService, reservasService, quartosService, hotelConfigService } from './supabaseService';
 import { templateMensagemService } from './templateMensagemService';
 import { webhookN8nService } from './webhookN8nService';
 import { getFusoHorarioDoHotel, getHoraEDataNoFuso, normalizarDataParaIsoDate } from './autoCheckoutService';
@@ -31,10 +33,72 @@ export interface ResumoReservasDia {
   totalPendencias: number;
 }
 
+export interface RegrasCheckinHotel {
+  checkInHorario: string;
+  toleranciaHoras: number;
+  horaLimiteFormatada: string;
+}
+
+// Cache local temporário das regras de check-in por hotel (TTL: 60s)
+const hotelConfigCache = new Map<string, { checkInHorario: string; toleranciaHoras: number; ts: number }>();
+
+export async function getRegrasCheckinDoHotel(hotelId?: string): Promise<RegrasCheckinHotel> {
+  const hId = hotelId || 'default';
+  const cached = hotelConfigCache.get(hId);
+  const now = Date.now();
+
+  let checkInHorario = '12:00';
+  let toleranciaHoras = 8;
+
+  if (cached && now - cached.ts < 60000) {
+    checkInHorario = cached.checkInHorario;
+    toleranciaHoras = cached.toleranciaHoras;
+  } else {
+    try {
+      const cfg = await hotelConfigService.getConfig(hotelId);
+      if (cfg?.checkInHorario) checkInHorario = cfg.checkInHorario;
+      if (typeof cfg?.toleranciaCheckInHoras === 'number' && cfg.toleranciaCheckInHoras > 0) {
+        toleranciaHoras = cfg.toleranciaCheckInHoras;
+      }
+      hotelConfigCache.set(hId, { checkInHorario, toleranciaHoras, ts: now });
+    } catch {
+      // Fallback seguro: 12:00 e 8 horas
+    }
+  }
+
+  const [horaStr, minStr] = checkInHorario.split(':');
+  const h = parseInt(horaStr, 10) || 12;
+  const m = parseInt(minStr, 10) || 0;
+  const minutosTotais = h * 60 + m + toleranciaHoras * 60;
+  const horaLimiteFormatada = `${String(Math.floor(minutosTotais / 60) % 24).padStart(2, '0')}:${String(minutosTotais % 60).padStart(2, '0')}`;
+
+  return { checkInHorario, toleranciaHoras, horaLimiteFormatada };
+}
+
+/**
+ * Detecta se a reserva possui indicação de atraso avisado / check-in tardio (imprevistos de estrada, etc.)
+ */
+export function isReservaComAtrasoAvisado(res: any): boolean {
+  if (!res) return false;
+  const texto = `${res.observacoes || ''} ${res.status || ''} ${res.motivo_cancelamento || ''} ${res.notas || ''}`.toLowerCase();
+  return (
+    texto.includes('atraso avisado') ||
+    texto.includes('check-in tardio') ||
+    texto.includes('checkin tardio') ||
+    texto.includes('chegada tardia') ||
+    texto.includes('chega mais tarde') ||
+    texto.includes('aviso de atraso') ||
+    texto.includes('atraso comunicado') ||
+    texto.includes('carro quebrou') ||
+    texto.includes('vai atrasar') ||
+    texto.includes('atrasado')
+  );
+}
+
 export const autoNoShowService = {
   /**
    * Avalia todas as reservas confirmadas e executa o cancelamento automático
-   * caso tenha ultrapassado o horário de check-in + 1 hora de tolerância.
+   * caso tenha ultrapassado o horário de check-in + tolerância (padrão: 8 horas).
    */
   async verificarEExecutarNoShows(reservasOpcional?: any[]): Promise<number> {
     try {
@@ -66,6 +130,11 @@ export const autoNoShowService = {
         // Apenas reservas Confirmadas (que ainda não fizeram check-in)
         if (!rawStatus.includes('confirmad')) continue;
 
+        // Se o hóspede avisou sobre imprevisto (ex: carro quebrou, trânsito), a reserva fica protegida no dia!
+        if (isReservaComAtrasoAvisado(res)) {
+          continue;
+        }
+
         const rawCheckin = res.checkIn || res.data_checkin || res.checkin;
         const checkinIso = normalizarDataParaIsoDate(rawCheckin);
         if (!checkinIso) continue;
@@ -74,19 +143,48 @@ export const autoNoShowService = {
         const fuso = getFusoHorarioDoHotel(hotelId);
         const { dataStr: hojeNoFuso, hora: horaNoFuso, minuto: minutoNoFuso } = getHoraEDataNoFuso(fuso);
 
-        // Regra de Horário: Padrão check-in 12:00 + 1h de tolerância = 13:00
-        // (horaNoFuso > 13 || (horaNoFuso === 13 && minutoNoFuso >= 0))
-        const isDataPassada = checkinIso < hojeNoFuso;
-        const isHojePassouTolerancia = checkinIso === hojeNoFuso && (horaNoFuso > 13 || (horaNoFuso === 13 && minutoNoFuso >= 1));
+        // Obter regras dinâmicas de tolerância do hotel (padrão 8 horas)
+        const regras = await getRegrasCheckinDoHotel(hotelId);
+        const [hCheckinStr, mCheckinStr] = regras.checkInHorario.split(':');
+        const hCheckin = parseInt(hCheckinStr, 10) || 12;
+        const mCheckin = parseInt(mCheckinStr, 10) || 0;
 
-        if (isDataPassada || isHojePassouTolerancia) {
+        // Limite total de tolerância em minutos a partir de 00:00 do dia do check-in
+        const minutosLimiteTolerancia = (hCheckin * 60 + mCheckin) + (regras.toleranciaHoras * 60);
+        const minutosAtuaisHoje = horaNoFuso * 60 + minutoNoFuso;
+
+        let expirou = false;
+
+        if (checkinIso < hojeNoFuso) {
+          // Check-in era em data anterior.
+          // Se a tolerância passou da meia-noite (>= 1440 min), verifica se já passou do excedente hoje.
+          if (minutosLimiteTolerancia >= 1440) {
+            const minutosExcedentesHoje = minutosLimiteTolerancia - 1440;
+            // Se o check-in foi ontem e já passou dos minutos que viraram a noite:
+            expirou = minutosAtuaisHoje >= minutosExcedentesHoje;
+          } else {
+            // A tolerância terminava no próprio dia de check-in, que já ficou no passado.
+            expirou = true;
+          }
+        } else if (checkinIso === hojeNoFuso) {
+          // Check-in é hoje.
+          // Se a tolerância termina hoje (< 1440 min):
+          if (minutosLimiteTolerancia < 1440) {
+            expirou = minutosAtuaisHoje >= minutosLimiteTolerancia;
+          } else {
+            // A tolerância estende até a madrugada do dia seguinte, portanto hoje ainda não expirou!
+            expirou = false;
+          }
+        }
+
+        if (expirou) {
           reservasEmProcessamentoNoShow.add(resId);
           console.info(
-            `[AutoNoShow 1h Tolerância] Cancelando reserva #${resId} (${res.nome_hospede}). Check-in: ${checkinIso}. Hoje no fuso (${fuso}): ${hojeNoFuso} às ${horaNoFuso}:${minutoNoFuso}h.`
+            `[AutoNoShow ${regras.toleranciaHoras}h Tolerância] Cancelando reserva #${resId} (${res.nome_hospede}). Check-in: ${checkinIso} às ${regras.checkInHorario}. Limite tolerância: ${regras.horaLimiteFormatada}h. Hoje no fuso (${fuso}): ${hojeNoFuso} às ${horaNoFuso}:${minutoNoFuso}h.`
           );
 
           try {
-            const executou = await this.cancelarPorNoShowELiberarQuarto(res);
+            const executou = await this.cancelarPorNoShowELiberarQuarto(res, regras);
             if (executou) {
               canceladasCount++;
             }
@@ -111,11 +209,12 @@ export const autoNoShowService = {
   /**
    * Executa o cancelamento da reserva por No-Show, libera o quarto e dispara avisos
    */
-  async cancelarPorNoShowELiberarQuarto(res: any): Promise<boolean> {
+  async cancelarPorNoShowELiberarQuarto(res: any, regrasParam?: RegrasCheckinHotel): Promise<boolean> {
     const resId = res.id;
     if (!resId) return false;
 
-    const motivo = `[NO-SHOW AUTOMÁTICO] Cancelada em ${new Date().toLocaleString('pt-BR')}: tolerância de 1h após o check-in (12:00 -> 13:00) expirada sem comparecimento do hóspede. Quarto liberado para nova locação.`;
+    const regras = regrasParam || await getRegrasCheckinDoHotel(res.hotel_id);
+    const motivo = `[NO-SHOW AUTOMÁTICO] Cancelada em ${new Date().toLocaleString('pt-BR')}: tolerância de ${regras.toleranciaHoras}h após o horário de check-in (${regras.checkInHorario} -> limite ${regras.horaLimiteFormatada}) expirada sem comparecimento do hóspede nem aviso de atraso. Quarto liberado para nova locação.`;
     const novaObservacao = res.observacoes ? `${res.observacoes}\n${motivo}` : motivo;
 
     // 1. Atualizar o status da reserva para Cancelada no Supabase
@@ -161,7 +260,7 @@ export const autoNoShowService = {
     }
 
     // 3. Disparar WhatsApp para o Hóspede
-    this.enviarWhatsAppCancelamentoNoShow(res).catch(wErr => {
+    this.enviarWhatsAppCancelamentoNoShow(res, regras).catch(wErr => {
       console.warn('[AutoNoShow] Erro ao disparar WhatsApp de cancelamento para o hóspede:', wErr);
     });
 
@@ -169,7 +268,7 @@ export const autoNoShowService = {
     try {
       webhookN8nService.dispararWebhookConfirmacaoReserva(res, {
         tipo: 'reserva_cancelada_noshow',
-        evento: 'Reserva Cancelada por No-Show (1h Tolerância Expirada)'
+        evento: `Reserva Cancelada por No-Show (${regras.toleranciaHoras}h Tolerância Expirada)`
       }).catch(() => {});
     } catch {}
 
@@ -198,9 +297,10 @@ export const autoNoShowService = {
   /**
    * Envia mensagem no WhatsApp para o Hóspede informando o cancelamento
    */
-  async enviarWhatsAppCancelamentoNoShow(res: any): Promise<void> {
+  async enviarWhatsAppCancelamentoNoShow(res: any, regrasParam?: RegrasCheckinHotel): Promise<void> {
     try {
       const hotelId = res.hotel_id || currentHotelService.getCurrentHotel()?.id;
+      const regras = regrasParam || await getRegrasCheckinDoHotel(hotelId);
 
       // 1. Obter dados do Hotel
       let hotelNome = 'Hotel';
@@ -230,7 +330,7 @@ export const autoNoShowService = {
       const numQuarto = res.numero_quarto || '101';
       const shortId = res.id ? res.id.substring(0, 6).toUpperCase() : 'RESERVA';
 
-      const textoMensagem = `⚠️ *AVISO DE CANCELAMENTO POR NÃO COMPARECIMENTO* ⚠️\n\nOlá *${nomeHospede}*,\n\nInformamos que sua reserva *#${shortId}* no *${hotelNome}* (Quarto ${numQuarto}) ultrapassou o horário padrão de check-in (12:00) e o período de tolerância máxima de 1 hora (13:00).\n\nComo não registramos sua entrada nem aviso prévio à nossa recepção, sua reserva foi automaticamente cancelada e a acomodação foi liberada para nova locação no sistema.\n\nCaso esteja a caminho ou precise de suporte, entre em contato imediatamente com nossa recepção!`;
+      const textoMensagem = `⚠️ *AVISO DE CANCELAMENTO POR NÃO COMPARECIMENTO* ⚠️\n\nOlá *${nomeHospede}*,\n\nInformamos que sua reserva *#${shortId}* no *${hotelNome}* (Quarto ${numQuarto}) ultrapassou o horário de check-in (${regras.checkInHorario}) e o período de tolerância de ${regras.toleranciaHoras} horas (até às ${regras.horaLimiteFormatada}).\n\nComo não registramos sua entrada nem aviso prévio de atraso à nossa recepção, sua reserva foi automaticamente cancelada e a acomodação foi liberada no sistema.\n\nCaso esteja a caminho ou precise de suporte, entre em contato imediatamente com nossa recepção!`;
 
       await templateMensagemService.enviarMensagemWhatsApp(hotelId, telefoneDestino, textoMensagem);
     } catch (e) {

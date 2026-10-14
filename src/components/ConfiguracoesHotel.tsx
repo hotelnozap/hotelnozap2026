@@ -12,6 +12,7 @@ export interface HotelConfigData {
   checkInHorario: string;
   checkOutHorario: string;
   toleranciaCheckOutMinutos: number;
+  toleranciaCheckInHoras?: number;
   cafeInicio: string;
   cafeFim: string;
   silencioInicio: string;
@@ -62,6 +63,7 @@ export const DEFAULT_CONFIG: HotelConfigData = {
   checkInHorario: '14:00',
   checkOutHorario: '12:00',
   toleranciaCheckOutMinutos: 30,
+  toleranciaCheckInHoras: 8,
   cafeInicio: '06:30',
   cafeFim: '10:00',
   silencioInicio: '22:00',
@@ -441,6 +443,27 @@ export const ConfiguracoesHotel: React.FC<ConfiguracoesHotelProps> = ({
                   />
                   <span className="text-xs font-medium text-slate-600">minutos após o horário oficial</span>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Tolerância de Chegada (Aguardar antes do No-Show)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="24"
+                    step="1"
+                    value={config.toleranciaCheckInHoras || 8}
+                    onChange={e => updateField('toleranciaCheckInHoras', Number(e.target.value))}
+                    className="w-32 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:border-[#006c49] outline-none"
+                  />
+                  <span className="text-xs font-medium text-slate-600">horas após o horário de check-in</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Padrão: 8 horas (Ex: check-in às 12:00 aguarda até às 20:00 antes de liberar o quarto caso o hóspede não avise atraso).
+                </span>
               </div>
             </div>
 

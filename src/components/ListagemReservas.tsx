@@ -7,6 +7,7 @@ import { ModalEnviarTemplateWhatsApp } from './ModalEnviarTemplateWhatsApp';
 import { caixaService } from '../services/caixaService';
 import { templateMensagemService } from '../services/templateMensagemService';
 import { autoCheckoutService } from '../services/autoCheckoutService';
+import { isReservaComAtrasoAvisado } from '../services/autoNoShowService';
 
 export interface Reserva {
   id: string;
@@ -337,6 +338,34 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
     setReservaToDelete(null);
   };
 
+  const handleRegistrarAtraso = async (reserva: Reserva) => {
+    const motivoPadrao = window.prompt(
+      `Registrar aviso de atraso para ${reserva.hospedeNome}:\n(Ex: Carro quebrou na estrada, voo atrasou, trânsito pesado)`,
+      'Hóspede avisou imprevisto na viagem (atraso comunicado / check-in tardio).'
+    );
+    if (!motivoPadrao || !motivoPadrao.trim()) return;
+
+    try {
+      const nota = `[ATRASO AVISADO] ${new Date().toLocaleString('pt-BR')}: ${motivoPadrao.trim()}`;
+      const obsAtual = (reserva as any).observacoes || '';
+      const novaObs = obsAtual ? `${obsAtual}\n${nota}` : nota;
+
+      const { error } = await supabase
+        .from('reservas')
+        .update({ observacoes: novaObs })
+        .eq('id', reserva.id);
+
+      if (error) throw error;
+
+      reservasService.invalidateCache();
+      await fetchReservas(true);
+      showToast('✅ Atraso comunicado registrado! Quarto protegido contra cancelamento por No-Show.');
+    } catch (e) {
+      console.error('Erro ao registrar atraso:', e);
+      showToast('Erro ao registrar aviso de atraso.');
+    }
+  };
+
   const getStatusBadge = (status: Reserva['status']) => {
     switch (status) {
       case 'Confirmada':
@@ -652,6 +681,12 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 block tracking-wider">{reserva.reservaNumber}</span>
                   <h3 className="font-bold text-sm text-slate-900">{reserva.hospedeNome}</h3>
+                  {isReservaComAtrasoAvisado(reserva) && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full my-0.5">
+                      <span className="material-symbols-outlined text-[12px]">directions_car</span>
+                      Atraso Avisado (Chegada Tardia)
+                    </span>
+                  )}
                   <p className="text-xs text-slate-500">{reserva.quartoNome} • {getTipoQuartoExibicao(reserva)}</p>
                 </div>
                 <div>{getStatusBadge(reserva.status)}</div>
@@ -676,6 +711,15 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                     title="Realizar Check-in (Entrada do Hóspede)"
                   >
                     <span className="material-symbols-outlined text-[14px]">login</span> Check-in
+                  </button>
+                )}
+                {reserva.status === 'Confirmada' && !isReservaComAtrasoAvisado(reserva) && (
+                  <button
+                    onClick={() => handleRegistrarAtraso(reserva)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+                    title="Registrar que o hóspede avisou atraso na viagem (Protege contra No-Show)"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">directions_car</span> Avisar Atraso
                   </button>
                 )}
                 {reserva.status === 'Hospedado' && (
@@ -846,6 +890,12 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                             <div className="font-medium text-slate-900 text-xs sm:text-sm truncate" title={reserva.hospedeNome}>
                               {reserva.hospedeNome}
                             </div>
+                            {isReservaComAtrasoAvisado(reserva) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-full mt-0.5" title="Hóspede avisou atraso na viagem. Quarto protegido contra cancelamento de No-Show.">
+                                <span className="material-symbols-outlined text-[12px]">directions_car</span>
+                                Atraso Avisado
+                              </span>
+                            )}
                             <div className="text-[11px] text-slate-400 truncate max-w-[130px] lg:max-w-[160px]" title={reserva.hospedeEmail}>
                               {reserva.hospedeEmail}
                             </div>
@@ -882,6 +932,16 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                             >
                               <span className="material-symbols-outlined text-[15px]">login</span>
                               <span className="hidden xl:inline">Check-in</span>
+                            </button>
+                          )}
+                          {reserva.status === 'Confirmada' && !isReservaComAtrasoAvisado(reserva) && (
+                            <button
+                              onClick={() => handleRegistrarAtraso(reserva)}
+                              className="inline-flex items-center gap-1 px-2 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                              title="Registrar aviso de atraso comunicado pelo hóspede (Protege contra No-Show)"
+                            >
+                              <span className="material-symbols-outlined text-[15px]">directions_car</span>
+                              <span className="hidden xl:inline">Avisar Atraso</span>
                             </button>
                           )}
                           {reserva.status === 'Hospedado' && (

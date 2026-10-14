@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { autoNoShowService, ResumoReservasDia } from '../services/autoNoShowService';
+import { autoNoShowService, ResumoReservasDia, isReservaComAtrasoAvisado } from '../services/autoNoShowService';
 import { reservasService, quartosService } from '../services/supabaseService';
 
 export interface ModalReservasDoDiaProps {
@@ -165,7 +165,7 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
                 </span>
               </div>
               <p className="text-xs text-emerald-200/90 capitalize mt-0.5">
-                {dataAtualFormatada} • Check-in 12:00 (Tolerância até 13:00)
+                {dataAtualFormatada} • Check-in a partir das 12:00 (Tolerância até 20:00)
               </p>
             </div>
           </div>
@@ -262,7 +262,7 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-emerald-700">info</span>
                       <span>
-                        <strong>Regra de Entrada:</strong> Check-in inicia às <strong>12:00</strong>. Hóspedes têm até <strong>13:00</strong> (1h de tolerância). Se não houver entrada, o quarto é liberado automaticamente.
+                        <strong>Regra de Entrada:</strong> Check-in a partir das <strong>12:00</strong>. Hóspedes têm até <strong>20:00</strong> (tolerância de 8 horas). Caso o hóspede avise imprevisto na viagem (carro quebrou, trânsito), o quarto permanece protegido.
                       </span>
                     </div>
                   </div>
@@ -277,10 +277,13 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {resumo?.checkinsHoje.map((res: any) => {
                         const shortId = res.id ? res.id.substring(0, 6).toUpperCase() : 'RES';
+                        const temAtrasoAvisado = isReservaComAtrasoAvisado(res);
                         return (
                           <div 
                             key={res.id} 
-                            className="bg-white p-4 rounded-xl border-2 border-emerald-500/30 shadow-xs hover:border-emerald-600 transition-all flex flex-col justify-between"
+                            className={`bg-white p-4 rounded-xl border-2 shadow-xs transition-all flex flex-col justify-between ${
+                              temAtrasoAvisado ? 'border-amber-400/80 bg-amber-50/20' : 'border-emerald-500/30 hover:border-emerald-600'
+                            }`}
                           >
                             <div>
                               <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -296,10 +299,19 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
                                 {res.nome_hospede}
                               </h4>
 
+                              {temAtrasoAvisado && (
+                                <div className="mt-1">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                                    <span className="material-symbols-outlined text-[13px]">directions_car</span>
+                                    Atraso Avisado (Chegada Tardia) • Quarto Protegido
+                                  </span>
+                                </div>
+                              )}
+
                               <div className="text-xs text-slate-600 space-y-0.5 mt-2">
                                 <p className="flex items-center gap-1">
                                   <span className="material-symbols-outlined text-xs text-slate-400">schedule</span>
-                                  Check-in: <strong>12:00</strong> (Tolerância máx: <strong>13:00</strong>)
+                                  Check-in: <strong>12:00</strong> (Tolerância máx: <strong>20:00</strong>)
                                 </p>
                                 <p className="flex items-center gap-1 font-semibold text-emerald-800">
                                   <span className="material-symbols-outlined text-xs text-emerald-600">payments</span>
@@ -343,7 +355,7 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-red-600">warning</span>
                       <span>
-                        <strong>Quartos Desocupados Automaticamente:</strong> Estas reservas ultrapassaram o limite de 1 hora de tolerância (após as 13:00) e foram canceladas. Os quartos voltaram ao status <strong>Disponível</strong> para você vender no balcão ou catálogo!
+                        <strong>Quartos Desocupados Automaticamente:</strong> Estas reservas ultrapassaram o limite de 8 horas de tolerância (após as 20:00) sem comparecimento nem aviso de atraso e foram canceladas. Os quartos voltaram ao status <strong>Disponível</strong> para você vender no balcão ou catálogo!
                       </span>
                     </div>
                   </div>
@@ -379,7 +391,7 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
                               </h4>
 
                               <p className="text-xs text-red-700 font-semibold mt-1">
-                                ⚠️ Não compareceu até às 13:00 (1h de tolerância esgotada)
+                                ⚠️ Não compareceu até às 20:00 (8h de tolerância sem aviso prévio)
                               </p>
 
                               <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
