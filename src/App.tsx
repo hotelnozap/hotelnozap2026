@@ -361,13 +361,33 @@ export const App: React.FC = () => {
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!locationService.hasAskedPermissions()) {
-      const timer = setTimeout(() => {
-        setIsPermissionsModalOpen(true);
-      }, 1500);
-      return () => clearTimeout(timer);
+    // 1. Se já perguntou antes, nunca abre
+    if (locationService.hasAskedPermissions()) return;
+
+    // 2. Não exibir no painel de administração corporativa desktop (hotel / equipe)
+    const isDesktopAdminArea = !isStandaloneMode() && (
+      activeTab === 'dashboard' || 
+      activeTab === 'admin-dashboard' || 
+      activeTab === 'reservas' || 
+      activeTab === 'mapa' || 
+      activeTab === 'caixa' || 
+      activeTab === 'login' ||
+      activeTab === 'usuarios' ||
+      activeTab === 'cadastro-hoteis' ||
+      activeTab === 'parceiros' ||
+      activeTab === 'planos'
+    );
+
+    if (isDesktopAdminArea) {
+      locationService.markPermissionsAsAsked();
+      return;
     }
-  }, []);
+
+    const timer = setTimeout(() => {
+      setIsPermissionsModalOpen(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
 
   useEffect(() => {
     const handleLocationChange = () => {

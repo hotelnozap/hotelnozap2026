@@ -12,14 +12,26 @@ export const ModalPermissoesApp: React.FC<ModalPermissoesAppProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   const handleAllowPermissions = async () => {
+    // Marca imediatamente no localStorage para evitar qualquer repetição/loop em recarregamentos
+    locationService.markPermissionsAsAsked();
     setLoading(true);
+
+    // Timeout de escape seguro: se o navegador do desktop ou celular travar o prompt nativo, libera em 3.5 segundos
+    const timeoutPromise = new Promise<{ notifications: boolean; location: boolean }>((resolve) => {
+      setTimeout(() => {
+        resolve({ notifications: false, location: false });
+      }, 3500);
+    });
+
     try {
-      const result = await locationService.requestAllAppPermissions();
+      const result = await Promise.race([
+        locationService.requestAllAppPermissions(),
+        timeoutPromise
+      ]);
       setLoading(false);
       onClose(result);
     } catch {
       setLoading(false);
-      locationService.markPermissionsAsAsked();
       onClose();
     }
   };
