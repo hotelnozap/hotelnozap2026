@@ -36,9 +36,9 @@ export const TEMPLATES_PADRAO: TemplatesConfig = {
   boas_vindas:
     'Olá {nome_hospede}! 😉\nSeja Bem-vindo(a) ao {nome_hotel}. 🫡\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 {link_hotel}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição por aqui!',
   confirmacao:
-    '🎉 Parabéns {nome_hospede}! Sua reserva no {nome_hotel} foi confirmada com sucesso! 🏨\n\n📌 Quarto: {tipo_quarto} ({numero_quarto})\n📅 Check-in: {checkin}\n📅 Check-out: {checkout}\n💰 Valor Total: {valor_total}\n\nEstamos ansiosos para recebê-lo(a)!',
+    '🎉 Parabéns {nome_hospede}! Sua reserva no {nome_hotel} foi confirmada com sucesso! 🏨\n\n📌 Acomodação: {tipo_quarto} (Quarto {numero_quarto})\n📅 Check-in: {checkin} (a partir das 12:00)\n📅 Check-out: {checkout}\n💰 Valor Total: {valor_total}\n\n⏰ HORÁRIO E TOLERÂNCIA: O check-in inicia às 12:00 com tolerância máxima de 1 hora (até às 13:00). Caso ocorra qualquer imprevisto ou atraso na viagem, avise nossa recepção por aqui para mantermos seu quarto garantido!\n\nEstamos ansiosos para recebê-lo(a)!',
   lembrete_checkin:
-    'Olá {nome_hospede}! Amanhã é o dia do seu check-in no {nome_hotel}! 🧳\n\nHorário de entrada: a partir das 14:00.\nLocalização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver alguma dúvida, basta responder aqui!',
+    'Olá {nome_hospede}! Amanhã é o dia do seu check-in no {nome_hotel}! 🧳\n\n⏰ Horário de entrada: a partir das 12:00 (Tolerância de 1h até as 13:00).\nLocalização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver alguma dúvida, basta responder aqui!',
   checkout:
     'Olá {nome_hospede}! Esperamos que sua estadia no {nome_hotel} tenha sido maravilhosa! ✨\n\nAgradecemos muito pela preferência. Foi um prazer recebê-lo(a). Poderia nos avaliar com 5 estrelas no Google Maps? Até a próxima viagem!',
   pix:
@@ -488,8 +488,34 @@ export const templateMensagemService = {
       const activeHotelId = hotelId || currentHotelService.getCurrentHotel()?.id;
       const instInfo = await this.getInstanciaConectadaDoHotel(activeHotelId);
 
-      if (!instInfo.isOnline || !instInfo.instanceName) {
-        console.warn('[templateMensagemService] Nenhuma instância conectada encontrada para o hotel:', activeHotelId);
+      let instanceToUse = instInfo.instanceName;
+
+      if (!instInfo.isOnline || !instanceToUse) {
+        console.warn('[templateMensagemService] Instância direta do hotel não online, buscando instâncias ativas no servidor...');
+        try {
+          const evoList = await evolutionApiService.fetchInstances();
+          
+          // 1. Tenta achar a instância cadastrada no banco para o hotel
+          if (activeHotelId) {
+            const { data: hData } = await supabase.from('hoteis').select('nome_instancia').eq('id', activeHotelId).maybeSingle();
+            if (hData?.nome_instancia) {
+              const matched = evoList.find(i => i.name.toLowerCase() === hData.nome_instancia.toLowerCase() && i.connectionStatus === 'open');
+              if (matched) instanceToUse = matched.name;
+            }
+          }
+
+          // 2. Se ainda não achou, usa a primeira instância 'open' do servidor (ex: meutim)
+          if (!instanceToUse) {
+            const fallbackOpen = evoList.find(i => i.connectionStatus === 'open');
+            if (fallbackOpen) instanceToUse = fallbackOpen.name;
+          }
+        } catch (e) {
+          console.warn('[templateMensagemService] Erro ao buscar instâncias fallback:', e);
+        }
+      }
+
+      if (!instanceToUse) {
+        console.warn('[templateMensagemService] Nenhuma instância de WhatsApp conectada no momento.');
         return {
           success: false,
           via: 'wa_me',
@@ -502,30 +528,30 @@ export const templateMensagemService = {
         return {
           success: false,
           via: 'evolution_api',
-          instanceName: instInfo.instanceName,
+          instanceName: instanceToUse,
           error: 'Número de telefone inválido para o WhatsApp.'
         };
       }
 
       const res = await evolutionApiService.sendTextMessageDetailed(
-        instInfo.instanceName,
+        instanceToUse,
         cleanPhone,
         mensagem
       );
 
       if (res.success) {
-        console.info(`[templateMensagemService] ✅ Mensagem enviada com sucesso para ${cleanPhone} via instância ${instInfo.instanceName}`);
+        console.info(`[templateMensagemService] ✅ Mensagem enviada com sucesso para ${cleanPhone} via instância ${instanceToUse}`);
         return {
           success: true,
           via: 'evolution_api',
-          instanceName: instInfo.instanceName
+          instanceName: instanceToUse
         };
       } else {
-        console.error(`[templateMensagemService] ❌ Erro ao enviar mensagem para ${cleanPhone} via ${instInfo.instanceName}:`, res.error);
+        console.error(`[templateMensagemService] ❌ Erro ao enviar mensagem para ${cleanPhone} via ${instanceToUse}:`, res.error);
         return {
           success: false,
           via: 'evolution_api',
-          instanceName: instInfo.instanceName,
+          instanceName: instanceToUse,
           error: res.error || 'Falha ao enviar mensagem pela Evolution API.'
         };
       }

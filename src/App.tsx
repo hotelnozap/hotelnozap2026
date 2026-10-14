@@ -5,6 +5,7 @@ import { ZapHotelLogo } from './components/ZapHotelLogo';
 import NotificationSystem from './components/NotificationSystem';
 import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInatividadeModal';
 import { ModalPermissoesApp } from './components/ModalPermissoesApp';
+import { ModalReservasDoDia } from './components/ModalReservasDoDia';
 
 // Services & utilities
 import { supabase } from './lib/supabase';
@@ -29,6 +30,7 @@ import type {
 import { trackingService } from './services/trackingService';
 import { whatsappAutoResponderService } from './services/whatsappAutoResponderService';
 import { autoCheckoutService } from './services/autoCheckoutService';
+import { autoNoShowService } from './services/autoNoShowService';
 import { locationService } from './services/locationService';
 import { slugify } from './utils/slugify';
 
@@ -360,6 +362,10 @@ export const App: React.FC = () => {
   // Modal de onboarding de permissões (Notificações e Localização) na primeira abertura
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState<boolean>(false);
 
+  // Modal proativo de Reservas do Dia e Alertas de No-Show na abertura do sistema (Desktop e Mobile)
+  const [isModalReservasDiaOpen, setIsModalReservasDiaOpen] = useState<boolean>(false);
+  const [totalReservasDiaCount, setTotalReservasDiaCount] = useState<number>(0);
+
   useEffect(() => {
     // 1. Se já perguntou antes, nunca abre
     if (locationService.hasAskedPermissions()) return;
@@ -670,13 +676,56 @@ export const App: React.FC = () => {
     } catch {}
   }, []);
 
-  // Inicializa o monitoramento global de check-out automático às 07:00 no fuso do hotel
+  // Inicializa o monitoramento global de check-out automático às 07:00 e no-show (tolerância de 1h)
   useEffect(() => {
     const cleanupCheckout = autoCheckoutService.iniciarMonitoramentoGlobal();
+    const cleanupNoShow = autoNoShowService.iniciarMonitoramentoGlobal();
+
+    // Checagem para abertura proativa do Modal de Reservas do Dia no Desktop e Mobile
+    const checkAberturaModal = async () => {
+      try {
+        const cur = currentHotelService.getCurrentHotel();
+        if (!cur?.id) return;
+
+        const resumo = await autoNoShowService.obterResumoReservasDoDia(cur.id);
+        setTotalReservasDiaCount(resumo.totalPendencias);
+
+        const hojeIso = new Date().toISOString().split('T')[0];
+        const sessionKey = `modal_reservas_dia_visto_${hojeIso}_${cur.id}`;
+        const jaVisto = sessionStorage.getItem(sessionKey);
+
+        // Se houver check-ins de hoje ou no-show recente, e não foi visto ainda nesta sessão:
+        if (!jaVisto && resumo.totalPendencias > 0) {
+          setIsModalReservasDiaOpen(true);
+          sessionStorage.setItem(sessionKey, 'true');
+        }
+      } catch (e) {
+        console.warn('Aviso ao checar abertura do modal de reservas:', e);
+      }
+    };
+
+    const timerAbertura = setTimeout(checkAberturaModal, 1500);
+
+    const handleRecheckContador = () => {
+      const cur = currentHotelService.getCurrentHotel();
+      if (cur?.id) {
+        autoNoShowService.obterResumoReservasDoDia(cur.id)
+          .then(r => setTotalReservasDiaCount(r.totalPendencias))
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener('hotel_reserva_noshow', handleRecheckContador);
+    window.addEventListener('hotel_reserva_modificada', handleRecheckContador);
+
     return () => {
       cleanupCheckout();
+      cleanupNoShow();
+      clearTimeout(timerAbertura);
+      window.removeEventListener('hotel_reserva_noshow', handleRecheckContador);
+      window.removeEventListener('hotel_reserva_modificada', handleRecheckContador);
     };
-  }, []);
+  }, [activeHotel.id]);
 
   useEffect(() => {
     evolutionApiService.fetchInstances().then((list) => {
@@ -2262,7 +2311,22 @@ export const App: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {/* Botão Reservas do Dia (Mobile) */}
+          <button
+            type="button"
+            onClick={() => setIsModalReservasDiaOpen(true)}
+            className="relative p-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold text-xs flex items-center justify-center transition-all cursor-pointer"
+            title="Reservas do Dia & Alertas"
+          >
+            <span className="material-symbols-outlined text-lg text-emerald-300">today</span>
+            {totalReservasDiaCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-emerald-950 text-[9px] flex items-center justify-center font-black animate-pulse">
+                {totalReservasDiaCount}
+              </span>
+            )}
+          </button>
+
           <NotificationSystem isMobile={true} onNavigateTab={(tab) => setActiveTab(tab)} currentUserRole={currentUserRole} />
           
           <div 
@@ -3402,6 +3466,22 @@ export const App: React.FC = () => {
             <div className="flex items-center gap-4 text-sm">
               <span className="text-[#45464d] hidden sm:inline mr-2">{currentDateTime}</span>
               <div className="flex items-center gap-2">
+                {/* Botão Reservas do Dia (Desktop) */}
+                <button
+                  type="button"
+                  onClick={() => setIsModalReservasDiaOpen(true)}
+                  className="relative px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  title="Painel de Reservas do Dia e Alertas de No-Show"
+                >
+                  <span className="material-symbols-outlined text-base text-emerald-700">today</span>
+                  <span>Reservas do Dia</span>
+                  {totalReservasDiaCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-emerald-950 text-[10px] font-black animate-pulse">
+                      {totalReservasDiaCount}
+                    </span>
+                  )}
+                </button>
+
                 <NotificationSystem isMobile={false} onNavigateTab={(tab) => setActiveTab(tab)} currentUserRole={currentUserRole} />
                 <div className="w-px h-6 bg-[#c6c6cd]/50 mx-1"></div>
                 <div 
@@ -4350,6 +4430,21 @@ export const App: React.FC = () => {
       <ModalPermissoesApp
         isOpen={isPermissionsModalOpen}
         onClose={() => setIsPermissionsModalOpen(false)}
+      />
+
+      {/* MODAL PROATIVO DE RESERVAS DO DIA & ALERTAS DE NO-SHOW (DESKTOP E MOBILE) */}
+      <ModalReservasDoDia
+        isOpen={isModalReservasDiaOpen}
+        onClose={() => setIsModalReservasDiaOpen(false)}
+        hotelId={activeHotel.id}
+        onRealizarCheckin={() => {
+          setIsModalReservasDiaOpen(false);
+          setActiveTab('reservas');
+        }}
+        onRealizarCheckout={() => {
+          setIsModalReservasDiaOpen(false);
+          setActiveTab('reservas');
+        }}
       />
 
     </div>
