@@ -15,6 +15,7 @@ import {
   AutomacoesConfig,
   AUTOMACOES_PADRAO
 } from '../services/templateMensagemService';
+import { whatsappBlacklistService, WhatsappBlacklistEntry } from '../services/whatsappBlacklistService';
 
 export interface WhatsappInstance {
   id: string;
@@ -107,9 +108,21 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
 
   // ==========================================
   // ==========================================
-  // ESTADOS DAS ABAS: INSTÂNCIAS, ATENDIMENTOS & TEMPLATES
+  // ESTADOS DAS ABAS: INSTÂNCIAS, ATENDIMENTOS, TEMPLATES & BLACKLIST
   // ==========================================
-  const [activeSubTab, setActiveSubTab] = useState<'instancias' | 'templates' | 'atendimentos'>('instancias');
+  const [activeSubTab, setActiveSubTab] = useState<'instancias' | 'templates' | 'atendimentos' | 'blacklist'>('instancias');
+
+  // Estados da Blacklist / Números Ignorados pelo Agente de IA
+  const [blacklistList, setBlacklistList] = useState<WhatsappBlacklistEntry[]>([]);
+  const [carregandoBlacklist, setCarregandoBlacklist] = useState<boolean>(false);
+  const [blacklistSearch, setBlacklistSearch] = useState<string>('');
+  const [isModalBlacklistOpen, setIsModalBlacklistOpen] = useState<boolean>(false);
+  const [blacklistEditId, setBlacklistEditId] = useState<string | null>(null);
+  const [blacklistNome, setBlacklistNome] = useState<string>('');
+  const [blacklistTelefone, setBlacklistTelefone] = useState<string>('');
+  const [blacklistMotivo, setBlacklistMotivo] = useState<string>('Familiar / Pessoal');
+  const [blacklistAtivo, setBlacklistAtivo] = useState<boolean>(true);
+  const [salvandoBlacklist, setSalvandoBlacklist] = useState<boolean>(false);
 
   // Mensagens em tempo real / Atendimentos WhatsApp
   const [mensagensChat, setMensagensChat] = useState<any[]>([]);
@@ -184,6 +197,105 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
   useEffect(() => {
     setHotelTemplates(templateMensagemService.getHotelTemplates(currentHotel.id));
   }, [currentHotel.id]);
+
+  // Carregar e gerenciar números na Blacklist
+  const loadBlacklist = async () => {
+    if (!currentHotel?.id) return;
+    setCarregandoBlacklist(true);
+    try {
+      const data = await whatsappBlacklistService.getBlacklistByHotelId(currentHotel.id);
+      setBlacklistList(data);
+    } catch (err) {
+      console.warn('Erro ao carregar blacklist:', err);
+    } finally {
+      setCarregandoBlacklist(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubTab === 'blacklist') {
+      loadBlacklist();
+    }
+  }, [activeSubTab, currentHotel.id]);
+
+  const handleSaveBlacklist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blacklistTelefone.trim()) {
+      showToast('Por favor, informe o número de telefone.');
+      return;
+    }
+    const cleanPhone = blacklistTelefone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      showToast('Telefone inválido. Informe o DDD e o número completo.');
+      return;
+    }
+
+    setSalvandoBlacklist(true);
+    try {
+      if (blacklistEditId) {
+        await whatsappBlacklistService.updateBlacklistEntry(blacklistEditId, {
+          telefone: cleanPhone,
+          nome: blacklistNome.trim(),
+          motivo: blacklistMotivo.trim(),
+          ativo: blacklistAtivo
+        });
+        showToast('Contato ignorado atualizado com sucesso!');
+      } else {
+        await whatsappBlacklistService.addBlacklistEntry({
+          hotel_id: currentHotel.id,
+          telefone: cleanPhone,
+          nome: blacklistNome.trim(),
+          motivo: blacklistMotivo.trim(),
+          ativo: blacklistAtivo
+        });
+        showToast('Número adicionado à Blacklist do Super Agente!');
+      }
+      setIsModalBlacklistOpen(false);
+      setBlacklistEditId(null);
+      setBlacklistNome('');
+      setBlacklistTelefone('');
+      setBlacklistMotivo('Familiar / Pessoal');
+      setBlacklistAtivo(true);
+      await loadBlacklist();
+    } catch (err: any) {
+      showToast('Erro ao salvar número na blacklist: ' + (err.message || 'Erro desconhecido'));
+    } finally {
+      setSalvandoBlacklist(false);
+    }
+  };
+
+  const handleToggleBlacklistAtivo = async (item: WhatsappBlacklistEntry) => {
+    try {
+      await whatsappBlacklistService.updateBlacklistEntry(item.id, {
+        ativo: !item.ativo
+      });
+      setBlacklistList(prev => prev.map(i => i.id === item.id ? { ...i, ativo: !i.ativo } : i));
+      showToast(item.ativo ? 'Bloqueio pausado para este número.' : 'Bloqueio ativado! O agente ignorará este número.');
+    } catch (err) {
+      showToast('Erro ao alternar status do bloqueio.');
+    }
+  };
+
+  const handleDeleteBlacklist = async (id: string) => {
+    if (!confirm('Deseja realmente remover este número da blacklist? O Super Agente voltará a responder este contato.')) return;
+    try {
+      await whatsappBlacklistService.deleteBlacklistEntry(id);
+      setBlacklistList(prev => prev.filter(i => i.id !== id));
+      showToast('Número removido da blacklist com sucesso!');
+    } catch (err) {
+      showToast('Erro ao remover número.');
+    }
+  };
+
+  const filteredBlacklist = useMemo(() => {
+    if (!blacklistSearch.trim()) return blacklistList;
+    const q = blacklistSearch.toLowerCase().trim();
+    return blacklistList.filter(item => 
+      (item.nome || '').toLowerCase().includes(q) ||
+      item.telefone.includes(q) ||
+      (item.motivo || '').toLowerCase().includes(q)
+    );
+  }, [blacklistList, blacklistSearch]);
 
   // Dados de teste para a pré-visualização ao vivo
   const previewTagsExemplo = useMemo(
@@ -1162,6 +1274,24 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
               <span>{carregandoChat ? 'Sincronizando...' : 'Atualizar Mensagens'}</span>
             </button>
           </div>
+        ) : activeSubTab === 'blacklist' ? (
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setBlacklistEditId(null);
+                setBlacklistNome('');
+                setBlacklistTelefone('');
+                setBlacklistMotivo('Familiar / Pessoal');
+                setBlacklistAtivo(true);
+                setIsModalBlacklistOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#003400] hover:bg-[#002500] text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-xs transition cursor-pointer active:scale-95"
+            >
+              <span className="material-symbols-outlined text-lg">person_add</span>
+              <span>Novo Número Ignorado</span>
+            </button>
+          </div>
         ) : (
           <div className="flex items-center gap-2.5 shrink-0">
             <button
@@ -1190,7 +1320,7 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
         )}
       </div>
 
-      {/* SELETOR DE ABAS PRINCIPAIS: INSTÂNCIAS VS ATENDIMENTOS VS TEMPLATES */}
+      {/* SELETOR DE ABAS PRINCIPAIS: INSTÂNCIAS VS ATENDIMENTOS VS TEMPLATES VS BLACKLIST */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2 flex-wrap">
         <button
           type="button"
@@ -1258,6 +1388,28 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
             }`}
           >
             4 Modelos
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('blacklist')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition cursor-pointer ${
+            activeSubTab === 'blacklist'
+              ? 'bg-[#003400] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <span className="material-symbols-outlined text-base">person_off</span>
+          <span>Números Ignorados (Blacklist)</span>
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+              activeSubTab === 'blacklist'
+                ? 'bg-rose-500/20 text-rose-200'
+                : 'bg-rose-100 text-rose-800'
+            }`}
+          >
+            {blacklistList.length}
           </span>
         </button>
       </div>
@@ -2893,6 +3045,216 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
         </div>
       )}
 
+      {/* CONTEÚDO DA ABA 4: NÚMEROS IGNORADOS PELO SUPER AGENTE (BLACKLIST) */}
+      {activeSubTab === 'blacklist' && (
+        <div className="space-y-6">
+          {/* BANNER INFORMATIVO */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 text-white p-6 rounded-2xl border border-slate-700/80 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0 shadow-inner">
+                <span className="material-symbols-outlined text-2xl">shield_person</span>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+                    Blindagem de Contatos Pessoais & Família (Blacklist)
+                  </h3>
+                  <span className="text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    Silêncio do Agente
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  Cadastre aqui os números de telefone da sua família (filhos, cônjuge), funcionários ou fornecedores. 
+                  O <strong>Super Agente de IA nunca responderá</strong> a quem estiver nesta lista, garantindo que você converse pessoalmente no seu WhatsApp sem qualquer resposta de robô.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setBlacklistEditId(null);
+                setBlacklistNome('');
+                setBlacklistTelefone('');
+                setBlacklistMotivo('Familiar / Pessoal');
+                setBlacklistAtivo(true);
+                setIsModalBlacklistOpen(true);
+              }}
+              className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-[#006C49] hover:bg-[#005438] text-white text-xs sm:text-sm font-bold rounded-xl shadow-lg transition cursor-pointer active:scale-95 shrink-0"
+            >
+              <span className="material-symbols-outlined text-lg">add_circle</span>
+              <span>Adicionar Número</span>
+            </button>
+          </div>
+
+          {/* BARRA DE FILTROS E BUSCA */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative flex-1">
+              <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+              <input
+                type="text"
+                value={blacklistSearch}
+                onChange={(e) => setBlacklistSearch(e.target.value)}
+                placeholder="Buscar por nome, telefone ou motivo..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              />
+              {blacklistSearch && (
+                <button
+                  type="button"
+                  onClick={() => setBlacklistSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 shrink-0">
+              <span className="px-3 py-1.5 bg-slate-100 rounded-lg text-slate-700">
+                Total: <strong className="text-slate-900">{filteredBlacklist.length}</strong> {filteredBlacklist.length === 1 ? 'número blindado' : 'números blindados'}
+              </span>
+              <button
+                type="button"
+                onClick={loadBlacklist}
+                disabled={carregandoBlacklist}
+                className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+                title="Recarregar lista"
+              >
+                <span className={`material-symbols-outlined text-base ${carregandoBlacklist ? 'animate-spin' : ''}`}>sync</span>
+              </button>
+            </div>
+          </div>
+
+          {/* LISTA DE NÚMEROS DA BLACKLIST */}
+          {carregandoBlacklist ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center flex flex-col items-center justify-center gap-3">
+              <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs font-bold text-slate-500">Consultando números blindados...</p>
+            </div>
+          ) : filteredBlacklist.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center flex flex-col items-center justify-center gap-3">
+              <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                <span className="material-symbols-outlined text-3xl">verified_user</span>
+              </div>
+              <h4 className="font-extrabold text-base text-slate-800">
+                {blacklistSearch ? 'Nenhum contato encontrado com este filtro' : 'Nenhum número na Blacklist'}
+              </h4>
+              <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+                {blacklistSearch
+                  ? 'Tente buscar por outro nome ou parte do telefone.'
+                  : 'Se você usa o mesmo WhatsApp para o hotel e para uso pessoal, adicione os números da sua filha, familiares ou equipe para que o agente não responda.'}
+              </p>
+              {!blacklistSearch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBlacklistEditId(null);
+                    setBlacklistNome('');
+                    setBlacklistTelefone('');
+                    setBlacklistMotivo('Familiar / Pessoal');
+                    setBlacklistAtivo(true);
+                    setIsModalBlacklistOpen(true);
+                  }}
+                  className="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-[#003400] text-white text-xs font-bold rounded-xl shadow-xs transition hover:bg-[#002500] cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">person_add</span>
+                  <span>Cadastrar Primeiro Número</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredBlacklist.map((item) => {
+                const phoneDisplay = maskPhone(item.telefone);
+                return (
+                  <div
+                    key={item.id}
+                    className={`bg-white rounded-2xl border transition-all p-5 shadow-xs flex flex-col justify-between gap-4 ${
+                      item.ativo ? 'border-slate-200 hover:border-slate-300' : 'border-slate-200/60 bg-slate-50/50 opacity-70'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            item.ativo ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            <span className="material-symbols-outlined text-lg">person_off</span>
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-extrabold text-sm text-slate-900 truncate" title={item.nome || 'Contato Pessoal'}>
+                              {item.nome || 'Contato Pessoal'}
+                            </h4>
+                            <span className="text-[11px] font-mono font-bold text-slate-600 block">
+                              {phoneDisplay}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                          item.ativo ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          {item.ativo ? 'IA Muta' : 'Pausado'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md">
+                          <span className="material-symbols-outlined text-xs text-slate-500">label</span>
+                          {item.motivo || 'Familiar / Pessoal'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleBlacklistAtivo(item)}
+                        className={`text-xs font-bold px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+                          item.ativo
+                            ? 'text-amber-700 hover:bg-amber-50'
+                            : 'text-emerald-700 hover:bg-emerald-50'
+                        }`}
+                        title={item.ativo ? 'Pausar silenciamento' : 'Ativar silenciamento da IA'}
+                      >
+                        <span className="material-symbols-outlined text-sm">{item.ativo ? 'pause_circle' : 'play_circle'}</span>
+                        <span>{item.ativo ? 'Pausar' : 'Ativar'}</span>
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBlacklistEditId(item.id);
+                            setBlacklistNome(item.nome || '');
+                            setBlacklistTelefone(item.telefone);
+                            setBlacklistMotivo(item.motivo || 'Familiar / Pessoal');
+                            setBlacklistAtivo(item.ativo);
+                            setIsModalBlacklistOpen(true);
+                          }}
+                          className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+                          title="Editar contato"
+                        >
+                          <span className="material-symbols-outlined text-base">edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBlacklist(item.id)}
+                          className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition"
+                          title="Remover da Blacklist"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* MODAL DETALHES & LOGS */}
       {selectedLogsInstance && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
@@ -3580,6 +3942,123 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ADICIONAR / EDITAR NÚMERO NA BLACKLIST */}
+      {isModalBlacklistOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 bg-[#003400] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-2xl text-rose-400">shield_person</span>
+                <div>
+                  <h3 className="font-bold text-base">
+                    {blacklistEditId ? 'Editar Contato Blindado' : 'Novo Contato na Blacklist'}
+                  </h3>
+                  <span className="text-[11px] text-emerald-300">
+                    O Super Agente nunca responderá a este contato
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalBlacklistOpen(false)}
+                className="text-white/80 hover:text-white transition p-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBlacklist} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nome ou Identificação do Contato *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={blacklistNome}
+                  onChange={(e) => setBlacklistNome(e.target.value)}
+                  placeholder="Ex: Minha Filha - Larissa, Esposa, etc."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Número do WhatsApp *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={maskPhone(blacklistTelefone)}
+                  onChange={(e) => setBlacklistTelefone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="(66) 98158-5014"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Informe o DDD + número. O sistema normaliza automaticamente.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Categoria / Parentesco
+                </label>
+                <select
+                  value={blacklistMotivo}
+                  onChange={(e) => setBlacklistMotivo(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="Familiar / Pessoal">Familiar / Pessoal (Filhos, Cônjuge, Pais)</option>
+                  <option value="Equipe / Funcionário">Equipe / Funcionário (Recepção, Camareira, Manutenção)</option>
+                  <option value="Fornecedor / Parceiro">Fornecedor / Prestador de Serviço</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="chkBlacklistAtivo"
+                  checked={blacklistAtivo}
+                  onChange={(e) => setBlacklistAtivo(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer"
+                />
+                <label htmlFor="chkBlacklistAtivo" className="text-xs text-slate-700 font-semibold cursor-pointer select-none">
+                  Ativar silenciamento imediato para este número (Recomendado)
+                </label>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsModalBlacklistOpen(false)}
+                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvandoBlacklist}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#003400] hover:bg-[#002500] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  {salvandoBlacklist ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">check</span>
+                      <span>{blacklistEditId ? 'Atualizar Número' : 'Salvar na Blacklist'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
