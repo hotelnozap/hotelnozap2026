@@ -80,6 +80,18 @@
         opacity: 0 !important;
         pointer-events: none !important;
       }
+
+      /* Oculta completamente o botão flutuante de sino do OneSignal (Desktop & Mobile) */
+      #onesignal-bell-container,
+      .onesignal-bell-container,
+      .onesignal-bell-launcher,
+      #onesignal-bell-launcher,
+      .onesignal-customlink-container {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
     </style>
 
     <!-- OneSignal Web Push SDK -->
@@ -90,14 +102,7 @@
         await OneSignal.init({
           appId: "40809032-1904-4b7c-80cb-f1e2e00992f4",
           notifyButton: {
-            enable: true,
-            size: 'medium',
-            theme: 'default',
-            position: 'bottom-right',
-            offset: {
-              bottom: '80px',
-              right: '20px'
-            }
+            enable: false
           },
           allowLocalhostAsSecureOrigin: true,
         });
