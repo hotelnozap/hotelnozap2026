@@ -3997,6 +3997,24 @@ export const reservasService = {
         console.warn('Aviso ao carregar quartos para mapeamento de tipo em reservas:', qErr);
       }
 
+      // Buscar hóspedes para resolver dinamicamente telefone, e-mail, CPF e cidade
+      const hospedesMap = new Map<string, any>();
+      try {
+        let hQuery = supabase.from('hospedes').select('id, nome, email, telefone, cpf_passaporte, cidade_uf, placa_veiculo');
+        if (hotelId && !hotelId.startsWith('hotel-master')) {
+          hQuery = hQuery.eq('hotel_id', hotelId);
+        }
+        const { data: dbHospedes } = await hQuery;
+        if (dbHospedes) {
+          dbHospedes.forEach((h: any) => {
+            if (h.id) hospedesMap.set(String(h.id).toLowerCase(), h);
+            if (h.nome) hospedesMap.set(h.nome.toLowerCase().trim(), h);
+          });
+        }
+      } catch (hErr) {
+        console.warn('Aviso ao carregar hóspedes para mapeamento em reservas:', hErr);
+      }
+
       return data.map((r: any) => {
         const checkInDate = r.data_checkin ? r.data_checkin.split('T')[0] : '';
         const checkOutDate = r.data_checkout ? r.data_checkout.split('T')[0] : '';
@@ -4012,12 +4030,35 @@ export const reservasService = {
 
         const shortId = r.id ? r.id.substring(0, 6).toUpperCase() : '202601';
 
-        // Tentar extrair email do hóspede das observações
-        let emailExtraido = 'hospede@zaphotel.com.br';
-        if (r.observacoes && r.observacoes.includes('@')) {
-          const mEmail = r.observacoes.match(/[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}/);
-          if (mEmail) emailExtraido = mEmail[0];
+        // Buscar hóspede vinculado pelo ID ou Nome
+        const hIdKey = r.hospede_id ? String(r.hospede_id).toLowerCase() : '';
+        const hNomeKey = r.nome_hospede ? r.nome_hospede.toLowerCase().trim() : '';
+        const hEnc = (hIdKey && hospedesMap.get(hIdKey)) || (hNomeKey && hospedesMap.get(hNomeKey));
+
+        // Resolver telefone real
+        let telResolvido = hEnc?.telefone || '';
+        if (!telResolvido && r.observacoes) {
+          const mTel = r.observacoes.match(/(?:WhatsApp|Tel|Telefone|Celular)[:\s]*([0-9]{10,13})/i);
+          if (mTel) telResolvido = mTel[1];
         }
+
+        // Resolver email real
+        let emailResolvido = hEnc?.email || '';
+        if (!emailResolvido && r.observacoes && r.observacoes.includes('@')) {
+          const mEmail = r.observacoes.match(/[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}/);
+          if (mEmail) emailResolvido = mEmail[0];
+        }
+
+        // Resolver CPF real
+        let cpfResolvido = hEnc?.cpf_passaporte || '';
+        if (!cpfResolvido && r.observacoes) {
+          const mCpf = r.observacoes.match(/(?:CPF)[:\s]*([0-9.-]{11,14})/i);
+          if (mCpf) cpfResolvido = mCpf[1];
+        }
+
+        // Cidade / Placa
+        const cidadeResolvida = hEnc?.cidade_uf || '';
+        const placaResolvida = hEnc?.placa_veiculo || '';
 
         // Normalização robusta do status para casar exatamente com os filtros da UI
         let normalizedStatus: Reserva['status'] = 'Confirmada';
@@ -4045,8 +4086,11 @@ export const reservasService = {
           id: r.id,
           reservaNumber: `#RES-${shortId}`,
           hospedeNome: r.nome_hospede || 'Hóspede Não Identificado',
-          hospedeEmail: emailExtraido,
-          hospedeTelefone: '5581998765432',
+          hospedeEmail: emailResolvido,
+          hospedeTelefone: telResolvido,
+          hospedeCpf: cpfResolvido,
+          hospedeCidade: cidadeResolvida,
+          hospedePlaca: placaResolvida,
           hospedeIniciais: (r.nome_hospede || 'Hóspede').substring(0, 2).toUpperCase(),
           quartoNome: r.numero_quarto ? `Quarto ${r.numero_quarto}` : 'Acomodação Principal',
           quartoTipo: tipoResolvido,
@@ -4066,6 +4110,7 @@ export const reservasService = {
           valor_total: Number(r.valor_total || 0),
           status: normalizedStatus,
           observacao: r.observacoes || 'Reserva via Zap',
+          observacoes: r.observacoes || '',
           formaPagamento: r.forma_pagamento || 'Dinheiro'
         };
       });
@@ -4288,9 +4333,9 @@ export const reservasService = {
         id: data.id,
         reservaNumber: `#RES-${shortId}`,
         hospedeNome: data.nome_hospede,
-        hospedeEmail: 'hospede@zap.com',
-        hospedeTelefone: '5581998765432',
-        hospedeIniciais: data.nome_hospede.substring(0, 2).toUpperCase(),
+        hospedeEmail: (data.observacoes && data.observacoes.match(/[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}/)?.[0]) || '',
+        hospedeTelefone: (data.observacoes && data.observacoes.match(/(?:WhatsApp|Tel|Telefone|Celular)[:\s]*([0-9]{10,13})/i)?.[1]) || '',
+        hospedeIniciais: (data.nome_hospede || 'HP').substring(0, 2).toUpperCase(),
         quartoNome: `Quarto ${data.numero_quarto}`,
         quartoTipo: resolvedTipo,
         checkIn: data.data_checkin ? data.data_checkin.split('T')[0] : '',

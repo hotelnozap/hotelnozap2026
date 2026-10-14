@@ -33,7 +33,11 @@ export interface Reserva {
   valor_total?: number;
   status: 'Confirmada' | 'Hospedado' | 'Concluída' | 'Cancelada';
   observacao?: string;
+  observacoes?: string;
   formaPagamento?: string;
+  hospedeCpf?: string;
+  hospedeCidade?: string;
+  hospedePlaca?: string;
 }
 
 interface ListagemReservasProps {

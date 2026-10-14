@@ -177,19 +177,19 @@ export const ModalCheckinEntrada: React.FC<ModalCheckinEntradaProps> = ({
         if (isMounted && dados) {
           setListaHospedesCadastrados(dados);
 
-          // Se a reserva já tiver hospedeNome, tenta encontrar na base e preencher campos vazios
-          if (reserva.hospedeNome) {
+          // Se a reserva já tiver hospedeNome ou hospede_id, tenta encontrar na base e preencher campos
+          if (reserva.hospedeNome || reserva.hospede_id) {
             const match = dados.find(g => 
-              g.id === reserva.hospede_id || 
-              g.name.trim().toLowerCase() === reserva.hospedeNome.trim().toLowerCase()
+              (reserva.hospede_id && g.id === reserva.hospede_id) || 
+              (reserva.hospedeNome && g.name.trim().toLowerCase() === reserva.hospedeNome.trim().toLowerCase())
             );
             if (match) {
               setHospedeSelecionadoBase(match);
               setHospedeSelecionadoId(match.id);
-              if (match.cpfCnpj) setDocumentoCpf(prev => prev || maskCpfCnpj(match.cpfCnpj));
-              if (match.phone) setTelefoneHospede(prev => prev || maskPhone(match.phone));
-              if (match.cidadeOrigem || match.lastStay) setCidadeOrigem(prev => prev || match.cidadeOrigem || match.lastStay);
-              if (match.placaVeiculo) setPlacaVeiculo(prev => prev || match.placaVeiculo!.toUpperCase());
+              if (match.cpfCnpj) setDocumentoCpf(maskCpfCnpj(match.cpfCnpj));
+              if (match.phone) setTelefoneHospede(maskPhone(match.phone));
+              if (match.cidadeOrigem) setCidadeOrigem(match.cidadeOrigem);
+              if (match.placaVeiculo) setPlacaVeiculo(match.placaVeiculo.toUpperCase());
             }
           }
         }
@@ -264,10 +264,27 @@ export const ModalCheckinEntrada: React.FC<ModalCheckinEntradaProps> = ({
   useEffect(() => {
     if (reserva) {
       setNomeHospede(reserva.hospedeNome || '');
-      setTelefoneHospede(reserva.hospedeTelefone ? maskPhone(reserva.hospedeTelefone) : '');
-      setDocumentoCpf('');
-      setCidadeOrigem('');
-      setPlacaVeiculo('');
+      
+      const rawTel = reserva.hospedeTelefone || '';
+      const isDummy = rawTel.includes('81998765432') || rawTel.includes('99876-5432');
+      let telFinal = !isDummy && rawTel ? maskPhone(rawTel) : '';
+      
+      const obs = reserva.observacoes || reserva.observacao || '';
+      if (!telFinal && obs) {
+        const mTel = obs.match(/(?:WhatsApp|Tel|Telefone|Celular)[:\s]*([0-9]{10,13})/i);
+        if (mTel) telFinal = maskPhone(mTel[1]);
+      }
+      setTelefoneHospede(telFinal);
+
+      let cpfFinal = reserva.hospedeCpf ? maskCpfCnpj(reserva.hospedeCpf) : '';
+      if (!cpfFinal && obs) {
+        const mCpf = obs.match(/(?:CPF)[:\s]*([0-9.-]{11,14})/i);
+        if (mCpf) cpfFinal = maskCpfCnpj(mCpf[1]);
+      }
+      setDocumentoCpf(cpfFinal);
+
+      setCidadeOrigem(reserva.hospedeCidade || '');
+      setPlacaVeiculo(reserva.hospedePlaca ? reserva.hospedePlaca.toUpperCase() : '');
       
       const qNum = reserva.numero_quarto || reserva.quartoNome.replace(/\D/g, '');
       setNumeroChave(qNum ? `Chave #${qNum}` : 'Chave Acomodação');
