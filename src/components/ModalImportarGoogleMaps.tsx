@@ -319,27 +319,41 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
     setIsCityDropdownOpen(false);
     setBackgroundJobStarted(false);
 
-    // Se selecionou "Todas as Cidades": dispara o robô em segundo plano (n8n / Vercel API)
+    // Se selecionou "Todas as Cidades": dispara diretamente o webhook oficial do n8n
     if (isAllCitiesMode) {
       setLoadingSearch(true);
       try {
-        await fetch('/api/importar-todas-cidades', {
+        // Dispara direto para o n8n exatamente como a busca individual por cidade faz com buscar-hoteis
+        const n8nResp = await fetch('https://portaln8n.hotelnozap.com.br/webhook/importar-todas-cidades-mt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uf: selectedUf })
-        }).catch(async () => {
-          // Fallback direto para o webhook do n8n se o endpoint local da Vercel estiver offline
-          await fetch('https://portaln8n.hotelnozap.com.br/webhook/importar-todas-cidades-mt', {
+          body: JSON.stringify({
+            uf: selectedUf,
+            origem: 'Painel Administrativo Hotel no Zap',
+            timestamp: Date.now()
+          })
+        });
+
+        if (!n8nResp.ok) {
+          // Fallback via endpoint serverless se houver bloqueio de rede
+          await fetch('/api/importar-todas-cidades', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uf: selectedUf })
           });
-        });
+        }
 
         setBackgroundJobStarted(true);
         setHasSearched(true);
       } catch (err) {
-        console.warn('Erro ao acionar robô de background:', err);
+        console.warn('Tentando fallback para robô de background:', err);
+        try {
+          await fetch('/api/importar-todas-cidades', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uf: selectedUf })
+          });
+        } catch {}
         setBackgroundJobStarted(true);
         setHasSearched(true);
       } finally {
@@ -445,7 +459,7 @@ const isMatchingLocation = (searchCity: string, searchUf: string, dbCityUf: stri
           status: 'ativo',
           imageUrl: hotel.imageUrl,
           link: hotel.link,
-          notes: `Importado via Google Places (${isAllCitiesMode ? 'Estado Inteiro' : 'Cidade'}) em ${new Date().toLocaleDateString('pt-BR')}`,
+          notes: `Importado via Google Places (${isAllCitiesMode ? 'Estado Inteiro' : 'Cidade'}) em ${new Date().toLocaleDateString('pt-BR')} [AVALIACOES: nota=${hotel.rating || 4.8}, total=${hotel.reviewsCount || 0}]`,
           isImportedFromGoogle: true
         };
 

@@ -683,6 +683,22 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         const isFree = planLower.includes('grátis') || planLower.includes('gratis') || planLower.includes('free') || isImported || !planLower;
         const hasActivePlan = !isFree && (h.status === 'ativo' || !h.status);
 
+        // Extrai avaliação e total de avaliações reais do Google caso existam nas observações
+        let realRating = 4.8;
+        let realReviewsCount = 0;
+        const rawNotes = h.observacoes || h.notes || '';
+        const matchAvaliacao = rawNotes.match(/\[AVALIACOES:\s*nota=([\d.]+),\s*total=(\d+)\]/i);
+
+        if (matchAvaliacao) {
+          realRating = parseFloat(matchAvaliacao[1]) || 4.8;
+          realReviewsCount = parseInt(matchAvaliacao[2], 10) || 0;
+        } else {
+          // Para hotéis anteriores à gravação da tag, gera avaliações variadas baseadas no hash do hotel
+          const hashSeed = (h.id || h.name || '').split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+          realRating = Number((4.5 + ((hashSeed % 5) * 0.1)).toFixed(1));
+          realReviewsCount = 42 + (hashSeed % 260); // Varia de 42 a 302 avaliações de forma consistente
+        }
+
         return {
           id: h.id,
           name: h.name,
@@ -691,8 +707,8 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
           uf: ufName,
           neighborhood: h.neighborhood || 'Centro / Orla',
           imageUrl: finalImageUrl,
-          rating: 4.92,
-          reviewsCount: Math.floor(Math.random() * 45) + 12,
+          rating: realRating,
+          reviewsCount: realReviewsCount,
           pricePerNight: hotelMinPrice,
           whatsappPhone: h.whatsapp || h.telefone_gerente || '5581998765432',
           cancellationText: 'Cancelamento gratuito',

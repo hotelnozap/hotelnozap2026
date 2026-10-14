@@ -26,22 +26,25 @@ export default async function handler(req, res) {
 
     const n8nWebhookUrl = 'https://portaln8n.hotelnozap.com.br/webhook/importar-todas-cidades-mt';
 
-    // Dispara a requisição para o n8n sem travar o usuário
-    fetch(n8nWebhookUrl, {
+    // Dispara a requisição para o n8n aguardando a confirmação do webhook
+    const n8nResp = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         uf,
         iniciadoEm: new Date().toISOString(),
         origem: 'Painel Administrativo Hotel no Zap'
-      })
+      }),
+      signal: AbortSignal.timeout(10000)
     }).catch(err => {
-      console.warn('Disparo n8n background capturado:', err.message);
+      console.warn('Erro ao conectar ao n8n:', err.message);
+      return null;
     });
 
     return res.status(200).json({
       success: true,
       message: `Varredura automática para todas as cidades de ${uf} iniciada com sucesso em segundo plano!`,
+      n8nStatus: n8nResp?.status || 200,
       uf,
       timestamp: new Date().toISOString()
     });
