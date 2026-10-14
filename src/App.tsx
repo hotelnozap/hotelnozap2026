@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { lazyWithRetry as lazy } from './utils/lazyWithRetry';
 
 // Shared small components & modals (kept synchronous for instant UX)
 import { ZapHotelLogo } from './components/ZapHotelLogo';

@@ -38,6 +38,41 @@ if (typeof window !== 'undefined') {
   });
 }
 
+// Tratamento automático de chunks atualizados no Vite após novos deploys
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event: any) => {
+    event?.preventDefault?.();
+    console.warn('[Vite] Chunk desatualizado detectado após nova publicação. Atualizando página...');
+    const reloadKey = 'hotelnozap_chunk_reload_ts';
+    const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
+    const now = Date.now();
+    if (now - lastReload > 8000) {
+      sessionStorage.setItem(reloadKey, String(now));
+      window.location.reload();
+    }
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const error = event.reason;
+    const msg = (error?.message || '').toLowerCase();
+    if (
+      msg.includes('dynamically imported module') ||
+      msg.includes('failed to fetch dynamically imported module') ||
+      error?.name === 'ChunkLoadError'
+    ) {
+      event.preventDefault();
+      console.warn('[Vite Unhandled Rejection] Chunk desatualizado detectado. Atualizando página...');
+      const reloadKey = 'hotelnozap_chunk_reload_ts';
+      const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
+      const now = Date.now();
+      if (now - lastReload > 8000) {
+        sessionStorage.setItem(reloadKey, String(now));
+        window.location.reload();
+      }
+    }
+  });
+}
+
 interface ErrorBoundaryProps {
   children: ReactNode;
 }
@@ -54,6 +89,23 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    const msg = (error?.message || '').toLowerCase();
+    const isChunkError =
+      msg.includes('dynamically imported module') ||
+      msg.includes('failed to fetch dynamically imported module') ||
+      error?.name === 'ChunkLoadError';
+
+    if (isChunkError && typeof window !== 'undefined') {
+      const reloadKey = 'hotelnozap_chunk_reload_ts';
+      const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
+      const now = Date.now();
+      if (now - lastReload > 8000) {
+        sessionStorage.setItem(reloadKey, String(now));
+        window.location.reload();
+        return { hasError: false };
+      }
+    }
+
     return { hasError: true, error };
   }
 
@@ -75,8 +127,7 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
             </div>
             <button
               onClick={() => {
-                localStorage.removeItem('hotelnozap_sb_session');
-                window.location.href = '/paineladmin';
+                window.location.reload();
               }}
               style={{ background: '#003400', color: '#fff', border: '1px solid #10b981', padding: '10px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
             >
