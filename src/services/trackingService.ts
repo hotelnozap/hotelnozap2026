@@ -66,7 +66,7 @@ export const trackingService = {
         return {
           metaPixelId: p.metaPixelId || p.pixelId || '',
           googleMetaTag: p.googleMetaTag || '',
-          googleAnalyticsId: p.googleAnalyticsId || '',
+          googleAnalyticsId: p.googleAnalyticsId || 'G-8VQJQCXSQP',
           recaptchaSiteKey: p.recaptchaSiteKey || '',
           recaptchaSecretKey: p.recaptchaSecretKey || ''
         };
@@ -75,7 +75,9 @@ export const trackingService = {
       console.warn('[trackingService] Erro ao ler credenciais de rastreamento:', e);
     }
 
-    return {};
+    return {
+      googleAnalyticsId: 'G-8VQJQCXSQP'
+    };
   },
 
   /**
@@ -149,7 +151,7 @@ export const trackingService = {
     // ─────────────────────────────────────────────────────────────
     const gaId = (conf.googleAnalyticsId || '').trim();
     const gaScriptId = 'hotelnozap-gtag-script';
-    let existingGaScript = document.getElementById(gaScriptId);
+    let existingGaScript = document.getElementById(gaScriptId) || document.querySelector('script[src*="googletagmanager.com/gtag/js"]');
 
     if (gaId && gaId.startsWith('G-')) {
       if (!existingGaScript) {

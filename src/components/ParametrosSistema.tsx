@@ -158,7 +158,7 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
   // 6. Marketing, Rastreamento & Segurança Web (Exclusivo Administrador)
   const [metaPixelId, setMetaPixelId] = useState('');
   const [googleMetaTag, setGoogleMetaTag] = useState('');
-  const [googleAnalyticsId, setGoogleAnalyticsId] = useState('');
+  const [googleAnalyticsId, setGoogleAnalyticsId] = useState('G-8VQJQCXSQP');
   const [recaptchaSiteKey, setRecaptchaSiteKey] = useState('');
   const [recaptchaSecretKey, setRecaptchaSecretKey] = useState('');
   const [showRecaptchaSecret, setShowRecaptchaSecret] = useState(false);
