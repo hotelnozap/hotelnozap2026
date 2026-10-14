@@ -146,8 +146,11 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
     }
   };
 
-  const fetchReservas = async () => {
-    setLoading(true);
+  const fetchReservas = async (isSilent = false) => {
+    // Só aciona o spinner de tela inteira se não houver dados já em memória
+    if (!isSilent && reservasRef.current.length === 0) {
+      setLoading(true);
+    }
     try {
       const data = await reservasService.getReservas();
       setReservas(data);
@@ -163,20 +166,25 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
   };
 
   useEffect(() => {
-    fetchReservas();
+    fetchReservas(false);
 
     const handleRefresh = () => {
-      fetchReservas();
+      fetchReservas(true);
     };
 
-    window.addEventListener('hotel_changed', handleRefresh);
+    const handleHotelChanged = () => {
+      reservasService.invalidateCache();
+      fetchReservas(false);
+    };
+
+    window.addEventListener('hotel_changed', handleHotelChanged);
     window.addEventListener('hotel_nova_reserva', handleRefresh);
     window.addEventListener('hotel_reserva_modificada', handleRefresh);
     window.addEventListener('focus', handleRefresh);
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'hotel_nova_reserva_trigger') {
-        fetchReservas();
+        fetchReservas(true);
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -186,13 +194,13 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
       bc = new BroadcastChannel('hotel_notifications_channel');
       bc.onmessage = (event) => {
         if (event.data?.type === 'NOVA_RESERVA_HOSPEDE' || event.data?.type === 'CHECKOUT_REALIZADO') {
-          fetchReservas();
+          fetchReservas(true);
         }
       };
     } catch {}
 
     const unsubscribeRealtime = reservasService.subscribeReservas(() => {
-      fetchReservas();
+      fetchReservas(true);
     });
 
     // Timer Inteligente: a cada 30 segundos valida se o relógio atingiu 07:00 no fuso do hotel

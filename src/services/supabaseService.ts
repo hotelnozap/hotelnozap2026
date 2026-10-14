@@ -3942,13 +3942,40 @@ export const quartosService = {
   }
 };
 
+// =========================================================================
+// CACHE EM MEMÓRIA DE ALTA PERFORMANCE PARA RESERVAS (STALE-WHILE-REVALIDATE)
+// =========================================================================
+interface ReservasCacheEntry {
+  key: string;
+  data: Reserva[];
+  timestamp: number;
+}
+let _reservasMemoryCache: ReservasCacheEntry | null = null;
+const RESERVAS_CACHE_TTL_MS = 25000; // 25 segundos de frescor imediato na memória
+
 // Service para Reservas no Supabase (Tabela: reservas)
 export const reservasService = {
-  async getReservas(hotelId?: string): Promise<Reserva[]> {
+  /**
+   * Invalida o cache em memória para forçar uma nova leitura fresca do Supabase
+   */
+  invalidateCache(): void {
+    _reservasMemoryCache = null;
+  },
+
+  async getReservas(hotelId?: string, forceRefresh = false): Promise<Reserva[]> {
     try {
       const isAll = hotelId === 'ALL' || hotelId === 'all';
       const userRole = (typeof window !== 'undefined' ? localStorage.getItem('hotelnozap_user_role') : '') || '';
       const isSuperAdmin = userRole.toLowerCase().includes('super') || userRole.toLowerCase().includes('admin');
+
+      const activeHotelId = hotelId || (!isAll ? currentHotelService.getCurrentHotel()?.id : 'ALL') || 'default';
+      const cacheKey = `${activeHotelId}_${isAll}_${isSuperAdmin}`;
+
+      // 1. Stale-While-Revalidate: Se existe cache válido e não for refresh forçado, retorna imediatamente (0ms)
+      const now = Date.now();
+      if (!forceRefresh && _reservasMemoryCache && _reservasMemoryCache.key === cacheKey && (now - _reservasMemoryCache.timestamp) < RESERVAS_CACHE_TTL_MS) {
+        return _reservasMemoryCache.data;
+      }
 
       let query = supabase
         .from('reservas')
@@ -4015,7 +4042,7 @@ export const reservasService = {
         console.warn('Aviso ao carregar hóspedes para mapeamento em reservas:', hErr);
       }
 
-      return data.map((r: any) => {
+      const result: Reserva[] = data.map((r: any) => {
         const checkInDate = r.data_checkin ? r.data_checkin.split('T')[0] : '';
         const checkOutDate = r.data_checkout ? r.data_checkout.split('T')[0] : '';
 
@@ -4114,6 +4141,14 @@ export const reservasService = {
           formaPagamento: r.forma_pagamento || 'Dinheiro'
         };
       });
+
+      _reservasMemoryCache = {
+        key: cacheKey,
+        data: result,
+        timestamp: Date.now()
+      };
+
+      return result;
     } catch (err) {
       console.warn('Erro ao carregar reservas do Supabase:', err);
       return [];
@@ -4329,6 +4364,8 @@ export const reservasService = {
         }
       } catch {}
 
+      this.invalidateCache();
+
       return {
         id: data.id,
         reservaNumber: `#RES-${shortId}`,
@@ -4366,8 +4403,11 @@ export const reservasService = {
 
       const { error } = await delQuery;
 
-      if (!error && typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: { id, deleted: true } }));
+      if (!error) {
+        this.invalidateCache();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: { id, deleted: true } }));
+        }
       }
       return !error;
     } catch (err) {
@@ -4449,6 +4489,7 @@ export const reservasService = {
             .catch(tErr => console.warn('[templateMensagemService] Erro ao disparar confirmação na alteração de status:', tErr));
         }
 
+        this.invalidateCache();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: data }));
           window.dispatchEvent(new Event('hotel_quarto_modificado'));
@@ -4617,6 +4658,7 @@ export const reservasService = {
         })
         .catch(() => {});
 
+      this.invalidateCache();
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: updated }));
         window.dispatchEvent(new Event('hotel_quarto_modificado'));
@@ -4768,6 +4810,7 @@ export const reservasService = {
           }));
         } catch { /* ignore */ }
 
+        this.invalidateCache();
         window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: reservaAtualizada }));
         window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId, numero: numeroQuarto, status: 'limpeza' } }));
         window.dispatchEvent(new CustomEvent('hotel_nova_notificacao', { detail: notifPayload }));
@@ -5019,6 +5062,7 @@ export const reservasService = {
           }));
         } catch { /* ignore */ }
 
+        this.invalidateCache();
         window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: reservaAtualizada }));
         window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId, numero: numeroQuarto, status: 'ocupado', guestName: nomeHospede } }));
         window.dispatchEvent(new CustomEvent('hotel_nova_notificacao', { detail: notifPayload }));
@@ -5039,6 +5083,7 @@ export const reservasService = {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservas' },
         (payload) => {
+          reservasService.invalidateCache();
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: payload }));
             if (payload.eventType === 'INSERT') {
