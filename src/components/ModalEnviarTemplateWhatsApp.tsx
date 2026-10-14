@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   templateMensagemService,
   TemplateType,
-  TemplateTags
+  TemplateTags,
+  TEMPLATES_PADRAO
 } from '../services/templateMensagemService';
 import { maskPhone } from '../utils/masks';
 
@@ -51,6 +52,8 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
   });
   const [feedback, setFeedback] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
 
+  const [restaurado, setRestaurado] = useState<boolean>(false);
+
   // Tags da reserva
   const tags: TemplateTags = {
     nome_hospede: hospedeNome || 'Hóspede',
@@ -63,7 +66,7 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
     valor_total: valorTotal || 'R$ 0,00'
   };
 
-  // Carregar status da conexão do hotel na Evolution API
+  // Carregar status da conexão do hotel no WhatsApp
   useEffect(() => {
     if (!isOpen) return;
 
@@ -96,8 +99,20 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
 
   if (!isOpen) return null;
 
-  // Enviar diretamente via Evolution API
-  const handleEnviarEvolution = async () => {
+  // Restaurar conteúdo do template para o padrão com as tags da reserva
+  const handleRestaurarPadrao = () => {
+    const rawTemplate =
+      templateMensagemService.getHotelTemplates(hotelId)[selectedTemplate] ||
+      TEMPLATES_PADRAO[selectedTemplate] ||
+      '';
+    const rendered = templateMensagemService.interpolarTemplate(rawTemplate, tags, hotelId);
+    setMensagem(rendered);
+    setRestaurado(true);
+    setTimeout(() => setRestaurado(false), 1500);
+  };
+
+  // Enviar diretamente via WhatsApp oficial
+  const handleEnviarWhatsApp = async () => {
     if (!hospedeTelefone || !mensagem.trim() || enviando) return;
 
     setEnviando(true);
@@ -141,7 +156,7 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
       } else {
         setFeedback({
           tipo: 'erro',
-          texto: res.error || 'Não foi possível enviar a mensagem pela Evolution API.'
+          texto: res.error || 'Não foi possível enviar a mensagem pelo WhatsApp.'
         });
       }
     } catch (err: any) {
@@ -152,16 +167,6 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
     } finally {
       setEnviando(false);
     }
-  };
-
-  // Abrir no WhatsApp Web
-  const handleAbrirWhatsAppWeb = () => {
-    const link = templateMensagemService.gerarLinkWhatsAppWeb(hospedeTelefone, mensagem);
-    window.open(link, '_blank');
-    if (onSuccess) {
-      onSuccess(`Conversa aberta no WhatsApp Web para ${hospedeNome}`);
-    }
-    onClose();
   };
 
   return (
@@ -176,7 +181,7 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
             <div>
               <h3 className="font-extrabold text-base leading-tight">Enviar Mensagem WhatsApp</h3>
               <p className="text-[11px] text-emerald-200">
-                Templates integrados à Evolution API • {hotelName || 'Hotel no Zap'}
+                Templates do sistema • {hotelName || 'Hotel no Zap'}
               </p>
             </div>
           </div>
@@ -190,7 +195,7 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
 
         {/* Corpo do Modal */}
         <div className="p-6 overflow-y-auto space-y-4">
-          {/* Status da Conexão Evolution API */}
+          {/* Status da Conexão WhatsApp */}
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 min-w-0">
               <span
@@ -204,10 +209,10 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
               />
               <span className="text-slate-700 truncate font-semibold">
                 {instanciaStatus.checking
-                  ? 'Verificando conexão da Evolution API...'
+                  ? 'Verificando conexão do WhatsApp...'
                   : instanciaStatus.isOnline
                   ? `WhatsApp Oficial Conectado: ${instanciaStatus.instanceName}`
-                  : 'Nenhuma conexão WhatsApp ativa no momento (use o WhatsApp Web)'}
+                  : 'Nenhuma conexão WhatsApp ativa no momento'}
               </span>
             </div>
             {instanciaStatus.isOnline && (
@@ -268,13 +273,14 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
               </label>
               <button
                 type="button"
-                onClick={() => {
-                  const rendered = templateMensagemService.renderTemplate(selectedTemplate, tags, hotelId);
-                  setMensagem(rendered);
-                }}
-                className="text-[11px] text-emerald-800 hover:underline font-bold cursor-pointer"
+                onClick={handleRestaurarPadrao}
+                className="text-[11px] text-emerald-800 hover:text-emerald-950 hover:underline font-bold cursor-pointer inline-flex items-center gap-1"
+                title="Recarregar o modelo padrão com as informações desta reserva"
               >
-                Restaurar Padrão
+                <span className="material-symbols-outlined text-[13px]">
+                  {restaurado ? 'check' : 'restart_alt'}
+                </span>
+                <span>{restaurado ? 'Padrão Restaurado!' : 'Restaurar Padrão'}</span>
               </button>
             </div>
             <textarea
@@ -318,22 +324,10 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
           </button>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* Botão WhatsApp Web */}
+            {/* Botão Enviar */}
             <button
               type="button"
-              onClick={handleAbrirWhatsAppWeb}
-              disabled={enviando}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#25D366] hover:bg-[#1fba58] text-white rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-xs whitespace-nowrap"
-              title="Abrir a mensagem preenchida no WhatsApp Web"
-            >
-              <span className="material-symbols-outlined text-base">open_in_new</span>
-              <span>WhatsApp Web</span>
-            </button>
-
-            {/* Botão Enviar Evolution API */}
-            <button
-              type="button"
-              onClick={handleEnviarEvolution}
+              onClick={handleEnviarWhatsApp}
               disabled={enviando || !instanciaStatus.isOnline}
               className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-xs whitespace-nowrap ${
                 instanciaStatus.isOnline
@@ -342,8 +336,8 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
               }`}
               title={
                 instanciaStatus.isOnline
-                  ? 'Disparar diretamente pela Evolution API'
-                  : 'Requer uma instância de WhatsApp conectada no hotel'
+                  ? 'Disparar mensagem pelo WhatsApp oficial'
+                  : 'Requer uma conexão WhatsApp ativa no hotel'
               }
             >
               {enviando ? (
@@ -354,7 +348,7 @@ export const ModalEnviarTemplateWhatsApp: React.FC<ModalEnviarTemplateWhatsAppPr
               ) : (
                 <>
                   <span className="material-symbols-outlined text-base text-emerald-300">send</span>
-                  <span>Enviar pelo Evolution API</span>
+                  <span>Enviar</span>
                 </>
               )}
             </button>

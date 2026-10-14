@@ -318,9 +318,6 @@ export const templateMensagemService = {
    * Renderiza o template substituindo as tags dinâmicas pelos valores reais
    */
   renderTemplate(type: TemplateType, tags: TemplateTags, hotelId?: string): string {
-    if (type === 'boas_vindas') {
-      return ''; // Boas-vindas desativadas permanentemente no sistema
-    }
     const templates = this.getHotelTemplates(hotelId);
     const text = templates[type] || TEMPLATES_PADRAO[type] || '';
     return this.interpolarTemplate(text, tags, hotelId);
