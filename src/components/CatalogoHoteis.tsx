@@ -480,10 +480,12 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   const [visibleCitiesCount, setVisibleCitiesCount] = useState<number>(14);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Localização do usuário detectada via GPS / Permissões
+  // Localização do usuário detectada via GPS / Permissões / IP
   const [userLocation, setUserLocation] = useState<UserLocation | null>(() => {
     return locationService.getUserLocationFromStorage();
   });
+  const [isDetectingLocation, setIsDetectingLocation] = useState<boolean>(false);
+  const [hasRunAutoOpen, setHasRunAutoOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleLocationUpdate = (e: any) => {
@@ -496,6 +498,55 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     window.addEventListener('hotelnozap_location_updated', handleLocationUpdate);
     return () => window.removeEventListener('hotelnozap_location_updated', handleLocationUpdate);
   }, []);
+
+  // Efeito principal: Abre o app automaticamente na cidade onde o usuário se encontra (Mobile & Desktop)
+  useEffect(() => {
+    const runAutoCityDetection = async () => {
+      const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+      const isExplicitCityRoute = (parts[0] === 'cidades' || parts[0] === 'cidade') && Boolean(parts[1]);
+      const hasManualOverride = locationService.hasManualCityOverride();
+
+      // 1. Se já tem localização prévia no cache e não há rota ou override manual, abre imediatamente
+      const stored = locationService.getUserLocationFromStorage();
+      if (stored?.city && !isExplicitCityRoute && !hasManualOverride && hoteisList.length > 0) {
+        const initialMatch = findCityBySlug(stored.city, hoteisList);
+        if (initialMatch && !focusedCity) {
+          setFocusedCity(initialMatch);
+        }
+      }
+
+      // 2. Se já rodou a verificação ou o usuário já forçou uma cidade, não substitui
+      if (hasRunAutoOpen) return;
+      setHasRunAutoOpen(true);
+
+      setIsDetectingLocation(true);
+      try {
+        const detected = await locationService.autoDetectUserLocation();
+        if (detected?.city) {
+          setUserLocation(detected);
+
+          const currentParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+          const stillNoExplicit = !((currentParts[0] === 'cidades' || currentParts[0] === 'cidade') && Boolean(currentParts[1]));
+          const stillNoOverride = !locationService.hasManualCityOverride();
+
+          if (stillNoExplicit && stillNoOverride && hoteisList.length > 0) {
+            const matched = findCityBySlug(detected.city, hoteisList);
+            if (matched) {
+              setFocusedCity(matched);
+              const cleanSlug = normalizeCitySlug(matched);
+              window.history.replaceState({}, '', `/cidades/${cleanSlug}`);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[CatalogoHoteis] Erro na autodetecção de cidade:', err);
+      } finally {
+        setIsDetectingLocation(false);
+      }
+    };
+
+    runAutoCityDetection();
+  }, [hoteisList.length, hasRunAutoOpen]);
 
   // Verifica se a cidade do usuário possui acomodações cadastradas
   const userCityHasHotels = useMemo(() => {
@@ -1122,6 +1173,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
 
   // Abertura oficial da rota /cidades/[nomedacidade]
   const handleOpenCityRoute = (citySlug: string, cityName: string) => {
+    locationService.setManualCityOverride(cityName || citySlug);
     const cleanSlug = normalizeCitySlug(cityName || citySlug);
     window.history.pushState({}, '', `/cidades/${cleanSlug}`);
     setFocusedCity(cityName);
@@ -1131,6 +1183,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
 
   // Limpeza de filtro de cidade e retorno para a raiz /
   const handleClearCityFilter = () => {
+    locationService.setManualCityOverride('todas');
     setFocusedCity(null);
     setSearchQuery('');
     setActiveCategory('Tudo');
@@ -1485,7 +1538,10 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                 <button
                   type="button"
                   onClick={async () => {
+                    locationService.clearManualCityOverride();
+                    setIsDetectingLocation(true);
                     const loc = await locationService.requestUserLocation();
+                    setIsDetectingLocation(false);
                     if (loc && loc.city) {
                       setUserLocation(loc);
                       const matchingCity = findCityBySlug(loc.city, hoteisList);
@@ -1594,7 +1650,83 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
       {/* ========================================================================= */}
       {/* CORPO PRINCIPAL: SEÇÕES DE CARROSSEL HORIZONTAL OU RESULTADO DA BUSCA    */}
       {/* ========================================================================= */}
-      <main className="max-w-[1680px] mx-auto px-4 sm:px-8 pt-6 space-y-10">
+      <main className="max-w-[1680px] mx-auto px-4 sm:px-8 pt-6 space-y-8">
+
+        {/* BANNER / STATUS DE RECONHECIMENTO DE LOCALIZAÇÃO DO GPS (MOBILE & DESKTOP) */}
+        {!loading && (userLocation?.city || isDetectingLocation) && (
+          <div className="bg-white/95 backdrop-blur-xs border border-emerald-200/90 rounded-2xl p-3 sm:px-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                <span className={`material-symbols-outlined text-xl ${isDetectingLocation ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                  {isDetectingLocation ? 'sync' : 'near_me'}
+                </span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
+                    {isDetectingLocation ? 'Detectando GPS' : 'Sua Localização Atual'}
+                  </span>
+                  <p className="text-xs font-bold text-slate-900">
+                    {userLocation?.city ? `${userLocation.city} · ${userLocation.uf || 'Brasil'}` : 'Localizando sua cidade via GPS...'}
+                  </p>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  {focusedCity
+                    ? `O aplicativo abriu diretamente nos hotéis e pousadas de ${focusedCity}`
+                    : userCityHasHotels
+                      ? `Você está em ${userLocation?.city}. Mostrando hotéis mais próximos de você.`
+                      : `Você está em ${userLocation?.city || 'sua cidade'}. Veja os hotéis e pousadas parceiros mais procurados.`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsDetectingLocation(true);
+                  locationService.clearManualCityOverride();
+                  const loc = await locationService.requestUserLocation();
+                  setIsDetectingLocation(false);
+                  if (loc?.city) {
+                    setUserLocation(loc);
+                    const match = findCityBySlug(loc.city, hoteisList);
+                    if (match) {
+                      handleOpenCityRoute(normalizeCitySlug(match), match);
+                    }
+                  }
+                }}
+                disabled={isDetectingLocation}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                title="Recalcular localização com o sensor GPS do aparelho"
+              >
+                <span className={`material-symbols-outlined text-base text-emerald-700 ${isDetectingLocation ? 'animate-spin' : ''}`}>my_location</span>
+                <span>{isDetectingLocation ? 'Calibrando...' : 'Atualizar GPS'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsSearchPopoverOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                title="Escolher outra cidade ou destino no Brasil"
+              >
+                <span className="material-symbols-outlined text-base">travel_explore</span>
+                <span>Trocar Cidade</span>
+              </button>
+
+              {focusedCity && (
+                <button
+                  type="button"
+                  onClick={handleClearCityFilter}
+                  className="px-3 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                  title="Exibir todos os hotéis de todas as cidades"
+                >
+                  <span>Ver todas</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="py-24 text-center space-y-4">

@@ -257,6 +257,124 @@ export const locationService = {
   },
 
   /**
+   * Detecta a cidade do usuário via endereço IP (sem precisar de permissão de GPS e com fallback instantâneo)
+   */
+  async detectCityByIp(): Promise<UserLocation | null> {
+    // 1. Tenta ipwho.is (rápido, gratuito e preciso para o Brasil)
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch('https://ipwho.is/', { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success !== false && data.city) {
+          const uf = normalizeStateToUf(data.region_code || data.region || '');
+          const loc: UserLocation = {
+            city: data.city.trim(),
+            uf: uf.trim(),
+            lat: data.latitude,
+            lng: data.longitude
+          };
+          locationService.saveUserLocation(loc);
+          return loc;
+        }
+      }
+    } catch (e) {
+      // Ignora e tenta fallback freeipapi
+    }
+
+    // 2. Fallback freeipapi.com
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch('https://freeipapi.com/api/json', { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.cityName) {
+          const uf = normalizeStateToUf(data.regionName || '');
+          const loc: UserLocation = {
+            city: data.cityName.trim(),
+            uf: uf.trim(),
+            lat: data.latitude,
+            lng: data.longitude
+          };
+          locationService.saveUserLocation(loc);
+          return loc;
+        }
+      }
+    } catch (e) {
+      console.warn('[locationService] Erro no fallback de geolocalização por IP:', e);
+    }
+
+    return null;
+  },
+
+  /**
+   * Reconhecimento automático completo da cidade tanto em Mobile quanto Desktop:
+   * 1. Tenta GPS de alta precisão do aparelho
+   * 2. Se recusado ou sem sinal, faz fallback imediato via IP
+   */
+  async autoDetectUserLocation(): Promise<UserLocation | null> {
+    try {
+      // 1. Tentar GPS primeiro (se disponível no dispositivo)
+      if (typeof window !== 'undefined' && navigator.geolocation) {
+        const gpsResult = await locationService.requestUserLocation();
+        if (gpsResult && gpsResult.city) {
+          return gpsResult;
+        }
+      }
+
+      // 2. Se o GPS falhar, não tiver sinal ou for bloqueado, tenta IP
+      const ipResult = await locationService.detectCityByIp();
+      if (ipResult && ipResult.city) {
+        return ipResult;
+      }
+    } catch (err) {
+      console.warn('[locationService] Falha na auto detecção de cidade:', err);
+    }
+
+    return locationService.getUserLocationFromStorage();
+  },
+
+  /**
+   * Verifica se o usuário escolheu uma cidade manualmente nesta sessão
+   */
+  hasManualCityOverride(): boolean {
+    try {
+      if (typeof window === 'undefined') return false;
+      return sessionStorage.getItem('hotelnozap_manual_city_override') === 'true';
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Marca que o usuário escolheu uma cidade manualmente
+   */
+  setManualCityOverride(city: string): void {
+    try {
+      if (typeof window === 'undefined') return;
+      sessionStorage.setItem('hotelnozap_manual_city_override', 'true');
+      sessionStorage.setItem('hotelnozap_override_city_name', city);
+    } catch {}
+  },
+
+  /**
+   * Limpa o override manual para voltar ao GPS automático
+   */
+  clearManualCityOverride(): void {
+    try {
+      if (typeof window === 'undefined') return;
+      sessionStorage.removeItem('hotelnozap_manual_city_override');
+      sessionStorage.removeItem('hotelnozap_override_city_name');
+    } catch {}
+  },
+
+  /**
    * Solicita as permissões do app (Notificações Push + Localização GPS)
    */
   async requestAllAppPermissions(): Promise<{ notifications: boolean; location: boolean; locationData?: UserLocation | null }> {
@@ -288,9 +406,9 @@ export const locationService = {
       console.warn('[locationService] Falha ao solicitar notificação:', e);
     }
 
-    // 2. Localização GPS
+    // 2. Localização GPS com fallback inteligente de IP
     try {
-      locationData = await locationService.requestUserLocation();
+      locationData = await locationService.autoDetectUserLocation();
       if (locationData && (locationData.city || locationData.lat)) {
         locationGranted = true;
       }
@@ -305,3 +423,4 @@ export const locationService = {
     };
   }
 };
+
