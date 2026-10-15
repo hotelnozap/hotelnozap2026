@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ZapHotelLogo } from './ZapHotelLogo';
 
 interface LandingPageParceirosProps {
@@ -12,6 +12,24 @@ export const LandingPageParceiros: React.FC<LandingPageParceirosProps> = ({
   onNavigateToHome,
   onNavigateToCheckout
 }) => {
+  useEffect(() => {
+    const originalTitle = document.title;
+    document.title = 'Programa de Parceiros Hotel no Zap | Renda Recorrente Mensal';
+
+    const desc = 'Construa sua carteira de faturamento recorrente com 50% de lucro líquido no mercado hoteleiro. Conheça o modelo de parceria e comece hoje!';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', desc);
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', 'Programa de Parceiros Hotel no Zap | Renda Recorrente Mensal');
+
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', desc);
+
+    return () => {
+      document.title = originalTitle;
+    };
+  }, []);
   // Simulador de Carteira Regional
   const [hotels, setHotels] = useState<number>(50);
   const commissionPerHotel = 98.50; // 50% de R$ 197,00

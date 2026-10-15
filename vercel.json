@@ -157,6 +157,26 @@
       "destination": "/api/lp-og"
     },
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "parceiros.hotelnozap.com.br"
+        }
+      ],
+      "destination": "/api/parceiros-og"
+    },
+    {
+      "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|robots\\.txt|sitemap\\.xml|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|xml|txt|woff2?|ttf|map)).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "parceiros.hotelnozap.com.br"
+        }
+      ],
+      "destination": "/api/parceiros-og"
+    },
+    {
       "source": "/(login|paineladmin)",
       "destination": "/api/app-og"
     },
