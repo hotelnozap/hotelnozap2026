@@ -127,6 +127,18 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
         troco: trocoCalculado
       });
       setSucessoCheckout(true);
+
+      // Dispara pós checkout no WhatsApp imediatamente em segundo plano
+      templateMensagemService.dispararCheckoutAutomatico(reserva.hotel_id, {
+        ...reserva,
+        telefone_hospede: reserva.hospedeTelefone,
+        hospedeTelefone: reserva.hospedeTelefone,
+        hospedeNome: reserva.hospedeNome,
+        nome_hospede: reserva.hospedeNome,
+        numero_quarto: reserva.quartoNome,
+        valor_total: totalReceber
+      }).catch(err => console.warn('[ModalCheckout] Erro ao disparar pós checkout automático:', err));
+
       onSuccess(reserva.id, totalReceber, metodoPagamento);
     } catch (err) {
       console.error('Erro ao processar checkout no caixa:', err);

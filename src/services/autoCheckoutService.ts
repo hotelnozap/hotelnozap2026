@@ -187,15 +187,22 @@ export const autoCheckoutService = {
 
     // 1. Executa imediatamente no início
     this.verificarEExecutarCheckoutsAutomaticos();
+    templateMensagemService.verificarEDispararLembretesCheckinDoDia().catch(() => {});
 
-    // 2. Intervalo periódico a cada 30 segundos
+    // 2. Intervalo periódico a cada 30 segundos para checkouts
     const timer = setInterval(() => {
       this.verificarEExecutarCheckoutsAutomaticos();
     }, 30000);
 
+    // 2.1 Intervalo periódico a cada 15 minutos para lembretes de check-in
+    const timerLembretes = setInterval(() => {
+      templateMensagemService.verificarEDispararLembretesCheckinDoDia().catch(() => {});
+    }, 15 * 60 * 1000);
+
     // 3. Listeners ao retornar à aba ou trocar de hotel
     const handleRecheck = () => {
       this.verificarEExecutarCheckoutsAutomaticos();
+      templateMensagemService.verificarEDispararLembretesCheckinDoDia().catch(() => {});
     };
 
     window.addEventListener('focus', handleRecheck);
@@ -208,6 +215,7 @@ export const autoCheckoutService = {
 
     return () => {
       clearInterval(timer);
+      clearInterval(timerLembretes);
       window.removeEventListener('focus', handleRecheck);
       window.removeEventListener('hotel_changed', handleRecheck);
     };

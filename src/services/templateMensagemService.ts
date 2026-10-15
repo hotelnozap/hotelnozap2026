@@ -582,6 +582,159 @@ export const templateMensagemService = {
   },
 
   /**
+   * Resolve todos os dados necessários (hóspede, quarto, hotel e tags) a partir de um objeto de reserva parcial ou completo
+   */
+  async resolverDadosCompletosReserva(dados: any, activeHotelId?: string): Promise<{
+    hospedeData: any;
+    quartoData: any;
+    hotelData: any;
+    telefoneDestino: string;
+    hospedeNome: string;
+    hospedeEmail: string;
+    tags: TemplateTags;
+  }> {
+    const hotelIdToUse = activeHotelId || dados.hotel_id || currentHotelService.getCurrentHotel()?.id;
+
+    // 1. Hotel
+    let hotelData: any = null;
+    if (hotelIdToUse) {
+      try {
+        const { data: hDb } = await supabase
+          .from('hoteis')
+          .select('*')
+          .eq('id', hotelIdToUse)
+          .maybeSingle();
+        if (hDb) hotelData = hDb;
+      } catch (e) {
+        console.warn('[templateMensagemService] Aviso ao buscar hotel no Supabase:', e);
+      }
+    }
+    if (!hotelData) {
+      hotelData = currentHotelService.getCurrentHotel();
+    }
+
+    // 2. Hóspede
+    let hospedeData: any = null;
+    const hospedeId = dados.hospede_id;
+    if (hospedeId) {
+      try {
+        const { data: gDb } = await supabase
+          .from('hospedes')
+          .select('*')
+          .eq('id', hospedeId)
+          .maybeSingle();
+        if (gDb) hospedeData = gDb;
+      } catch (e) {
+        console.warn('[templateMensagemService] Aviso ao buscar hóspede por ID:', e);
+      }
+    }
+
+    if (!hospedeData && dados.nome_hospede && hotelIdToUse) {
+      try {
+        const { data: gDb } = await supabase
+          .from('hospedes')
+          .select('*')
+          .eq('hotel_id', hotelIdToUse)
+          .ilike('nome', dados.nome_hospede)
+          .limit(1)
+          .maybeSingle();
+        if (gDb) hospedeData = gDb;
+      } catch (e) {
+        console.warn('[templateMensagemService] Aviso ao buscar hóspede por nome:', e);
+      }
+    }
+
+    // 3. Quarto
+    let quartoData: any = null;
+    const quartoId = dados.quarto_id;
+    if (quartoId) {
+      try {
+        const { data: qDb } = await supabase
+          .from('quartos')
+          .select('*')
+          .eq('id', quartoId)
+          .maybeSingle();
+        if (qDb) quartoData = qDb;
+      } catch {}
+    }
+    if (!quartoData && (dados.numero_quarto || dados.quartoNumero) && hotelIdToUse) {
+      try {
+        const numQ = String(dados.numero_quarto || dados.quartoNumero);
+        const { data: qDb } = await supabase
+          .from('quartos')
+          .select('*')
+          .eq('hotel_id', hotelIdToUse)
+          .eq('numero', numQ)
+          .maybeSingle();
+        if (qDb) quartoData = qDb;
+      } catch {}
+    }
+
+    // 4. Determinar telefone de destino (com fallbacks amplos)
+    let telefoneDestino =
+      dados.telefone_hospede ||
+      dados.hospedeTelefone ||
+      dados.telefone ||
+      dados.whatsapp ||
+      dados.guestWhatsapp ||
+      dados.celular ||
+      dados.phone ||
+      hospedeData?.telefone ||
+      hospedeData?.whatsapp ||
+      hospedeData?.celular ||
+      '';
+
+    // Se ainda não encontrou telefone, tenta extrair de observacoes (ex: "Telefone: 6699...")
+    if (!telefoneDestino && dados.observacoes) {
+      const matchPhone = dados.observacoes.match(/(?:telefone|whatsapp|contato|celular)[:\s]+([0-9\(\)\s\-+]{8,20})/i);
+      if (matchPhone && matchPhone[1]) {
+        telefoneDestino = matchPhone[1];
+      }
+    }
+
+    // 5. Nome e Email
+    const hospedeNome = dados.nome_hospede || dados.hospedeNome || hospedeData?.nome || 'Hóspede';
+    const hospedeEmail = dados.email_hospede || dados.hospedeEmail || dados.email || hospedeData?.email || '';
+
+    // 6. Formatações
+    const formatarDataBR = (val: any) => {
+      if (!val) return '';
+      const s = String(val).split('T')[0];
+      const parts = s.split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return s;
+    };
+
+    const formatarMoedaBR = (val: any) => {
+      if (val === undefined || val === null || val === '') return 'R$ 0,00';
+      if (typeof val === 'string' && val.includes('R$')) return val;
+      const num = Number(val) || 0;
+      return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    const tags: TemplateTags = {
+      nome_hospede: hospedeNome,
+      nome_hotel: hotelData?.nome || hotelData?.name || hotelData?.razao_social || 'Hotel',
+      link_hotel: this.getHotelPublicLink(hotelIdToUse),
+      numero_quarto: String(dados.numero_quarto || dados.quartoNumero || quartoData?.numero || '101'),
+      tipo_quarto: quartoData?.tipo || quartoData?.nome || dados.tipo_quarto || dados.quartoTipo || 'Acomodação',
+      checkin: formatarDataBR(dados.data_checkin || dados.checkIn),
+      checkout: formatarDataBR(dados.data_checkout || dados.checkOut),
+      valor_total: formatarMoedaBR(dados.valor_total || dados.valorTotal)
+    };
+
+    return {
+      hospedeData,
+      quartoData,
+      hotelData,
+      telefoneDestino,
+      hospedeNome,
+      hospedeEmail,
+      tags
+    };
+  },
+
+  /**
    * Dispara a confirmação automática de reserva utilizando o template do hotel
    */
   async dispararConfirmacaoAutomatica(
@@ -611,136 +764,32 @@ export const templateMensagemService = {
         return { success: true, error: 'Já enviado recentemente' };
       }
 
-      // 3. Obter dados do Hotel
-      let hotelData: any = null;
-      if (activeHotelId) {
-        try {
-          const { data: hDb } = await supabase
-            .from('hoteis')
-            .select('*')
-            .eq('id', activeHotelId)
-            .maybeSingle();
-          if (hDb) hotelData = hDb;
-        } catch (e) {
-          console.warn('[templateMensagemService] Erro ao buscar hotel:', e);
-        }
-      }
-      if (!hotelData) {
-        hotelData = currentHotelService.getCurrentHotel();
-      }
+      // 3. Resolver dados completos da reserva e do hóspede
+      const info = await this.resolverDadosCompletosReserva(dados, activeHotelId);
 
-      // 4. Obter dados do Hóspede (especialmente telefone)
-      let hospedeData: any = null;
-      const hospedeId = dados.hospede_id;
-      if (hospedeId) {
-        try {
-          const { data: gDb } = await supabase
-            .from('hospedes')
-            .select('*')
-            .eq('id', hospedeId)
-            .maybeSingle();
-          if (gDb) hospedeData = gDb;
-        } catch (e) {
-          console.warn('[templateMensagemService] Erro ao buscar hóspede por ID:', e);
-        }
-      }
-
-      if (!hospedeData && dados.nome_hospede && activeHotelId) {
-        try {
-          const { data: gDb } = await supabase
-            .from('hospedes')
-            .select('*')
-            .eq('hotel_id', activeHotelId)
-            .ilike('nome', dados.nome_hospede)
-            .limit(1)
-            .maybeSingle();
-          if (gDb) hospedeData = gDb;
-        } catch (e) {
-          console.warn('[templateMensagemService] Erro ao buscar hóspede por nome:', e);
-        }
-      }
-
-      // 5. Obter dados do Quarto
-      let quartoData: any = null;
-      const quartoId = dados.quarto_id;
-      if (quartoId) {
-        try {
-          const { data: qDb } = await supabase
-            .from('quartos')
-            .select('*')
-            .eq('id', quartoId)
-            .maybeSingle();
-          if (qDb) quartoData = qDb;
-        } catch {}
-      }
-      if (!quartoData && dados.numero_quarto && activeHotelId) {
-        try {
-          const { data: qDb } = await supabase
-            .from('quartos')
-            .select('*')
-            .eq('hotel_id', activeHotelId)
-            .eq('numero', String(dados.numero_quarto))
-            .maybeSingle();
-          if (qDb) quartoData = qDb;
-        } catch {}
-      }
-
-      // 6. Determinar telefone de destino
-      const telefoneDestino =
-        hospedeData?.telefone ||
-        hospedeData?.whatsapp ||
-        hospedeData?.celular ||
-        dados.telefone_hospede ||
-        dados.hospedeTelefone ||
-        dados.telefone ||
-        '';
-
-      if (!telefoneDestino) {
+      if (!info.telefoneDestino) {
         console.warn('[templateMensagemService] Aviso: Telefone do hóspede não encontrado para confirmação.');
         // Notifica o proprietário mesmo se o hóspede não tiver telefone
-        this.dispararNotificacaoNovaReservaProprietario(activeHotelId, dados, hospedeData).catch(() => {});
+        this.dispararNotificacaoNovaReservaProprietario(activeHotelId, dados, info.hospedeData).catch(() => {});
         return { success: false, error: 'Telefone do hóspede não encontrado.' };
       }
 
-      // Formatação amigável de datas e moeda
-      const formatarDataBR = (val: any) => {
-        if (!val) return '';
-        const s = String(val).split('T')[0];
-        const parts = s.split('-');
-        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        return s;
-      };
+      // 4. Renderizar template de confirmação
+      const mensagem = this.renderTemplate('confirmacao', info.tags, activeHotelId);
 
-      const formatarMoedaBR = (val: any) => {
-        if (val === undefined || val === null || val === '') return 'R$ 0,00';
-        if (typeof val === 'string' && val.includes('R$')) return val;
-        const num = Number(val) || 0;
-        return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      };
-
-      const tags: TemplateTags = {
-        nome_hospede: dados.nome_hospede || dados.hospedeNome || hospedeData?.nome || '',
-        nome_hotel: hotelData?.name || hotelData?.razao_social || 'Hotel',
-        link_hotel: this.getHotelPublicLink(activeHotelId),
-        numero_quarto: String(dados.numero_quarto || quartoData?.numero || '101'),
-        tipo_quarto: quartoData?.tipo || quartoData?.nome || dados.tipo_quarto || dados.quartoTipo || 'Acomodação',
-        checkin: formatarDataBR(dados.data_checkin || dados.checkIn),
-        checkout: formatarDataBR(dados.data_checkout || dados.checkOut),
-        valor_total: formatarMoedaBR(dados.valor_total || dados.valorTotal)
-      };
-
-      // 7. Renderizar template de confirmação
-      const mensagem = this.renderTemplate('confirmacao', tags, activeHotelId);
-
-      // 8. Disparar via Evolution API pela instância conectada
-      const resultado = await this.enviarMensagemWhatsApp(activeHotelId, telefoneDestino, mensagem);
+      // 5. Disparar via Evolution API pela instância conectada
+      console.info(`[templateMensagemService] 🚀 Disparando confirmação para o hóspede ${info.hospedeNome} (${info.telefoneDestino})...`);
+      const resultado = await this.enviarMensagemWhatsApp(activeHotelId, info.telefoneDestino, mensagem);
 
       if (resultado.success) {
         this._recentDispatches.set(cacheKey, Date.now());
+        console.info(`[templateMensagemService] ✅ Confirmação enviada com sucesso para ${info.telefoneDestino}`);
+      } else {
+        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar confirmação para ${info.telefoneDestino}:`, resultado.error);
       }
 
-      // 9. Disparar notificação no WhatsApp do proprietário do hotel
-      this.dispararNotificacaoNovaReservaProprietario(activeHotelId, dados, hospedeData).catch(pErr => {
+      // 6. Disparar notificação no WhatsApp do proprietário do hotel
+      this.dispararNotificacaoNovaReservaProprietario(activeHotelId, dados, info.hospedeData).catch(pErr => {
         console.warn('[templateMensagemService] Aviso ao notificar proprietário:', pErr);
       });
 
@@ -774,23 +823,9 @@ export const templateMensagemService = {
         return { success: true, error: 'Já enviado recentemente ao proprietário' };
       }
 
-      // 2. Obter dados do Hotel
-      let hotelData: any = null;
-      if (activeHotelId) {
-        try {
-          const { data: hDb } = await supabase
-            .from('hoteis')
-            .select('*')
-            .eq('id', activeHotelId)
-            .maybeSingle();
-          if (hDb) hotelData = hDb;
-        } catch (e) {
-          console.warn('[templateMensagemService] Erro ao buscar hotel para notificação do proprietário:', e);
-        }
-      }
-      if (!hotelData) {
-        hotelData = currentHotelService.getCurrentHotel();
-      }
+      // 2. Obter dados completos da reserva
+      const info = await this.resolverDadosCompletosReserva(dados, activeHotelId);
+      const hotelData = info.hotelData;
 
       // 3. Localizar o WhatsApp / Telefone do Proprietário
       let proprietarioPhone =
@@ -805,14 +840,14 @@ export const templateMensagemService = {
         try {
           const { data: users } = await supabase
             .from('usuarios')
-            .select('telefone, whatsapp, celular')
+            .select('telefone, perfil, nome')
             .eq('hotel_id', activeHotelId)
             .in('perfil', ['Hotel', 'Administrador', 'gerente'])
             .order('criado_em', { ascending: true });
           if (users && users.length > 0) {
-            const uWithPhone = users.find((u: any) => u.whatsapp || u.telefone || u.celular);
+            const uWithPhone = users.find((u: any) => u.telefone);
             if (uWithPhone) {
-              proprietarioPhone = uWithPhone.whatsapp || uWithPhone.telefone || uWithPhone.celular;
+              proprietarioPhone = uWithPhone.telefone;
             }
           }
         } catch (uErr) {
@@ -824,67 +859,6 @@ export const templateMensagemService = {
         console.warn('[templateMensagemService] ⚠️ WhatsApp do proprietário/gerente não configurado no hotel:', activeHotelId);
         return { success: false, error: 'WhatsApp do proprietário não configurado no hotel.' };
       }
-
-      // 4. Buscar dados do Hóspede caso não tenham vindo completos
-      let hospedeNome = dados.nome_hospede || dados.hospedeNome || guestExtra?.nome || 'Hóspede';
-      let hospedeTelefone = guestExtra?.telefone || dados.telefone_hospede || dados.hospedeTelefone || dados.telefone || '';
-      let hospedeEmail = guestExtra?.email || dados.hospedeEmail || dados.email_hospede || dados.email || '';
-
-      if ((!hospedeTelefone || !hospedeEmail) && dados.hospede_id) {
-        try {
-          const { data: gDb } = await supabase
-            .from('hospedes')
-            .select('*')
-            .eq('id', dados.hospede_id)
-            .maybeSingle();
-          if (gDb) {
-            if (!hospedeTelefone) hospedeTelefone = gDb.telefone || gDb.whatsapp || gDb.celular || '';
-            if (!hospedeEmail) hospedeEmail = gDb.email || '';
-            if (!hospedeNome || hospedeNome === 'Hóspede') hospedeNome = gDb.nome || hospedeNome;
-          }
-        } catch {}
-      }
-
-      // 5. Buscar dados do Quarto
-      let numeroQuarto = String(dados.numero_quarto || dados.quartoNumero || '101');
-      let tipoQuarto = dados.tipo_quarto || dados.quartoTipo || dados.quartoNome || 'Acomodação';
-      if (dados.quarto_id) {
-        try {
-          const { data: qDb } = await supabase
-            .from('quartos')
-            .select('*')
-            .eq('id', dados.quarto_id)
-            .maybeSingle();
-          if (qDb) {
-            numeroQuarto = String(qDb.numero || numeroQuarto);
-            tipoQuarto = qDb.tipo || qDb.nome || tipoQuarto;
-          }
-        } catch {}
-      }
-
-      // 6. Formatações
-      const formatarDataBR = (val: any) => {
-        if (!val) return '';
-        const s = String(val).split('T')[0];
-        const parts = s.split('-');
-        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        return s;
-      };
-
-      const formatarMoedaBR = (val: any) => {
-        if (val === undefined || val === null || val === '') return 'R$ 0,00';
-        if (typeof val === 'string' && val.includes('R$')) return val;
-        const num = Number(val) || 0;
-        return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      };
-
-      const checkinStr = formatarDataBR(dados.data_checkin || dados.checkIn || dados.check_in);
-      const checkoutStr = formatarDataBR(dados.data_checkout || dados.checkOut || dados.check_out);
-      const valorStr = formatarMoedaBR(dados.valor_total || dados.valorTotal);
-      const shortId = dados.id ? String(dados.id).substring(0, 6).toUpperCase() : 'NOVA';
-      const reservaNum = dados.reservaNumber || `#RES-${shortId}`;
-      const hotelNome = hotelData?.nome || hotelData?.name || hotelData?.razao_social || 'Hotel no Zap';
-      const statusStr = dados.status || 'Confirmada';
 
       // Obter horários configurados do hotel ou defaults 14:00 / 12:00
       let horarioCheckin = '14:00';
@@ -901,8 +875,14 @@ export const templateMensagemService = {
       } catch {}
 
       const nomeProprietario = hotelData?.nome_gerente || hotelData?.proprietario || 'Proprietário';
+      const checkinStr = info.tags.checkin || '';
+      const checkoutStr = info.tags.checkout || '';
+      const valorStr = info.tags.valor_total || 'R$ 0,00';
+      const tipoQuarto = info.tags.tipo_quarto || 'Acomodação';
+      const numeroQuarto = info.tags.numero_quarto || '101';
+      const hospedeNome = info.hospedeNome || 'Hóspede';
 
-      // 7. Montar mensagem conforme especificação exata do usuário
+      // 4. Montar mensagem oficial conforme especificação
       const mensagemProprietario =
         `Olá ${nomeProprietario}, você tem uma nova reserva\n\n` +
         `📌 Quarto: ${tipoQuarto} (${numeroQuarto})\n` +
@@ -912,7 +892,7 @@ export const templateMensagemService = {
         `💰 Valor Total: ${valorStr}\n\n` +
         `_Esta é uma mensagem automática do sistema, por favor não responder!_`;
 
-      // 8. Disparo via WhatsApp (Evolution API pela instância conectada do hotel)
+      // 5. Disparo via WhatsApp (Evolution API pela instância conectada do hotel)
       console.info(`[templateMensagemService] 🚀 Disparando notificação de nova reserva para o proprietário: ${proprietarioPhone}`);
       const resultado = await this.enviarMensagemWhatsApp(activeHotelId, proprietarioPhone, mensagemProprietario);
 
@@ -920,7 +900,7 @@ export const templateMensagemService = {
         this._recentDispatches.set(cacheKey, Date.now());
         console.info(`[templateMensagemService] ✅ Notificação enviada com sucesso ao proprietário (${proprietarioPhone})`);
       } else {
-        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar notificação ao proprietário:`, resultado.error);
+        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar notificação ao proprietário (${proprietarioPhone}):`, resultado.error);
       }
 
       return resultado;
@@ -936,7 +916,7 @@ export const templateMensagemService = {
   async dispararLembreteCheckinAutomatico(
     hotelId: string | undefined,
     dados: any
-  ): Promise<{ success: boolean; instanceName?: string; error?: string }> {
+  ): Promise<{ success: boolean; via?: string; instanceName?: string; error?: string }> {
     try {
       if (!dados) return { success: false, error: 'Dados não informados' };
       const activeHotelId = hotelId || dados.hotel_id || currentHotelService.getCurrentHotel()?.id;
@@ -946,20 +926,35 @@ export const templateMensagemService = {
         return { success: false, error: 'Automação de lembrete de check-in desativada' };
       }
 
-      const telefoneDestino = dados.telefone_hospede || dados.hospedeTelefone || dados.telefone || '';
-      if (!telefoneDestino) return { success: false, error: 'Telefone não informado' };
+      // Proteção anti-duplicidade (2 horas)
+      const reservaId = dados.id || `${dados.nome_hospede}_${dados.numero_quarto}_lembrete`;
+      const cacheKey = `lembrete_checkin_${reservaId}`;
+      const lastSent = this._recentDispatches.get(cacheKey);
+      if (lastSent && Date.now() - lastSent < 2 * 60 * 60 * 1000) {
+        console.info('[templateMensagemService] Lembrete ignorado por anti-duplicidade recente:', cacheKey);
+        return { success: true, error: 'Lembrete já enviado recentemente' };
+      }
 
-      const tags: TemplateTags = {
-        nome_hospede: dados.nome_hospede || dados.hospedeNome || '',
-        nome_hotel: dados.nome_hotel || currentHotelService.getCurrentHotel()?.name || 'Hotel',
-        link_hotel: this.getHotelPublicLink(activeHotelId),
-        numero_quarto: String(dados.numero_quarto || '101'),
-        checkin: dados.data_checkin || dados.checkIn || ''
-      };
+      const info = await this.resolverDadosCompletosReserva(dados, activeHotelId);
+      if (!info.telefoneDestino) {
+        console.warn('[templateMensagemService] ⚠️ Telefone do hóspede não encontrado para lembrete de check-in.');
+        return { success: false, error: 'Telefone do hóspede não encontrado.' };
+      }
 
-      const mensagem = this.renderTemplate('lembrete_checkin', tags, activeHotelId);
-      return await this.enviarMensagemWhatsApp(activeHotelId, telefoneDestino, mensagem);
+      const mensagem = this.renderTemplate('lembrete_checkin', info.tags, activeHotelId);
+      console.info(`[templateMensagemService] 🚀 Disparando lembrete de check-in para ${info.telefoneDestino}...`);
+      const resultado = await this.enviarMensagemWhatsApp(activeHotelId, info.telefoneDestino, mensagem);
+
+      if (resultado.success) {
+        this._recentDispatches.set(cacheKey, Date.now());
+        console.info(`[templateMensagemService] ✅ Lembrete de check-in enviado com sucesso para ${info.telefoneDestino}`);
+      } else {
+        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar lembrete de check-in para ${info.telefoneDestino}:`, resultado.error);
+      }
+
+      return resultado;
     } catch (err: any) {
+      console.error('[templateMensagemService] Erro ao disparar lembrete de check-in:', err);
       return { success: false, error: err?.message || 'Erro inesperado' };
     }
   },
@@ -970,29 +965,91 @@ export const templateMensagemService = {
   async dispararCheckoutAutomatico(
     hotelId: string | undefined,
     dados: any
-  ): Promise<{ success: boolean; instanceName?: string; error?: string }> {
+  ): Promise<{ success: boolean; via?: string; instanceName?: string; error?: string }> {
     try {
       if (!dados) return { success: false, error: 'Dados não informados' };
       const activeHotelId = hotelId || dados.hotel_id || currentHotelService.getCurrentHotel()?.id;
       const automacoes = this.getHotelAutomacoes(activeHotelId);
 
       if (!automacoes.auto_checkout) {
+        console.info('[templateMensagemService] Automação de pós checkout desativada');
         return { success: false, error: 'Automação de pós checkout desativada' };
       }
 
-      const telefoneDestino = dados.telefone_hospede || dados.hospedeTelefone || dados.telefone || '';
-      if (!telefoneDestino) return { success: false, error: 'Telefone não informado' };
+      // Proteção anti-duplicidade (30 segundos)
+      const reservaId = dados.id || `${dados.nome_hospede}_${dados.numero_quarto}_checkout`;
+      const cacheKey = `checkout_${reservaId}`;
+      const lastSent = this._recentDispatches.get(cacheKey);
+      if (lastSent && Date.now() - lastSent < 30000) {
+        console.info('[templateMensagemService] Pós checkout ignorado por anti-duplicidade recente:', cacheKey);
+        return { success: true, error: 'Já enviado recentemente' };
+      }
 
-      const tags: TemplateTags = {
-        nome_hospede: dados.nome_hospede || dados.hospedeNome || '',
-        nome_hotel: dados.nome_hotel || currentHotelService.getCurrentHotel()?.name || 'Hotel',
-        link_hotel: this.getHotelPublicLink(activeHotelId)
-      };
+      const info = await this.resolverDadosCompletosReserva(dados, activeHotelId);
+      if (!info.telefoneDestino) {
+        console.warn('[templateMensagemService] ⚠️ Telefone do hóspede não encontrado para pós checkout:', dados);
+        return { success: false, error: 'Telefone do hóspede não encontrado.' };
+      }
 
-      const mensagem = this.renderTemplate('checkout', tags, activeHotelId);
-      return await this.enviarMensagemWhatsApp(activeHotelId, telefoneDestino, mensagem);
+      const mensagem = this.renderTemplate('checkout', info.tags, activeHotelId);
+      console.info(`[templateMensagemService] 🚀 Disparando pós-checkout para ${info.hospedeNome} (${info.telefoneDestino})...`);
+      const resultado = await this.enviarMensagemWhatsApp(activeHotelId, info.telefoneDestino, mensagem);
+
+      if (resultado.success) {
+        this._recentDispatches.set(cacheKey, Date.now());
+        console.info(`[templateMensagemService] ✅ Pós-checkout enviado com sucesso para ${info.telefoneDestino}`);
+      } else {
+        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar pós-checkout para ${info.telefoneDestino}:`, resultado.error);
+      }
+
+      return resultado;
     } catch (err: any) {
+      console.error('[templateMensagemService] Erro ao disparar pós checkout:', err);
       return { success: false, error: err?.message || 'Erro inesperado' };
+    }
+  },
+
+  /**
+   * Varre as reservas de hoje e amanhã no fuso do hotel e dispara o lembrete de check-in
+   * para reservas com status Confirmada que ainda não receberam a notificação hoje.
+   */
+  async verificarEDispararLembretesCheckinDoDia(hotelId?: string): Promise<number> {
+    try {
+      const activeHotelId = hotelId || currentHotelService.getCurrentHotel()?.id;
+      if (!activeHotelId) return 0;
+
+      const automacoes = this.getHotelAutomacoes(activeHotelId);
+      if (!automacoes.auto_lembrete_checkin) return 0;
+
+      const hoje = new Date();
+      const hojeIso = hoje.toISOString().split('T')[0];
+      const amanha = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
+      const amanhaIso = amanha.toISOString().split('T')[0];
+
+      const { data: reservas, error } = await supabase
+        .from('reservas')
+        .select('*')
+        .eq('hotel_id', activeHotelId)
+        .in('status', ['Confirmada', 'confirmada', 'Pendente', 'pendente', 'Ativa', 'ativa'])
+        .or(`data_checkin.eq.${hojeIso},data_checkin.eq.${amanhaIso}`);
+
+      if (error || !reservas || reservas.length === 0) return 0;
+
+      let disparados = 0;
+      for (const res of reservas) {
+        const cacheKey = `lembrete_enviado_${res.id}_${hojeIso}`;
+        if (typeof window !== 'undefined' && localStorage.getItem(cacheKey)) continue;
+
+        const resultado = await this.dispararLembreteCheckinAutomatico(activeHotelId, res);
+        if (resultado.success) {
+          if (typeof window !== 'undefined') localStorage.setItem(cacheKey, new Date().toISOString());
+          disparados++;
+        }
+      }
+      return disparados;
+    } catch (err) {
+      console.warn('[templateMensagemService] Erro ao verificar lembretes de check-in do dia:', err);
+      return 0;
     }
   },
 

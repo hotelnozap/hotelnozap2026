@@ -1400,10 +1400,12 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
       <ModalCheckoutRecebimento
         isOpen={!!checkoutModalReserva}
         reserva={checkoutModalReserva}
-        onClose={() => setCheckoutModalReserva(null)}
-        onSuccess={() => {
+        onClose={() => {
           fetchReservas();
           setCheckoutModalReserva(null);
+        }}
+        onSuccess={() => {
+          fetchReservas();
         }}
       />
 
