@@ -453,6 +453,16 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       return;
     }
 
+    if (isLicencaGratisComCupom) {
+      setIsSubmitting(true);
+      try {
+        await liberarAcessoParceiro(true);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     setGerandoPix(true);
     setCurrentStep('pagamento');
@@ -1511,12 +1521,18 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                       {isSubmitting ? (
                         <>
                           <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                          <span>Gerando Pagamento...</span>
+                          <span>{isLicencaGratisComCupom ? 'Ativando Franquia...' : 'Gerando Pagamento...'}</span>
                         </>
                       ) : (
                         <>
-                          <span>Continuar para Pagamento • R$ 197,00</span>
-                          <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                          <span>
+                            {isLicencaGratisComCupom
+                              ? 'Concluir Cadastro com 100% de Desconto (Grátis)'
+                              : `Continuar para Pagamento • R$ ${valorFinalLicenca.toFixed(2).replace('.', ',')}`}
+                          </span>
+                          <span className="material-symbols-outlined text-xl">
+                            {isLicencaGratisComCupom ? 'rocket_launch' : 'arrow_forward'}
+                          </span>
                         </>
                       )}
                     </button>
@@ -1525,20 +1541,71 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
               </div>
             )}
 
-            {/* PASSO 2: PAGAMENTO VIA PIX */}
+            {/* PASSO 2: PAGAMENTO VIA PIX OU ATIVAÇÃO 100% GRATUITA */}
             {currentStep === 'pagamento' && (
               <div className="rounded-3xl bg-white p-6 sm:p-8 border border-slate-200/90 shadow-xl transition-all text-center flex flex-col items-center">
                 
-                <div className="w-full flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#006c49] text-xl">qr_code_2</span>
-                    <h3 className="font-bold text-sm sm:text-base text-[#0b1c30]">Pagamento via PIX Instantâneo</h3>
+                {isLicencaGratisComCupom ? (
+                  /* CARD 100% OFF GRATUITO DO PARCEIRO */
+                  <div className="w-full flex flex-col items-center gap-6 py-2 animate-in zoom-in-95 duration-200">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-700 rounded-3xl flex items-center justify-center shadow-lg shadow-emerald-500/20 ring-8 ring-emerald-50">
+                      <span className="material-symbols-outlined text-4xl font-black">celebration</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-black uppercase tracking-wider">
+                        Cupom 100% OFF Aplicado
+                      </span>
+                      <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Sua Franquia é 100% Gratuita!
+                      </h3>
+                      <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                        O cupom <strong className="text-emerald-800 font-mono font-black">{cupomDescontoAplicado?.codigo}</strong> isentou 100% da sua taxa de licença anual. Nenhum pagamento é necessário!
+                      </p>
+                    </div>
+
+                    <div className="w-full p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex items-center justify-between text-left max-w-md">
+                      <div>
+                        <span className="text-xs text-slate-400 line-through block">De: R$ 197,00</span>
+                        <span className="text-xs font-bold text-emerald-700">Desconto do Cupom: 100% OFF</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-slate-500 font-medium block">Total a Pagar</span>
+                        <span className="text-3xl font-black text-emerald-600">R$ 0,00</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isSubmitting || isApproved}
+                      onClick={() => liberarAcessoParceiro(true)}
+                      className="w-full max-w-md py-4 px-6 rounded-2xl bg-[#003400] hover:bg-[#002600] active:scale-[0.98] text-white font-black text-base shadow-lg shadow-emerald-950/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="material-symbols-outlined text-xl animate-spin">sync</span>
+                          <span>Ativando sua Franquia...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-xl text-amber-300">rocket_launch</span>
+                          <span>Concluir Cadastro e Ativar Minha Franquia Agora</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold">
-                    <span className="material-symbols-outlined text-[15px] text-amber-600">timer</span>
-                    <span>{formatTime(timeLeft)} (5 min)</span>
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="w-full flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#006c49] text-xl">qr_code_2</span>
+                        <h3 className="font-bold text-sm sm:text-base text-[#0b1c30]">Pagamento via PIX Instantâneo</h3>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold">
+                        <span className="material-symbols-outlined text-[15px] text-amber-600">timer</span>
+                        <span>{formatTime(timeLeft)} (5 min)</span>
+                      </div>
+                    </div>
 
                 {gerandoPix ? (
                   <div className="py-12 flex flex-col items-center gap-3">
@@ -1646,9 +1713,11 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
                   </div>
                 )}
-
-              </div>
+              </>
             )}
+
+          </div>
+        )}
 
             {/* PASSO 3: SUCESSO E ACESSO LIBERADO */}
             {currentStep === 'sucesso' && (

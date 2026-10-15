@@ -37,6 +37,24 @@ const STORAGE_KEY = 'hotelnozap_cupons_desconto_v3';
 const CUPONS_PADRAO: CupomDesconto[] = [
   // Cupons da Plataforma para Cadastro de Hotéis (Planos SaaS)
   {
+    id: 'cupom-hotel-100',
+    hotel_id: null,
+    hotel_nome: 'Plataforma Hotel no Zap',
+    codigo: 'HOTEL100',
+    tipo_desconto: 'porcentagem',
+    valor_desconto: 100,
+    valor_minimo_reserva: 0,
+    data_inicio: '2026-01-01',
+    data_expiracao: null,
+    limite_usos: 100,
+    usos_atuais: 0,
+    status: 'Ativo',
+    visivel_hospedes: false,
+    aplicavel_em: 'plano_hotel',
+    descricao: '100% de desconto (Gratuidade Total) no cadastro de novos hotéis e pousadas na contratação de planos.',
+    created_at: new Date().toISOString()
+  },
+  {
     id: 'cupom-hotel-50',
     hotel_id: null,
     hotel_nome: 'Plataforma Hotel no Zap',
@@ -74,6 +92,24 @@ const CUPONS_PADRAO: CupomDesconto[] = [
   },
 
   // Cupons da Plataforma para Cadastro de Parceiros / Franqueados
+  {
+    id: 'cupom-parceiro-100',
+    hotel_id: null,
+    hotel_nome: 'Plataforma Hotel no Zap',
+    codigo: 'PARCEIRO100',
+    tipo_desconto: 'porcentagem',
+    valor_desconto: 100,
+    valor_minimo_reserva: 0,
+    data_inicio: '2026-01-01',
+    data_expiracao: null,
+    limite_usos: 50,
+    usos_atuais: 0,
+    status: 'Ativo',
+    visivel_hospedes: false,
+    aplicavel_em: 'parceiro',
+    descricao: '100% de desconto (Gratuidade Total) na taxa de ativação da licença de parceiro franqueado.',
+    created_at: new Date().toISOString()
+  },
   {
     id: 'cupom-parceiro-50',
     hotel_id: null,
@@ -205,7 +241,14 @@ const loadFromStorage = (): CupomDesconto[] => {
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed.map((c: CupomDesconto) => ({
+      // Garantir que cupons padrão essenciais (como HOTEL100 e PARCEIRO100) existam caso o usuário tenha cache anterior
+      const codigosExistentes = new Set(parsed.map((c: CupomDesconto) => (c.codigo || '').toUpperCase()));
+      const novosPadroes = CUPONS_PADRAO.filter(p => !codigosExistentes.has(p.codigo.toUpperCase()));
+      const merged = [...parsed, ...novosPadroes];
+      if (novosPadroes.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      }
+      return merged.map((c: CupomDesconto) => ({
         ...c,
         hotel_cidade: c.hotel_cidade || ''
       }));

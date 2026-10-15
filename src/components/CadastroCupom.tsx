@@ -631,49 +631,147 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
                     )}
                   </div>
                 )}
-
-                {/* Limite de utilizações */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-bold text-slate-800 block">Limitar Quantidade de Utilizações?</span>
-                      <span className="text-[11px] text-slate-500">Defina se o cupom pode ser resgatado um número limitado de vezes.</span>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={temLimiteUsos}
-                        onChange={(e) => setTemLimiteUsos(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003400]"></div>
-                    </label>
-                  </div>
-
-                  {temLimiteUsos && (
-                    <div className="pt-2 border-t border-slate-200">
-                      <label className="text-xs font-bold text-slate-700 block mb-1" htmlFor="cupom-limite">
-                        Número Máximo de Utilizações
-                      </label>
-                      <input
-                        id="cupom-limite"
-                        type="number"
-                        min={1}
-                        value={limiteUsos}
-                        onChange={(e) => setLimiteUsos(e.target.value)}
-                        placeholder="Ex: 50"
-                        className="w-full sm:w-48 h-10 px-3 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-bold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none"
-                      />
-                    </div>
-                  )}
-                </div>
               </div>
 
-              {/* Bloco 4: Visibilidade e Status */}
+              {/* Bloco 4: Quantidade de Vezes que o Cupom Pode Ser Usado */}
+              <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+                  <span className="material-symbols-outlined text-emerald-700 text-xl">pin</span>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">4. Quantidade de Utilizações (Limite de Usos)</h2>
+                    <p className="text-[11px] text-slate-500">Defina se este cupom pode ser usado infinitamente ou se expira após um número específico de utilizações.</p>
+                  </div>
+                </div>
+
+                {/* Seleção Visual: Ilimitado vs Limitado */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTemLimiteUsos(false)}
+                    className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer flex items-start gap-3 ${
+                      !temLimiteUsos
+                        ? 'border-emerald-600 bg-emerald-50/50 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      !temLimiteUsos ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      <span className="material-symbols-outlined text-lg">all_inclusive</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">Uso Ilimitado</span>
+                        {!temLimiteUsos && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800">Ativo</span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">
+                        Pode ser resgatado quantas vezes quiser enquanto estiver ativo.
+                      </span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTemLimiteUsos(true);
+                      if (!limiteUsos || limiteUsos === '0') setLimiteUsos('10');
+                    }}
+                    className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer flex items-start gap-3 ${
+                      temLimiteUsos
+                        ? 'border-emerald-600 bg-emerald-50/50 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      temLimiteUsos ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      <span className="material-symbols-outlined text-lg">pin</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">Quantidade Limitada</span>
+                        {temLimiteUsos && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800">Ativo</span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">
+                        Expira automaticamente após atingir o número máximo de utilizações.
+                      </span>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Bloco de Configuração de Limite */}
+                {temLimiteUsos && (
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3.5 animate-in fade-in duration-150">
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 block mb-1.5" htmlFor="cupom-limite">
+                        Quantas vezes este cupom pode ser usado? *
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="cupom-limite"
+                          type="number"
+                          min={1}
+                          max={999999}
+                          value={limiteUsos}
+                          onChange={(e) => setLimiteUsos(e.target.value)}
+                          placeholder="Ex: 10"
+                          className="w-40 h-11 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-900 text-sm font-extrabold focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                        />
+                        <span className="text-xs font-bold text-slate-600">utilizações permitidas</span>
+                      </div>
+                    </div>
+
+                    {/* Presets Rápidos */}
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Escolha Rápida de Quantidade:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { label: '1 Uso (Único / Exclusivo)', val: '1' },
+                          { label: '5 Usos', val: '5' },
+                          { label: '10 Usos', val: '10' },
+                          { label: '25 Usos', val: '25' },
+                          { label: '50 Usos', val: '50' },
+                          { label: '100 Usos', val: '100' },
+                          { label: '500 Usos', val: '500' }
+                        ].map((preset) => (
+                          <button
+                            key={preset.val}
+                            type="button"
+                            onClick={() => setLimiteUsos(preset.val)}
+                            className={`px-3 py-1.5 text-xs rounded-xl font-bold transition cursor-pointer ${
+                              limiteUsos === preset.val
+                                ? 'bg-[#003400] text-white shadow-xs'
+                                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Aviso Dinâmico */}
+                    <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-xl flex items-center gap-2.5 text-xs text-amber-950 font-medium">
+                      <span className="material-symbols-outlined text-amber-700 text-lg shrink-0">info</span>
+                      <span>
+                        Este cupom só poderá ser utilizado por <strong>{limiteUsos || '0'} compras/clientes</strong>. Ao atingir esse limite, ele será bloqueado automaticamente pelo sistema.
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bloco 5: Visibilidade e Status */}
               <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                 <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
                   <span className="material-symbols-outlined text-emerald-700 text-xl">visibility</span>
-                  <h2 className="text-sm font-bold text-slate-900">4. Disponibilidade & Hóspedes</h2>
+                  <h2 className="text-sm font-bold text-slate-900">5. Disponibilidade & Hóspedes</h2>
                 </div>
 
                 <div className="flex items-center justify-between p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
@@ -765,6 +863,16 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
                       {numValorMinimo > 0 && (
                         <span>Mín. R$ {numValorMinimo.toFixed(2).replace('.', ',')}</span>
                       )}
+                    </div>
+
+                    <div className="pt-1.5 border-t border-emerald-200/40 flex items-center justify-between text-[11px]">
+                      <span className="flex items-center gap-1 font-bold text-slate-700">
+                        <span className="material-symbols-outlined text-xs text-amber-600">pin</span>
+                        {temLimiteUsos && numLimiteUsos ? `Limite: ${numLimiteUsos} utilizações` : 'Usos Ilimitados'}
+                      </span>
+                      <span className="text-[10px] text-emerald-800 font-bold bg-white/80 px-2 py-0.5 rounded-full border border-emerald-200/80">
+                        {temLimiteUsos ? `${numLimiteUsos} vagas` : 'Sem limite'}
+                      </span>
                     </div>
                   </div>
 

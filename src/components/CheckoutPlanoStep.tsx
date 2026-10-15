@@ -764,27 +764,62 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
             </p>
           )}
 
-          {isTotalmenteGratisComCupom && (
-            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-emerald-900 text-xs font-bold">
-                <span className="material-symbols-outlined text-emerald-600">celebration</span>
-                <span>Cupom 100% OFF! Sua assinatura ficou gratuita.</span>
-              </div>
-              <button
-                type="button"
-                disabled={isAtivando || isApproved}
-                onClick={() => handleAprovarPagamento(`cupom_100_${Date.now()}`, `Cupom 100% OFF (${cupomAplicado?.codigo})`)}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black rounded-lg transition cursor-pointer shadow-xs whitespace-nowrap"
-              >
-                {isAtivando ? 'Ativando...' : 'Liberar Conta Agora'}
-              </button>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Abas de Métodos de Pagamento */}
-      <div className="grid grid-cols-2 gap-2 mb-5">
+      {isTotalmenteGratisComCupom ? (
+        /* CARD EXCLUSIVO DE ATIVAÇÃO 100% GRATUITA */
+        <div className="bg-gradient-to-b from-emerald-50 via-white to-emerald-50/50 border-2 border-emerald-500 rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-700 rounded-3xl flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20 ring-8 ring-emerald-50">
+            <span className="material-symbols-outlined text-4xl font-black">celebration</span>
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-black uppercase tracking-wider">
+              Cupom de 100% de Desconto Ativo
+            </span>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Sua Assinatura é 100% Gratuita!
+            </h3>
+            <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+              O cupom <strong className="text-emerald-800 font-mono font-black">{cupomAplicado?.codigo}</strong> cobriu 100% do plano <strong>{plano}</strong>. Nenhum pagamento em PIX ou cartão de crédito é necessário!
+            </p>
+          </div>
+
+          <div className="p-4 bg-white rounded-2xl border border-emerald-200 shadow-xs flex items-center justify-between max-w-md mx-auto text-left">
+            <div>
+              <span className="text-xs text-slate-400 line-through block">De: R$ {valorPlano.toFixed(2).replace('.', ',')}</span>
+              <span className="text-xs font-bold text-emerald-700">Desconto Especial: 100% OFF</span>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-slate-500 font-medium block">Total a Pagar</span>
+              <span className="text-3xl font-black text-emerald-600">R$ 0,00</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={isAtivando || isApproved}
+            onClick={() => handleAprovarPagamento(`cupom_100_${Date.now()}`, `Cupom 100% OFF (${cupomAplicado?.codigo})`)}
+            className="w-full max-w-md mx-auto py-4 px-6 bg-[#003400] hover:bg-[#002600] active:scale-[0.98] text-white font-black text-base rounded-2xl shadow-lg shadow-emerald-950/20 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+          >
+            {isAtivando ? (
+              <>
+                <span className="material-symbols-outlined text-xl animate-spin">sync</span>
+                <span>Liberando sua conta no sistema...</span>
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-xl text-amber-300">rocket_launch</span>
+                <span>Confirmar e Ativar Minha Conta Agora</span>
+              </>
+            )}
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Abas de Métodos de Pagamento */}
+          <div className="grid grid-cols-2 gap-2 mb-5">
         <button
           type="button"
           onClick={() => setMetodoSelecionado('pix')}
@@ -1059,6 +1094,8 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
           </button>
         </form>
       )}
+    </>
+  )}
 
       {/* Rodapé de Segurança */}
       <div className="mt-5 flex items-center justify-center gap-4 text-slate-400 text-[11px]">
