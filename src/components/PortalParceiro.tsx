@@ -71,11 +71,13 @@ export interface IndicacaoHotel {
 interface PortalParceiroProps {
   onLogout?: () => void;
   onNavigateHome?: () => void;
+  onAlternarAmbiente?: () => void;
 }
 
 export const PortalParceiro: React.FC<PortalParceiroProps> = ({
   onLogout,
-  onNavigateHome
+  onNavigateHome,
+  onAlternarAmbiente
 }) => {
   // Aba ativa: 'dashboard' | 'indicacoes' | 'financeiro' | 'links' | 'configuracoes'
   const [activeTab, setActiveTab] = useState<'dashboard' | 'indicacoes' | 'financeiro' | 'links' | 'configuracoes'>('dashboard');
@@ -654,9 +656,28 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
               </p>
             </div>
           </div>
+          {/* Botão Alternar Telas & Ambientes */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onAlternarAmbiente) onAlternarAmbiente();
+              else window.dispatchEvent(new CustomEvent('abrir_modal_ambientes'));
+            }}
+            className="w-full flex items-center justify-between py-2.5 px-3.5 text-xs font-black text-emerald-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-all mb-2 cursor-pointer shadow-md"
+            title="Alternar entre Painel do Hotel, Portal do Parceiro e Área do Hóspede"
+          >
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-base">sync_alt</span>
+              <span>Alternar Telas</span>
+            </div>
+            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300">
+              Trocar
+            </span>
+          </button>
+
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors mb-2"
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors mb-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sair do Portal</span>
@@ -693,7 +714,21 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          {/* Botão Alternar Telas Mobile */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onAlternarAmbiente) onAlternarAmbiente();
+              else window.dispatchEvent(new CustomEvent('abrir_modal_ambientes'));
+            }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-400 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer active:scale-95 transition-transform"
+            title="Alternar entre Telas e Ambientes"
+          >
+            <span className="material-symbols-outlined text-[15px]">sync_alt</span>
+            <span>Telas</span>
+          </button>
+
           <button 
             className="p-1.5 text-slate-300 hover:text-white relative"
             title="Notificações"
@@ -763,10 +798,28 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-white/10 space-y-3">
+            <div className="pt-4 border-t border-white/10 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onAlternarAmbiente) onAlternarAmbiente();
+                  else window.dispatchEvent(new CustomEvent('abrir_modal_ambientes'));
+                }}
+                className="w-full flex items-center justify-between py-2.5 px-3.5 text-xs font-black text-emerald-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-all cursor-pointer shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">sync_alt</span>
+                  <span>Alternar Telas & Ambientes</span>
+                </div>
+                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300">
+                  Trocar
+                </span>
+              </button>
+
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold text-rose-300 hover:bg-rose-500/10 rounded-xl"
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-rose-300 hover:bg-rose-500/10 rounded-xl cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sair do Portal</span>
@@ -798,7 +851,20 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+            {/* Botão Alternar Telas Desktop */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onAlternarAmbiente) onAlternarAmbiente();
+                else window.dispatchEvent(new CustomEvent('abrir_modal_ambientes'));
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer group"
+              title="Alternar entre Painel do Hotel, Portal do Parceiro e Área do Hóspede"
+            >
+              <span className="material-symbols-outlined text-base text-emerald-700 transition-transform group-hover:rotate-180 duration-300">sync_alt</span>
+              <span>Alternar Telas</span>
+            </button>
             <div className="flex items-center gap-1.5 text-slate-600">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
               <span>{dataHoraAtual}</span>

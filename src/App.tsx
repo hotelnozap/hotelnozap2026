@@ -7,6 +7,7 @@ import NotificationSystem from './components/NotificationSystem';
 import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInatividadeModal';
 import { ModalPermissoesApp } from './components/ModalPermissoesApp';
 import { ModalReservasDoDia } from './components/ModalReservasDoDia';
+import { ModalAlternarAmbientes, type TipoAmbiente } from './components/ModalAlternarAmbientes';
 
 // Services & utilities
 import { supabase } from './lib/supabase';
@@ -599,6 +600,36 @@ export const App: React.FC = () => {
       cleanupTracking();
     };
   }, []);
+
+  // Modal Multitelas / Alternador de Ambientes
+  const [isModalAmbientesOpen, setIsModalAmbientesOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenAmbientes = () => setIsModalAmbientesOpen(true);
+    window.addEventListener('abrir_modal_ambientes', handleOpenAmbientes);
+    return () => window.removeEventListener('abrir_modal_ambientes', handleOpenAmbientes);
+  }, []);
+
+  const handleAlternarAmbiente = (ambiente: TipoAmbiente) => {
+    switch (ambiente) {
+      case 'hotel':
+        setActiveTab('dashboard');
+        break;
+      case 'parceiro':
+        setActiveTab('portal-parceiro');
+        break;
+      case 'hospede':
+        setActiveTab('area-hospede');
+        break;
+      case 'master':
+        setActiveTab('admin-dashboard');
+        break;
+      case 'catalogo':
+        setActiveTab('catalogo-hoteis');
+        break;
+    }
+  };
+
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [autoLogoutEnabled, setAutoLogoutEnabled] = useState<boolean>(() => {
     try {
@@ -1903,7 +1934,11 @@ export const App: React.FC = () => {
     );
   }
 
-  const isHospedeUser = (currentUserRole || '').toLowerCase().includes('hospede') || (currentUserRole || '').toLowerCase().includes('hóspede');
+  const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
+  const isCamareiraUser = roleLower.includes('camareira') || roleLower.includes('governanca');
+  const isAdminUser = roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master') || roleLower.includes('administrador') || roleLower.includes('hotel') || roleLower.includes('gerente');
+  const isCamareiraAuthorized = isCamareiraUser || isAdminUser;
+  const isHospedeUser = roleLower.includes('hospede') || roleLower.includes('hóspede');
 
   // Proteção: não redirecionar para /minhaconta se estiver em rotas públicas ou de hotéis
   const isPublicOrHotelPath = 
@@ -1924,7 +1959,13 @@ export const App: React.FC = () => {
     activeTab === 'cardapio-hotel' ||
     activeTab === 'pagina-404';
 
-  if (!isPublicOrHotelPath && (activeTab === 'minhaconta' || pathParts[0] === 'minhaconta' || isHospedeUser)) {
+  const isNavigatingToOtherAppTab = 
+    activeTab === 'portal-parceiro' || 
+    activeTab === 'dashboard' || 
+    activeTab === 'admin-dashboard' ||
+    activeTab === 'catalogo-hoteis';
+
+  if (!isPublicOrHotelPath && !isNavigatingToOtherAppTab && (activeTab === 'minhaconta' || pathParts[0] === 'minhaconta' || isHospedeUser)) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/minhaconta') {
       window.history.replaceState({}, '', '/minhaconta');
     }
@@ -2032,6 +2073,16 @@ export const App: React.FC = () => {
             window.location.href = targetHome;
           }}
         />
+        <ModalAlternarAmbientes
+          isOpen={isModalAmbientesOpen}
+          onClose={() => setIsModalAmbientesOpen(false)}
+          ambienteAtual="hospede"
+          onSelecionarAmbiente={handleAlternarAmbiente}
+          isAdmin={isAdminUser}
+          userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
+          userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
+          hotelNome={hotelNomeFantasia}
+        />
       </Suspense>
     );
   }
@@ -2078,10 +2129,6 @@ export const App: React.FC = () => {
   }
 
   // ── Rota Dedicada: /camareira ou aba 'camareira' — Painel de Governança ──
-  const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
-  const isCamareiraUser = roleLower.includes('camareira') || roleLower.includes('governanca');
-  const isAdminUser = roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master') || roleLower.includes('administrador') || roleLower.includes('hotel') || roleLower.includes('gerente');
-  const isCamareiraAuthorized = isCamareiraUser || isAdminUser;
 
   const isCamareiraRoute = (activeTab === 'camareira' && isCamareiraUser) || pathParts[0] === 'camareira';
 
@@ -2212,6 +2259,17 @@ export const App: React.FC = () => {
           onNavigateHome={() => {
             setActiveTab('catalogo-hoteis');
           }}
+          onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
+        />
+        <ModalAlternarAmbientes
+          isOpen={isModalAmbientesOpen}
+          onClose={() => setIsModalAmbientesOpen(false)}
+          ambienteAtual="parceiro"
+          onSelecionarAmbiente={handleAlternarAmbiente}
+          isAdmin={isAdminUser}
+          userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
+          userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
+          hotelNome={hotelNomeFantasia}
         />
       </Suspense>
     );
@@ -3299,6 +3357,22 @@ export const App: React.FC = () => {
                 </p>
               </div>
             </div>
+            {/* Botão Alternar Telas Master Admin */}
+            <button
+              type="button"
+              onClick={() => setIsModalAmbientesOpen(true)}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-black transition-all cursor-pointer shadow-md"
+              title="Alternar entre Telas e Ambientes"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-base">sync_alt</span>
+                <span>Alternar Telas</span>
+              </div>
+              <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-950 text-emerald-300 font-extrabold">
+                Trocar
+              </span>
+            </button>
+
             <button 
               type="button"
               onClick={() => handleLogout()}
@@ -3539,6 +3613,17 @@ export const App: React.FC = () => {
                   )}
                 </button>
 
+                {/* Botão Alternar Telas (Desktop) */}
+                <button
+                  type="button"
+                  onClick={() => setIsModalAmbientesOpen(true)}
+                  className="relative px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 border border-slate-300 hover:border-emerald-400 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer group"
+                  title="Alternar entre Painel do Hotel, Portal do Parceiro e Área do Hóspede"
+                >
+                  <span className="material-symbols-outlined text-base text-emerald-700 transition-transform group-hover:rotate-180 duration-300">sync_alt</span>
+                  <span>Alternar Telas</span>
+                </button>
+
                 <NotificationSystem isMobile={false} onNavigateTab={(tab) => setActiveTab(tab)} currentUserRole={currentUserRole} />
                 <div className="w-px h-6 bg-[#c6c6cd]/50 mx-1"></div>
                 <div 
@@ -3609,6 +3694,23 @@ export const App: React.FC = () => {
 
                       {/* Lista de Opções */}
                       <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsModalAmbientesOpen(true);
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full px-3 py-2.5 rounded-xl flex items-center justify-between text-xs font-black text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors text-left cursor-pointer mb-1 shadow-2xs"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="material-symbols-outlined text-base text-emerald-700">sync_alt</span>
+                            <span>Alternar Telas & Ambientes</span>
+                          </div>
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-700 text-white px-1.5 py-0.5 rounded-md">
+                            Atalho
+                          </span>
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => {
@@ -4509,6 +4611,24 @@ export const App: React.FC = () => {
           setIsModalReservasDiaOpen(false);
           setActiveTab('reservas');
         }}
+      />
+
+      {/* MODAL GLOBAL DE ALTERNÂNCIA DE AMBIENTES (MULTITELAS) */}
+      <ModalAlternarAmbientes
+        isOpen={isModalAmbientesOpen}
+        onClose={() => setIsModalAmbientesOpen(false)}
+        ambienteAtual={
+          activeTab === 'portal-parceiro' ? 'parceiro'
+          : activeTab === 'area-hospede' || activeTab === 'minhaconta' ? 'hospede'
+          : activeTab === 'admin-dashboard' || activeTab === 'admin-hoteis' ? 'master'
+          : activeTab === 'catalogo-hoteis' ? 'catalogo'
+          : 'hotel'
+        }
+        onSelecionarAmbiente={handleAlternarAmbiente}
+        isAdmin={isAdminUser}
+        userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
+        userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
+        hotelNome={hotelNomeFantasia}
       />
 
     </div>

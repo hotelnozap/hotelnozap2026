@@ -795,6 +795,22 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
             </button>
           )}
 
+          {/* Botão Alternar Telas & Ambientes */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('abrir_modal_ambientes'))}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs transition-all shadow-md cursor-pointer"
+            title="Alternar entre Painel do Hotel, Portal do Parceiro e Área do Hóspede"
+          >
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-base">sync_alt</span>
+              <span>Alternar Telas</span>
+            </div>
+            <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-950 text-emerald-300 font-extrabold">
+              Trocar
+            </span>
+          </button>
+
           {/* Botão Sair da Conta */}
           <button
             onClick={handleSairDaConta}
@@ -829,6 +845,17 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Botão Alternar Telas Mobile */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('abrir_modal_ambientes'))}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-400 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer active:scale-95 transition-transform"
+              title="Alternar entre Telas e Ambientes"
+            >
+              <span className="material-symbols-outlined text-[15px]">sync_alt</span>
+              <span>Telas</span>
+            </button>
+
             {perfil?.temCheckinAtivo && perfil?.hotelWifi && (
               <button
                 type="button"
@@ -997,8 +1024,25 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
                 </nav>
               </div>
 
-              {/* Rodapé fixo do drawer: botão Sair da Conta SEMPRE visível e clicável */}
+              {/* Rodapé fixo do drawer: botão Alternar Telas e Sair da Conta */}
               <div className="p-4 border-t border-white/10 shrink-0 bg-[#001400]/95 space-y-2 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    window.dispatchEvent(new CustomEvent('abrir_modal_ambientes'));
+                  }}
+                  className="w-full py-2.5 px-3 bg-emerald-400 hover:bg-emerald-300 text-slate-950 rounded-xl text-xs font-black flex items-center justify-between cursor-pointer shadow-md transition-all active:scale-98"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base">sync_alt</span>
+                    <span>Alternar Telas & Ambientes</span>
+                  </div>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-950 text-emerald-300 font-extrabold">
+                    Trocar
+                  </span>
+                </button>
+
                 {(normalizedRole === 'administrador' || normalizedRole === 'admin') && onNavigateToSystem && (
                   <button
                     type="button"
