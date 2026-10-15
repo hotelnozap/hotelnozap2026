@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { navigateSpa } from './utils/navigation';
+import { forceCleanReload } from './utils/lazyWithRetry';
 
 // Força HTTPS em ambiente de produção (remove aviso 'Não seguro')
 if (typeof window !== 'undefined' && window.location.protocol === 'http:' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
@@ -38,18 +39,12 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Tratamento automático de chunks atualizados no Vite após novos deploys
+// Tratamento automático de chunks e módulos desatualizados no Vite após novos deploys
 if (typeof window !== 'undefined') {
   window.addEventListener('vite:preloadError', (event: any) => {
     event?.preventDefault?.();
     console.warn('[Vite] Chunk desatualizado detectado após nova publicação. Atualizando página...');
-    const reloadKey = 'hotelnozap_chunk_reload_ts';
-    const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
-    const now = Date.now();
-    if (now - lastReload > 8000) {
-      sessionStorage.setItem(reloadKey, String(now));
-      window.location.reload();
-    }
+    forceCleanReload();
   });
 
   window.addEventListener('unhandledrejection', (event) => {
@@ -58,31 +53,13 @@ if (typeof window !== 'undefined') {
     if (
       msg.includes('dynamically imported module') ||
       msg.includes('failed to fetch dynamically imported module') ||
+      msg.includes('error loading dynamically imported module') ||
+      msg.includes('failed to fetch') ||
       error?.name === 'ChunkLoadError'
     ) {
       event.preventDefault();
       console.warn('[Vite Unhandled Rejection] Chunk desatualizado detectado. Atualizando página...');
-      const reloadKey = 'hotelnozap_chunk_reload_ts';
-      const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
-      const now = Date.now();
-      if (now - lastReload > 8000) {
-        sessionStorage.setItem(reloadKey, String(now));
-        window.location.reload();
-      }
-    }
-  });
-}
-
-// Intercepta erros de import dinâmico do Vite (deploy recente com chunks renomeados)
-if (typeof window !== 'undefined') {
-  window.addEventListener('vite:preloadError', (event: any) => {
-    event?.preventDefault?.();
-    const reloadKey = 'hotelnozap_chunk_reload_ts';
-    const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
-    const now = Date.now();
-    if (now - lastReload > 5000) {
-      sessionStorage.setItem(reloadKey, String(now));
-      window.location.reload();
+      forceCleanReload();
     }
   });
 }
@@ -109,16 +86,11 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
       msg.includes('dynamically imported module') ||
       msg.includes('failed to fetch dynamically imported module') ||
       msg.includes('error loading dynamically imported module') ||
+      msg.includes('failed to fetch') ||
       error?.name === 'ChunkLoadError';
 
     if (isChunkError && typeof window !== 'undefined') {
-      const reloadKey = 'hotelnozap_chunk_reload_ts';
-      const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
-      const now = Date.now();
-      if (now - lastReload > 5000) {
-        sessionStorage.setItem(reloadKey, String(now));
-        window.location.reload();
-      }
+      forceCleanReload();
       return { hasError: true, error, isChunkUpdating: true };
     }
 
@@ -154,7 +126,7 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
             </div>
             <button
               onClick={() => {
-                window.location.reload();
+                forceCleanReload(true);
               }}
               style={{ background: '#003400', color: '#fff', border: '1px solid #10b981', padding: '10px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
             >

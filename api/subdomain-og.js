@@ -40,7 +40,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.setHeader('Vary', 'User-Agent');
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -113,11 +112,17 @@ export default async function handler(req, res) {
 </body>
 </html>`;
 
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(crawlerHtml);
   }
 
   // Para navegadores humanos normais:
+  // Garante SEMPRE no-cache para que novos builds e deploys na Vercel sejam recebidos imediatamente
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   // Lê o index.html compilado da aplicação e substitui dinamicamente as metatags
   try {
     let htmlPath = path.join(process.cwd(), 'dist', 'index.html');
