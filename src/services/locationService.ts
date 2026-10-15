@@ -157,7 +157,10 @@ export const locationService = {
 
       if (res.ok) {
         const data = await res.json();
-        const city = data.city || data.locality || data.localityInfo?.administrative?.[2]?.name;
+        const adminCity = data.localityInfo?.administrative?.find(
+          (a: any) => a.adminLevel === 8 || a.adminLevel === 7 || a.adminLevel === 6
+        )?.name;
+        const city = data.city || data.locality || adminCity || data.localityInfo?.administrative?.[2]?.name;
         const subdivision = data.principalSubdivisionCode || data.principalSubdivision;
         const uf = normalizeStateToUf(subdivision || '');
 
@@ -185,7 +188,7 @@ export const locationService = {
       if (res.ok) {
         const data = await res.json();
         const address = data.address || {};
-        const city = address.city || address.town || address.municipality || address.village || address.suburb;
+        const city = address.city || address.town || address.municipality || address.village || address.suburb || address.county;
         const state = address.state || address['ISO3166-2-lvl4'] || '';
         const uf = normalizeStateToUf(state);
 
@@ -248,9 +251,9 @@ export const locationService = {
           resolve(null);
         },
         {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 1000 * 60 * 30 // Cache de 30 minutos
+          enableHighAccuracy: true,
+          timeout: 7000,
+          maximumAge: 1000 * 60 * 15 // Cache de 15 minutos
         }
       );
     });
@@ -315,29 +318,52 @@ export const locationService = {
 
   /**
    * Reconhecimento automático completo da cidade tanto em Mobile quanto Desktop:
-   * 1. Tenta GPS de alta precisão do aparelho
-   * 2. Se recusado ou sem sinal, faz fallback imediato via IP
+   * 1. Inicia GPS nativo do aparelho com alta precisão
+   * 2. Inicia IP em paralelo para resposta instantânea (< 350ms)
+   * 3. Se GPS responder dentro da janela, prioriza GPS; se demorar ou for bloqueado, usa IP imediatamente
+   * 4. Se o usuário conceder GPS posteriormente, atualiza em background e dispara evento
    */
   async autoDetectUserLocation(): Promise<UserLocation | null> {
-    try {
-      // 1. Tentar GPS primeiro (se disponível no dispositivo)
-      if (typeof window !== 'undefined' && navigator.geolocation) {
-        const gpsResult = await locationService.requestUserLocation();
-        if (gpsResult && gpsResult.city) {
-          return gpsResult;
-        }
-      }
+    const cached = locationService.getUserLocationFromStorage();
 
-      // 2. Se o GPS falhar, não tiver sinal ou for bloqueado, tenta IP
-      const ipResult = await locationService.detectCityByIp();
-      if (ipResult && ipResult.city) {
-        return ipResult;
+    // 1. Inicia IP em paralelo (instantâneo, sem necessidade de popup)
+    const ipPromise = locationService.detectCityByIp();
+
+    // 2. Se suporte a geolocalização nativa existir
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      try {
+        const gpsPromise = locationService.requestUserLocation();
+
+        // Aguarda até 3.5 segundos pelo GPS nativo
+        const timeoutGps = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
+        const quickGps = await Promise.race([gpsPromise, timeoutGps]);
+
+        if (quickGps && quickGps.city) {
+          return quickGps;
+        }
+
+        // Se o GPS demorou ou o usuário não respondeu no primeiro momento, usa o IP instantâneo
+        const ipLoc = await ipPromise;
+        if (ipLoc && ipLoc.city) {
+          // Deixa o GPS rodando em segundo plano: quando o usuário clicar "Permitir", atualiza automaticamente
+          gpsPromise.then((bgGps) => {
+            if (bgGps && bgGps.city) {
+              console.log('[locationService] GPS refinado obtido em background:', bgGps.city);
+              locationService.saveUserLocation(bgGps);
+            }
+          }).catch(() => {});
+
+          return ipLoc;
+        }
+      } catch (err) {
+        console.warn('[locationService] Falha GPS, fallback IP:', err);
       }
-    } catch (err) {
-      console.warn('[locationService] Falha na auto detecção de cidade:', err);
     }
 
-    return locationService.getUserLocationFromStorage();
+    const ipLoc = await ipPromise;
+    if (ipLoc && ipLoc.city) return ipLoc;
+
+    return cached;
   },
 
   /**

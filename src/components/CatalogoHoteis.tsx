@@ -93,6 +93,18 @@ export const findCityBySlug = (slug: string, hotels: PublicHotel[]): string | nu
     }
   }
 
+  // 4. Match por inclusão (ex: distritos, regiões ou nomes compostos)
+  for (const h of hotels) {
+    if (h.city) {
+      const cSlug = normalizeCitySlug(h.city);
+      if (cleanTarget.length >= 4 && cSlug.length >= 4) {
+        if (cleanTarget.includes(cSlug) || cSlug.includes(cleanTarget)) {
+          return h.city;
+        }
+      }
+    }
+  }
+
   return null;
 };
 
@@ -485,8 +497,9 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     return locationService.getUserLocationFromStorage();
   });
   const [isDetectingLocation, setIsDetectingLocation] = useState<boolean>(false);
-  const [hasRunAutoOpen, setHasRunAutoOpen] = useState<boolean>(false);
+  const autoOpenedCityRef = useRef<string | null>(null);
 
+  // Escuta evento customizado de atualização de localização (ex: quando GPS conclui)
   useEffect(() => {
     const handleLocationUpdate = (e: any) => {
       if (e.detail) {
@@ -499,54 +512,52 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     return () => window.removeEventListener('hotelnozap_location_updated', handleLocationUpdate);
   }, []);
 
-  // Efeito principal: Abre o app automaticamente na cidade onde o usuário se encontra (Mobile & Desktop)
+  // Efeito 1: Dispara a auto-detecção em background no mount do componente
   useEffect(() => {
-    const runAutoCityDetection = async () => {
-      const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
-      const isExplicitCityRoute = (parts[0] === 'cidades' || parts[0] === 'cidade') && Boolean(parts[1]);
-      const hasManualOverride = locationService.hasManualCityOverride();
-
-      // 1. Se já tem localização prévia no cache e não há rota ou override manual, abre imediatamente
-      const stored = locationService.getUserLocationFromStorage();
-      if (stored?.city && !isExplicitCityRoute && !hasManualOverride && hoteisList.length > 0) {
-        const initialMatch = findCityBySlug(stored.city, hoteisList);
-        if (initialMatch && !focusedCity) {
-          setFocusedCity(initialMatch);
-        }
-      }
-
-      // 2. Se já rodou a verificação ou o usuário já forçou uma cidade, não substitui
-      if (hasRunAutoOpen) return;
-      setHasRunAutoOpen(true);
-
+    let isMounted = true;
+    const runDetection = async () => {
       setIsDetectingLocation(true);
       try {
         const detected = await locationService.autoDetectUserLocation();
-        if (detected?.city) {
+        if (isMounted && detected?.city) {
           setUserLocation(detected);
-
-          const currentParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
-          const stillNoExplicit = !((currentParts[0] === 'cidades' || currentParts[0] === 'cidade') && Boolean(currentParts[1]));
-          const stillNoOverride = !locationService.hasManualCityOverride();
-
-          if (stillNoExplicit && stillNoOverride && hoteisList.length > 0) {
-            const matched = findCityBySlug(detected.city, hoteisList);
-            if (matched) {
-              setFocusedCity(matched);
-              const cleanSlug = normalizeCitySlug(matched);
-              window.history.replaceState({}, '', `/cidades/${cleanSlug}`);
-            }
-          }
         }
       } catch (err) {
-        console.warn('[CatalogoHoteis] Erro na autodetecção de cidade:', err);
+        console.warn('[CatalogoHoteis] Falha na detecção de GPS/IP:', err);
       } finally {
-        setIsDetectingLocation(false);
+        if (isMounted) setIsDetectingLocation(false);
       }
     };
 
-    runAutoCityDetection();
-  }, [hoteisList.length, hasRunAutoOpen]);
+    runDetection();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Efeito 2: Abre o app automaticamente na cidade onde o usuário se encontra (Mobile & Desktop)
+  useEffect(() => {
+    if (!hoteisList || hoteisList.length === 0) return;
+
+    const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+    const isExplicitCityRoute = (parts[0] === 'cidades' || parts[0] === 'cidade') && Boolean(parts[1]);
+    const hasManualOverride = locationService.hasManualCityOverride();
+
+    // Se o usuário está em uma rota explícita (/cidades/:slug) ou escolheu manualmente ver todas/outra cidade, respeita
+    if (isExplicitCityRoute || hasManualOverride) return;
+
+    const currentCity = userLocation?.city;
+    if (!currentCity) return;
+
+    // Se já abrimos esta cidade automaticamente nesta sessão, não repete
+    if (autoOpenedCityRef.current === currentCity) return;
+
+    const matched = findCityBySlug(currentCity, hoteisList);
+    if (matched) {
+      autoOpenedCityRef.current = currentCity;
+      setFocusedCity(matched);
+      const cleanSlug = normalizeCitySlug(matched);
+      window.history.replaceState({}, '', `/cidades/${cleanSlug}`);
+    }
+  }, [userLocation, hoteisList]);
 
   // Verifica se a cidade do usuário possui acomodações cadastradas
   const userCityHasHotels = useMemo(() => {
@@ -913,10 +924,19 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
 
     // ORDEM DAS CIDADES NA PÁGINA INICIAL:
     // Se a cidade do usuário possui acomodações, ela é posicionada no TOPO ABSOLUTO (índice 0)!
-    // As demais cidades continuam em ordem alfabética (A a Z).
+    // Cidades do mesmo estado (UF) do usuário vêm logo em seguida, e as demais em ordem alfabética.
     return formattedGroups.sort((a, b) => {
       if (a.isUserLocation && !b.isUserLocation) return -1;
       if (!a.isUserLocation && b.isUserLocation) return 1;
+
+      const userUf = userLocation?.uf?.toUpperCase();
+      if (userUf) {
+        const aSameUf = (a.uf || '').toUpperCase() === userUf;
+        const bSameUf = (b.uf || '').toUpperCase() === userUf;
+        if (aSameUf && !bSameUf) return -1;
+        if (!aSameUf && bSameUf) return 1;
+      }
+
       return a.city.localeCompare(b.city, 'pt-BR', { sensitivity: 'base' });
     });
   }, [hoteisList, activeCategory, searchQuery, userLocation]);
@@ -1107,16 +1127,25 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             .join(' ');
           setFocusedCity(fallbackName);
         }
-      } else if (window.location.pathname === '/' || window.location.pathname === '/hoteis') {
-        if (!searchQuery.trim() && focusedCity) {
-          setFocusedCity(null);
-        }
       }
     };
 
     syncCityFromUrl();
-    window.addEventListener('popstate', syncCityFromUrl);
-    return () => window.removeEventListener('popstate', syncCityFromUrl);
+
+    const handlePopState = () => {
+      const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+      if ((parts[0] === 'cidades' || parts[0] === 'cidade') && parts[1]) {
+        const rawSlug = decodeURIComponent(parts[1]);
+        const matched = findCityBySlug(rawSlug, hoteisList);
+        setFocusedCity(matched || rawSlug);
+      } else if (window.location.pathname === '/' || window.location.pathname === '/hoteis') {
+        locationService.setManualCityOverride('todas');
+        setFocusedCity(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [hoteisList]);
 
   // Atualização dinâmica de Meta Tags Open Graph & Twitter para compartilhamento de links
@@ -1346,7 +1375,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             >
               <span className="block text-[11px] font-extrabold text-slate-900 leading-tight">Onde</span>
               <span className="block text-xs text-slate-500 truncate max-w-[130px]">
-                {focusedCity || 'Buscar destinos'}
+                {focusedCity || (userLocation?.city ? `${userLocation.city} · ${userLocation.uf}` : 'Buscar destinos')}
               </span>
             </button>
 
@@ -1542,13 +1571,15 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                   onClick={async () => {
                     locationService.clearManualCityOverride();
                     setIsDetectingLocation(true);
-                    const loc = await locationService.requestUserLocation();
+                    const loc = await locationService.autoDetectUserLocation();
                     setIsDetectingLocation(false);
                     if (loc && loc.city) {
                       setUserLocation(loc);
                       const matchingCity = findCityBySlug(loc.city, hoteisList);
                       if (matchingCity) {
                         handleOpenCityRoute(normalizeCitySlug(matchingCity), matchingCity);
+                      } else {
+                        setFocusedCity(null);
                       }
                       setIsSearchPopoverOpen(false);
                     }
@@ -1688,13 +1719,15 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                 onClick={async () => {
                   setIsDetectingLocation(true);
                   locationService.clearManualCityOverride();
-                  const loc = await locationService.requestUserLocation();
+                  const loc = await locationService.autoDetectUserLocation();
                   setIsDetectingLocation(false);
                   if (loc?.city) {
                     setUserLocation(loc);
                     const match = findCityBySlug(loc.city, hoteisList);
                     if (match) {
                       handleOpenCityRoute(normalizeCitySlug(match), match);
+                    } else {
+                      setFocusedCity(null);
                     }
                   }
                 }}
