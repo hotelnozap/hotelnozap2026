@@ -8,9 +8,11 @@ export function useHotelSecurityCheck(params: {
   email: string;
   excludeHotelId?: string | null;
   originalEmail?: string | null;
+  originalCpf?: string | null;
+  originalCnpj?: string | null;
   isEditing?: boolean;
 }) {
-  const { cnpj, cpf = '', email, excludeHotelId, originalEmail, isEditing } = params;
+  const { cnpj, cpf = '', email, excludeHotelId, originalEmail, originalCpf, originalCnpj, isEditing } = params;
 
   const [cnpjCheck, setCnpjCheck] = useState<UniquenessCheckResult>(initialCheckResult);
   const [cpfCheck, setCpfCheck] = useState<UniquenessCheckResult>(initialCheckResult);
@@ -24,6 +26,19 @@ export function useHotelSecurityCheck(params: {
   // 1. Checagem de CNPJ em tempo real
   useEffect(() => {
     const clean = cnpj.replace(/\D/g, '');
+    const cleanOriginal = (originalCnpj || '').replace(/\D/g, '');
+
+    // Se for o mesmo CNPJ original do hotel, não é duplicidade
+    if (cleanOriginal && clean === cleanOriginal) {
+      setCnpjCheck({
+        checking: false,
+        checked: true,
+        exists: false,
+        message: 'CNPJ atual do hotel'
+      });
+      return;
+    }
+
     if (clean.length !== 14) {
       setCnpjCheck(initialCheckResult);
       return;
@@ -45,11 +60,24 @@ export function useHotelSecurityCheck(params: {
     return () => {
       if (cnpjTimer.current) clearTimeout(cnpjTimer.current);
     };
-  }, [cnpj, excludeHotelId]);
+  }, [cnpj, excludeHotelId, originalCnpj]);
 
   // 2. Checagem de CPF em tempo real
   useEffect(() => {
     const clean = (cpf || '').replace(/\D/g, '');
+    const cleanOriginal = (originalCpf || '').replace(/\D/g, '');
+
+    // Se for o mesmo CPF original do responsável do hotel, não é duplicidade
+    if (cleanOriginal && clean === cleanOriginal) {
+      setCpfCheck({
+        checking: false,
+        checked: true,
+        exists: false,
+        message: 'CPF atual do responsável'
+      });
+      return;
+    }
+
     if (!clean || clean.length < 11) {
       setCpfCheck(initialCheckResult);
       return;
@@ -71,7 +99,7 @@ export function useHotelSecurityCheck(params: {
     return () => {
       if (cpfTimer.current) clearTimeout(cpfTimer.current);
     };
-  }, [cpf, excludeHotelId]);
+  }, [cpf, excludeHotelId, originalCpf]);
 
   // 3. Checagem de E-mail de Acesso em tempo real
   useEffect(() => {
@@ -112,17 +140,29 @@ export function useHotelSecurityCheck(params: {
     cpfExists: boolean;
     emailExists: boolean;
   }> => {
+    const cleanCpf = (cpf || '').replace(/\D/g, '');
+    const cleanOriginalCpf = (originalCpf || '').replace(/\D/g, '');
+    const skipCpfCheck = isEditing && (!cleanCpf || (cleanOriginalCpf && cleanCpf === cleanOriginalCpf));
+
+    const cleanCnpj = (cnpj || '').replace(/\D/g, '');
+    const cleanOriginalCnpj = (originalCnpj || '').replace(/\D/g, '');
+    const skipCnpjCheck = isEditing && (!cleanCnpj || (cleanOriginalCnpj && cleanCnpj === cleanOriginalCnpj));
+
     const cleanEmail = (email || '').trim().toLowerCase();
-    const cleanOriginal = (originalEmail || '').trim().toLowerCase();
-    const skipEmailCheck = isEditing && (!cleanEmail || (cleanOriginal && cleanEmail === cleanOriginal));
+    const cleanOriginalEmail = (originalEmail || '').trim().toLowerCase();
+    const skipEmailCheck = isEditing && (!cleanEmail || (cleanOriginalEmail && cleanEmail === cleanOriginalEmail));
 
     const [cRes, pRes, eRes] = await Promise.all([
-      hotelSecurityService.checkCnpj(cnpj, excludeHotelId),
-      cpf && cpf.replace(/\D/g, '').length === 11
-        ? hotelSecurityService.checkCpf(cpf, excludeHotelId)
-        : Promise.resolve(initialCheckResult),
+      skipCnpjCheck
+        ? Promise.resolve({ checking: false, checked: true, exists: false, message: 'CNPJ atual do hotel' })
+        : hotelSecurityService.checkCnpj(cnpj, excludeHotelId),
+      skipCpfCheck
+        ? Promise.resolve({ checking: false, checked: true, exists: false, message: 'CPF atual do responsável' })
+        : cpf && cleanCpf.length === 11
+          ? hotelSecurityService.checkCpf(cpf, excludeHotelId)
+          : Promise.resolve(initialCheckResult),
       skipEmailCheck
-        ? Promise.resolve({ checking: false, checked: true, exists: false, message: '' })
+        ? Promise.resolve({ checking: false, checked: true, exists: false, message: 'E-mail atual do hotel' })
         : hotelSecurityService.checkEmail(email, excludeHotelId)
     ]);
 

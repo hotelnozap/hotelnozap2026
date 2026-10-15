@@ -36,6 +36,7 @@ export const hotelSecurityService = {
       return { checking: false, checked: true, exists: false, message: 'CNPJ inválido' };
     }
 
+    const safeExcludeId = excludeHotelId && /^[0-9a-f-]{36}$/i.test(excludeHotelId) ? excludeHotelId : null;
     const masked = maskCnpj(clean);
     try {
       let query = supabase
@@ -43,8 +44,8 @@ export const hotelSecurityService = {
         .select('id, nome, cnpj')
         .or(`cnpj.eq.${clean},cnpj.eq.${masked}`);
 
-      if (excludeHotelId) {
-        query = query.neq('id', excludeHotelId);
+      if (safeExcludeId) {
+        query = query.neq('id', safeExcludeId);
       }
 
       const { data, error } = await query.limit(1);
@@ -93,6 +94,7 @@ export const hotelSecurityService = {
       return { checking: false, checked: true, exists: false, message: 'CPF inválido' };
     }
 
+    const safeExcludeId = excludeHotelId && /^[0-9a-f-]{36}$/i.test(excludeHotelId) ? excludeHotelId : null;
     const masked = maskCpf(clean);
     try {
       // 1. Consulta em hoteis (cpf_gerente)
@@ -101,20 +103,23 @@ export const hotelSecurityService = {
         .select('id, nome, cpf_gerente')
         .or(`cpf_gerente.eq.${clean},cpf_gerente.eq.${masked}`);
 
-      if (excludeHotelId) {
-        qHotel = qHotel.neq('id', excludeHotelId);
+      if (safeExcludeId) {
+        qHotel = qHotel.neq('id', safeExcludeId);
       }
 
-      // 2. Consulta em usuarios (cpf)
-      const qUsuario = supabase
+      // 2. Consulta em usuarios (cpf) - não conflitar com usuários do mesmo hotel
+      let qUsuario = supabase
         .from('usuarios')
-        .select('id, nome, cpf')
-        .or(`cpf.eq.${clean},cpf.eq.${masked}`)
-        .limit(1);
+        .select('id, nome, cpf, hotel_id')
+        .or(`cpf.eq.${clean},cpf.eq.${masked}`);
+
+      if (safeExcludeId) {
+        qUsuario = qUsuario.or(`hotel_id.is.null,hotel_id.neq.${safeExcludeId}`);
+      }
 
       const [resHotel, resUsuario] = await Promise.all([
         qHotel.limit(1),
-        qUsuario
+        qUsuario.limit(1)
       ]).catch(() => [{ data: null }, { data: null }]);
 
       if (resHotel?.data && resHotel.data.length > 0) {

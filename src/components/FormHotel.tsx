@@ -485,6 +485,18 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const isEditing = Boolean(hotelToEdit || isProfileView);
   const [loginEmail, setLoginEmail] = useState(hotelToEdit?.loginEmail || '');
 
+  // Estados para valores originais do hotel (evita falso-positivo de duplicidade ao editar o próprio hotel)
+  const [originalHotelId, setOriginalHotelId] = useState<string | null>(hotelToEdit?.id || null);
+  const [originalCpf, setOriginalCpf] = useState<string | null>(hotelToEdit?.managerCpf || null);
+  const [originalCnpj, setOriginalCnpj] = useState<string | null>(hotelToEdit?.cnpj || null);
+  const [originalEmail, setOriginalEmail] = useState<string | null>(hotelToEdit?.loginEmail || null);
+
+  const effectiveHotelId =
+    hotelToEdit?.id ||
+    originalHotelId ||
+    (isProfileView ? currentHotelService.getCurrentHotel()?.id : null) ||
+    null;
+
   // Regra de Segurança: Verificação em tempo real de CNPJ, CPF do Responsável e E-mail de Login
   const {
     cnpjCheck,
@@ -495,8 +507,10 @@ export const FormHotel: React.FC<FormHotelProps> = ({
     cnpj,
     cpf: managerCpf,
     email: loginEmail,
-    excludeHotelId: hotelToEdit?.id || null,
-    originalEmail: hotelToEdit?.loginEmail || null,
+    excludeHotelId: effectiveHotelId,
+    originalEmail: originalEmail || hotelToEdit?.loginEmail || null,
+    originalCpf: originalCpf || hotelToEdit?.managerCpf || null,
+    originalCnpj: originalCnpj || hotelToEdit?.cnpj || null,
     isEditing
   });
 
@@ -812,6 +826,12 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         setDataCompra(infoCreds.dataCompra);
       }
       setIsGoogleMaps(isHotelGoogleMaps(targetHotel));
+
+      // Guardar referências originais para checagem anti-duplicidade precisa
+      setOriginalHotelId(targetHotel.id || null);
+      setOriginalCpf(targetHotel.managerCpf || null);
+      setOriginalCnpj(targetHotel.cnpj || null);
+      setOriginalEmail(targetHotel.loginEmail || null);
     };
 
     loadHotelData();
