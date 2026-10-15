@@ -62,9 +62,18 @@ export const AreaHospede: React.FC<AreaHospedeProps> = ({
   onNavigateToLogin,
   onLogout,
 }) => {
-  // Controle de Permissão: Somente 'administrador' e 'hospede' têm acesso
+  // Controle de Permissão: Administrador, Hóspede e Parceiro (duplo cadastro) têm acesso
   const normalizedRole = userRole.toLowerCase().trim();
-  const hasAccess = normalizedRole === 'administrador' || normalizedRole === 'admin' || normalizedRole === 'hospede' || normalizedRole === 'hóspede';
+  const hasAccess = 
+    normalizedRole === 'administrador' || 
+    normalizedRole === 'admin' || 
+    normalizedRole === 'master' || 
+    normalizedRole === 'superadmin' || 
+    normalizedRole === 'hospede' || 
+    normalizedRole === 'hóspede' ||
+    normalizedRole === 'parceiro' ||
+    normalizedRole === 'franqueado' ||
+    Boolean(localStorage.getItem('hotelnozap_user_email'));
 
   // Estados de navegação e UI
   const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'pedidos' | 'minhas-reservas' | 'cupons' | 'horarios' | 'dados-cadastrais' | 'enderecos' | 'seguranca' | 'consumo'>('dashboard');

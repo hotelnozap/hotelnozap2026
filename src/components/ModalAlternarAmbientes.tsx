@@ -8,6 +8,12 @@ export interface ModalAlternarAmbientesProps {
   ambienteAtual?: TipoAmbiente;
   onSelecionarAmbiente: (ambiente: TipoAmbiente) => void;
   isAdmin?: boolean;
+  isParceiro?: boolean;
+  isHotel?: boolean;
+  isHospede?: boolean;
+  temCadastroHospede?: boolean;
+  temCadastroParceiro?: boolean;
+  temCadastroHotel?: boolean;
   userEmail?: string;
   userName?: string;
   hotelNome?: string;
@@ -19,15 +25,34 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
   ambienteAtual = 'hotel',
   onSelecionarAmbiente,
   isAdmin = false,
+  isParceiro = false,
+  isHotel = false,
+  isHospede = false,
+  temCadastroHospede = false,
+  temCadastroParceiro = false,
+  temCadastroHotel = false,
   userEmail = '',
   userName = '',
   hotelNome = 'Hotel no Zap'
 }) => {
   if (!isOpen) return null;
 
-  const ambientes = [
-    {
-      id: 'hotel' as TipoAmbiente,
+  const ambientes: Array<{
+    id: TipoAmbiente;
+    titulo: string;
+    subtitulo: string;
+    descricao: string;
+    icone: string;
+    badgeCor: string;
+    iconeCor: string;
+    bordaHover: string;
+  }> = [];
+
+  // 1. Painel do Hotel: SOMENTE visível se for Hotel/Gerente, tiver cadastro de hotel ou for Master Admin
+  const podeAcessarHotel = isAdmin || isHotel || temCadastroHotel;
+  if (podeAcessarHotel) {
+    ambientes.push({
+      id: 'hotel',
       titulo: 'Painel do Hotel (Recepção & Gestão)',
       subtitulo: hotelNome || 'Operação do Estabelecimento',
       descricao: 'Mapa de ocupação, reservas, controle de caixa, pedidos do cardápio e conexões do WhatsApp.',
@@ -35,9 +60,14 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
       badgeCor: 'bg-emerald-100 text-emerald-900 border-emerald-300',
       iconeCor: 'bg-emerald-500/10 text-emerald-700',
       bordaHover: 'hover:border-emerald-500 hover:shadow-emerald-500/10'
-    },
-    {
-      id: 'parceiro' as TipoAmbiente,
+    });
+  }
+
+  // 2. Portal do Franqueado / Parceiro: Visível se for Parceiro, tiver cadastro de parceiro ou for Master Admin
+  const podeAcessarParceiro = isAdmin || isParceiro || temCadastroParceiro;
+  if (podeAcessarParceiro) {
+    ambientes.push({
+      id: 'parceiro',
       titulo: 'Portal do Franqueado / Parceiro',
       subtitulo: 'Gestão de Franquia & Comissões de 50%',
       descricao: 'Acompanhe seus hotéis indicados, comissões recorrentes, previsão de repasses PIX e link de afiliado.',
@@ -45,9 +75,14 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
       badgeCor: 'bg-blue-100 text-blue-900 border-blue-300',
       iconeCor: 'bg-blue-500/10 text-blue-700',
       bordaHover: 'hover:border-blue-500 hover:shadow-blue-500/10'
-    },
-    {
-      id: 'hospede' as TipoAmbiente,
+    });
+  }
+
+  // 3. Área do Hóspede: Visível se for Hóspede, Parceiro (duplo cadastro ou viajante), Hotel ou Master Admin
+  const podeAcessarHospede = isAdmin || isHospede || temCadastroHospede || isParceiro;
+  if (podeAcessarHospede) {
+    ambientes.push({
+      id: 'hospede',
       titulo: 'Área do Hóspede (Minha Conta)',
       subtitulo: 'Experiência do Viajante',
       descricao: 'Minhas reservas ativas, histórico de estadias, cardápio digital do quarto e cupons de desconto.',
@@ -55,9 +90,13 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
       badgeCor: 'bg-amber-100 text-amber-900 border-amber-300',
       iconeCor: 'bg-amber-500/10 text-amber-700',
       bordaHover: 'hover:border-amber-500 hover:shadow-amber-500/10'
-    },
-    ...(isAdmin ? [{
-      id: 'master' as TipoAmbiente,
+    });
+  }
+
+  // 4. Painel Master Admin: SOMENTE E EXCLUSIVAMENTE para Super Administrador REAL
+  if (isAdmin) {
+    ambientes.push({
+      id: 'master',
       titulo: 'Painel Master Admin',
       subtitulo: 'Super Administrador da Plataforma',
       descricao: 'Gestão global de todos os hotéis, parâmetros do sistema, planos SaaS e métricas gerais.',
@@ -65,18 +104,20 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
       badgeCor: 'bg-purple-100 text-purple-900 border-purple-300',
       iconeCor: 'bg-purple-500/10 text-purple-700',
       bordaHover: 'hover:border-purple-500 hover:shadow-purple-500/10'
-    }] : []),
-    {
-      id: 'catalogo' as TipoAmbiente,
-      titulo: 'Catálogo Público & Reserva Online',
-      subtitulo: 'Portal de Busca de Hotéis',
-      descricao: 'Vitrine pública onde hóspedes buscam cidades, comparam quartos e iniciam reservas diretas.',
-      icone: 'travel_explore',
-      badgeCor: 'bg-teal-100 text-teal-900 border-teal-300',
-      iconeCor: 'bg-teal-500/10 text-teal-700',
-      bordaHover: 'hover:border-teal-500 hover:shadow-teal-500/10'
-    }
-  ];
+    });
+  }
+
+  // 5. Catálogo Público: Sempre visível para todos
+  ambientes.push({
+    id: 'catalogo',
+    titulo: 'Catálogo Público & Reserva Online',
+    subtitulo: 'Portal de Busca de Hotéis',
+    descricao: 'Vitrine pública onde hóspedes buscam cidades, comparam quartos e iniciam reservas diretas.',
+    icone: 'travel_explore',
+    badgeCor: 'bg-teal-100 text-teal-900 border-teal-300',
+    iconeCor: 'bg-teal-500/10 text-teal-700',
+    bordaHover: 'hover:border-teal-500 hover:shadow-teal-500/10'
+  });
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">

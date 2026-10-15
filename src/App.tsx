@@ -603,6 +603,11 @@ export const App: React.FC = () => {
 
   // Modal Multitelas / Alternador de Ambientes
   const [isModalAmbientesOpen, setIsModalAmbientesOpen] = useState(false);
+  const [userCadastros, setUserCadastros] = useState<{ temHospede: boolean; temParceiro: boolean; temHotel: boolean }>({
+    temHospede: false,
+    temParceiro: false,
+    temHotel: false
+  });
 
   useEffect(() => {
     const handleOpenAmbientes = () => setIsModalAmbientesOpen(true);
@@ -610,19 +615,72 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('abrir_modal_ambientes', handleOpenAmbientes);
   }, []);
 
+  useEffect(() => {
+    let cancel = false;
+    const checkCadastros = async () => {
+      try {
+        const email = (localStorage.getItem('hotelnozap_user_email') || '').trim().toLowerCase();
+        if (!email) return;
+
+        const [resHosp, resParc, resHotel] = await Promise.allSettled([
+          supabase.from('hospedes').select('id').ilike('email', email).limit(1),
+          supabase.from('parceiros').select('id').ilike('email', email).limit(1),
+          supabase.from('hoteis').select('id').or(`manager_email.ilike.${email},login_email.ilike.${email}`).limit(1)
+        ]);
+
+        if (cancel) return;
+
+        setUserCadastros({
+          temHospede: resHosp.status === 'fulfilled' && !!(resHosp.value.data && resHosp.value.data.length > 0),
+          temParceiro: resParc.status === 'fulfilled' && !!(resParc.value.data && resParc.value.data.length > 0),
+          temHotel: resHotel.status === 'fulfilled' && !!(resHotel.value.data && resHotel.value.data.length > 0)
+        });
+      } catch (err) {
+        console.warn('Erro ao verificar cadastros:', err);
+      }
+    };
+    checkCadastros();
+    window.addEventListener('user_role_changed', checkCadastros);
+    return () => {
+      cancel = true;
+      window.removeEventListener('user_role_changed', checkCadastros);
+    };
+  }, []);
+
   const handleAlternarAmbiente = (ambiente: TipoAmbiente) => {
+    const roleLowerCurrent = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase().trim();
+    const isMasterAdminCurrent = (
+      roleLowerCurrent === 'admin' ||
+      roleLowerCurrent === 'administrador' ||
+      roleLowerCurrent === 'superadmin' ||
+      roleLowerCurrent === 'master'
+    ) && !roleLowerCurrent.includes('parceiro') && !roleLowerCurrent.includes('hospede');
+    const isParceiroCurrent = (roleLowerCurrent.includes('parceiro') || roleLowerCurrent.includes('franqueado')) && !isMasterAdminCurrent;
+
     switch (ambiente) {
       case 'hotel':
-        setActiveTab('dashboard');
+        if (isMasterAdminCurrent || (!isParceiroCurrent && !roleLowerCurrent.includes('hospede')) || userCadastros.temHotel) {
+          setActiveTab('dashboard');
+        } else {
+          alert('Acesso restrito: seu perfil não possui hotel cadastrado.');
+        }
         break;
       case 'parceiro':
-        setActiveTab('portal-parceiro');
+        if (isParceiroCurrent || isMasterAdminCurrent || userCadastros.temParceiro) {
+          setActiveTab('portal-parceiro');
+        } else {
+          alert('Acesso restrito ao Portal do Parceiro.');
+        }
         break;
       case 'hospede':
-        setActiveTab('area-hospede');
+        setActiveTab('minhaconta');
         break;
       case 'master':
-        setActiveTab('admin-dashboard');
+        if (isMasterAdminCurrent) {
+          setActiveTab('admin-dashboard');
+        } else {
+          alert('Acesso restrito ao Super Administrador Master.');
+        }
         break;
       case 'catalogo':
         setActiveTab('catalogo-hoteis');
@@ -1271,20 +1329,38 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  const userRoleClean = (currentUserRole || '').toLowerCase();
+  const savedRoleValue = typeof localStorage !== 'undefined' ? (localStorage.getItem('hotelnozap_user_role') || '') : '';
+  const userRoleClean = (currentUserRole || savedRoleValue || '').toLowerCase().trim();
   const userPerfilClean = (typeof localStorage !== 'undefined' ? (localStorage.getItem('hotelnozap_user_perfil') || '') : '').toLowerCase();
   const userCargoClean = (typeof localStorage !== 'undefined' ? (localStorage.getItem('hotelnozap_user_cargo') || '') : '').toLowerCase();
 
-  const isHotelUser = Boolean(currentUserRole) && (
+  // 1. Super Admin Master REAL (NUNCA inferido por negação!)
+  const isMasterAdmin = (
+    userRoleClean === 'admin' ||
+    userRoleClean === 'administrador' ||
+    userRoleClean === 'superadmin' ||
+    userRoleClean === 'super admin' ||
+    userRoleClean === 'master' ||
+    userRoleClean.startsWith('admin') ||
+    userRoleClean.startsWith('super')
+  ) && !userRoleClean.includes('parceiro') && !userRoleClean.includes('franqueado') && !userRoleClean.includes('hospede') && !userRoleClean.includes('camareira');
+
+  // 2. Parceiro / Franqueado
+  const isParceiroUser = (userRoleClean.includes('parceiro') || userRoleClean.includes('franqueado')) && !isMasterAdmin;
+
+  // 3. Hóspede
+  const isHospedeUser = (userRoleClean.includes('hospede') || userRoleClean.includes('hóspede')) && !isMasterAdmin && !isParceiroUser;
+
+  // 4. Camareira
+  const isCamareiraUser = (userRoleClean.includes('camareira') || userRoleClean.includes('governanca')) && !isMasterAdmin;
+
+  // 5. Hotel / Recepção / Gerente
+  const isHotelUser = !isMasterAdmin && !isParceiroUser && !isHospedeUser && !isCamareiraUser && (
     userRoleClean.includes('hotel') || 
     userRoleClean.includes('gerente') || 
-    (!userRoleClean.includes('admin') && 
-     !userRoleClean.includes('super') && 
-     !userRoleClean.includes('administrador') && 
-     !userRoleClean.includes('parceiro') && 
-     !userRoleClean.includes('franqueado') && 
-     !userRoleClean.includes('camareira') && 
-     !userRoleClean.includes('hospede'))
+    userRoleClean.includes('recep') || 
+    userRoleClean.includes('financeiro') ||
+    Boolean(activeHotel?.id && activeHotel.id !== 'default' && activeHotel.id !== '11111111-1111-1111-1111-111111111111')
   );
 
   const isRecepcao = isHotelUser && (
@@ -1297,7 +1373,7 @@ export const App: React.FC = () => {
     userRoleClean.includes('gerente') ||
     userPerfilClean.includes('gerente') ||
     userCargoClean.includes('gerente')
-  ) && !userRoleClean.includes('admin') && !userRoleClean.includes('super');
+  );
 
   const isPerfilHotel = isHotelUser && (
     userRoleClean.includes('hotel') ||
@@ -1306,7 +1382,7 @@ export const App: React.FC = () => {
   );
 
   // Apenas perfis Hotel e Gerente (e Administrador SaaS) podem ter acesso ao menu de Lavanderia
-  const canAccessLavanderia = !isHotelUser || isPerfilHotel || isGerente;
+  const canAccessLavanderia = isMasterAdmin || isPerfilHotel || isGerente;
 
 
 
@@ -1499,7 +1575,7 @@ export const App: React.FC = () => {
       if (adminOnlyTabs.includes(activeTab)) {
         setActiveTab('dashboard');
       }
-    } else {
+    } else if (isMasterAdmin) {
       // Para o administrador não há vínculo operacional com nenhum hotel
       const hotelOnlyTabs = [
         'mapa', 'cadastro-quarto', 'itens-quartos', 'cadastro-item', 
@@ -1515,8 +1591,13 @@ export const App: React.FC = () => {
       if (hotelOnlyTabs.includes(activeTab)) {
         setActiveTab('admin-dashboard');
       }
+    } else if (isParceiroUser) {
+      const rotasPermitidas = ['portal-parceiro', 'area-hospede', 'minhaconta', 'catalogo-hoteis', 'pagina-hotel', 'detalhes-quarto', 'cardapio-hotel', 'pagina-404'];
+      if (!rotasPermitidas.includes(activeTab)) {
+        setActiveTab('portal-parceiro');
+      }
     }
-  }, [isHotelUser, isRecepcao, isGerente, canAccessLavanderia, activeTab]);
+  }, [isHotelUser, isMasterAdmin, isParceiroUser, isRecepcao, isGerente, canAccessLavanderia, activeTab]);
 
   // Função para obter o link público do hotel logado na rota /hoteis/nomedohotel
   const getLoggedHotelUrl = () => {
@@ -1571,7 +1652,7 @@ export const App: React.FC = () => {
     return true;
   });
 
-  const menuItems = !isHotelUser ? [
+  const menuItems = isMasterAdmin ? [
     { id: 'admin-dashboard', label: 'Área Administrativa', icon: 'admin_panel_settings' },
     { id: 'cadastro-hoteis', label: 'Hotéis & Pousadas', icon: 'domain' },
     { id: 'categorias-hoteis', label: 'Categorias de Hotéis', icon: 'category' },
@@ -1944,11 +2025,8 @@ export const App: React.FC = () => {
     );
   }
 
-  const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
-  const isCamareiraUser = roleLower.includes('camareira') || roleLower.includes('governanca');
-  const isAdminUser = roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master') || roleLower.includes('administrador') || roleLower.includes('hotel') || roleLower.includes('gerente');
-  const isCamareiraAuthorized = isCamareiraUser || isAdminUser;
-  const isHospedeUser = roleLower.includes('hospede') || roleLower.includes('hóspede');
+  const isAdminUser = isMasterAdmin;
+  const isCamareiraAuthorized = isCamareiraUser || isMasterAdmin;
 
   // Proteção: não redirecionar para /minhaconta se estiver em rotas públicas ou de hotéis
   const isPublicOrHotelPath = 
@@ -1975,6 +2053,67 @@ export const App: React.FC = () => {
     activeTab === 'admin-dashboard' ||
     activeTab === 'catalogo-hoteis';
 
+  const handleNavigateToHotelFromAreaHospede = async (hotelIdentifier: string, codigoCupom?: string, cupomObj?: any) => {
+    const query = codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : '';
+    
+    try {
+      const allHoteis = await hoteisService.getHoteis();
+      const rawId = (cupomObj?.hotel_id || hotelIdentifier || '').replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0].trim();
+      const targetName = (cupomObj?.hotel_nome || hotelIdentifier || '').trim();
+      const normCleanName = targetName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+      const safeSlugFromInput = slugify(rawId || targetName);
+
+      const matched = (allHoteis || []).find((h: any) => {
+        if (rawId && h.id === rawId) return true;
+        if (cupomObj?.hotel_id && h.id === cupomObj.hotel_id) return true;
+        if (h.name && h.name.toLowerCase() === targetName.toLowerCase()) return true;
+        const hNorm = h.name ? h.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') : '';
+        if (hNorm && normCleanName && (hNorm === normCleanName || hNorm.includes(normCleanName) || normCleanName.includes(hNorm))) return true;
+        const hSlug = h.name ? slugify(h.name) : '';
+        if (hSlug && (hSlug === safeSlugFromInput || hSlug.includes(safeSlugFromInput))) return true;
+        return false;
+      });
+
+      if (matched) {
+        const matchedPublic: PublicHotel = {
+          id: matched.id,
+          name: matched.name,
+          link: matched.link,
+          category: matched.category || 'Hotel & Pousada',
+          city: matched.city || matched.cityUf?.split('/')[0]?.trim() || '',
+          uf: matched.uf || matched.cityUf?.split('/')[1]?.trim() || '',
+          neighborhood: matched.neighborhood || 'Centro',
+          imageUrl: matched.imageUrl || '',
+          rating: 4.90,
+          reviewsCount: 45,
+          pricePerNight: 0,
+          whatsappPhone: (matched.whatsapp ? matched.whatsapp.replace(/\D/g, '') : ''),
+          instagram: matched.instagram,
+          facebook: matched.facebook,
+          tiktok: matched.tiktok,
+          whatsapp: matched.whatsapp,
+          cancellationText: 'Cancelamento flexível via Zap',
+          capacity: 0,
+          roomTitle: 'Contato Direto',
+          amenities: []
+        };
+        setSelectedHotelForPage(matchedPublic);
+        const targetSlug = matched.link ? matched.link.replace(/^\/(hotel|hoteis)\/?/, '') : slugify(matched.name);
+        const targetUrl = `/hoteis/${targetSlug}${query}`;
+        window.history.pushState({}, '', targetUrl);
+        setActiveTab('pagina-hotel');
+        return;
+      }
+    } catch (e) {
+      console.warn('Erro ao resolver hotel para navegação em Área do Hóspede:', e);
+    }
+
+    const fallbackSlug = slugify(hotelIdentifier.replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0]);
+    const targetUrl = `/hoteis/${fallbackSlug}${query}`;
+    window.history.pushState({}, '', targetUrl);
+    setActiveTab('pagina-hotel');
+  };
+
   if (!isPublicOrHotelPath && !isNavigatingToOtherAppTab && (activeTab === 'minhaconta' || pathParts[0] === 'minhaconta' || isHospedeUser)) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/minhaconta') {
       window.history.replaceState({}, '', '/minhaconta');
@@ -1985,72 +2124,17 @@ export const App: React.FC = () => {
           userRole={currentUserRole || 'hospede'}
           userName={localStorage.getItem('hotelnozap_user_name') || 'Hóspede'}
           userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
-          onNavigateToHotel={async (hotelIdentifier: string, codigoCupom?: string, cupomObj?: any) => {
-            const query = codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : '';
-            
-            try {
-              const allHoteis = await hoteisService.getHoteis();
-              const rawId = (cupomObj?.hotel_id || hotelIdentifier || '').replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0].trim();
-              const targetName = (cupomObj?.hotel_nome || hotelIdentifier || '').trim();
-              const normCleanName = targetName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-              const safeSlugFromInput = slugify(rawId || targetName);
-
-              const matched = (allHoteis || []).find((h: any) => {
-                if (rawId && h.id === rawId) return true;
-                if (cupomObj?.hotel_id && h.id === cupomObj.hotel_id) return true;
-                if (h.name && h.name.toLowerCase() === targetName.toLowerCase()) return true;
-                const hNorm = h.name ? h.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') : '';
-                if (hNorm && normCleanName && (hNorm === normCleanName || hNorm.includes(normCleanName) || normCleanName.includes(hNorm))) return true;
-                const hSlug = h.name ? slugify(h.name) : '';
-                if (hSlug && (hSlug === safeSlugFromInput || hSlug.includes(safeSlugFromInput))) return true;
-                return false;
-              });
-
-              if (matched) {
-                const matchedPublic: PublicHotel = {
-                  id: matched.id,
-                  name: matched.name,
-                  link: matched.link,
-                  category: matched.category || 'Hotel & Pousada',
-                  city: matched.city || matched.cityUf?.split('/')[0]?.trim() || '',
-                  uf: matched.uf || matched.cityUf?.split('/')[1]?.trim() || '',
-                  neighborhood: matched.neighborhood || 'Centro',
-                  imageUrl: matched.imageUrl || '',
-                  rating: 4.90,
-                  reviewsCount: 45,
-                  pricePerNight: 0,
-                  whatsappPhone: (matched.whatsapp ? matched.whatsapp.replace(/\D/g, '') : ''),
-                  instagram: matched.instagram,
-                  facebook: matched.facebook,
-                  tiktok: matched.tiktok,
-                  whatsapp: matched.whatsapp,
-                  cancellationText: 'Cancelamento flexível via Zap',
-                  capacity: 0,
-                  roomTitle: 'Contato Direto',
-                  amenities: []
-                };
-                setSelectedHotelForPage(matchedPublic);
-                const targetSlug = matched.link ? matched.link.replace(/^\/(hotel|hoteis)\/?/, '') : slugify(matched.name);
-                const targetUrl = `/hoteis/${targetSlug}${query}`;
-                window.history.pushState({}, '', targetUrl);
-                setActiveTab('pagina-hotel');
-                return;
-              }
-            } catch (e) {
-              console.warn('Erro ao resolver hotel para navegação em Área do Hóspede:', e);
-            }
-
-            const fallbackSlug = slugify(hotelIdentifier.replace(/^\/(hotel|hoteis)\/?/, '').split('?')[0]);
-            const targetUrl = `/hoteis/${fallbackSlug}${query}`;
-            window.history.pushState({}, '', targetUrl);
-            setActiveTab('pagina-hotel');
-          }}
+          onNavigateToHotel={handleNavigateToHotelFromAreaHospede}
           onNavigateToSystem={() => {
+            if (isParceiroUser) {
+              setActiveTab('portal-parceiro');
+              return;
+            }
             if (!shouldStayInternal() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
               window.location.href = 'https://app.hotelnozap.com.br/';
             } else {
               window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
-              setActiveTab('dashboard');
+              setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard');
             }
           }}
           onNavigateToLogin={() => {
@@ -2088,7 +2172,13 @@ export const App: React.FC = () => {
           onClose={() => setIsModalAmbientesOpen(false)}
           ambienteAtual="hospede"
           onSelecionarAmbiente={handleAlternarAmbiente}
-          isAdmin={isAdminUser}
+          isAdmin={isMasterAdmin}
+          isParceiro={isParceiroUser}
+          isHotel={isHotelUser}
+          isHospede={isHospedeUser}
+          temCadastroHospede={userCadastros.temHospede}
+          temCadastroParceiro={userCadastros.temParceiro}
+          temCadastroHotel={userCadastros.temHotel}
           userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
           userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
           hotelNome={hotelNomeFantasia}
@@ -2206,8 +2296,7 @@ export const App: React.FC = () => {
   }
 
   // ── Portal do Franqueado / Parceiro (Acesso pelo Login Padrão de Acordo com Perfil) ──
-  const isParceiroUser = roleLower.includes('parceiro') || roleLower.includes('franqueado');
-  const isParceiroAuthorized = isParceiroUser || isAdminUser;
+  const isParceiroAuthorized = isParceiroUser || isMasterAdmin || userCadastros.temParceiro;
 
   const isParceiroRoute = activeTab === 'portal-parceiro';
 
@@ -2234,7 +2323,7 @@ export const App: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveTab(isCamareiraUser ? 'camareira' : (isHotelUser ? 'dashboard' : 'admin-dashboard'));
+                    setActiveTab(isCamareiraUser ? 'camareira' : (isHotelUser ? 'dashboard' : (isMasterAdmin ? 'admin-dashboard' : 'catalogo-hoteis')));
                   }}
                   className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors"
                 >
@@ -2272,7 +2361,13 @@ export const App: React.FC = () => {
           onClose={() => setIsModalAmbientesOpen(false)}
           ambienteAtual="parceiro"
           onSelecionarAmbiente={handleAlternarAmbiente}
-          isAdmin={isAdminUser}
+          isAdmin={isMasterAdmin}
+          isParceiro={isParceiroUser}
+          isHotel={isHotelUser}
+          isHospede={isHospedeUser}
+          temCadastroHospede={userCadastros.temHospede}
+          temCadastroParceiro={userCadastros.temParceiro}
+          temCadastroHotel={userCadastros.temHotel}
           userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
           userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
           hotelNome={hotelNomeFantasia}
@@ -2346,6 +2441,129 @@ export const App: React.FC = () => {
     );
   }
 
+  // ── FIREWALL DE SEGURANÇA MÁXIMA: BLOQUEIO DE ACESSO INDEVIDO AO DASHBOARD DO HOTEL OU MASTER ADMIN ──
+  if (!isHotelUser && !isMasterAdmin) {
+    if (isParceiroUser) {
+      if (activeTab === 'minhaconta' || activeTab === 'area-hospede') {
+        window.history.replaceState({}, '', '/minhaconta');
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AreaHospede
+              userRole={currentUserRole || 'parceiro'}
+              userName={localStorage.getItem('hotelnozap_user_name') || 'Parceiro'}
+              userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
+              onNavigateToHotel={handleNavigateToHotelFromAreaHospede}
+              onNavigateToSystem={() => setActiveTab('portal-parceiro')}
+              onNavigateToLogin={handleNavigateToLoginFromCatalogo}
+              onLogout={handleLogout}
+            />
+            <ModalAlternarAmbientes
+              isOpen={isModalAmbientesOpen}
+              onClose={() => setIsModalAmbientesOpen(false)}
+              ambienteAtual="hospede"
+              onSelecionarAmbiente={handleAlternarAmbiente}
+              isAdmin={isMasterAdmin}
+              isParceiro={isParceiroUser}
+              isHotel={isHotelUser}
+              isHospede={isHospedeUser}
+              temCadastroHospede={userCadastros.temHospede}
+              temCadastroParceiro={userCadastros.temParceiro}
+              temCadastroHotel={userCadastros.temHotel}
+              userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
+              userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
+              hotelNome={hotelNomeFantasia}
+            />
+          </Suspense>
+        );
+      }
+      return (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <PortalParceiro
+            onLogout={async () => {
+              await handleLogout();
+            }}
+            onNavigateHome={() => {
+              setActiveTab('catalogo-hoteis');
+            }}
+            onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
+          />
+          <ModalAlternarAmbientes
+            isOpen={isModalAmbientesOpen}
+            onClose={() => setIsModalAmbientesOpen(false)}
+            ambienteAtual="parceiro"
+            onSelecionarAmbiente={handleAlternarAmbiente}
+            isAdmin={isMasterAdmin}
+            isParceiro={isParceiroUser}
+            isHotel={isHotelUser}
+            isHospede={isHospedeUser}
+            temCadastroHospede={userCadastros.temHospede}
+            temCadastroParceiro={userCadastros.temParceiro}
+            temCadastroHotel={userCadastros.temHotel}
+            userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
+            userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
+            hotelNome={hotelNomeFantasia}
+          />
+        </Suspense>
+      );
+    }
+
+    if (isHospedeUser) {
+      window.history.replaceState({}, '', '/minhaconta');
+      return (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <AreaHospede
+            userRole={currentUserRole || 'hospede'}
+            userName={localStorage.getItem('hotelnozap_user_name') || 'Hóspede'}
+            userEmail={localStorage.getItem('hotelnozap_user_email') || ''}
+            onNavigateToHotel={handleNavigateToHotelFromAreaHospede}
+            onNavigateToSystem={() => setActiveTab('catalogo-hoteis')}
+            onNavigateToLogin={handleNavigateToLoginFromCatalogo}
+            onLogout={handleLogout}
+          />
+          <ModalAlternarAmbientes
+            isOpen={isModalAmbientesOpen}
+            onClose={() => setIsModalAmbientesOpen(false)}
+            ambienteAtual="hospede"
+            onSelecionarAmbiente={handleAlternarAmbiente}
+            isAdmin={isMasterAdmin}
+            isParceiro={isParceiroUser}
+            isHotel={isHotelUser}
+            isHospede={isHospedeUser}
+            temCadastroHospede={userCadastros.temHospede}
+            temCadastroParceiro={userCadastros.temParceiro}
+            temCadastroHotel={userCadastros.temHotel}
+            userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
+            userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
+            hotelNome={hotelNomeFantasia}
+          />
+        </Suspense>
+      );
+    }
+
+    if (isCamareiraUser) {
+      window.history.replaceState({}, '', '/camareira');
+      return (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <PainelCamareira
+            currentUserRole={currentUserRole}
+            activeHotel={activeHotel}
+            onLogout={() => handleLogout()}
+          />
+        </Suspense>
+      );
+    }
+
+    window.history.replaceState({}, '', '/');
+    return (
+      <Suspense fallback={<PageLoadingFallback />}>
+        <CatalogoHoteis
+          onNavigateToLogin={handleNavigateToLoginFromCatalogo}
+          onNavigateToHotel={handleNavigateToHotelFromCatalogo}
+        />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="flex flex-col lg:flex-row h-screen w-screen overflow-hidden bg-[#f8f9ff]">
       
@@ -2367,7 +2585,7 @@ export const App: React.FC = () => {
               {isMobileMenuOpen ? 'close' : 'menu'}
             </span>
           </button>
-          {!isHotelUser ? (
+          {isMasterAdmin ? (
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-emerald-700/40 border border-emerald-500/50 flex items-center justify-center text-[#FDB116] shadow-sm shrink-0">
                 <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
@@ -2433,31 +2651,14 @@ export const App: React.FC = () => {
                   </div>
                   <div className="mt-2 pt-1.5 border-t border-slate-200/60 flex items-center justify-between">
                     <span className="text-[9px] font-semibold text-slate-500">Tipo:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        let newRole = 'Hotel';
-                        if (currentUserRole === 'Hotel') newRole = 'Gerente';
-                        else if (currentUserRole === 'Gerente') newRole = 'Administrador';
-                        else newRole = 'Hotel';
-                        setCurrentUserRole(newRole);
-                        localStorage.setItem('hotelnozap_user_role', newRole);
-                        if (newRole === 'Gerente') {
-                          localStorage.setItem('hotelnozap_user_perfil', 'Gerente');
-                        } else {
-                          localStorage.removeItem('hotelnozap_user_perfil');
-                        }
-                        window.dispatchEvent(new CustomEvent('user_role_changed', { detail: newRole }));
-                      }}
-                      className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-slate-200 hover:bg-emerald-100 text-slate-700 hover:text-emerald-900 transition-colors cursor-pointer"
-                    >
-                      Mudar para {currentUserRole === 'Hotel' ? 'Gerente' : currentUserRole === 'Gerente' ? 'Admin' : 'Hotel'}
-                    </button>
+                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                      {currentUserRole || 'Hotel'}
+                    </span>
                   </div>
                 </div>
 
                 <div className="space-y-0.5">
-                  {!isHotelUser && (
+                  {isMasterAdmin && (
                     <button
                       type="button"
                       onClick={() => {
@@ -2554,7 +2755,7 @@ export const App: React.FC = () => {
           >
             {/* Drawer Header com Botão de Recolher */}
             <div className="py-4 px-4 border-b border-white/10 shrink-0 flex items-center justify-between">
-              {!isHotelUser ? (
+              {isMasterAdmin ? (
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 font-bold shadow-md shrink-0">
                     <span className="material-symbols-outlined text-2xl">admin_panel_settings</span>
@@ -2596,7 +2797,7 @@ export const App: React.FC = () => {
 
             {/* Navigation Items */}
             <nav className="flex-1 min-h-0 py-4 overflow-y-auto no-scrollbar">
-              {!isHotelUser ? (
+              {isMasterAdmin ? (
                 <div className="flex flex-col gap-1 px-3 text-sm">
                   <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/70">
                     Visão Geral
@@ -3023,7 +3224,7 @@ export const App: React.FC = () => {
 
             {/* Drawer Footer / Logout */}
             <div className="p-4 border-t border-white/10 shrink-0 bg-[#000000]">
-              {!isHotelUser ? (
+              {isMasterAdmin ? (
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10">
                     <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-bold text-xs shrink-0">
@@ -3061,7 +3262,7 @@ export const App: React.FC = () => {
       )}
 
       {/* DESKTOP FIXED SIDEBAR */}
-      {!isHotelUser ? (
+      {isMasterAdmin ? (
         <aside 
           className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 z-40 text-white overflow-hidden justify-between border-r border-emerald-950/40"
           style={{ background: 'linear-gradient(180deg, #003400 0%, #000000 100%)' }}
@@ -3571,7 +3772,7 @@ export const App: React.FC = () => {
       )}
 
       {/* MAIN CONTENT AREA */}
-      <main className={`flex-1 flex flex-col ${!isHotelUser ? 'lg:ml-72' : 'lg:ml-[280px]'} h-full overflow-hidden bg-[#f8f9ff]`}>
+      <main className={`flex-1 flex flex-col ${isMasterAdmin ? 'lg:ml-72' : 'lg:ml-[280px]'} h-full overflow-hidden bg-[#f8f9ff]`}>
         
         {/* DESKTOP TOP HEADER */}
         {isHotelUser && (
@@ -3669,31 +3870,10 @@ export const App: React.FC = () => {
                           </div>
                           <div className="mt-1 flex items-center gap-1.5">
                             <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold rounded-full ${
-                              isHotelUser ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-800'
+                              isMasterAdmin ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
                             }`}>
-                              {currentUserRole}
+                              {currentUserRole || 'Hotel'}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                let newRole = 'Hotel';
-                                if (currentUserRole === 'Hotel') newRole = 'Gerente';
-                                else if (currentUserRole === 'Gerente') newRole = 'Administrador';
-                                else newRole = 'Hotel';
-                                setCurrentUserRole(newRole);
-                                localStorage.setItem('hotelnozap_user_role', newRole);
-                                if (newRole === 'Gerente') {
-                                  localStorage.setItem('hotelnozap_user_perfil', 'Gerente');
-                                } else {
-                                  localStorage.removeItem('hotelnozap_user_perfil');
-                                }
-                                window.dispatchEvent(new CustomEvent('user_role_changed', { detail: newRole }));
-                              }}
-                              className="text-[9px] font-semibold text-slate-600 hover:text-emerald-800 underline cursor-pointer"
-                              title="Alternar perfil para testes de permissão"
-                            >
-                              Mudar para {currentUserRole === 'Hotel' ? 'Gerente' : currentUserRole === 'Gerente' ? 'Admin' : 'Hotel'}
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -3795,7 +3975,7 @@ export const App: React.FC = () => {
         {/* VIEW ROUTER */}
         <div className="flex-1 overflow-y-auto" ref={mainContentRef}>
           <Suspense fallback={<RouteLoadingFallback />}>
-            {activeTab === 'admin-dashboard' && !isHotelUser && (
+            {activeTab === 'admin-dashboard' && isMasterAdmin && (
             <AdminMasterDashboard
               hideSidebar={true}
               adminName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Administrador'; } catch { return 'Administrador'; } })()}
@@ -4017,7 +4197,7 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'cupons' && (
             <ListagemCupons 
-              isAdmin={!isHotelUser}
+              isAdmin={isMasterAdmin}
               onNavigateToDashboard={() => setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard')}
               onNavigateToPlanos={() => setActiveTab('planos')}
               onNavigateToNovoCupom={() => {
@@ -4032,7 +4212,7 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'cadastro-cupom' && (
             <CadastroCupom 
-              isAdmin={!isHotelUser}
+              isAdmin={isMasterAdmin}
               cupomToEdit={cupomToEdit}
               onBack={() => setActiveTab('cupons')}
               onSaveSuccess={() => setActiveTab('cupons')}
@@ -4174,7 +4354,7 @@ export const App: React.FC = () => {
               onNavigateToUpgrade={() => setActiveTab(isHotelUser ? 'assinar' : 'planos')}
             />
           )}
-          {activeTab === 'parceiros' && !isHotelUser && (
+          {activeTab === 'parceiros' && isMasterAdmin && (
             <ListagemParceiros 
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
               onNavigateToCreate={() => {
@@ -4192,7 +4372,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab === 'cadastro-parceiro' && !isHotelUser && (
+          {activeTab === 'cadastro-parceiro' && isMasterAdmin && (
             <CadastroParceiro 
               partnerToEdit={partnerToEdit}
               onBack={() => setActiveTab('parceiros')}
@@ -4201,7 +4381,7 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'cadastro-hoteis' && (
             <CadastroHoteis 
-              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onBackToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
               onNavigateToCategories={() => setActiveTab('categorias-hoteis')}
               onNavigateToCreate={() => {
                 setHotelToEdit(null);
@@ -4257,7 +4437,7 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'status-quartos' && (
             <ListagemStatusQuartos
-              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onBackToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
               currentUserRole={currentUserRole || localStorage.getItem('hotelnozap_user_role') || ''}
               isHotelUser={isHotelUser}
             />
@@ -4267,7 +4447,7 @@ export const App: React.FC = () => {
               key={hotelToEdit ? hotelToEdit.id : 'novo-hotel'}
               hotelToEdit={hotelToEdit}
               preselectedPartner={preselectedPartner}
-              isAdmin={!isHotelUser}
+              isAdmin={isMasterAdmin}
               userRole={currentUserRole}
               onBack={() => {
                 setPreselectedPartner(null);
@@ -4284,10 +4464,10 @@ export const App: React.FC = () => {
           {(activeTab === 'config' || activeTab === 'config-hotel') && !isGerente && (
             <ConfiguracoesHotel 
               initialTab="horarios"
-              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onBackToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
             />
           )}
-          {activeTab === 'config-mercado-pago' && !isHotelUser && (
+          {activeTab === 'config-mercado-pago' && isMasterAdmin && (
             <ConfiguracoesMercadoPago 
               isAdmin={true}
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
@@ -4301,7 +4481,7 @@ export const App: React.FC = () => {
               onBackToDashboard={() => setActiveTab('dashboard')}
             />
           )}
-          {activeTab === 'planos' && !isHotelUser && (
+          {activeTab === 'planos' && isMasterAdmin && (
             <ListagemPlanos 
               onNavigateToDashboard={() => setActiveTab('admin-dashboard')}
               onNavigateToCreate={() => {
@@ -4315,7 +4495,7 @@ export const App: React.FC = () => {
               onNavigateToCupons={() => setActiveTab('cupons')}
             />
           )}
-          {activeTab === 'cadastro-plano' && !isHotelUser && (
+          {activeTab === 'cadastro-plano' && isMasterAdmin && (
             <CadastroPlano 
               planToEdit={planToEdit}
               onBack={() => {
@@ -4328,7 +4508,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab === 'creditos-saas' && !isHotelUser && (
+          {activeTab === 'creditos-saas' && isMasterAdmin && (
             <GestaoCreditosSaaS 
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
               onNavigateToHotel={(hotel) => {
@@ -4345,7 +4525,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab === 'admin-conexoes' && !isHotelUser && (
+          {activeTab === 'admin-conexoes' && isMasterAdmin && (
             <AdminConexoesWhatsapp
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
               onNavigateToHotel={async (hotelId) => {
@@ -4370,26 +4550,26 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab === 'admin-financeiro' && !isHotelUser && (
+          {activeTab === 'admin-financeiro' && isMasterAdmin && (
             <ReceitaRepasses
               onNavigateToDashboard={() => setActiveTab('admin-dashboard')}
               adminEmail={localStorage.getItem('hotelnozap_user_email') || 'master@hotelnozap.com.br'}
               adminName={localStorage.getItem('hotelnozap_user_name') || 'Super Admin Master'}
             />
           )}
-          {activeTab === 'admin-config' && !isHotelUser && (
+          {activeTab === 'admin-config' && isMasterAdmin && (
             <ParametrosSistema
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
               initialTab={adminParametrosTab}
               userRole={currentUserRole}
             />
           )}
-          {activeTab === 'logs-sistema' && !isHotelUser && (
+          {activeTab === 'logs-sistema' && isMasterAdmin && (
             <LogsSistema
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
             />
           )}
-          {activeTab === 'admin-notificacoes' && !isHotelUser && (
+          {activeTab === 'admin-notificacoes' && isMasterAdmin && (
             <NotificacoesPushAdmin
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
             />
@@ -4398,29 +4578,29 @@ export const App: React.FC = () => {
           {activeTab === 'relatorios' && (
             <RelatoriosHotel 
               activeHotel={activeHotel}
-              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onBackToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
             />
           )}
 
           {activeTab === 'tutoriais' && (
             <Tutoriais 
-              onBackToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onBackToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
             />
           )}
           {(activeTab === 'perfil' || activeTab === 'minhaconta') && (
             <FormHotel 
               isProfileView={true}
-              isAdmin={!isHotelUser}
+              isAdmin={isMasterAdmin}
               userRole={currentUserRole}
-              onBack={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
-              onSaveSuccess={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onBack={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
+              onSaveSuccess={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
             />
           )}
           {activeTab === 'usuarios' && !isGerente && (
             <ListagemUsuarios 
               isHotelScope={isHotelUser}
               hotelId={activeHotel?.id}
-              onNavigateToDashboard={() => setActiveTab(!isHotelUser ? 'admin-dashboard' : 'dashboard')}
+              onNavigateToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
               onNavigateToCreate={() => {
                 setUserToEdit(null);
                 setActiveTab('cadastro-usuario');
@@ -4481,7 +4661,7 @@ export const App: React.FC = () => {
 
       {/* MOBILE STICKY BOTTOM NAVIGATION BAR */}
       <nav className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-[#c6c6cd]/40 px-2 py-2 flex justify-around items-center z-40 lg:hidden shadow-[0_-2px_8px_-2px_rgba(19,27,46,0.1)]">
-        {!isHotelUser ? (
+        {isMasterAdmin ? (
           <>
             <button 
               onClick={() => setActiveTab('admin-dashboard')}
@@ -4631,7 +4811,13 @@ export const App: React.FC = () => {
           : 'hotel'
         }
         onSelecionarAmbiente={handleAlternarAmbiente}
-        isAdmin={isAdminUser}
+        isAdmin={isMasterAdmin}
+        isParceiro={isParceiroUser}
+        isHotel={isHotelUser}
+        isHospede={isHospedeUser}
+        temCadastroHospede={userCadastros.temHospede}
+        temCadastroParceiro={userCadastros.temParceiro}
+        temCadastroHotel={userCadastros.temHotel}
         userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
         userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
         hotelNome={hotelNomeFantasia}
