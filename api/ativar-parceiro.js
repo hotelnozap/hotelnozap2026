@@ -183,15 +183,18 @@ export default async function handler(req, res) {
 
   const { data: existingDocUser } = await supabaseAdmin
     .from('usuarios')
-    .select('id, nome, email, cpf')
+    .select('id, nome, email, cpf, perfil')
     .or(`cpf.eq.${cleanDoc},cpf.eq.${maskedDoc}`)
     .limit(1);
 
   if (existingDocUser && existingDocUser.length > 0) {
-    if (existingDocUser[0].email?.toLowerCase() !== cleanEmail) {
+    const u = existingDocUser[0];
+    const perfilNorm = (u.perfil || '').toLowerCase();
+    // Só bloqueia se o documento já pertencer a outro Parceiro ativo com e-mail diferente
+    if (perfilNorm.includes('parceiro') && u.email?.toLowerCase() !== cleanEmail) {
       return res.status(400).json({
         success: false,
-        error: `Este CPF/CNPJ já está cadastrado para outro usuário (${existingDocUser[0].nome}). Não é permitido duplicar o documento no sistema.`
+        error: `Este CPF/CNPJ já está cadastrado para outro parceiro (${u.nome}). Não é permitido duplicar o documento no sistema.`
       });
     }
   }
@@ -245,7 +248,8 @@ export default async function handler(req, res) {
     const { data: existingUser } = await supabaseAdmin
       .from('usuarios')
       .select('id, auth_user_id')
-      .eq('email', cleanEmail)
+      .or(`email.eq.${cleanEmail},cpf.eq.${cleanDoc},cpf.eq.${maskedDoc}`)
+      .limit(1)
       .maybeSingle();
 
     const userPayload = {

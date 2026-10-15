@@ -41,9 +41,15 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 
   // Verificação de Unicidade de Documento (CPF / CNPJ)
   const [verificandoDoc, setVerificandoDoc] = useState(false);
-  const [docCheckStatus, setDocCheckStatus] = useState<{ checked: boolean; exists: boolean; message: string }>({
+  const [docCheckStatus, setDocCheckStatus] = useState<{
+    checked: boolean;
+    exists: boolean;
+    isUpgrade?: boolean;
+    message: string;
+  }>({
     checked: false,
     exists: false,
+    isUpgrade: false,
     message: ''
   });
 
@@ -231,7 +237,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     const masked = clean.length === 11 ? maskCpf(clean) : maskCnpj(clean);
 
     try {
-      // 1. Verifica duplicidade na tabela parceiros
+      // 1. Verifica duplicidade na tabela parceiros (se já possui franquia ativa cadastrada)
       const { data: pData } = await supabase
         .from('parceiros')
         .select('id, nome, documento')
@@ -242,28 +248,48 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         return {
           exists: true,
           valid: true,
-          message: `Este ${clean.length === 11 ? 'CPF' : 'CNPJ'} já está cadastrado no sistema (Parceiro: ${pData[0].nome || 'Cadastrado'}). Não é permitido criar dois cadastros com o mesmo documento.`
+          isUpgrade: false,
+          message: `Este ${clean.length === 11 ? 'CPF' : 'CNPJ'} já possui Franquia Oficial cadastrada (${pData[0].nome || 'Parceiro'}). Acesse o Portal do Parceiro para entrar.`
         };
       }
 
-      // 2. Verifica duplicidade na tabela usuarios
+      // 2. Verifica na tabela usuarios se já existe um Parceiro cadastrado.
+      // Se for Hóspede ou outro perfil, NÃO bloqueia (permite upgrade para Parceiro).
       const { data: uData } = await supabase
         .from('usuarios')
-        .select('id, nome, cpf')
+        .select('id, nome, cpf, perfil, email')
         .or(`cpf.eq.${clean},cpf.eq.${masked}`)
         .limit(1);
 
       if (uData && uData.length > 0) {
+        const u = uData[0];
+        const perfilNorm = (u.perfil || '').toLowerCase();
+
+        // Se o usuário já possui perfil de Parceiro ativo
+        if (perfilNorm.includes('parceiro')) {
+          return {
+            exists: true,
+            valid: true,
+            isUpgrade: false,
+            message: `Este ${clean.length === 11 ? 'CPF' : 'CNPJ'} já possui cadastro de parceiro (${u.nome || 'Cadastrado'}). Acesse o login para entrar no painel.`
+          };
+        }
+
+        // Se for hóspede ou outro perfil, NÃO BLOQUEIA! Reconhece e permite vincular à franquia!
         return {
-          exists: true,
+          exists: false,
           valid: true,
-          message: `Este ${clean.length === 11 ? 'CPF' : 'CNPJ'} já possui cadastro de usuário no sistema (${uData[0].nome || 'Cadastrado'}). Não é permitido duplicar o documento.`
+          isUpgrade: true,
+          existingName: u.nome,
+          existingEmail: u.email,
+          message: `Cadastro prévio localizado (${u.nome}). Sua conta será vinculada e ativada como Parceira Franqueada!`
         };
       }
 
       return {
         exists: false,
         valid: true,
+        isUpgrade: false,
         message: `${clean.length === 11 ? 'CPF' : 'CNPJ'} disponível para cadastro.`
       };
     } catch (err) {
@@ -275,18 +301,26 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
   const checkDocUniquenessAsync = async (val: string) => {
     const clean = val.replace(/\D/g, '');
     if (clean.length !== 11 && clean.length !== 14) {
-      setDocCheckStatus({ checked: false, exists: false, message: '' });
+      setDocCheckStatus({ checked: false, exists: false, isUpgrade: false, message: '' });
       return;
     }
 
     setVerificandoDoc(true);
     const res = await verificarDocumentoExistente(val);
     setVerificandoDoc(false);
-    setDocCheckStatus({ checked: true, exists: res.exists, message: res.message });
+    setDocCheckStatus({ checked: true, exists: res.exists, isUpgrade: (res as any).isUpgrade, message: res.message });
     if (res.exists) {
       setErrorMsg(res.message);
-    } else if (errorMsg && (errorMsg.includes('CPF') || errorMsg.includes('CNPJ') || errorMsg.includes('documento'))) {
-      setErrorMsg(null);
+    } else {
+      if (errorMsg && (errorMsg.includes('CPF') || errorMsg.includes('CNPJ') || errorMsg.includes('documento'))) {
+        setErrorMsg(null);
+      }
+      if ((res as any).existingName && !nome.trim()) {
+        setNome((res as any).existingName);
+      }
+      if ((res as any).existingEmail && !email.trim()) {
+        setEmail((res as any).existingEmail);
+      }
     }
   };
 
@@ -758,7 +792,8 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         const { data: existingUser } = await supabase
           .from('usuarios')
           .select('id, auth_user_id')
-          .eq('email', cleanEmail)
+          .or(`email.eq.${cleanEmail},cpf.eq.${cleanCpf}`)
+          .limit(1)
           .maybeSingle();
 
         const userPayload: any = {
@@ -1158,8 +1193,12 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                         </p>
                       )}
                       {docCheckStatus.checked && !docCheckStatus.exists && (
-                        <p className="mt-1.5 text-xs text-emerald-700 font-medium flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <p className={`mt-1.5 text-xs font-semibold flex items-center gap-1.5 ${
+                          docCheckStatus.isUpgrade ? 'text-emerald-800 bg-emerald-50 p-2 rounded-lg border border-emerald-200' : 'text-emerald-700'
+                        }`}>
+                          <span className="material-symbols-outlined text-sm text-emerald-600 shrink-0">
+                            {docCheckStatus.isUpgrade ? 'verified' : 'check_circle'}
+                          </span>
                           <span>{docCheckStatus.message}</span>
                         </p>
                       )}
