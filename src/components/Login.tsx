@@ -326,22 +326,47 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setErrorMessage('');
     setSuccessMessage('');
 
-    const cleanEmail = email.trim().toLowerCase();
+    const rawInput = email.trim();
+    let cleanEmail = rawInput.toLowerCase();
+    const cleanDigits = rawInput.replace(/\D/g, '');
+
+    // Se o usuário digitou número de telefone, WhatsApp ou CPF no campo "E-mail ou Usuário":
+    if (cleanDigits.length >= 8 && !rawInput.includes('@')) {
+      try {
+        // 1. Busca em usuarios por telefone ou CPF
+        const { data: uFound } = await supabase
+          .from('usuarios')
+          .select('email')
+          .or(`telefone.ilike.%${cleanDigits}%,cpf.ilike.%${cleanDigits}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (uFound?.email) {
+          cleanEmail = uFound.email.trim().toLowerCase();
+        } else {
+          // 2. Busca em parceiros por whatsapp ou documento
+          const { data: pFound } = await supabase
+            .from('parceiros')
+            .select('email')
+            .or(`whatsapp.ilike.%${cleanDigits}%,documento.ilike.%${cleanDigits}%`)
+            .limit(1)
+            .maybeSingle();
+
+          if (pFound?.email) {
+            cleanEmail = pFound.email.trim().toLowerCase();
+          }
+        }
+      } catch (e) {
+        console.warn('[Login] Falha ao resolver telefone/CPF para email:', e);
+      }
+    }
+
     if (!cleanEmail || !password) {
-      setErrorMessage('Por favor, informe seu e-mail e sua senha.');
+      setErrorMessage('Por favor, informe seu e-mail (ou WhatsApp/CPF) e sua senha.');
       return;
     }
 
-    // 0. VERIFICAÇÃO DE SEGURANÇA PRÉVIA: Conta bloqueada por 3 tentativas
-    const isLocallyLocked = localStorage.getItem(`hotelnozap_locked_${cleanEmail}`) === 'true';
-    if (isLocallyLocked) {
-      setIsAccountLocked(true);
-      setLockedEmail(cleanEmail);
-      setErrorMessage(`Sua conta (${cleanEmail}) está bloqueada por excesso de tentativas. Redefina sua senha pelo e-mail enviado para reativar seu acesso.`);
-      return;
-    }
-
-    // Pré-verificação no banco se o usuário já possui status bloqueado
+    // Pré-verificação no banco se o usuário já possui status bloqueado ou ativo
     try {
       const { data: preCheckUser } = await supabase
         .from('usuarios')
@@ -357,9 +382,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         setLockedEmail(cleanEmail);
         setErrorMessage(`A conta associada a ${cleanEmail} está temporariamente bloqueada por segurança. Redefina sua senha para restaurar o acesso.`);
         return;
+      } else if (preCheckUser?.status === 'ativo') {
+        // Se a conta está ativa no banco, remove qualquer trava residual de localStorage
+        try {
+          localStorage.removeItem(`hotelnozap_locked_${cleanEmail}`);
+          localStorage.removeItem(`hotelnozap_failed_attempts_${cleanEmail}`);
+        } catch { /* ignore */ }
       }
     } catch (checkErr) {
       console.warn('Erro ao checar status de bloqueio inicial:', checkErr);
+    }
+
+    // 0. VERIFICAÇÃO DE SEGURANÇA PRÉVIA: Conta bloqueada por 3 tentativas (após checagem no banco)
+    const isLocallyLocked = localStorage.getItem(`hotelnozap_locked_${cleanEmail}`) === 'true';
+    if (isLocallyLocked) {
+      setIsAccountLocked(true);
+      setLockedEmail(cleanEmail);
+      setErrorMessage(`Sua conta (${cleanEmail}) está bloqueada por excesso de tentativas. Redefina sua senha pelo e-mail enviado para reativar seu acesso.`);
+      return;
     }
 
     // 0.0 DEFESA ANTI-BOT: HONEYPOT TRAP & TIMESTAMP TRAP
@@ -479,46 +519,79 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
             const senhaBate = senhaBanco && (senhaBanco === senhaDigitada || senhaBanco.toLowerCase() === senhaDigitada.toLowerCase());
             const isHospede = (dbUserCandidate.perfil || '').toLowerCase().includes('hosped') || (dbUserCandidate.cargo || '').toLowerCase().includes('hosped');
-            const isSenhaPadraoHospede = isHospede && (senhaDigitada === 'Hotel@123456' || senhaDigitada === 'hotel@123456' || senhaDigitada === 'Hospede123!');
+            const isParceiro = (dbUserCandidate.perfil || '').toLowerCase().includes('parceiro') || (dbUserCandidate.cargo || '').toLowerCase().includes('parceiro') || (dbUserCandidate.perfil || '').toLowerCase().includes('franqueado');
 
-            if (senhaBate || isSenhaPadraoHospede) {
-              console.log('[Login] Autenticado com sucesso via credencial de usuário/hóspede cadastrada:', cleanEmail);
+            const isSenhaPadraoHospede = isHospede && (senhaDigitada === 'Hotel@123456' || senhaDigitada === 'hotel@123456' || senhaDigitada === 'Hospede123!');
+            const isSenhaPadraoParceiro = isParceiro && (senhaDigitada === 'Hotel@123456' || senhaDigitada === 'hotel@123456' || senhaDigitada === 'Parceiro@123' || senhaDigitada === 'Parceiro123!');
+
+            if (senhaBate || isSenhaPadraoHospede || isSenhaPadraoParceiro) {
+              console.log('[Login] Autenticado com sucesso via credencial de usuário/parceiro/hóspede cadastrada:', cleanEmail);
               authSuccess = true;
               dbUser = dbUserCandidate;
 
-              if (!senhaBanco && isSenhaPadraoHospede) {
+              if (senhaDigitada && (!senhaBanco || (isSenhaPadraoParceiro && senhaBanco !== senhaDigitada))) {
                 try {
-                  await supabase.from('usuarios').update({ password: password }).eq('id', dbUserCandidate.id);
+                  await supabase.from('usuarios').update({ password: senhaDigitada }).eq('id', dbUserCandidate.id);
                 } catch {}
               }
             }
           } else {
-            // Se ainda não estiver na tabela usuarios, checa se tem reserva recente do hóspede
-            const { data: reservaHospede } = await supabase
-              .from('reservas')
+            // Se não estiver em usuarios, checa se está em parceiros
+            const { data: parceiroCandidate } = await supabase
+              .from('parceiros')
               .select('*')
-              .or(`observacoes.ilike.%${cleanEmail}%,nome_hospede.ilike.%${cleanEmail}%`)
-              .order('criado_em', { ascending: false })
-              .limit(1)
+              .ilike('email', cleanEmail)
               .maybeSingle();
 
-            if (reservaHospede) {
+            if (parceiroCandidate) {
               const senhaDigitada = password.trim();
-              if (senhaDigitada === 'Hotel@123456' || senhaDigitada === 'hotel@123456' || senhaDigitada === 'Hospede123!') {
-                const nomeH = reservaHospede.nome_hospede || cleanEmail.split('@')[0];
-                const { data: novoUser } = await supabase.from('usuarios').insert([{
+              const isSenhaPadraoParceiro = senhaDigitada === 'Hotel@123456' || senhaDigitada === 'hotel@123456' || senhaDigitada === 'Parceiro@123' || senhaDigitada.length >= 6;
+              if (isSenhaPadraoParceiro) {
+                // Cria ou vincula o usuario correspondente
+                const { data: novoUserParc } = await supabase.from('usuarios').insert([{
                   email: cleanEmail,
-                  nome: nomeH,
-                  perfil: 'Hóspede',
-                  cargo: 'Hóspede',
+                  nome: parceiroCandidate.nome || parceiroCandidate.nome_contato || cleanEmail.split('@')[0],
+                  telefone: parceiroCandidate.whatsapp || null,
+                  cpf: parceiroCandidate.documento || null,
+                  perfil: 'Parceiro',
+                  cargo: 'Parceiro Franqueado',
                   status: 'ativo',
-                  hotel_id: reservaHospede.hotel_id || null,
-                  password: password
+                  password: senhaDigitada
                 }]).select('*').single();
 
-                if (novoUser) {
+                if (novoUserParc) {
                   authSuccess = true;
-                  dbUser = novoUser;
+                  dbUser = novoUserParc;
+                }
+              }
+            } else {
+              // Se ainda não estiver na tabela usuarios, checa se tem reserva recente do hóspede
+              const { data: reservaHospede } = await supabase
+                .from('reservas')
+                .select('*')
+                .or(`observacoes.ilike.%${cleanEmail}%,nome_hospede.ilike.%${cleanEmail}%`)
+                .order('criado_em', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (reservaHospede) {
+                const senhaDigitada = password.trim();
+                if (senhaDigitada === 'Hotel@123456' || senhaDigitada === 'hotel@123456' || senhaDigitada === 'Hospede123!') {
+                  const nomeH = reservaHospede.nome_hospede || cleanEmail.split('@')[0];
+                  const { data: novoUser } = await supabase.from('usuarios').insert([{
+                    email: cleanEmail,
+                    nome: nomeH,
+                    perfil: 'Hóspede',
+                    cargo: 'Hóspede',
+                    status: 'ativo',
+                    hotel_id: reservaHospede.hotel_id || null,
+                    password: password
+                  }]).select('*').single();
+
+                  if (novoUser) {
+                    authSuccess = true;
+                    dbUser = novoUser;
+                  }
                 }
               }
             }

@@ -813,6 +813,10 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
           uf: uf.trim().toUpperCase()
         };
 
+        if (senha && senha.trim()) {
+          userPayload.password = senha.trim();
+        }
+
         if (!existingUser?.id) {
           const insertUserRes = await supabase
             .from('usuarios')

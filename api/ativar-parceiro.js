@@ -269,6 +269,10 @@ export default async function handler(req, res) {
       uf: cleanUf
     };
 
+    if (senha && String(senha).trim()) {
+      userPayload.password = String(senha).trim();
+    }
+
     if (!existingUser?.id) {
       const { data: newUser, error: insertUserErr } = await supabaseAdmin
         .from('usuarios')
