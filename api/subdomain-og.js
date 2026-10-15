@@ -12,6 +12,30 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+const PORTAL_CONFIGS = {
+  parceiros: {
+    title: 'Programa de Parceiros Hotel no Zap | Renda Recorrente Mensal',
+    description: 'Construa sua carteira de faturamento recorrente com 50% de lucro líquido no mercado hoteleiro. Conheça o modelo de parceria e comece hoje!',
+    canonicalUrl: 'https://parceiros.hotelnozap.com.br/',
+    keywords: 'parceiro hotel no zap, franquia hotel, renda recorrente hotel, comissao hotelaria, programa de parceiros, afiliados hotelaria',
+    ctaText: 'Conhecer Modelo de Parceria'
+  },
+  lp: {
+    title: 'Hotel no Zap | Gestão Hoteleira 90% Autônoma',
+    description: 'A plataforma de Gestão Hoteleira 90% autônoma mais completa do Brasil. Tenha o controle total do seu hotel na palma da sua mão!',
+    canonicalUrl: 'https://lp.hotelnozap.com.br/',
+    keywords: 'gestão hoteleira, hotel autônomo, pms hotel, automação hoteleira, whatsapp hotel, check-in digital, hotel no zap, software para hotel, sistema para pousada',
+    ctaText: 'Acessar Hotel no Zap'
+  },
+  app: {
+    title: 'Hotel no Zap - Painel Administrativo',
+    description: 'Acesse agora mesmo o seu painel administrativo, e tenha o controle total do seu hotel.',
+    canonicalUrl: 'https://app.hotelnozap.com.br/',
+    keywords: 'painel hotel no zap, login hotel no zap, administracao hotelaria',
+    ctaText: 'Acessar Painel Administrativo'
+  }
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
@@ -22,9 +46,22 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const ogTitle = 'Hotel no Zap | Gestão Hoteleira 90% Autônoma';
-  const ogDescription = 'A plataforma de Gestão Hoteleira 90% autônoma mais completa do Brasil. Tenha o controle total do seu hotel na palma da sua mão!';
-  const canonicalUrl = 'https://lp.hotelnozap.com.br/';
+  // Detecta o portal a partir da query (?portal=parceiros|lp|app) ou do host
+  const host = (req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+  let portalKey = (req.query?.portal || '').toLowerCase();
+
+  if (!PORTAL_CONFIGS[portalKey]) {
+    if (host.includes('parceiros')) portalKey = 'parceiros';
+    else if (host.includes('lp')) portalKey = 'lp';
+    else portalKey = 'app';
+  }
+
+  const config = PORTAL_CONFIGS[portalKey] || PORTAL_CONFIGS.app;
+  const ogTitle = config.title;
+  const ogDescription = config.description;
+  const canonicalUrl = config.canonicalUrl;
+  const keywords = config.keywords;
+  const ctaText = config.ctaText;
   const urlImagem = 'https://hotelnozap.com.br/og-image.png';
 
   const userAgent = (req.headers['user-agent'] || '').toLowerCase();
@@ -39,7 +76,7 @@ export default async function handler(req, res) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(ogTitle)}</title>
   <meta name="description" content="${escapeHtml(ogDescription)}" />
-  <meta name="keywords" content="gestão hoteleira, hotel autônomo, pms hotel, automação hoteleira, whatsapp hotel, check-in digital, hotel no zap, software para hotel, sistema para pousada" />
+  <meta name="keywords" content="${escapeHtml(keywords)}" />
   <meta name="author" content="Hotel no Zap" />
   <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
 
@@ -72,7 +109,7 @@ export default async function handler(req, res) {
 <body style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9ff; color: #0b1c30; padding: 40px; text-align: center;">
   <h1 style="font-size: 24px; margin-bottom: 16px;">${escapeHtml(ogTitle)}</h1>
   <p style="font-size: 16px; color: #4b5563; max-width: 600px; margin: 0 auto 24px;">${escapeHtml(ogDescription)}</p>
-  <p><a href="${escapeHtml(canonicalUrl)}" style="display: inline-block; background-color: #008000; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Conhecer Hotel no Zap</a></p>
+  <p><a href="${escapeHtml(canonicalUrl)}" style="display: inline-block; background-color: #008000; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">${escapeHtml(ctaText)}</a></p>
 </body>
 </html>`;
 
@@ -119,7 +156,7 @@ export default async function handler(req, res) {
       return res.status(200).send(html);
     }
   } catch (err) {
-    console.warn('[lp-og] Falha ao ler index.html local:', err);
+    console.warn('[subdomain-og] Falha ao ler index.html local:', err);
   }
 
   // Fallback seguro se index.html não puder ser lido diretamente

@@ -124,7 +124,7 @@
           "value": "app.hotelnozap.com.br"
         }
       ],
-      "destination": "/api/app-og"
+      "destination": "/api/subdomain-og?portal=app"
     },
     {
       "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|robots\\.txt|sitemap\\.xml|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|xml|txt|woff2?|ttf|map)).*)",
@@ -134,7 +134,7 @@
           "value": "app.hotelnozap.com.br"
         }
       ],
-      "destination": "/api/app-og"
+      "destination": "/api/subdomain-og?portal=app"
     },
     {
       "source": "/",
@@ -144,7 +144,7 @@
           "value": "lp.hotelnozap.com.br"
         }
       ],
-      "destination": "/api/lp-og"
+      "destination": "/api/subdomain-og?portal=lp"
     },
     {
       "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|robots\\.txt|sitemap\\.xml|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|xml|txt|woff2?|ttf|map)).*)",
@@ -154,7 +154,7 @@
           "value": "lp.hotelnozap.com.br"
         }
       ],
-      "destination": "/api/lp-og"
+      "destination": "/api/subdomain-og?portal=lp"
     },
     {
       "source": "/",
@@ -164,7 +164,7 @@
           "value": "parceiros.hotelnozap.com.br"
         }
       ],
-      "destination": "/api/parceiros-og"
+      "destination": "/api/subdomain-og?portal=parceiros"
     },
     {
       "source": "/((?!assets/|favicon|_vercel|sw\\.js|manifest\\.json|robots\\.txt|sitemap\\.xml|apple-touch-icon|logo|icon|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|json|xml|txt|woff2?|ttf|map)).*)",
@@ -174,11 +174,11 @@
           "value": "parceiros.hotelnozap.com.br"
         }
       ],
-      "destination": "/api/parceiros-og"
+      "destination": "/api/subdomain-og?portal=parceiros"
     },
     {
       "source": "/(login|paineladmin)",
-      "destination": "/api/app-og"
+      "destination": "/api/subdomain-og?portal=app"
     },
     {
       "source": "/((?!api/).*)",
