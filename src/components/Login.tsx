@@ -65,9 +65,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState('');
 
-  // Estados de Segurança Anti-Bot (Honeypot, Timestamp Trap e reCAPTCHA v3 Invisível)
-  const [honeypotLogin, setHoneypotLogin] = useState('');
-  const loginFormLoadedAtRef = useRef<number>(Date.now());
 
   // Verifica se o usuário foi deslogado automaticamente por inatividade
   useEffect(() => {
@@ -372,20 +369,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setIsAccountLocked(true);
       setLockedEmail(cleanEmail);
       setErrorMessage(`Sua conta (${cleanEmail}) está bloqueada por excesso de tentativas. Redefina sua senha pelo e-mail enviado para reativar seu acesso.`);
-      return;
-    }
-
-    // 0.0 DEFESA ANTI-BOT: HONEYPOT TRAP & TIMESTAMP TRAP
-    if (honeypotLogin.trim() !== '') {
-      console.warn('[Anti-Bot] Login bloqueado por Honeypot ativo.');
-      setErrorMessage('Credenciais inválidas. Verifique seu e-mail e senha.');
-      return;
-    }
-
-    const elapsedSeconds = (Date.now() - loginFormLoadedAtRef.current) / 1000;
-    if (elapsedSeconds < 0.8) {
-      console.warn('[Anti-Bot] Submissão suspeita por velocidade extrema (< 0.8s).');
-      setErrorMessage('Submissão rápida demais detectada. Por favor, tente novamente.');
       return;
     }
 
@@ -1343,18 +1326,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                       <span className="material-symbols-outlined text-sm text-emerald-700">help</span>
                       Esqueceu a senha?
                     </button>
-                  </div>
- 
-                  {/* Honeypot Trap (Invisível para humanos, atrai bots automatizados) */}
-                  <div className="opacity-0 absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
-                    <input
-                      type="text"
-                      name="user_security_verification_field"
-                      value={honeypotLogin}
-                      onChange={(e) => setHoneypotLogin(e.target.value)}
-                      tabIndex={-1}
-                      autoComplete="off"
-                    />
                   </div>
 
                   {/* Botão de Ação Principal (Login) */}
