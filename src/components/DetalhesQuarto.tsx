@@ -52,21 +52,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
   const [modalPhotoIndex, setModalPhotoIndex] = useState<number>(0);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState<boolean>(false);
 
-  // Detecção de dispositivo Desktop vs Mobile para restrição do hotel de teste
-  const [isDesktopDevice, setIsDesktopDevice] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    return window.innerWidth >= 1024 && !isMobileUa;
-  });
 
-  useEffect(() => {
-    const handleCheckDesktop = () => {
-      const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      setIsDesktopDevice(window.innerWidth >= 1024 && !isMobileUa);
-    };
-    window.addEventListener('resize', handleCheckDesktop);
-    return () => window.removeEventListener('resize', handleCheckDesktop);
-  }, []);
 
   // Swipe e navegação touch do slide mobile
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -1462,66 +1448,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
     );
   }
 
-  // Restrição: Hotel Morada da Lua (ambiente de teste) só pode ser visualizado em computadores / Desktop
-  if (isHotelMoradaDaLua(currentHotel) && !isDesktopDevice) {
-    return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col justify-between p-6">
-        {/* Top Header */}
-        <header className="max-w-md mx-auto w-full pt-4 flex items-center justify-between">
-          <a href="/" className="cursor-pointer">
-            <ZapHotelLogo size={36} />
-          </a>
-          <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold border border-amber-500/30 flex items-center gap-1.5 shadow-xs">
-            <span className="material-symbols-outlined text-sm">science</span>
-            Ambiente de Demonstração
-          </span>
-        </header>
 
-        {/* Main Content */}
-        <main className="max-w-md mx-auto w-full my-auto text-center py-8">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-500/20 to-teal-500/30 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-6 shadow-xl shadow-emerald-950/50">
-            <span className="material-symbols-outlined text-4xl">desktop_windows</span>
-          </div>
-
-          <h1 className="text-2xl font-black text-white tracking-tight mb-3">
-            Visualização Exclusiva para Computador (Desktop)
-          </h1>
-
-          <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 text-left mb-6 space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
-              <span className="material-symbols-outlined text-base">info</span>
-              Hotel Modelo de Demonstração & Teste
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              O <strong className="text-white">Hotel Morada da Lua</strong> é uma unidade modelo utilizada exclusivamente para testes e demonstrações das ferramentas do <strong className="text-white">Hotel no Zap</strong>.
-            </p>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Para testar o fluxo de reservas simuladas e analisar a experiência completa, por favor acesse este link através de um <strong>computador ou notebook</strong>.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (onNavigateToCatalog) onNavigateToCatalog();
-                else navigateSpa('/hoteis');
-              }}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <span className="material-symbols-outlined text-base">travel_explore</span>
-              Ver Hotéis e Pousadas no Catálogo
-            </button>
-          </div>
-        </main>
-
-        {/* Footer */}
-        <footer className="max-w-md mx-auto w-full text-center py-4 border-t border-slate-800 text-[11px] text-slate-500">
-          © {new Date().getFullYear()} Hotel no Zap · Plataforma Oficial de Reservas
-        </footer>
-      </div>
-    );
-  }
 
 
 
