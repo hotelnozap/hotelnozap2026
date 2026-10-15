@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { hoteisService, parceirosService, planosService, reservasService, quartosService } from '../services/supabaseService';
+import { cuponsService } from '../services/cuponsService';
 import { Hotel } from './CadastroHoteis';
 import { Partner } from './ListagemParceiros';
 import { Plano } from './ListagemPlanos';
@@ -30,6 +31,7 @@ export interface AdminMasterDashboardProps {
   onNavigateToParceiros: () => void;
   onNavigateToPlanos: () => void;
   onNavigateToCreditos?: () => void;
+  onNavigateToCupons?: () => void;
   onNavigateToUsuarios: () => void;
   onNavigateToConfig?: () => void;
   onNavigateToMercadoPago?: () => void;
@@ -50,6 +52,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   onNavigateToParceiros,
   onNavigateToPlanos,
   onNavigateToCreditos,
+  onNavigateToCupons,
   onNavigateToUsuarios,
   onNavigateToConfig,
   onNavigateToMercadoPago,
@@ -65,6 +68,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [quartosRede, setQuartosRede] = useState<QuartoRede[]>([]);
+  const [totalCupons, setTotalCupons] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState<'6meses' | 'anoAtual'>('6meses');
@@ -113,12 +117,13 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   const loadRealData = async () => {
     setIsLoading(true);
     try {
-      const [dbHoteis, dbParceiros, dbPlanos, dbReservas, dbQuartosRede] = await Promise.all([
+      const [dbHoteis, dbParceiros, dbPlanos, dbReservas, dbQuartosRede, dbCupons] = await Promise.all([
         hoteisService.getHoteis(),
         parceirosService.getParceiros(),
         planosService.getPlanos(),
         reservasService.getAllReservas ? reservasService.getAllReservas() : reservasService.getReservas('ALL'),
-        quartosService.getAllQuartosRede ? quartosService.getAllQuartosRede() : []
+        quartosService.getAllQuartosRede ? quartosService.getAllQuartosRede() : [],
+        cuponsService.getCuponsHotel()
       ]);
 
       if (dbHoteis) setHoteis(dbHoteis);
@@ -126,6 +131,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
       if (dbPlanos) setPlanos(dbPlanos);
       if (dbReservas) setReservas(dbReservas);
       if (Array.isArray(dbQuartosRede)) setQuartosRede(dbQuartosRede as QuartoRede[]);
+      if (Array.isArray(dbCupons)) setTotalCupons(dbCupons.length);
     } catch (err) {
       console.warn('Erro ao carregar dados do admin:', err);
     } finally {
@@ -549,6 +555,20 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
               </span>
             </button>
 
+            {onNavigateToCupons && (
+              <button 
+                type="button"
+                onClick={onNavigateToCupons}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-amber-300">confirmation_number</span>
+                <span>Cupons de Desconto</span>
+                <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300">
+                  {totalCupons > 0 ? totalCupons : 'Novo'}
+                </span>
+              </button>
+            )}
+
             {onNavigateToCreditos && (
               <button 
                 type="button"
@@ -740,6 +760,21 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                   <span className="material-symbols-outlined text-lg">loyalty</span>
                   <span>Planos &amp; Assinaturas</span>
                 </button>
+
+                {onNavigateToCupons && (
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); onNavigateToCupons(); }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/5 text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-lg text-amber-300">confirmation_number</span>
+                      <span>Cupons de Desconto</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-bold">
+                      {totalCupons > 0 ? totalCupons : 'Novo'}
+                    </span>
+                  </button>
+                )}
 
                 {onNavigateToCreditos && (
                   <button 

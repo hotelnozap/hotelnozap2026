@@ -73,7 +73,7 @@ export const CuponsHospede: React.FC<CuponsHospedeProps> = ({
     }
   };
 
-  const gerarLinkHotel = (hotelNome?: string, codigoCupom?: string, hotelId?: string) => {
+  const gerarLinkHotel = (hotelNome?: string | null, codigoCupom?: string, hotelId?: string | null) => {
     if (!hotelNome && !hotelId) return '/hoteis';
     const slug = hotelNome ? slugify(hotelNome) : (hotelId ? slugify(hotelId) : 'hotel');
     return `/hoteis/${slug}${codigoCupom ? `?cupom=${encodeURIComponent(codigoCupom)}` : ''}`;

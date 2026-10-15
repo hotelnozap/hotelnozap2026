@@ -1460,8 +1460,7 @@ export const App: React.FC = () => {
         'contas-receber', 'categorias-contas-pagar', 'categorias-contas-receber', 
         'cadastro-conta-pagar', 'cadastro-conta-receber', 
         'cadastro-categoria-conta-pagar', 'cadastro-categoria-conta-receber', 
-        'conexao', 'reservas', 'cadastro-reserva', 'hospedes', 'cadastro-hospede',
-        'cupons', 'cadastro-cupom'
+        'conexao', 'reservas', 'cadastro-reserva', 'hospedes', 'cadastro-hospede'
       ];
       if (hotelOnlyTabs.includes(activeTab)) {
         setActiveTab('admin-dashboard');
@@ -1529,6 +1528,7 @@ export const App: React.FC = () => {
     { id: 'status-quartos', label: 'Status dos Quartos', icon: 'room_preferences' },
     { id: 'parceiros', label: 'Parceiros', icon: 'handshake' },
     { id: 'planos', label: 'Planos & Preços', icon: 'sell' },
+    { id: 'cupons', label: 'Cupons de Desconto', icon: 'confirmation_number' },
     { id: 'creditos-saas', label: 'Controle de Planos & Créditos', icon: 'fact_check' },
     { id: 'usuarios', label: 'Usuários do Sistema', icon: 'manage_accounts' },
     { id: 'admin-conexoes', label: 'Conexões WhatsApp', icon: 'sync_alt' },
@@ -3682,6 +3682,9 @@ export const App: React.FC = () => {
               onNavigateToPlanos={() => {
                 setActiveTab('planos');
               }}
+              onNavigateToCupons={() => {
+                setActiveTab('cupons');
+              }}
               onNavigateToCreditos={() => {
                 setActiveTab('creditos-saas');
               }}
@@ -3865,7 +3868,8 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'cupons' && (
             <ListagemCupons 
-              onNavigateToDashboard={() => setActiveTab('dashboard')}
+              isAdmin={!isHotelUser}
+              onNavigateToDashboard={() => setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard')}
               onNavigateToNovoCupom={() => {
                 setCupomToEdit(null);
                 setActiveTab('cadastro-cupom');
@@ -3878,6 +3882,7 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'cadastro-cupom' && (
             <CadastroCupom 
+              isAdmin={!isHotelUser}
               cupomToEdit={cupomToEdit}
               onBack={() => setActiveTab('cupons')}
               onSaveSuccess={() => setActiveTab('cupons')}

@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { cuponsService, CupomDesconto } from '../services/cuponsService';
+import { cuponsService, CupomDesconto, EscopoCupom } from '../services/cuponsService';
 import { currentHotelService } from '../services/supabaseService';
 
 interface ListagemCuponsProps {
+  isAdmin?: boolean;
   onNavigateToDashboard: () => void;
   onNavigateToNovoCupom: () => void;
   onNavigateToEditCupom: (cupom: CupomDesconto) => void;
 }
 
 export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
+  isAdmin = false,
   onNavigateToDashboard,
   onNavigateToNovoCupom,
   onNavigateToEditCupom
@@ -18,6 +20,7 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'Todos' | 'Ativo' | 'Inativo'>('Todos');
   const [tipoFilter, setTipoFilter] = useState<'Todos' | 'porcentagem' | 'fixo'>('Todos');
+  const [escopoFilter, setEscopoFilter] = useState<'Todos' | 'plano_hotel' | 'parceiro' | 'reserva' | 'todos'>('Todos');
   const [cupomParaExcluir, setCupomParaExcluir] = useState<CupomDesconto | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -31,7 +34,7 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
   const carregarCupons = async () => {
     setLoading(true);
     try {
-      const dados = await cuponsService.getCuponsHotel(activeHotel?.id);
+      const dados = await cuponsService.getCuponsHotel(isAdmin ? undefined : activeHotel?.id);
       setCupons(dados);
     } catch (err) {
       console.error('Erro ao carregar cupons:', err);
@@ -42,7 +45,7 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
 
   useEffect(() => {
     carregarCupons();
-  }, [activeHotel?.id]);
+  }, [activeHotel?.id, isAdmin]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -72,9 +75,13 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
         (c.descricao && c.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchStatus = statusFilter === 'Todos' || c.status === statusFilter;
       const matchTipo = tipoFilter === 'Todos' || c.tipo_desconto === tipoFilter;
-      return matchBusca && matchStatus && matchTipo;
+      const matchEscopo =
+        escopoFilter === 'Todos' ||
+        c.aplicavel_em === escopoFilter ||
+        (!c.aplicavel_em && escopoFilter === 'reserva');
+      return matchBusca && matchStatus && matchTipo && matchEscopo;
     });
-  }, [cupons, searchTerm, statusFilter, tipoFilter]);
+  }, [cupons, searchTerm, statusFilter, tipoFilter, escopoFilter]);
 
   // Estatísticas do Topo
   const stats = useMemo(() => {
@@ -167,11 +174,13 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                     Cupons de Desconto
                   </h1>
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Checkout & Hóspedes
+                    {isAdmin ? 'Hotéis & Parceiros' : 'Checkout & Hóspedes'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Gerencie promoções, códigos de desconto para o checkout e ofertas visíveis para os hóspedes.
+                  {isAdmin
+                    ? 'Gerencie códigos promocionais para novos hotéis (planos), franqueados parceiros e reservas.'
+                    : 'Gerencie promoções, códigos de desconto para o checkout e ofertas visíveis para os hóspedes.'}
                 </p>
               </div>
             </div>
@@ -255,6 +264,19 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Filtro de Aplicação / Escopo */}
+            <select
+              value={escopoFilter}
+              onChange={(e) => setEscopoFilter(e.target.value as any)}
+              className="px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 cursor-pointer"
+            >
+              <option value="Todos">Todas as Aplicações</option>
+              <option value="plano_hotel">Hotéis (Planos SaaS)</option>
+              <option value="parceiro">Parceiros (Franquia)</option>
+              <option value="reserva">Reservas de Hóspedes</option>
+              <option value="todos">Geral (Todos)</option>
+            </select>
+
             {/* Filtro de Status */}
             <select
               value={statusFilter}
@@ -314,11 +336,12 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                   <thead>
                     <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
                       <th className="py-3.5 px-4">Código do Cupom</th>
+                      <th className="py-3.5 px-4">Aplicação</th>
                       <th className="py-3.5 px-4">Desconto</th>
                       <th className="py-3.5 px-4">Regras & Mínimo</th>
                       <th className="py-3.5 px-4">Validade</th>
                       <th className="py-3.5 px-4">Utilizações</th>
-                      <th className="py-3.5 px-4 text-center">Área do Hóspede</th>
+                      <th className="py-3.5 px-4 text-center">Visibilidade</th>
                       <th className="py-3.5 px-4 text-center">Status</th>
                       <th className="py-3.5 px-4 text-right">Ações</th>
                     </tr>
@@ -348,6 +371,34 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                               <p className="text-[11px] text-slate-400 truncate max-w-xs mt-1">
                                 {cupom.descricao}
                               </p>
+                            )}
+                          </td>
+
+                          {/* Aplicação / Escopo */}
+                          <td className="py-3.5 px-4">
+                            {cupom.aplicavel_em === 'plano_hotel' && (
+                              <span className="inline-flex items-center gap-1 font-bold text-[11px] text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg">
+                                <span className="material-symbols-outlined text-xs">domain</span>
+                                Hotéis (Planos)
+                              </span>
+                            )}
+                            {cupom.aplicavel_em === 'parceiro' && (
+                              <span className="inline-flex items-center gap-1 font-bold text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                                <span className="material-symbols-outlined text-xs">handshake</span>
+                                Parceiros
+                              </span>
+                            )}
+                            {cupom.aplicavel_em === 'reserva' && (
+                              <span className="inline-flex items-center gap-1 font-bold text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                                <span className="material-symbols-outlined text-xs">hotel</span>
+                                Reservas
+                              </span>
+                            )}
+                            {(!cupom.aplicavel_em || cupom.aplicavel_em === 'todos') && (
+                              <span className="inline-flex items-center gap-1 font-bold text-[11px] text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">
+                                <span className="material-symbols-outlined text-xs">verified</span>
+                                Geral (Todos)
+                              </span>
                             )}
                           </td>
 
@@ -509,6 +560,32 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                           >
                             <span className="material-symbols-outlined text-base">content_copy</span>
                           </button>
+                        </div>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          {cupom.aplicavel_em === 'plano_hotel' && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md">
+                              <span className="material-symbols-outlined text-[11px]">domain</span>
+                              Hotéis (Planos)
+                            </span>
+                          )}
+                          {cupom.aplicavel_em === 'parceiro' && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                              <span className="material-symbols-outlined text-[11px]">handshake</span>
+                              Parceiros
+                            </span>
+                          )}
+                          {cupom.aplicavel_em === 'reserva' && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                              <span className="material-symbols-outlined text-[11px]">hotel</span>
+                              Reservas
+                            </span>
+                          )}
+                          {(!cupom.aplicavel_em || cupom.aplicavel_em === 'todos') && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                              <span className="material-symbols-outlined text-[11px]">verified</span>
+                              Geral
+                            </span>
+                          )}
                         </div>
                         {cupom.descricao && (
                           <p className="text-xs text-slate-500 mt-1 line-clamp-2">

@@ -7,6 +7,7 @@ import { parceirosService, usuariosService } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { generateValidCpf } from '../utils/mockHotelData';
 import { getPartnerReferralLink } from '../utils/partnerUrl';
+import { cuponsService, CupomDesconto } from '../services/cuponsService';
 
 interface CheckoutParceiroProps {
   onNavigateBack: () => void;
@@ -21,6 +22,17 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
 }) => {
   // Passos do Checkout: 'dados' | 'login' | 'pagamento' | 'sucesso'
   const [currentStep, setCurrentStep] = useState<'dados' | 'login' | 'pagamento' | 'sucesso'>('dados');
+
+  // Estados do Cupom de Desconto
+  const [cupomDescontoInput, setCupomDescontoInput] = useState('');
+  const [cupomDescontoAplicado, setCupomDescontoAplicado] = useState<CupomDesconto | null>(null);
+  const [valorDescontoCupom, setValorDescontoCupom] = useState(0);
+  const [validandoCupom, setValidandoCupom] = useState(false);
+  const [cupomMsg, setCupomMsg] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
+
+  const valorOriginalLicenca = 197.00;
+  const valorFinalLicenca = Math.max(0, valorOriginalLicenca - valorDescontoCupom);
+  const isLicencaGratisComCupom = valorFinalLicenca === 0 && valorDescontoCupom > 0;
 
   // Dados Pessoais do Parceiro
   const [nome, setNome] = useState('');
@@ -451,18 +463,19 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       const refId = `parceiro_${cleanDoc}_${Date.now()}`;
       setPartnerCheckoutId(refId);
 
-      // Cria a cobrança PIX oficial no Mercado Pago com o valor da licença de R$ 197,00
-      const res = await mercadopagoService.criarPagamentoPixMaster({
-        hotelId: refId,
-        hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
-        planoNome: 'Licença Anual Franqueado Hotel no Zap',
-        valor: 197.00,
-        pagadorEmail: email.trim().toLowerCase(),
-        pagadorNome: nome.trim(),
-        pagadorDoc: cleanDoc
-      });
-
-      setPixResult(res);
+      // Cria a cobrança PIX oficial no Mercado Pago com o valor da licença (com desconto se houver)
+      if (valorFinalLicenca > 0) {
+        const res = await mercadopagoService.criarPagamentoPixMaster({
+          hotelId: refId,
+          hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
+          planoNome: 'Licença Anual Franqueado Hotel no Zap',
+          valor: valorFinalLicenca,
+          pagadorEmail: email.trim().toLowerCase(),
+          pagadorNome: nome.trim(),
+          pagadorDoc: cleanDoc
+        });
+        setPixResult(res);
+      }
       setTimeLeft(300); // 5 minutos de validade
     } catch (err: any) {
       console.warn('Erro ao gerar cobrança Pix do Parceiro:', err);
@@ -477,6 +490,68 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       setTimeLeft(300);
     } finally {
       setIsSubmitting(false);
+      setGerandoPix(false);
+    }
+  };
+
+  // Aplicar Cupom de Desconto para Parceiros
+  const handleAplicarCupom = async () => {
+    if (!cupomDescontoInput.trim()) return;
+    setValidandoCupom(true);
+    setCupomMsg(null);
+    try {
+      const res = await cuponsService.validarCupom(cupomDescontoInput, undefined, valorOriginalLicenca, 'parceiro');
+      if (res.valido && res.cupom) {
+        setCupomDescontoAplicado(res.cupom);
+        setValorDescontoCupom(res.valorDesconto || 0);
+        setCupomMsg({ tipo: 'sucesso', texto: res.mensagem });
+
+        // Se já estiver na etapa de pagamento, regerar o PIX com o novo valor
+        const novoValor = Math.max(0, valorOriginalLicenca - (res.valorDesconto || 0));
+        if (currentStep === 'pagamento' && partnerCheckoutId && novoValor > 0) {
+          setGerandoPix(true);
+          const cleanDoc = cpf.replace(/\D/g, '');
+          const newPix = await mercadopagoService.criarPagamentoPixMaster({
+            hotelId: partnerCheckoutId,
+            hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
+            planoNome: 'Licença Anual Franqueado Hotel no Zap',
+            valor: novoValor,
+            pagadorEmail: email.trim().toLowerCase(),
+            pagadorNome: nome.trim(),
+            pagadorDoc: cleanDoc
+          });
+          setPixResult(newPix);
+          setGerandoPix(false);
+        }
+      } else {
+        setCupomMsg({ tipo: 'erro', texto: res.mensagem });
+      }
+    } catch {
+      setCupomMsg({ tipo: 'erro', texto: 'Erro ao validar cupom de parceiro.' });
+    } finally {
+      setValidandoCupom(false);
+    }
+  };
+
+  // Remover Cupom de Desconto
+  const handleRemoverCupom = async () => {
+    setCupomDescontoAplicado(null);
+    setValorDescontoCupom(0);
+    setCupomDescontoInput('');
+    setCupomMsg(null);
+    if (currentStep === 'pagamento' && partnerCheckoutId) {
+      setGerandoPix(true);
+      const cleanDoc = cpf.replace(/\D/g, '');
+      const newPix = await mercadopagoService.criarPagamentoPixMaster({
+        hotelId: partnerCheckoutId,
+        hotelNome: `Franquia Hotel no Zap - ${nome.trim()}`,
+        planoNome: 'Licença Anual Franqueado Hotel no Zap',
+        valor: valorOriginalLicenca,
+        pagadorEmail: email.trim().toLowerCase(),
+        pagadorNome: nome.trim(),
+        pagadorDoc: cleanDoc
+      });
+      setPixResult(newPix);
       setGerandoPix(false);
     }
   };
@@ -518,7 +593,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         const statusRes = await mercadopagoService.consultarPagamentoMaster(
           pixResult.paymentId,
           partnerCheckoutId,
-          197.00
+          valorFinalLicenca
         );
         if (statusRes.approved || statusRes.status === 'approved') {
           if (pollingRef.current) clearInterval(pollingRef.current);
@@ -532,7 +607,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [currentStep, isApproved, pixResult?.paymentId, partnerCheckoutId]);
+  }, [currentStep, isApproved, pixResult?.paymentId, partnerCheckoutId, valorFinalLicenca]);
 
   // Liberação do Acesso e Cadastro do Parceiro em cascata: Auth -> Usuários -> Parceiros
   // SEGURANÇA MÁXIMA: Exige confirmação prévia do gateway ou consulta em tempo real antes de prosseguir
@@ -552,7 +627,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
         const checkRes = await mercadopagoService.consultarPagamentoMaster(
           pixResult.paymentId,
           partnerCheckoutId,
-          197.00
+          valorFinalLicenca
         );
         if (!checkRes.approved && checkRes.status !== 'approved') {
           setMsgVerificacao({
@@ -776,6 +851,12 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       if (usuarioId) localStorage.setItem('hotelnozap_user_id', usuarioId);
       localStorage.setItem('hotelnozap_last_authenticated_at', new Date().toISOString());
 
+      if (cupomDescontoAplicado?.id) {
+        try {
+          await cuponsService.registrarUsoCupom(cupomDescontoAplicado.id);
+        } catch { /* ignore */ }
+      }
+
       setIsApproved(true);
       setCurrentStep('sucesso');
     } catch (err: any) {
@@ -817,7 +898,7 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
       const res = await mercadopagoService.consultarPagamentoMaster(
         pixResult.paymentId,
         partnerCheckoutId,
-        197.00
+        valorFinalLicenca
       );
 
       if (res.approved || res.status === 'approved') {
@@ -1672,14 +1753,104 @@ export const CheckoutParceiro: React.FC<CheckoutParceiroProps> = ({
                 <h3 className="text-lg font-black text-[#0b1c30]">Licença Anual de Franqueado</h3>
                 <p className="text-xs text-slate-500">Direito oficial de distribuição e revenda na sua região.</p>
                 
-                <div className="flex items-baseline gap-2 mt-4 pt-4 border-t border-slate-100">
-                  <span className="text-xs text-slate-500">Valor Oficial:</span>
-                  <span className="text-3xl font-black text-[#003400]">R$ 197,00</span>
-                  <span className="text-xs text-slate-500 font-semibold">/ ano</span>
-                </div>
+                {cupomDescontoAplicado && valorDescontoCupom > 0 ? (
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs text-slate-400 line-through font-semibold">De: R$ 197,00</span>
+                      <span className="text-3xl font-black text-[#003400]">
+                        R$ {valorFinalLicenca.toFixed(2).replace('.', ',')}
+                      </span>
+                      <span className="text-xs text-slate-500 font-semibold">/ ano</span>
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 w-fit mt-0.5">
+                      ✓ Cupom {cupomDescontoAplicado.codigo} aplicado ({cupomDescontoAplicado.tipo_desconto === 'porcentagem' ? `${cupomDescontoAplicado.valor_desconto}% OFF` : `R$ ${cupomDescontoAplicado.valor_desconto.toFixed(2)} OFF`})
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-2 mt-4 pt-4 border-t border-slate-100">
+                    <span className="text-xs text-slate-500">Valor Oficial:</span>
+                    <span className="text-3xl font-black text-[#003400]">R$ 197,00</span>
+                    <span className="text-xs text-slate-500 font-semibold">/ ano</span>
+                  </div>
+                )}
                 <span className="text-[11px] text-emerald-700 font-bold mt-0.5">
                   ✓ Pagamento anual único (sem mensalidades fixas)
                 </span>
+              </div>
+
+              {/* Box de Cupom de Desconto */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5" htmlFor="cupom-parceiro">
+                    <span className="material-symbols-outlined text-base text-amber-500">confirmation_number</span>
+                    <span>Tem um cupom de desconto?</span>
+                  </label>
+                  {cupomDescontoAplicado && (
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      Cupom Ativo
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    id="cupom-parceiro"
+                    type="text"
+                    disabled={validandoCupom || Boolean(cupomDescontoAplicado)}
+                    value={cupomDescontoInput}
+                    onChange={(e) => setCupomDescontoInput(e.target.value.toUpperCase().replace(/\s/g, ''))}
+                    placeholder="Digite seu cupom (Ex: PARCEIRO50)"
+                    className="flex-1 h-9 px-3 rounded-xl bg-white border border-slate-200 text-xs font-mono font-bold uppercase focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition disabled:opacity-60"
+                  />
+                  {cupomDescontoAplicado ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoverCupom}
+                      className="h-9 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                      <span>Remover</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={validandoCupom || !cupomDescontoInput.trim()}
+                      onClick={handleAplicarCupom}
+                      className="h-9 px-3.5 rounded-xl bg-[#003400] hover:bg-[#002600] disabled:bg-slate-300 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                    >
+                      {validandoCupom ? (
+                        <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-sm">check</span>
+                      )}
+                      <span>Aplicar</span>
+                    </button>
+                  )}
+                </div>
+
+                {cupomMsg && (
+                  <p className={`text-[11px] font-medium flex items-center gap-1 ${
+                    cupomMsg.tipo === 'sucesso' ? 'text-emerald-700 font-bold' : 'text-rose-600'
+                  }`}>
+                    <span className="material-symbols-outlined text-xs">
+                      {cupomMsg.tipo === 'sucesso' ? 'check_circle' : 'error'}
+                    </span>
+                    <span>{cupomMsg.texto}</span>
+                  </p>
+                )}
+
+                {isLicencaGratisComCupom && (
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-emerald-900">100% OFF! Licença Gratuita.</span>
+                    <button
+                      type="button"
+                      onClick={() => liberarAcessoParceiro(true)}
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-black rounded-lg transition cursor-pointer"
+                    >
+                      Ativar Grátis
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Lista dos Benefícios Inclusos */}

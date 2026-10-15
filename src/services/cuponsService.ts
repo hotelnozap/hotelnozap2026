@@ -1,9 +1,11 @@
 import { supabase } from '../lib/supabase';
 import { currentHotelService } from './supabaseService';
 
+export type EscopoCupom = 'todos' | 'reserva' | 'plano_hotel' | 'parceiro';
+
 export interface CupomDesconto {
   id: string;
-  hotel_id?: string;
+  hotel_id?: string | null;
   hotel_nome?: string;
   hotel_cidade?: string;
   codigo: string;
@@ -17,6 +19,7 @@ export interface CupomDesconto {
   status: 'Ativo' | 'Inativo';
   visivel_hospedes: boolean;
   descricao?: string;
+  aplicavel_em?: EscopoCupom; // 'todos' | 'reserva' | 'plano_hotel' | 'parceiro'
   created_at?: string;
 }
 
@@ -28,10 +31,107 @@ export interface ValidacaoCupomResult {
   novoTotal?: number;
 }
 
-const STORAGE_KEY = 'hotelnozap_cupons_desconto_v2';
+const STORAGE_KEY = 'hotelnozap_cupons_desconto_v3';
 
-// Cupons padrão para demonstração inicial e fallback offline com hotéis reais cadastrados
+// Cupons padrão para demonstração inicial e fallback offline (Hotéis, Parceiros e Reservas)
 const CUPONS_PADRAO: CupomDesconto[] = [
+  // Cupons da Plataforma para Cadastro de Hotéis (Planos SaaS)
+  {
+    id: 'cupom-hotel-50',
+    hotel_id: null,
+    hotel_nome: 'Plataforma Hotel no Zap',
+    codigo: 'HOTEL50',
+    tipo_desconto: 'porcentagem',
+    valor_desconto: 50,
+    valor_minimo_reserva: 0,
+    data_inicio: '2026-01-01',
+    data_expiracao: null,
+    limite_usos: 200,
+    usos_atuais: 5,
+    status: 'Ativo',
+    visivel_hospedes: false,
+    aplicavel_em: 'plano_hotel',
+    descricao: '50% de desconto no cadastro de novos hotéis e pousadas na contratação de planos.',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'cupom-hotel-100off',
+    hotel_id: null,
+    hotel_nome: 'Plataforma Hotel no Zap',
+    codigo: 'HOTEL100OFF',
+    tipo_desconto: 'fixo',
+    valor_desconto: 100,
+    valor_minimo_reserva: 150,
+    data_inicio: '2026-01-01',
+    data_expiracao: null,
+    limite_usos: 100,
+    usos_atuais: 2,
+    status: 'Ativo',
+    visivel_hospedes: false,
+    aplicavel_em: 'plano_hotel',
+    descricao: 'R$ 100,00 de desconto no primeiro pagamento da assinatura do plano hoteleiro.',
+    created_at: new Date().toISOString()
+  },
+
+  // Cupons da Plataforma para Cadastro de Parceiros / Franqueados
+  {
+    id: 'cupom-parceiro-50',
+    hotel_id: null,
+    hotel_nome: 'Plataforma Hotel no Zap',
+    codigo: 'PARCEIRO50',
+    tipo_desconto: 'porcentagem',
+    valor_desconto: 50,
+    valor_minimo_reserva: 0,
+    data_inicio: '2026-01-01',
+    data_expiracao: null,
+    limite_usos: 150,
+    usos_atuais: 7,
+    status: 'Ativo',
+    visivel_hospedes: false,
+    aplicavel_em: 'parceiro',
+    descricao: '50% de desconto na taxa de ativação da licença de parceiro franqueado.',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'cupom-parceiro-vip',
+    hotel_id: null,
+    hotel_nome: 'Plataforma Hotel no Zap',
+    codigo: 'PARCEIROVIP',
+    tipo_desconto: 'fixo',
+    valor_desconto: 50,
+    valor_minimo_reserva: 100,
+    data_inicio: '2026-01-01',
+    data_expiracao: null,
+    limite_usos: 100,
+    usos_atuais: 4,
+    status: 'Ativo',
+    visivel_hospedes: false,
+    aplicavel_em: 'parceiro',
+    descricao: 'R$ 50,00 OFF na taxa de franquia para novos parceiros credenciados.',
+    created_at: new Date().toISOString()
+  },
+
+  // Cupom Geral Aplicável a Todos
+  {
+    id: 'cupom-bemvindo-20',
+    hotel_id: null,
+    hotel_nome: 'Plataforma Hotel no Zap',
+    codigo: 'BEMVINDO20',
+    tipo_desconto: 'porcentagem',
+    valor_desconto: 20,
+    valor_minimo_reserva: 0,
+    data_inicio: '2026-01-01',
+    data_expiracao: null,
+    limite_usos: 500,
+    usos_atuais: 18,
+    status: 'Ativo',
+    visivel_hospedes: true,
+    aplicavel_em: 'todos',
+    descricao: '20% de desconto de boas-vindas aplicável em planos de hotéis, parceiros e reservas.',
+    created_at: new Date().toISOString()
+  },
+
+  // Cupons Operacionais de Hotéis (Reservas)
   {
     id: 'cupom-santiago-10',
     hotel_id: 'f5ce4199-8cd4-4baf-aadb-ff253cf6659d',
@@ -47,6 +147,7 @@ const CUPONS_PADRAO: CupomDesconto[] = [
     usos_atuais: 14,
     status: 'Ativo',
     visivel_hospedes: true,
+    aplicavel_em: 'reserva',
     descricao: '10% de desconto especial no Hotel Santiago em Primavera do Leste para reservas diretas.',
     created_at: new Date().toISOString()
   },
@@ -65,25 +166,8 @@ const CUPONS_PADRAO: CupomDesconto[] = [
     usos_atuais: 8,
     status: 'Ativo',
     visivel_hospedes: true,
+    aplicavel_em: 'reserva',
     descricao: 'R$ 50,00 OFF na sua hospedagem no Hotel Morada da Lua para reservas a partir de R$ 250,00.',
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 'cupom-vila-rica-15',
-    hotel_id: '81b9a9ce-dcf1-416b-907d-e42c769477ef',
-    hotel_nome: 'Hotel Vila Rica',
-    hotel_cidade: 'Vila Rica / MT',
-    codigo: 'VILARICA15',
-    tipo_desconto: 'porcentagem',
-    valor_desconto: 15,
-    valor_minimo_reserva: 200,
-    data_inicio: '2026-01-01',
-    data_expiracao: '2026-12-31',
-    limite_usos: null,
-    usos_atuais: 23,
-    status: 'Ativo',
-    visivel_hospedes: true,
-    descricao: '15% de desconto especial para todas as acomodações do Hotel Vila Rica.',
     created_at: new Date().toISOString()
   },
   {
@@ -101,6 +185,7 @@ const CUPONS_PADRAO: CupomDesconto[] = [
     usos_atuais: 19,
     status: 'Ativo',
     visivel_hospedes: true,
+    aplicavel_em: 'reserva',
     descricao: 'R$ 40,00 de desconto promocional para reservas acima de R$ 220,00 no Hotel Recanto em Nova Mutum.',
     created_at: new Date().toISOString()
   }
@@ -172,6 +257,7 @@ export const cuponsService = {
           status: d.status || 'Ativo',
           visivel_hospedes: d.visivel_hospedes !== false,
           descricao: d.descricao || '',
+          aplicavel_em: d.aplicavel_em || 'reserva',
           created_at: d.created_at
         }));
         saveToStorage(mapped);
@@ -184,7 +270,7 @@ export const cuponsService = {
     // Fallback LocalStorage
     const local = loadFromStorage();
     if (!targetHotelId) return local;
-    return local.filter(c => !c.hotel_id || c.hotel_id === targetHotelId || c.hotel_id.includes('demo'));
+    return local.filter(c => !c.hotel_id || c.hotel_id === targetHotelId || c.hotel_id.includes('demo') || c.aplicavel_em === 'plano_hotel' || c.aplicavel_em === 'parceiro');
   },
 
   /**
@@ -200,37 +286,47 @@ export const cuponsService = {
         .order('valor_desconto', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        return data.map((d: any) => ({
-          id: d.id,
-          hotel_id: d.hotel_id,
-          hotel_nome: d.hotel_nome,
-          hotel_cidade: d.hotel_cidade || '',
-          codigo: d.codigo,
-          tipo_desconto: d.tipo_desconto,
-          valor_desconto: Number(d.valor_desconto) || 0,
-          valor_minimo_reserva: d.valor_minimo_reserva !== null ? Number(d.valor_minimo_reserva) : 0,
-          data_inicio: d.data_inicio,
-          data_expiracao: d.data_expiracao,
-          limite_usos: d.limite_usos !== null ? Number(d.limite_usos) : null,
-          usos_atuais: Number(d.usos_atuais) || 0,
-          status: d.status || 'Ativo',
-          visivel_hospedes: d.visivel_hospedes !== false,
-          descricao: d.descricao || '',
-          created_at: d.created_at
-        }));
+        return data
+          .map((d: any) => ({
+            id: d.id,
+            hotel_id: d.hotel_id,
+            hotel_nome: d.hotel_nome,
+            hotel_cidade: d.hotel_cidade || '',
+            codigo: d.codigo,
+            tipo_desconto: d.tipo_desconto,
+            valor_desconto: Number(d.valor_desconto) || 0,
+            valor_minimo_reserva: d.valor_minimo_reserva !== null ? Number(d.valor_minimo_reserva) : 0,
+            data_inicio: d.data_inicio,
+            data_expiracao: d.data_expiracao,
+            limite_usos: d.limite_usos !== null ? Number(d.limite_usos) : null,
+            usos_atuais: Number(d.usos_atuais) || 0,
+            status: d.status || 'Ativo',
+            visivel_hospedes: d.visivel_hospedes !== false,
+            descricao: d.descricao || '',
+            aplicavel_em: d.aplicavel_em || 'reserva',
+            created_at: d.created_at
+          }))
+          .filter((c: any) => !c.aplicavel_em || c.aplicavel_em === 'reserva' || c.aplicavel_em === 'todos');
       }
     } catch (err) {
       console.warn('Supabase offline ao buscar cupons públicos. Usando fallback:', err);
     }
 
     const local = loadFromStorage();
-    return local.filter(c => c.status === 'Ativo' && c.visivel_hospedes);
+    return local.filter(
+      c => c.status === 'Ativo' && c.visivel_hospedes && (!c.aplicavel_em || c.aplicavel_em === 'reserva' || c.aplicavel_em === 'todos')
+    );
   },
 
   /**
-   * Valida se um código de cupom é válido para um hotel e valor de reserva
+   * Valida se um código de cupom é válido para um contexto (reserva, plano de hotel ou parceiro)
    */
-  async validarCupom(codigo: string, hotelId?: string, valorTotal: number = 0): Promise<ValidacaoCupomResult> {
+  async validarCupom(
+    codigo: string,
+    hotelId?: string,
+    valorTotal: number = 0,
+    contexto: EscopoCupom = 'reserva'
+  ): Promise<ValidacaoCupomResult> {
     if (!codigo || !codigo.trim()) {
       return { valido: false, mensagem: 'Informe o código do cupom de desconto.' };
     }
@@ -264,6 +360,7 @@ export const cuponsService = {
           status: data.status || 'Ativo',
           visivel_hospedes: data.visivel_hospedes !== false,
           descricao: data.descricao || '',
+          aplicavel_em: data.aplicavel_em || 'reserva',
           created_at: data.created_at
         };
       }
@@ -285,15 +382,29 @@ export const cuponsService = {
       return { valido: false, mensagem: `O cupom "${cleanCode}" está inativo no momento.` };
     }
 
-    // 2. Validação de Hotel (se o cupom for exclusivo de outro hotel)
-    if (cupom.hotel_id && hotelId && cupom.hotel_id !== hotelId && !cupom.hotel_id.includes('demo')) {
+    // 2. Validação de Escopo / Contexto (se cupom é para planos de hotéis, parceiros ou reservas)
+    const escopoCupom = cupom.aplicavel_em || 'reserva';
+    if (contexto && escopoCupom !== 'todos' && escopoCupom !== contexto) {
+      let contextoNome = 'este tipo de compra';
+      if (escopoCupom === 'plano_hotel') contextoNome = 'Assinatura de Planos de Hotéis';
+      else if (escopoCupom === 'parceiro') contextoNome = 'Cadastro de Franqueados / Parceiros';
+      else if (escopoCupom === 'reserva') contextoNome = 'Reservas de Hóspedes';
+
+      return {
+        valido: false,
+        mensagem: `O cupom "${cleanCode}" é exclusivo para ${contextoNome}.`
+      };
+    }
+
+    // 3. Validação de Hotel (se for cupom de reserva exclusivo de um hotel específico)
+    if (escopoCupom === 'reserva' && cupom.hotel_id && hotelId && cupom.hotel_id !== hotelId && !cupom.hotel_id.includes('demo')) {
       return {
         valido: false,
         mensagem: `Este cupom é exclusivo do estabelecimento "${cupom.hotel_nome || 'outro hotel'}".`
       };
     }
 
-    // 3. Validação de Data de Validade
+    // 4. Validação de Data de Validade
     if (cupom.data_inicio && today < cupom.data_inicio) {
       return {
         valido: false,
@@ -307,7 +418,7 @@ export const cuponsService = {
       };
     }
 
-    // 4. Validação de Limite de Utilizações
+    // 5. Validação de Limite de Utilizações
     if (cupom.limite_usos && cupom.limite_usos > 0 && cupom.usos_atuais >= cupom.limite_usos) {
       return {
         valido: false,
@@ -315,15 +426,15 @@ export const cuponsService = {
       };
     }
 
-    // 5. Validação de Valor Mínimo de Reserva
+    // 6. Validação de Valor Mínimo
     if (cupom.valor_minimo_reserva && cupom.valor_minimo_reserva > 0 && valorTotal < cupom.valor_minimo_reserva) {
       return {
         valido: false,
-        mensagem: `Este cupom exige um valor mínimo de reserva de R$ ${cupom.valor_minimo_reserva.toFixed(2).replace('.', ',')}.`
+        mensagem: `Este cupom exige um valor mínimo de R$ ${cupom.valor_minimo_reserva.toFixed(2).replace('.', ',')}.`
       };
     }
 
-    // 6. Cálculo do Desconto
+    // 7. Cálculo do Desconto
     let valorDesconto = 0;
     if (cupom.tipo_desconto === 'porcentagem') {
       valorDesconto = (valorTotal * cupom.valor_desconto) / 100;
@@ -353,8 +464,8 @@ export const cuponsService = {
     const current = currentHotelService.getCurrentHotel();
     const payload: Partial<CupomDesconto> = {
       id: `cupom-${Date.now()}`,
-      hotel_id: novoCupom.hotel_id || current?.id || 'hotel-local',
-      hotel_nome: novoCupom.hotel_nome || current?.name || 'Hotel Parceiro',
+      hotel_id: novoCupom.hotel_id !== undefined ? novoCupom.hotel_id : (current?.id || null),
+      hotel_nome: novoCupom.hotel_nome || (novoCupom.hotel_id ? current?.name : 'Plataforma Hotel no Zap'),
       hotel_cidade: novoCupom.hotel_cidade || current?.cityUf || current?.city || '',
       codigo: (novoCupom.codigo || 'DESC10').trim().toUpperCase(),
       tipo_desconto: novoCupom.tipo_desconto || 'porcentagem',
@@ -367,6 +478,7 @@ export const cuponsService = {
       status: novoCupom.status || 'Ativo',
       visivel_hospedes: novoCupom.visivel_hospedes !== false,
       descricao: novoCupom.descricao || '',
+      aplicavel_em: novoCupom.aplicavel_em || 'todos',
       created_at: new Date().toISOString()
     };
 

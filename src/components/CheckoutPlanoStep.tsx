@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { mercadopagoService, PixMasterResult } from '../services/mercadopagoService';
 import { hoteisService } from '../services/supabaseService';
+import { cuponsService, CupomDesconto } from '../services/cuponsService';
 
 export interface CheckoutPlanoStepProps {
   hotelId: string;
@@ -28,6 +29,17 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   const isGratis = mercadopagoService.isPlanoGratis(plano) || Number(plano?.basePrice || 0) === 0;
   const valorPlano = Number(plano?.basePrice || 0);
   const planoNome = plano?.name || 'Plano Hotel no Zap';
+
+  // Estados de Cupom de Desconto
+  const [codigoCupomInput, setCodigoCupomInput] = useState('');
+  const [cupomAplicado, setCupomAplicado] = useState<CupomDesconto | null>(null);
+  const [valorDescontoCupom, setValorDescontoCupom] = useState(0);
+  const [validandoCupom, setValidandoCupom] = useState(false);
+  const [cupomMsg, setCupomMsg] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
+
+  // Valor a pagar recalculado com desconto do cupom
+  const valorFinal = Math.max(0, valorPlano - valorDescontoCupom);
+  const isTotalmenteGratisComCupom = valorPlano > 0 && valorFinal === 0;
 
   // Tabs de Pagamento: 'pix' | 'cartao'
   const [metodoSelecionado, setMetodoSelecionado] = useState<'pix' | 'cartao'>('pix');
@@ -70,7 +82,10 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
   };
 
   // Gerar cobrança PIX
-  const gerarPix = async () => {
+  const gerarPix = async (valorCustom?: number) => {
+    const valorCobrar = valorCustom !== undefined ? valorCustom : valorFinal;
+    if (valorCobrar <= 0) return;
+
     setGerandoPix(true);
     setErroMsg(null);
     try {
@@ -79,7 +94,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
         hotelNome,
         planoId: plano?.id,
         planoNome,
-        valor: valorPlano,
+        valor: valorCobrar,
         pagadorEmail: loginEmail,
         pagadorNome: nomeResponsavel || hotelNome,
         pagadorDoc: cpfOuCnpj
@@ -90,6 +105,40 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     } finally {
       setGerandoPix(false);
     }
+  };
+
+  // Aplicar Cupom de Desconto
+  const handleAplicarCupom = async () => {
+    if (!codigoCupomInput.trim()) return;
+    setValidandoCupom(true);
+    setCupomMsg(null);
+    try {
+      const res = await cuponsService.validarCupom(codigoCupomInput, hotelId, valorPlano, 'plano_hotel');
+      if (res.valido && res.cupom) {
+        setCupomAplicado(res.cupom);
+        setValorDescontoCupom(res.valorDesconto || 0);
+        setCupomMsg({ tipo: 'sucesso', texto: res.mensagem });
+        const novoValor = Math.max(0, valorPlano - (res.valorDesconto || 0));
+        if (novoValor > 0) {
+          await gerarPix(novoValor);
+        }
+      } else {
+        setCupomMsg({ tipo: 'erro', texto: res.mensagem });
+      }
+    } catch {
+      setCupomMsg({ tipo: 'erro', texto: 'Erro ao validar cupom de desconto.' });
+    } finally {
+      setValidandoCupom(false);
+    }
+  };
+
+  // Remover Cupom de Desconto
+  const handleRemoverCupom = async () => {
+    setCupomAplicado(null);
+    setValorDescontoCupom(0);
+    setCodigoCupomInput('');
+    setCupomMsg(null);
+    await gerarPix(valorPlano);
   };
 
   // Bloquear cadastro por expiração de tempo (5 minutos)
@@ -185,7 +234,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     pollingRef.current = setInterval(async () => {
       tickCounter += 1;
       try {
-        const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId, hotelId, valorPlano);
+        const check = await mercadopagoService.consultarPagamentoMaster(pixResult.paymentId, hotelId, valorFinal);
         if (tickCounter % 5 === 1 || check.approved || check.rejected) {
           console.debug(`[CHECKOUT] tick#${tickCounter} check.approved=${check.approved} check.rejected=${check.rejected} check.status=${check.status} rawStatus=${check.rawStatus || 'N/D'} source=${(check as any)?.source || 'N/D'} timeLeft=${timeLeft}s`);
         }
@@ -244,13 +293,19 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
     setIsAtivando(true);
     setErroMsg(null);
     try {
+      if (cupomAplicado?.id) {
+        try {
+          await cuponsService.registrarUsoCupom(cupomAplicado.id);
+        } catch { /* ignore */ }
+      }
+
       await mercadopagoService.ativarHotelAposPagamento({
         hotelId,
         hotelNome,
         plano,
         paymentId,
         metodo,
-        valor: valorPlano
+        valor: valorFinal
       });
     } catch (err: any) {
       console.warn('Aviso ao registrar ativação no Supabase:', err);
@@ -283,7 +338,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
       const res = await mercadopagoService.consultarPagamentoMaster(
         pixResult.paymentId,
         hotelId,
-        valorPlano
+        valorFinal
       );
 
       if (res.approved || res.status === 'approved') {
@@ -599,7 +654,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
       </div>
 
       {/* Resumo do Plano Selecionado */}
-      <div className="bg-slate-900 text-white rounded-2xl p-5 mb-5 shadow-lg border border-slate-800">
+      <div className="bg-slate-900 text-white rounded-2xl p-5 mb-4 shadow-lg border border-slate-800">
         <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
@@ -608,10 +663,26 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
             <h3 className="text-base sm:text-lg font-black">{planoNome}</h3>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-black text-emerald-400">
-              R$ {valorPlano.toFixed(2).replace('.', ',')}
-            </span>
-            <span className="text-[10px] text-slate-400 block">Pagamento Único</span>
+            {cupomAplicado && valorDescontoCupom > 0 ? (
+              <div>
+                <span className="text-xs text-slate-400 line-through block font-semibold">
+                  De: R$ {valorPlano.toFixed(2).replace('.', ',')}
+                </span>
+                <span className="text-2xl font-black text-emerald-400 block">
+                  Por: R$ {valorFinal.toFixed(2).replace('.', ',')}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 mt-0.5">
+                  ✓ Desconto {cupomAplicado.tipo_desconto === 'porcentagem' ? `${cupomAplicado.valor_desconto}%` : `R$ ${cupomAplicado.valor_desconto.toFixed(2)}`}
+                </span>
+              </div>
+            ) : (
+              <div>
+                <span className="text-2xl font-black text-emerald-400">
+                  R$ {valorPlano.toFixed(2).replace('.', ',')}
+                </span>
+                <span className="text-[10px] text-slate-400 block">Pagamento Único</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -630,6 +701,87 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Box de Cupom de Desconto */}
+      {!isGratis && (
+        <div className="bg-white rounded-2xl p-4 mb-5 border border-slate-200/90 shadow-xs">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5" htmlFor="checkout-cupom">
+              <span className="material-symbols-outlined text-base text-amber-500">confirmation_number</span>
+              <span>Tem um cupom de desconto?</span>
+            </label>
+            {cupomAplicado && (
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                Cupom Ativo
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="checkout-cupom"
+              type="text"
+              disabled={validandoCupom || Boolean(cupomAplicado)}
+              value={codigoCupomInput}
+              onChange={(e) => setCodigoCupomInput(e.target.value.toUpperCase().replace(/\s/g, ''))}
+              placeholder="Digite seu cupom (Ex: HOTEL50)"
+              className="flex-1 h-10 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold uppercase focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none transition disabled:opacity-60"
+            />
+            {cupomAplicado ? (
+              <button
+                type="button"
+                onClick={handleRemoverCupom}
+                className="h-10 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+                <span>Remover</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={validandoCupom || !codigoCupomInput.trim()}
+                onClick={handleAplicarCupom}
+                className="h-10 px-4 rounded-xl bg-[#003400] hover:bg-[#002600] disabled:bg-slate-300 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                {validandoCupom ? (
+                  <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                ) : (
+                  <span className="material-symbols-outlined text-sm">check</span>
+                )}
+                <span>Aplicar</span>
+              </button>
+            )}
+          </div>
+
+          {cupomMsg && (
+            <p className={`text-xs mt-2 font-medium flex items-center gap-1.5 ${
+              cupomMsg.tipo === 'sucesso' ? 'text-emerald-700 font-bold' : 'text-rose-600'
+            }`}>
+              <span className="material-symbols-outlined text-sm">
+                {cupomMsg.tipo === 'sucesso' ? 'check_circle' : 'error'}
+              </span>
+              <span>{cupomMsg.texto}</span>
+            </p>
+          )}
+
+          {isTotalmenteGratisComCupom && (
+            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-emerald-900 text-xs font-bold">
+                <span className="material-symbols-outlined text-emerald-600">celebration</span>
+                <span>Cupom 100% OFF! Sua assinatura ficou gratuita.</span>
+              </div>
+              <button
+                type="button"
+                disabled={isAtivando || isApproved}
+                onClick={() => handleAprovarPagamento(`cupom_100_${Date.now()}`, `Cupom 100% OFF (${cupomAplicado?.codigo})`)}
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black rounded-lg transition cursor-pointer shadow-xs whitespace-nowrap"
+              >
+                {isAtivando ? 'Ativando...' : 'Liberar Conta Agora'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Abas de Métodos de Pagamento */}
       <div className="grid grid-cols-2 gap-2 mb-5">
@@ -880,11 +1032,11 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
               onChange={(e) => setCartaoParcelas(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 bg-white"
             >
-              <option value="1">1x de R$ {valorPlano.toFixed(2).replace('.', ',')} (à vista sem juros)</option>
-              <option value="2">2x de R$ {(valorPlano / 2).toFixed(2).replace('.', ',')} sem juros</option>
-              <option value="3">3x de R$ {(valorPlano / 3).toFixed(2).replace('.', ',')} sem juros</option>
-              <option value="6">6x de R$ {(valorPlano / 6).toFixed(2).replace('.', ',')} sem juros</option>
-              <option value="12">12x de R$ {(valorPlano / 12).toFixed(2).replace('.', ',')} sem juros</option>
+              <option value="1">1x de R$ {valorFinal.toFixed(2).replace('.', ',')} (à vista sem juros)</option>
+              <option value="2">2x de R$ {(valorFinal / 2).toFixed(2).replace('.', ',')} sem juros</option>
+              <option value="3">3x de R$ {(valorFinal / 3).toFixed(2).replace('.', ',')} sem juros</option>
+              <option value="6">6x de R$ {(valorFinal / 6).toFixed(2).replace('.', ',')} sem juros</option>
+              <option value="12">12x de R$ {(valorFinal / 12).toFixed(2).replace('.', ',')} sem juros</option>
             </select>
           </div>
 
@@ -901,7 +1053,7 @@ export const CheckoutPlanoStep: React.FC<CheckoutPlanoStepProps> = ({
             ) : (
               <>
                 <span className="material-symbols-outlined text-base">lock</span>
-                Pagar R$ {valorPlano.toFixed(2).replace('.', ',')} e Liberar Conta
+                Pagar R$ {valorFinal.toFixed(2).replace('.', ',')} e Liberar Conta
               </>
             )}
           </button>

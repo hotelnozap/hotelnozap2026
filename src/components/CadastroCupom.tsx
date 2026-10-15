@@ -1,21 +1,26 @@
 import React, { useState, useMemo } from 'react';
-import { cuponsService, CupomDesconto } from '../services/cuponsService';
+import { cuponsService, CupomDesconto, EscopoCupom } from '../services/cuponsService';
 import { currentHotelService } from '../services/supabaseService';
 
 interface CadastroCupomProps {
   cupomToEdit?: CupomDesconto | null;
+  isAdmin?: boolean;
   onBack: () => void;
   onSaveSuccess: () => void;
 }
 
 export const CadastroCupom: React.FC<CadastroCupomProps> = ({
   cupomToEdit,
+  isAdmin = false,
   onBack,
   onSaveSuccess
 }) => {
   const activeHotel = currentHotelService.getCurrentHotel();
 
   // Estados do Formulário
+  const [aplicavelEm, setAplicavelEm] = useState<EscopoCupom>(
+    cupomToEdit?.aplicavel_em || (isAdmin ? 'plano_hotel' : 'reserva')
+  );
   const [codigo, setCodigo] = useState<string>(cupomToEdit?.codigo || '');
   const [tipoDesconto, setTipoDesconto] = useState<'porcentagem' | 'fixo'>(
     cupomToEdit?.tipo_desconto || 'porcentagem'
@@ -154,8 +159,9 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
         status,
         visivel_hospedes: visivelHospedes,
         descricao: descricao.trim(),
-        hotel_id: cupomToEdit?.hotel_id || activeHotel?.id || 'hotel-local',
-        hotel_nome: cupomToEdit?.hotel_nome || activeHotel?.name || 'Hotel Parceiro',
+        aplicavel_em: aplicavelEm,
+        hotel_id: cupomToEdit?.hotel_id !== undefined ? cupomToEdit.hotel_id : (isAdmin ? null : (activeHotel?.id || null)),
+        hotel_nome: cupomToEdit?.hotel_nome || (isAdmin ? 'Plataforma Hotel no Zap' : (activeHotel?.name || 'Hotel Parceiro')),
         hotel_cidade: cupomToEdit?.hotel_cidade || activeHotel?.cityUf || activeHotel?.city || ''
       };
 
@@ -240,11 +246,120 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* COLUNA ESQUERDA: FORMULÁRIO (8 colunas) */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Bloco 1: Identificação & Código */}
+              
+              {/* Bloco 0: Onde o cupom será aplicado */}
+              <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+                  <span className="material-symbols-outlined text-emerald-700 text-xl">tune</span>
+                  <h2 className="text-sm font-bold text-slate-900">1. Aplicação & Finalidade do Cupom</h2>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700">
+                    Onde este cupom de desconto pode ser utilizado? <span className="text-red-500">*</span>
+                  </label>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Hotéis (Planos) */}
+                    <button
+                      type="button"
+                      onClick={() => setAplicavelEm('plano_hotel')}
+                      className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition cursor-pointer ${
+                        aplicavelEm === 'plano_hotel'
+                          ? 'bg-purple-50/80 border-purple-500 text-purple-950 font-bold ring-2 ring-purple-500/20'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${
+                        aplicavelEm === 'plano_hotel' ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        <span className="material-symbols-outlined text-base">domain</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-bold text-slate-900">Cadastro de Hotéis (Planos)</span>
+                        <span className="block text-[11px] text-slate-500 font-normal">
+                          Desconto na assinatura de novos hotéis e pousadas parceiras.
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Parceiros (Taxa de Franquia) */}
+                    <button
+                      type="button"
+                      onClick={() => setAplicavelEm('parceiro')}
+                      className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition cursor-pointer ${
+                        aplicavelEm === 'parceiro'
+                          ? 'bg-amber-50/80 border-amber-500 text-amber-950 font-bold ring-2 ring-amber-500/20'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${
+                        aplicavelEm === 'parceiro' ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        <span className="material-symbols-outlined text-base">handshake</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-bold text-slate-900">Cadastro de Parceiros</span>
+                        <span className="block text-[11px] text-slate-500 font-normal">
+                          Desconto na taxa de ativação da franquia de parceiro credenciado.
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Reservas de Hóspedes */}
+                    <button
+                      type="button"
+                      onClick={() => setAplicavelEm('reserva')}
+                      className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition cursor-pointer ${
+                        aplicavelEm === 'reserva'
+                          ? 'bg-emerald-50/80 border-emerald-500 text-emerald-950 font-bold ring-2 ring-emerald-500/20'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${
+                        aplicavelEm === 'reserva' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        <span className="material-symbols-outlined text-base">hotel</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-bold text-slate-900">Reservas de Hóspedes</span>
+                        <span className="block text-[11px] text-slate-500 font-normal">
+                          Desconto em estadias e reservas diretas no catálogo do hotel.
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Todos os Serviços */}
+                    <button
+                      type="button"
+                      onClick={() => setAplicavelEm('todos')}
+                      className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition cursor-pointer ${
+                        aplicavelEm === 'todos'
+                          ? 'bg-blue-50/80 border-blue-500 text-blue-950 font-bold ring-2 ring-blue-500/20'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 ${
+                        aplicavelEm === 'todos' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        <span className="material-symbols-outlined text-base">verified</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-bold text-slate-900">Geral (Todos os Serviços)</span>
+                        <span className="block text-[11px] text-slate-500 font-normal">
+                          Válido tanto para Hotéis, Parceiros quanto Reservas.
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloco 2: Identificação & Código */}
               <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                 <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
                   <span className="material-symbols-outlined text-emerald-700 text-xl">confirmation_number</span>
-                  <h2 className="text-sm font-bold text-slate-900">1. Identificação do Cupom</h2>
+                  <h2 className="text-sm font-bold text-slate-900">2. Identificação do Cupom</h2>
                 </div>
 
                 <div className="space-y-1.5">
