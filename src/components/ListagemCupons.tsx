@@ -7,13 +7,15 @@ interface ListagemCuponsProps {
   onNavigateToDashboard: () => void;
   onNavigateToNovoCupom: () => void;
   onNavigateToEditCupom: (cupom: CupomDesconto) => void;
+  onNavigateToPlanos?: () => void;
 }
 
 export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
   isAdmin = false,
   onNavigateToDashboard,
   onNavigateToNovoCupom,
-  onNavigateToEditCupom
+  onNavigateToEditCupom,
+  onNavigateToPlanos
 }) => {
   const [cupons, setCupons] = useState<CupomDesconto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -186,6 +188,17 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+              {isAdmin && onNavigateToPlanos && (
+                <button
+                  type="button"
+                  onClick={onNavigateToPlanos}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 border border-slate-300 transition-all cursor-pointer"
+                  title="Voltar aos Planos de Assinatura"
+                >
+                  <span className="material-symbols-outlined text-lg text-emerald-600">sell</span>
+                  <span>Ver Planos de Assinatura</span>
+                </button>
+              )}
               <button
                 onClick={onNavigateToNovoCupom}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#003400] hover:bg-[#002600] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
@@ -199,6 +212,27 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* SUB-NAV TABS: Planos vs Cupons */}
+        {isAdmin && onNavigateToPlanos && (
+          <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200/80 w-fit">
+            <button
+              type="button"
+              onClick={onNavigateToPlanos}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/60 font-semibold text-sm transition cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-emerald-600 text-base">sell</span>
+              <span>Planos de Assinatura</span>
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-slate-900 font-bold text-sm shadow-xs border border-slate-200/60"
+            >
+              <span className="material-symbols-outlined text-purple-600 text-base">confirmation_number</span>
+              <span>Cupons de Desconto</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold">{cupons.length}</span>
+            </button>
+          </div>
+        )}
         {/* CARDS DE MÉTRICAS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3.5">

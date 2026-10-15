@@ -37,7 +37,7 @@ import { slugify } from './utils/slugify';
 
 // Types only (erased at runtime, zero bundle cost)
 import type { EditingQuartoData } from './components/CadastroQuarto';
-import type { CupomDesconto } from './services/cuponsService';
+import { cuponsService, type CupomDesconto } from './services/cuponsService';
 import type { Partner } from './components/ListagemParceiros';
 import type { Hotel } from './components/CadastroHoteis';
 import type { Usuario } from './components/ListagemUsuarios';
@@ -1273,7 +1273,8 @@ export const App: React.FC = () => {
   const [adminCounts, setAdminCounts] = useState({
     hoteis: 0,
     parceiros: 0,
-    planos: 0
+    planos: 0,
+    cupons: 0
   });
 
   useEffect(() => {
@@ -1281,16 +1282,18 @@ export const App: React.FC = () => {
     let isMounted = true;
     const loadAdminCounts = async () => {
       try {
-        const [hList, pList, plList] = await Promise.all([
+        const [hList, pList, plList, cList] = await Promise.all([
           hoteisService.getHoteis().catch(() => []),
           parceirosService.getParceiros().catch(() => []),
-          planosService.getPlanos().catch(() => [])
+          planosService.getPlanos().catch(() => []),
+          cuponsService.getCuponsHotel().catch(() => [])
         ]);
         if (isMounted) {
           setAdminCounts({
             hoteis: Array.isArray(hList) ? hList.length : 0,
             parceiros: Array.isArray(pList) ? pList.length : 0,
-            planos: Array.isArray(plList) ? plList.length : 0
+            planos: Array.isArray(plList) ? plList.length : 0,
+            cupons: Array.isArray(cList) ? cList.length : 0
           });
         }
       } catch (err) {
@@ -1306,6 +1309,9 @@ export const App: React.FC = () => {
     window.addEventListener('hotel_novo_parceiro', handleUpdate);
     window.addEventListener('hotel_parceiro_modificado', handleUpdate);
     window.addEventListener('hotel_parceiro_deletado', handleUpdate);
+    window.addEventListener('cupom_criado', handleUpdate);
+    window.addEventListener('cupom_atualizado', handleUpdate);
+    window.addEventListener('cupom_deletado', handleUpdate);
 
     return () => { 
       isMounted = false; 
@@ -1315,6 +1321,9 @@ export const App: React.FC = () => {
       window.removeEventListener('hotel_novo_parceiro', handleUpdate);
       window.removeEventListener('hotel_parceiro_modificado', handleUpdate);
       window.removeEventListener('hotel_parceiro_deletado', handleUpdate);
+      window.removeEventListener('cupom_criado', handleUpdate);
+      window.removeEventListener('cupom_atualizado', handleUpdate);
+      window.removeEventListener('cupom_deletado', handleUpdate);
     };
   }, [isHotelUser, activeTab]);
 
@@ -2618,6 +2627,22 @@ export const App: React.FC = () => {
 
                   <button
                     type="button"
+                    onClick={() => { setActiveTab('cupons'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                      activeTab === 'cupons' || activeTab === 'cadastro-cupom'
+                        ? 'bg-white/10 text-white font-medium border-l-4 border-amber-400'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined ${activeTab === 'cupons' || activeTab === 'cadastro-cupom' ? 'text-amber-300' : 'text-amber-400'}`}>confirmation_number</span>
+                    <span>Cupons de Desconto</span>
+                    <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300">
+                      {adminCounts.cupons > 0 ? adminCounts.cupons : 'Novo'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => { setActiveTab('creditos-saas'); setIsMobileMenuOpen(false); }}
                     className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
                       activeTab === 'creditos-saas'
@@ -3081,6 +3106,22 @@ export const App: React.FC = () => {
                 <span>Planos &amp; Assinaturas</span>
                 <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-emerald-300">
                   {adminCounts.planos}
+                </span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setActiveTab('cupons')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                  activeTab === 'cupons' || activeTab === 'cadastro-cupom'
+                    ? 'bg-white/10 text-white font-medium border-l-4 border-amber-400'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className={`material-symbols-outlined ${activeTab === 'cupons' || activeTab === 'cadastro-cupom' ? 'text-amber-300' : 'text-amber-400'}`}>confirmation_number</span>
+                <span>Cupons de Desconto</span>
+                <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300">
+                  {adminCounts.cupons > 0 ? adminCounts.cupons : 'Novo'}
                 </span>
               </button>
 
@@ -3870,6 +3911,7 @@ export const App: React.FC = () => {
             <ListagemCupons 
               isAdmin={!isHotelUser}
               onNavigateToDashboard={() => setActiveTab(isHotelUser ? 'dashboard' : 'admin-dashboard')}
+              onNavigateToPlanos={() => setActiveTab('planos')}
               onNavigateToNovoCupom={() => {
                 setCupomToEdit(null);
                 setActiveTab('cadastro-cupom');
@@ -4162,6 +4204,7 @@ export const App: React.FC = () => {
                 setPlanToEdit(plan);
                 setActiveTab('cadastro-plano');
               }}
+              onNavigateToCupons={() => setActiveTab('cupons')}
             />
           )}
           {activeTab === 'cadastro-plano' && !isHotelUser && (

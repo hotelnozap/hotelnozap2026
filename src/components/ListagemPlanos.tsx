@@ -209,12 +209,14 @@ interface ListagemPlanosProps {
   onNavigateToDashboard: () => void;
   onNavigateToCreate?: () => void;
   onNavigateToEdit?: (plan: Plano) => void;
+  onNavigateToCupons?: () => void;
 }
 
 export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({ 
   onNavigateToDashboard,
   onNavigateToCreate,
-  onNavigateToEdit
+  onNavigateToEdit,
+  onNavigateToCupons
 }) => {
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [viewMode, setViewMode] = useState<'lista' | 'grade'>('lista');
@@ -587,6 +589,29 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
           </p>
         </div>
 
+        {/* SUB-NAV TABS MOBILE: Planos vs Cupons */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/80 w-full">
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white text-slate-900 font-bold text-xs shadow-xs border border-slate-200/60"
+          >
+            <span className="material-symbols-outlined text-emerald-600 text-sm">sell</span>
+            <span>Planos</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-semibold">{planos.length}</span>
+          </button>
+          {onNavigateToCupons && (
+            <button
+              type="button"
+              onClick={onNavigateToCupons}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold text-xs transition cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-purple-600 text-sm">confirmation_number</span>
+              <span>Cupons</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-800 font-semibold">Novo</span>
+            </button>
+          )}
+        </div>
+
         {/* 2 LINHAS DE BOTÕES DE AÇÃO MOBILE */}
         <section className="space-y-2">
           {/* Linha 1 */}
@@ -628,6 +653,18 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
               <span>Importar</span>
             </button>
           </div>
+
+          {/* Botão de Cupons Mobile */}
+          {onNavigateToCupons && (
+            <button
+              type="button"
+              onClick={onNavigateToCupons}
+              className="w-full flex items-center justify-center gap-2 bg-purple-700 hover:bg-purple-800 text-white py-2.5 px-3 rounded-lg text-xs font-bold shadow-xs active:scale-[0.98] transition cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-base text-amber-300">confirmation_number</span>
+              <span>Cupons de Desconto (Planos &amp; Parceiros)</span>
+            </button>
+          )}
         </section>
 
         {/* BUSCA E FILTROS MOBILE */}
@@ -950,6 +987,18 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
 
           {/* Action Buttons - Always on same line */}
           <div className="flex items-center gap-3 shrink-0 flex-nowrap self-start xl:self-center">
+            {onNavigateToCupons && (
+              <button
+                type="button"
+                onClick={onNavigateToCupons}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm transition shadow-xs cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+                title="Criar e gerenciar cupons de desconto para planos e parceiros"
+              >
+                <span className="material-symbols-outlined text-base text-amber-300">confirmation_number</span>
+                <span>Cupons de Desconto</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => showToast('Módulo de importação em lote acionado.')}
@@ -978,6 +1027,29 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
             </button>
           </div>
         </header>
+
+        {/* SUB-NAV TABS: Planos vs Cupons */}
+        <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200/80 w-fit">
+          <button
+            type="button"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-slate-900 font-bold text-sm shadow-xs border border-slate-200/60"
+          >
+            <span className="material-symbols-outlined text-emerald-600 text-base">sell</span>
+            <span>Planos de Assinatura</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">{planos.length}</span>
+          </button>
+          {onNavigateToCupons && (
+            <button
+              type="button"
+              onClick={onNavigateToCupons}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/60 font-semibold text-sm transition cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-purple-600 text-base">confirmation_number</span>
+              <span>Cupons de Desconto</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold">Novo</span>
+            </button>
+          )}
+        </div>
 
         {/* 3. KPI SECTION DESKTOP */}
         <section aria-label="Indicadores de Desempenho" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
