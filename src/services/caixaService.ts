@@ -18,6 +18,18 @@ export interface CaixaMovimentacao {
   hotelId?: string;
 }
 
+export interface CaixaTurnoStatus {
+  aberto: boolean;
+  abertoEm?: string;
+  fechadoEm?: string;
+  operadorAbertura?: string;
+  operadorFechamento?: string;
+  saldoInicial?: number;
+  saldoFechamento?: number;
+  turnoNome?: string;
+  obsFechamento?: string;
+}
+
 const STORAGE_KEY_PREFIX = 'hotelnozap_caixa_movimentacoes_';
 const EXCLUIDOS_KEY = 'hotelnozap_caixa_excluidos_ids';
 
@@ -626,5 +638,25 @@ export const caixaService = {
       quartoNumero: dados.quartoNumero,
       hotelId: dados.hotelId
     }, dados.hotelId);
+  },
+
+  getCaixaStatus(hotelId?: string): CaixaTurnoStatus {
+    try {
+      if (typeof window === 'undefined') return { aberto: true, turnoNome: 'Turno Manhã (07:00 - 15:00)', saldoInicial: 350 };
+      const specificKey = `hotelnozap_caixa_status_${this._getStorageKey(hotelId)}`;
+      const saved = localStorage.getItem(specificKey);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {}
+    return { aberto: true, turnoNome: 'Turno Manhã (07:00 - 15:00)', saldoInicial: 350 };
+  },
+
+  salvarCaixaStatus(status: CaixaTurnoStatus, hotelId?: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const specificKey = `hotelnozap_caixa_status_${this._getStorageKey(hotelId)}`;
+      localStorage.setItem(specificKey, JSON.stringify(status));
+    } catch {}
   }
 };

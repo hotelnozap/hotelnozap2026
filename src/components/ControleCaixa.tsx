@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { caixaService, CaixaMovimentacao } from '../services/caixaService';
+import { caixaService, CaixaMovimentacao, CaixaTurnoStatus } from '../services/caixaService';
 import { supabase } from '../lib/supabase';
-export type { CaixaMovimentacao };
+export type { CaixaMovimentacao, CaixaTurnoStatus };
 
 export interface ControleCaixaProps {
   onNavigateToDashboard?: () => void;
@@ -16,6 +16,10 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
   const [methodFilter, setMethodFilter] = useState<string>('all');
   const [periodFilter, setPeriodFilter] = useState<string>('turn_now');
 
+  // Status de Turno / Caixa Aberto vs Fechado
+  const [caixaStatus, setCaixaStatus] = useState<CaixaTurnoStatus>(() => caixaService.getCaixaStatus());
+  const isCaixaAberto = caixaStatus.aberto;
+
   // Modals
   const [selectedMovForView, setSelectedMovForView] = useState<CaixaMovimentacao | null>(null);
   const [selectedMovForEdit, setSelectedMovForEdit] = useState<CaixaMovimentacao | null>(null);
@@ -24,6 +28,12 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
   const [isEntradaModalOpen, setIsEntradaModalOpen] = useState(false);
   const [isSangriaModalOpen, setIsSangriaModalOpen] = useState(false);
   const [isFecharCaixaModalOpen, setIsFecharCaixaModalOpen] = useState(false);
+  const [isAbrirCaixaModalOpen, setIsAbrirCaixaModalOpen] = useState(false);
+
+  // Abertura de Caixa state
+  const [fundoTrocoAbertura, setFundoTrocoAbertura] = useState<string>('350.00');
+  const [turnoAbertura, setTurnoAbertura] = useState<string>('Turno Manhã (07:00 - 15:00)');
+  const [obsAbertura, setObsAbertura] = useState('');
 
   // Form entries
   const [formDesc, setFormDesc] = useState('');
@@ -45,7 +55,9 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
   };
 
   // Calculations
-  const saldoInicial = 350.00;
+  const saldoInicial = useMemo(() => {
+    return typeof caixaStatus.saldoInicial === 'number' ? caixaStatus.saldoInicial : 350.00;
+  }, [caixaStatus.saldoInicial]);
   
   const totalEntradas = useMemo(() => {
     return movimentacoes
@@ -280,8 +292,36 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
   };
 
   const handleCloseCaixaConfirm = () => {
+    const agoraHora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const novoStatus: CaixaTurnoStatus = {
+      aberto: false,
+      fechadoEm: agoraHora,
+      operadorFechamento: loggedUserName,
+      saldoFechamento: parseFloat(saldoConferidoGaveta) || 0,
+      obsFechamento: obsFechamento.trim(),
+      turnoNome: caixaStatus.turnoNome || 'Turno Manhã',
+      saldoInicial: caixaStatus.saldoInicial ?? 350
+    };
+    caixaService.salvarCaixaStatus(novoStatus);
+    setCaixaStatus(novoStatus);
     setIsFecharCaixaModalOpen(false);
-    showToast('Caixa do turno encerrado e conciliação enviada!');
+    showToast('Caixa do turno encerrado com sucesso!');
+  };
+
+  const handleAbrirCaixaConfirm = () => {
+    const valorTroco = parseFloat(fundoTrocoAbertura) || 0;
+    const agoraHora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const novoStatus: CaixaTurnoStatus = {
+      aberto: true,
+      abertoEm: agoraHora,
+      operadorAbertura: loggedUserName,
+      saldoInicial: valorTroco,
+      turnoNome: turnoAbertura
+    };
+    caixaService.salvarCaixaStatus(novoStatus);
+    setCaixaStatus(novoStatus);
+    setIsAbrirCaixaModalOpen(false);
+    showToast('Caixa aberto com sucesso para o turno!');
   };
 
   const openEdit = (m: CaixaMovimentacao) => {
@@ -325,16 +365,29 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
         {/* Status do Caixa Badge */}
         <div className="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3 bg-white px-3.5 sm:px-4 py-2 rounded-xl border border-slate-200 shadow-xs w-full sm:w-auto">
           <div className="flex items-center gap-2 shrink-0">
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
-            </span>
-            <span className="text-xs uppercase font-bold text-emerald-700 tracking-wider whitespace-nowrap">Caixa Aberto</span>
+            {isCaixaAberto ? (
+              <>
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+                </span>
+                <span className="text-xs uppercase font-bold text-emerald-700 tracking-wider whitespace-nowrap">Caixa Aberto</span>
+              </>
+            ) : (
+              <>
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
+                </span>
+                <span className="text-xs uppercase font-bold text-rose-700 tracking-wider whitespace-nowrap">Caixa Fechado</span>
+              </>
+            )}
           </div>
           <span className="text-slate-300">|</span>
           <div className="flex flex-col text-xs text-slate-600 font-medium leading-tight">
-            <span className="font-semibold text-slate-800">Turno Manhã</span>
-            <span className="text-[11px] text-slate-500 font-normal">(07:00 - 15:00)</span>
+            <span className="font-semibold text-slate-800">{caixaStatus.turnoNome || 'Turno Manhã'}</span>
+            <span className="text-[11px] text-slate-500 font-normal">
+              {isCaixaAberto ? (caixaStatus.abertoEm ? `Aberto às ${caixaStatus.abertoEm}` : '(07:00 - 15:00)') : (caixaStatus.fechadoEm ? `Fechado às ${caixaStatus.fechadoEm}` : 'Encerrado')}
+            </span>
           </div>
           <span className="text-slate-300 hidden sm:inline">|</span>
           <span className="text-xs font-semibold text-slate-800 hidden sm:inline-flex items-center gap-1 shrink-0 whitespace-nowrap">
@@ -467,6 +520,29 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
         </div>
       </div>
 
+      {/* BANNER DE ALERTA: CAIXA FECHADO */}
+      {!isCaixaAberto && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-2xl">lock</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-amber-950">Caixa do Turno Encerrado</h4>
+              <p className="text-xs text-amber-800 mt-0.5">O caixa está fechado no momento. Para iniciar as movimentações deste turno, clique no botão <strong>Abrir Caixa</strong>.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAbrirCaixaModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0"
+          >
+            <span className="material-symbols-outlined text-base">lock_open</span>
+            <span>Abrir Caixa Agora</span>
+          </button>
+        </div>
+      )}
+
       {/* GRID DE BOTÕES DE AÇÃO MOBILE (2X2 1:1 COM O PROTÓTIPO MOBILE) */}
       <div className="grid grid-cols-2 gap-2 sm:hidden w-full">
         {/* Entrada */}
@@ -489,15 +565,26 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
           <span className="whitespace-nowrap">Sangria</span>
         </button>
 
-        {/* Fechar Caixa */}
-        <button 
-          type="button"
-          onClick={() => setIsFecharCaixaModalOpen(true)}
-          className="flex items-center justify-center gap-1.5 h-12 px-2.5 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white shadow-xs active:scale-[0.98] transition-all text-xs font-bold cursor-pointer whitespace-nowrap"
-        >
-          <span className="material-symbols-outlined text-[19px] shrink-0">lock</span>
-          <span className="whitespace-nowrap">Fechar Caixa</span>
-        </button>
+        {/* Abrir / Fechar Caixa */}
+        {isCaixaAberto ? (
+          <button 
+            type="button"
+            onClick={() => setIsFecharCaixaModalOpen(true)}
+            className="flex items-center justify-center gap-1.5 h-12 px-2.5 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white shadow-xs active:scale-[0.98] transition-all text-xs font-bold cursor-pointer whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-[19px] shrink-0">lock</span>
+            <span className="whitespace-nowrap">Fechar Caixa</span>
+          </button>
+        ) : (
+          <button 
+            type="button"
+            onClick={() => setIsAbrirCaixaModalOpen(true)}
+            className="flex items-center justify-center gap-1.5 h-12 px-2.5 rounded-xl bg-[#059669] hover:bg-emerald-700 text-white shadow-xs active:scale-[0.98] transition-all text-xs font-bold cursor-pointer whitespace-nowrap animate-pulse"
+          >
+            <span className="material-symbols-outlined text-[19px] shrink-0">lock_open</span>
+            <span className="whitespace-nowrap">Abrir Caixa</span>
+          </button>
+        )}
 
         {/* Exportar / Relatório */}
         <button 
@@ -557,14 +644,25 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
                 <span>Sangria</span>
               </button>
 
-              <button 
-                type="button"
-                onClick={() => setIsFecharCaixaModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-lg">lock</span>
-                <span>Fechar Caixa</span>
-              </button>
+              {isCaixaAberto ? (
+                <button 
+                  type="button"
+                  onClick={() => setIsFecharCaixaModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-lg">lock</span>
+                  <span>Fechar Caixa</span>
+                </button>
+              ) : (
+                <button 
+                  type="button"
+                  onClick={() => setIsAbrirCaixaModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#059669] hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer animate-pulse"
+                >
+                  <span className="material-symbols-outlined text-lg">lock_open</span>
+                  <span>Abrir Caixa</span>
+                </button>
+              )}
 
               <button 
                 type="button"
@@ -1189,6 +1287,111 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVO: ABERTURA DE CAIXA */}
+      {isAbrirCaixaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-emerald-800 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                  <span className="material-symbols-outlined text-lg">lock_open</span>
+                </div>
+                <h3 className="font-bold text-base">Abertura de Caixa do Turno</h3>
+              </div>
+              <button
+                onClick={() => setIsAbrirCaixaModalOpen(false)}
+                className="text-emerald-100 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs sm:text-sm">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-1 text-emerald-950">
+                <span className="text-[10.5px] font-bold text-emerald-800 uppercase tracking-wider block">Iniciar Novo Turno</span>
+                <p className="text-xs text-emerald-800 leading-relaxed">
+                  Confirme o fundo de troco presente na gaveta e o turno de atendimento para iniciar o registro das operações.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Turno de Atendimento *
+                </label>
+                <select
+                  value={turnoAbertura}
+                  onChange={(e) => setTurnoAbertura(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                >
+                  <option value="Turno Manhã (07:00 - 15:00)">Turno Manhã (07:00 - 15:00)</option>
+                  <option value="Turno Tarde (15:00 - 23:00)">Turno Tarde (15:00 - 23:00)</option>
+                  <option value="Turno Noite (23:00 - 07:00)">Turno Noite (23:00 - 07:00)</option>
+                  <option value="Turno Geral">Turno Geral / Diário</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Fundo de Troco em Gaveta (R$) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={fundoTrocoAbertura}
+                  onChange={(e) => setFundoTrocoAbertura(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Operador Responsável
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={loggedUserName}
+                  className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Observações de Abertura (Opcional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={obsAbertura}
+                  onChange={(e) => setObsAbertura(e.target.value)}
+                  placeholder="Ex: Troco inicial conferido, notas miúdas abastecidas..."
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#003400]"
+                ></textarea>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAbrirCaixaModalOpen(false)}
+                  className="h-11 px-5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold transition-colors cursor-pointer inline-flex items-center justify-center"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAbrirCaixaConfirm}
+                  className="h-11 px-6 rounded-xl bg-[#059669] hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer inline-flex items-center justify-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[18px]">lock_open</span>
+                  <span>Confirmar Abertura</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
