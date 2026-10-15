@@ -372,10 +372,20 @@ export const PainelCamareira: React.FC<PainelCamareiraProps> = ({
 
   const handleConfirmarSaida = () => {
     setModalFinalizarTurnoOpen(false);
+    try {
+      localStorage.removeItem('hotelnozap_user_role');
+      localStorage.removeItem('hotelnozap_user_email');
+      localStorage.removeItem('hotelnozap_user_name');
+      localStorage.removeItem('hotelnozap_current_user');
+      localStorage.removeItem('hotelnozap_user_id');
+      localStorage.removeItem('hotelnozap_user_cargo');
+      sessionStorage.clear();
+      supabase.auth.signOut();
+    } catch {}
     if (onLogout) {
       onLogout();
-    } else if (onNavigateBack) {
-      onNavigateBack();
+    } else {
+      window.location.href = '/';
     }
   };
 

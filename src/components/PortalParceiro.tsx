@@ -546,13 +546,15 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
     localStorage.removeItem('hotelnozap_user_role');
     localStorage.removeItem('hotelnozap_user_email');
     localStorage.removeItem('hotelnozap_user_name');
+    localStorage.removeItem('hotelnozap_current_user');
     localStorage.removeItem('hotelnozap_user_id');
     localStorage.removeItem('hotelnozap_user_cargo');
     try { supabase.auth.signOut(); } catch {}
+    try { sessionStorage.clear(); } catch {}
     if (onLogout) {
       onLogout();
     } else {
-      window.location.href = '/paineladmin';
+      window.location.href = '/';
     }
   };
 

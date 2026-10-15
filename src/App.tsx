@@ -283,7 +283,7 @@ export const App: React.FC = () => {
             const isAdm = roleLower.includes('admin') || roleLower.includes('super');
             return isAdm ? 'admin-dashboard' : 'dashboard';
           }
-          return 'login';
+          return 'catalogo-hoteis';
         }
         return 'catalogo-hoteis';
       }
@@ -888,15 +888,25 @@ export const App: React.FC = () => {
       localStorage.removeItem('hotelnozap_user_role');
       localStorage.removeItem('hotelnozap_user_email');
       localStorage.removeItem('hotelnozap_user_name');
+      localStorage.removeItem('hotelnozap_current_user');
+      localStorage.removeItem('hotelnozap_user_id');
+      localStorage.removeItem('hotelnozap_user_cargo');
       localStorage.removeItem('hotelnozap_hotel_atual');
       localStorage.removeItem('hotelnozap_last_authenticated_at');
       localStorage.removeItem('hotelnozap_last_active_timestamp');
+      sessionStorage.clear();
     } catch { /* ignore */ }
     setCurrentUserRole('');
     setIsUserMenuOpen(false);
     setIsMobileMenuOpen(false);
-    window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
-    setActiveTab('login');
+
+    // Redireciona sempre para a página Home (/)
+    const isAppSubdomain = typeof window !== 'undefined' && window.location.hostname === 'app.hotelnozap.com.br';
+    if (isAppSubdomain && !isStandaloneMode()) {
+      window.location.href = 'https://hotelnozap.com.br/';
+    } else {
+      window.location.href = '/';
+    }
   };
 
   const handleSalvarConfiguracaoInatividade = (enabled: boolean, duration: '8h' | '30m') => {
@@ -2165,8 +2175,6 @@ export const App: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   await handleLogout();
-                  window.history.pushState({}, '', isAppDomain() ? '/' : '/paineladmin');
-                  setActiveTab('login');
                 }}
                 className="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors shadow-sm"
               >
@@ -2237,7 +2245,6 @@ export const App: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   await handleLogout();
-                  setActiveTab('login');
                 }}
                 className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors shadow-sm"
               >
@@ -2254,7 +2261,6 @@ export const App: React.FC = () => {
         <PortalParceiro
           onLogout={async () => {
             await handleLogout();
-            setActiveTab('login');
           }}
           onNavigateHome={() => {
             setActiveTab('catalogo-hoteis');

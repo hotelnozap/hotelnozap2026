@@ -1425,7 +1425,9 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                           localStorage.removeItem('hotelnozap_user_role');
                           localStorage.removeItem('hotelnozap_user_email');
                           localStorage.removeItem('hotelnozap_user_name');
-                          window.location.reload();
+                          localStorage.removeItem('hotelnozap_current_user');
+                          try { sessionStorage.clear(); } catch {}
+                          window.location.href = '/';
                         }}
                         className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
                       >
