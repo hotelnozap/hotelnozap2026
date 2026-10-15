@@ -327,42 +327,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setSuccessMessage('');
 
     const rawInput = email.trim();
-    let cleanEmail = rawInput.toLowerCase();
-    const cleanDigits = rawInput.replace(/\D/g, '');
-
-    // Se o usuário digitou número de telefone, WhatsApp ou CPF no campo "E-mail ou Usuário":
-    if (cleanDigits.length >= 8 && !rawInput.includes('@')) {
-      try {
-        // 1. Busca em usuarios por telefone ou CPF
-        const { data: uFound } = await supabase
-          .from('usuarios')
-          .select('email')
-          .or(`telefone.ilike.%${cleanDigits}%,cpf.ilike.%${cleanDigits}%`)
-          .limit(1)
-          .maybeSingle();
-
-        if (uFound?.email) {
-          cleanEmail = uFound.email.trim().toLowerCase();
-        } else {
-          // 2. Busca em parceiros por whatsapp ou documento
-          const { data: pFound } = await supabase
-            .from('parceiros')
-            .select('email')
-            .or(`whatsapp.ilike.%${cleanDigits}%,documento.ilike.%${cleanDigits}%`)
-            .limit(1)
-            .maybeSingle();
-
-          if (pFound?.email) {
-            cleanEmail = pFound.email.trim().toLowerCase();
-          }
-        }
-      } catch (e) {
-        console.warn('[Login] Falha ao resolver telefone/CPF para email:', e);
-      }
-    }
+    const cleanEmail = rawInput.toLowerCase();
 
     if (!cleanEmail || !password) {
-      setErrorMessage('Por favor, informe seu e-mail (ou WhatsApp/CPF) e sua senha.');
+      setErrorMessage('Por favor, informe seu e-mail e sua senha.');
+      return;
+    }
+
+    if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setErrorMessage('Por favor, informe um endereço de e-mail válido.');
       return;
     }
 
@@ -1229,10 +1202,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 {/* Formulário de Login */}
                 <form onSubmit={handleSubmit} className="space-y-4">
               
-              {/* Campo E-mail / Usuário */}
+              {/* Campo E-mail */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2" htmlFor="desktop-email">
-                  E-mail ou Usuário <span className="text-red-500">*</span>
+                  E-mail <span className="text-red-500">*</span>
                 </label>
                 <div className="relative rounded-xl shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">

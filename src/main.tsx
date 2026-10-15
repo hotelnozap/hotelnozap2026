@@ -73,6 +73,20 @@ if (typeof window !== 'undefined') {
   });
 }
 
+// Intercepta erros de import dinâmico do Vite (deploy recente com chunks renomeados)
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event: any) => {
+    event?.preventDefault?.();
+    const reloadKey = 'hotelnozap_chunk_reload_ts';
+    const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
+    const now = Date.now();
+    if (now - lastReload > 5000) {
+      sessionStorage.setItem(reloadKey, String(now));
+      window.location.reload();
+    }
+  });
+}
+
 interface ErrorBoundaryProps {
   children: ReactNode;
 }
@@ -80,12 +94,13 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
+  isChunkUpdating?: boolean;
 }
 
 class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, isChunkUpdating: false };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -93,20 +108,21 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
     const isChunkError =
       msg.includes('dynamically imported module') ||
       msg.includes('failed to fetch dynamically imported module') ||
+      msg.includes('error loading dynamically imported module') ||
       error?.name === 'ChunkLoadError';
 
     if (isChunkError && typeof window !== 'undefined') {
       const reloadKey = 'hotelnozap_chunk_reload_ts';
       const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
       const now = Date.now();
-      if (now - lastReload > 8000) {
+      if (now - lastReload > 5000) {
         sessionStorage.setItem(reloadKey, String(now));
         window.location.reload();
-        return { hasError: false };
       }
+      return { hasError: true, error, isChunkUpdating: true };
     }
 
-    return { hasError: true, error };
+    return { hasError: true, error, isChunkUpdating: false };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -115,6 +131,17 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 
   render() {
     if (this.state.hasError) {
+      if (this.state.isChunkUpdating) {
+        return (
+          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0b1c30', color: '#fff', fontFamily: 'sans-serif', padding: '20px' }}>
+            <div style={{ width: '38px', height: '38px', border: '3px solid #10b981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '16px' }} />
+            <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#10b981', marginBottom: '4px' }}>Sincronizando atualização...</h3>
+            <p style={{ fontSize: '13px', color: '#94a3b8' }}>Carregando a versão mais recente do sistema.</p>
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+          </div>
+        );
+      }
+
       return (
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0b1c30', color: '#fff', fontFamily: 'sans-serif', padding: '20px' }}>
           <div style={{ maxWidth: '480px', width: '100%', background: '#132338', padding: '32px', borderRadius: '16px', textAlign: 'center', border: '1px solid #1e3a5f' }}>
