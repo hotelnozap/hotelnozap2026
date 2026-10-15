@@ -772,8 +772,27 @@ export const App: React.FC = () => {
     const cleanupNoShow = autoNoShowService.iniciarMonitoramentoGlobal();
 
     // Checagem para abertura proativa do Modal de Reservas do Dia no Desktop e Mobile
+    // Regra estrita: nunca exibir para o Administrador, somente para perfis de Hotel, Gerente e Recepção
     const checkAberturaModal = async () => {
       try {
+        const savedRole = (typeof localStorage !== 'undefined' ? (localStorage.getItem('hotelnozap_user_role') || '') : '').toLowerCase();
+        const isAdmin = 
+          savedRole === 'admin' ||
+          savedRole === 'administrador' ||
+          savedRole === 'superadmin' ||
+          savedRole === 'super admin' ||
+          savedRole === 'master' ||
+          savedRole.startsWith('admin') ||
+          savedRole.startsWith('super');
+
+        const isPermittedRole = !isAdmin && (
+          savedRole.includes('hotel') ||
+          savedRole.includes('gerente') ||
+          savedRole.includes('recep')
+        );
+
+        if (!isPermittedRole) return;
+
         const cur = currentHotelService.getCurrentHotel();
         if (!cur?.id) return;
 
@@ -1598,6 +1617,13 @@ export const App: React.FC = () => {
       }
     }
   }, [isHotelUser, isMasterAdmin, isParceiroUser, isRecepcao, isGerente, canAccessLavanderia, activeTab]);
+
+  // Garante estritamente que o Modal de Reservas do Dia nunca fique aberto para administrador master ou parceiro
+  useEffect(() => {
+    if ((isMasterAdmin || isParceiroUser) && isModalReservasDiaOpen) {
+      setIsModalReservasDiaOpen(false);
+    }
+  }, [isMasterAdmin, isParceiroUser, isModalReservasDiaOpen]);
 
   // Função para obter o link público do hotel logado na rota /hoteis/nomedohotel
   const getLoggedHotelUrl = () => {
@@ -2604,20 +2630,22 @@ export const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* Botão Reservas do Dia (Mobile) */}
-          <button
-            type="button"
-            onClick={() => setIsModalReservasDiaOpen(true)}
-            className="relative p-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold text-xs flex items-center justify-center transition-all cursor-pointer"
-            title="Reservas do Dia & Alertas"
-          >
-            <span className="material-symbols-outlined text-lg text-emerald-300">today</span>
-            {totalReservasDiaCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-emerald-950 text-[9px] flex items-center justify-center font-black animate-pulse">
-                {totalReservasDiaCount}
-              </span>
-            )}
-          </button>
+          {/* Botão Reservas do Dia (Mobile - Exclusivo Hotel, Gerente e Recepção) */}
+          {!isMasterAdmin && (isPerfilHotel || isGerente || isRecepcao) && (
+            <button
+              type="button"
+              onClick={() => setIsModalReservasDiaOpen(true)}
+              className="relative p-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold text-xs flex items-center justify-center transition-all cursor-pointer"
+              title="Reservas do Dia & Alertas"
+            >
+              <span className="material-symbols-outlined text-lg text-emerald-300">today</span>
+              {totalReservasDiaCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-emerald-950 text-[9px] flex items-center justify-center font-black animate-pulse">
+                  {totalReservasDiaCount}
+                </span>
+              )}
+            </button>
+          )}
 
           <NotificationSystem isMobile={true} onNavigateTab={(tab) => setActiveTab(tab)} currentUserRole={currentUserRole} />
           
@@ -3804,21 +3832,23 @@ export const App: React.FC = () => {
                   <span className="material-symbols-outlined text-xs text-blue-500">open_in_new</span>
                 </button>
 
-                {/* Botão Reservas do Dia (Desktop) */}
-                <button
-                  type="button"
-                  onClick={() => setIsModalReservasDiaOpen(true)}
-                  className="relative px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                  title="Painel de Reservas do Dia e Alertas de No-Show"
-                >
-                  <span className="material-symbols-outlined text-base text-emerald-700">today</span>
-                  <span>Reservas do Dia</span>
-                  {totalReservasDiaCount > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-emerald-950 text-[10px] font-black animate-pulse">
-                      {totalReservasDiaCount}
-                    </span>
-                  )}
-                </button>
+                {/* Botão Reservas do Dia (Desktop - Exclusivo Hotel, Gerente e Recepção) */}
+                {!isMasterAdmin && (isPerfilHotel || isGerente || isRecepcao) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsModalReservasDiaOpen(true)}
+                    className="relative px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    title="Painel de Reservas do Dia e Alertas de No-Show"
+                  >
+                    <span className="material-symbols-outlined text-base text-emerald-700">today</span>
+                    <span>Reservas do Dia</span>
+                    {totalReservasDiaCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-emerald-950 text-[10px] font-black animate-pulse">
+                        {totalReservasDiaCount}
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 {/* Botão Alternar Telas (Desktop) */}
                 <button
@@ -4784,20 +4814,22 @@ export const App: React.FC = () => {
         onClose={() => setIsPermissionsModalOpen(false)}
       />
 
-      {/* MODAL PROATIVO DE RESERVAS DO DIA & ALERTAS DE NO-SHOW (DESKTOP E MOBILE) */}
-      <ModalReservasDoDia
-        isOpen={isModalReservasDiaOpen}
-        onClose={() => setIsModalReservasDiaOpen(false)}
-        hotelId={activeHotel.id}
-        onRealizarCheckin={() => {
-          setIsModalReservasDiaOpen(false);
-          setActiveTab('reservas');
-        }}
-        onRealizarCheckout={() => {
-          setIsModalReservasDiaOpen(false);
-          setActiveTab('reservas');
-        }}
-      />
+      {/* MODAL PROATIVO DE RESERVAS DO DIA & ALERTAS DE NO-SHOW (EXCLUSIVO PARA HOTEL, GERENTE E RECEPÇÃO) */}
+      {!isMasterAdmin && (isPerfilHotel || isGerente || isRecepcao) && (
+        <ModalReservasDoDia
+          isOpen={isModalReservasDiaOpen}
+          onClose={() => setIsModalReservasDiaOpen(false)}
+          hotelId={activeHotel.id}
+          onRealizarCheckin={() => {
+            setIsModalReservasDiaOpen(false);
+            setActiveTab('reservas');
+          }}
+          onRealizarCheckout={() => {
+            setIsModalReservasDiaOpen(false);
+            setActiveTab('reservas');
+          }}
+        />
+      )}
 
       {/* MODAL GLOBAL DE ALTERNÂNCIA DE AMBIENTES (MULTITELAS) */}
       <ModalAlternarAmbientes
