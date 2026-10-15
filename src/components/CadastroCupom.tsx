@@ -35,7 +35,7 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
     cupomToEdit?.data_inicio || new Date().toISOString().split('T')[0]
   );
   const [naoExpira, setNaoExpira] = useState<boolean>(
-    cupomToEdit ? !cupomToEdit.data_expiracao : false
+    cupomToEdit ? (!cupomToEdit.data_expiracao || cupomToEdit.data_expiracao.startsWith('2099')) : false
   );
   const [diasValidade, setDiasValidade] = useState<string>(() => {
     if (cupomToEdit?.data_expiracao && cupomToEdit?.data_inicio) {
@@ -172,9 +172,9 @@ export const CadastroCupom: React.FC<CadastroCupomProps> = ({
       }
 
       onSaveSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao salvar cupom:', err);
-      setErroMsg('Ocorreu um erro ao salvar o cupom. Verifique os dados e tente novamente.');
+      setErroMsg(err?.message || 'Ocorreu um erro ao salvar o cupom no banco de dados. Verifique os dados e tente novamente.');
     } finally {
       setIsSaving(false);
     }

@@ -95,13 +95,13 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
   }, [cupons]);
 
   const isExpirado = (dataExp?: string | null) => {
-    if (!dataExp) return false;
+    if (!dataExp || dataExp.startsWith('2099')) return false;
     const today = new Date().toISOString().split('T')[0];
     return today > dataExp;
   };
 
   const formatarDataBR = (dataStr?: string | null) => {
-    if (!dataStr) return '-';
+    if (!dataStr || dataStr.startsWith('2099')) return 'Sem expiração';
     try {
       const [ano, mes, dia] = dataStr.split('-');
       if (ano && mes && dia) return `${dia}/${mes}/${ano}`;

@@ -294,7 +294,7 @@ export const cuponsService = {
           valor_desconto: Number(d.valor_desconto) || 0,
           valor_minimo_reserva: d.valor_minimo_reserva !== null ? Number(d.valor_minimo_reserva) : 0,
           data_inicio: d.data_inicio,
-          data_expiracao: d.data_expiracao,
+          data_expiracao: (d.data_expiracao && d.data_expiracao.startsWith('2099')) ? null : d.data_expiracao,
           limite_usos: d.limite_usos !== null ? Number(d.limite_usos) : null,
           usos_atuais: Number(d.usos_atuais) || 0,
           status: d.status || 'Ativo',
@@ -340,7 +340,7 @@ export const cuponsService = {
             valor_desconto: Number(d.valor_desconto) || 0,
             valor_minimo_reserva: d.valor_minimo_reserva !== null ? Number(d.valor_minimo_reserva) : 0,
             data_inicio: d.data_inicio,
-            data_expiracao: d.data_expiracao,
+            data_expiracao: (d.data_expiracao && d.data_expiracao.startsWith('2099')) ? null : d.data_expiracao,
             limite_usos: d.limite_usos !== null ? Number(d.limite_usos) : null,
             usos_atuais: Number(d.usos_atuais) || 0,
             status: d.status || 'Ativo',
@@ -505,80 +505,152 @@ export const cuponsService = {
    */
   async createCupom(novoCupom: Partial<CupomDesconto>): Promise<CupomDesconto> {
     const current = currentHotelService.getCurrentHotel();
-    const payload: Partial<CupomDesconto> = {
-      id: `cupom-${Date.now()}`,
+    const codigoClean = (novoCupom.codigo || 'DESC10').trim().toUpperCase();
+
+    // Compatibilidade com NOT NULL no banco de dados (2099-12-31 = sem expiração / perpétuo)
+    const dataExpDb = (!novoCupom.data_expiracao || novoCupom.data_expiracao.startsWith('2099'))
+      ? '2099-12-31'
+      : novoCupom.data_expiracao;
+
+    // Payload sanitizado estritamente com as colunas existentes na tabela cupons_desconto do Supabase
+    const dbPayload: Record<string, any> = {
       hotel_id: novoCupom.hotel_id !== undefined ? novoCupom.hotel_id : (current?.id || null),
       hotel_nome: novoCupom.hotel_nome || (novoCupom.hotel_id ? current?.name : 'Plataforma Hotel no Zap'),
-      hotel_cidade: novoCupom.hotel_cidade || current?.cityUf || current?.city || '',
-      codigo: (novoCupom.codigo || 'DESC10').trim().toUpperCase(),
+      codigo: codigoClean,
       tipo_desconto: novoCupom.tipo_desconto || 'porcentagem',
       valor_desconto: Number(novoCupom.valor_desconto) || 10,
       valor_minimo_reserva: novoCupom.valor_minimo_reserva ? Number(novoCupom.valor_minimo_reserva) : 0,
       data_inicio: novoCupom.data_inicio || new Date().toISOString().split('T')[0],
-      data_expiracao: novoCupom.data_expiracao ? novoCupom.data_expiracao : null,
-      limite_usos: novoCupom.limite_usos ? Number(novoCupom.limite_usos) : null,
-      usos_atuais: 0,
+      data_expiracao: dataExpDb,
+      limite_usos: (novoCupom.limite_usos !== undefined && novoCupom.limite_usos !== null) ? Number(novoCupom.limite_usos) : null,
+      usos_atuais: Number(novoCupom.usos_atuais) || 0,
       status: novoCupom.status || 'Ativo',
       visivel_hospedes: novoCupom.visivel_hospedes !== false,
-      descricao: novoCupom.descricao || '',
-      aplicavel_em: novoCupom.aplicavel_em || 'todos',
-      created_at: new Date().toISOString()
+      descricao: (novoCupom.descricao || '').trim(),
+      aplicavel_em: novoCupom.aplicavel_em || 'todos'
     };
+
+    console.info('[cuponsService] Registrando cupom no Supabase:', dbPayload);
+
+    let supabaseId = '';
+    let supabaseCreatedAt = new Date().toISOString();
 
     try {
       const { data, error } = await supabase
         .from('cupons_desconto')
-        .insert([payload])
+        .insert([dbPayload])
         .select()
         .single();
 
-      if (!error && data) {
-        payload.id = data.id;
+      if (error) {
+        console.error('[cuponsService] Erro ao registrar cupom no Supabase:', error);
+        throw new Error(error.message || 'Falha ao registrar cupom no banco de dados Supabase.');
       }
-    } catch (err) {
-      console.warn('Erro ao inserir cupom no Supabase. Salvando localmente:', err);
+
+      if (data) {
+        supabaseId = data.id;
+        supabaseCreatedAt = data.created_at || supabaseCreatedAt;
+        console.info('[cuponsService] Cupom gravado no Supabase com sucesso! ID:', data.id);
+      }
+    } catch (err: any) {
+      console.error('[cuponsService] Exceção ao gravar cupom no Supabase:', err);
+      throw err;
     }
 
+    const finalCupom: CupomDesconto = {
+      id: supabaseId || `cupom-${Date.now()}`,
+      hotel_id: dbPayload.hotel_id,
+      hotel_nome: dbPayload.hotel_nome,
+      hotel_cidade: novoCupom.hotel_cidade || current?.cityUf || current?.city || '',
+      codigo: dbPayload.codigo,
+      tipo_desconto: dbPayload.tipo_desconto,
+      valor_desconto: dbPayload.valor_desconto,
+      valor_minimo_reserva: dbPayload.valor_minimo_reserva,
+      data_inicio: dbPayload.data_inicio,
+      data_expiracao: (!novoCupom.data_expiracao || novoCupom.data_expiracao === '2099-12-31') ? null : novoCupom.data_expiracao,
+      limite_usos: dbPayload.limite_usos,
+      usos_atuais: dbPayload.usos_atuais,
+      status: dbPayload.status,
+      visivel_hospedes: dbPayload.visivel_hospedes,
+      descricao: dbPayload.descricao,
+      aplicavel_em: dbPayload.aplicavel_em,
+      created_at: supabaseCreatedAt
+    };
+
     const currentList = loadFromStorage();
-    const updated = [payload as CupomDesconto, ...currentList.filter(c => c.id !== payload.id)];
+    const updated = [finalCupom, ...currentList.filter(c => c.id !== finalCupom.id && c.codigo !== finalCupom.codigo)];
     saveToStorage(updated);
 
-    return payload as CupomDesconto;
+    return finalCupom;
   },
 
   /**
-   * Atualiza um cupom existente
+   * Atualiza um cupom existente no Supabase e no localStorage
    */
   async updateCupom(id: string, updates: Partial<CupomDesconto>): Promise<boolean> {
-    const cleanUpdates = { ...updates };
-    if (cleanUpdates.codigo) {
-      cleanUpdates.codigo = cleanUpdates.codigo.trim().toUpperCase();
+    const cleanCodigo = updates.codigo ? updates.codigo.trim().toUpperCase() : undefined;
+
+    // Sanitizar payload com colunas existentes na tabela cupons_desconto do Supabase
+    const dbPayload: Record<string, any> = {
+      updated_at: new Date().toISOString()
+    };
+
+    if (cleanCodigo) dbPayload.codigo = cleanCodigo;
+    if (updates.tipo_desconto !== undefined) dbPayload.tipo_desconto = updates.tipo_desconto;
+    if (updates.valor_desconto !== undefined) dbPayload.valor_desconto = Number(updates.valor_desconto);
+    if (updates.valor_minimo_reserva !== undefined) dbPayload.valor_minimo_reserva = Number(updates.valor_minimo_reserva);
+    if (updates.data_inicio !== undefined) dbPayload.data_inicio = updates.data_inicio;
+    if (updates.data_expiracao !== undefined) {
+      dbPayload.data_expiracao = (!updates.data_expiracao || updates.data_expiracao.startsWith('2099'))
+        ? '2099-12-31'
+        : updates.data_expiracao;
     }
+    if (updates.limite_usos !== undefined) dbPayload.limite_usos = updates.limite_usos;
+    if (updates.usos_atuais !== undefined) dbPayload.usos_atuais = updates.usos_atuais;
+    if (updates.status !== undefined) dbPayload.status = updates.status;
+    if (updates.visivel_hospedes !== undefined) dbPayload.visivel_hospedes = updates.visivel_hospedes;
+    if (updates.descricao !== undefined) dbPayload.descricao = (updates.descricao || '').trim();
+    if (updates.aplicavel_em !== undefined) dbPayload.aplicavel_em = updates.aplicavel_em;
+    if (updates.hotel_id !== undefined) dbPayload.hotel_id = updates.hotel_id;
+    if (updates.hotel_nome !== undefined) dbPayload.hotel_nome = updates.hotel_nome;
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('cupons_desconto')
-        .update(cleanUpdates)
+        .update(dbPayload)
         .eq('id', id);
-    } catch (err) {
-      console.warn('Erro ao atualizar cupom no Supabase:', err);
+
+      if (error) {
+        console.error('[cuponsService] Erro ao atualizar cupom no Supabase:', error);
+        throw new Error(error.message || 'Falha ao atualizar cupom no banco de dados.');
+      }
+      console.info('[cuponsService] Cupom atualizado no Supabase com sucesso. ID:', id);
+    } catch (err: any) {
+      console.error('[cuponsService] Exceção no updateCupom:', err);
+      throw err;
     }
 
     const currentList = loadFromStorage();
-    const updated = currentList.map(c => (c.id === id ? { ...c, ...cleanUpdates } : c));
+    const updated = currentList.map(c => (c.id === id ? { ...c, ...updates, ...(cleanCodigo ? { codigo: cleanCodigo } : {}) } : c));
     saveToStorage(updated);
 
     return true;
   },
 
   /**
-   * Exclui um cupom
+   * Exclui um cupom no Supabase e no localStorage
    */
   async deleteCupom(id: string): Promise<boolean> {
     try {
-      await supabase.from('cupons_desconto').delete().eq('id', id);
-    } catch (err) {
-      console.warn('Erro ao excluir cupom no Supabase:', err);
+      const { error } = await supabase.from('cupons_desconto').delete().eq('id', id);
+      if (error) {
+        console.error('[cuponsService] Erro ao excluir cupom no Supabase:', error);
+        throw new Error(error.message || 'Falha ao excluir cupom do banco de dados.');
+      }
+      console.info('[cuponsService] Cupom excluído no Supabase com sucesso. ID:', id);
+    } catch (err: any) {
+      console.error('[cuponsService] Exceção no deleteCupom:', err);
+      throw err;
     }
 
     const currentList = loadFromStorage();
