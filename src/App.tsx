@@ -106,6 +106,7 @@ const CadastroContaReceber = lazy(() => import('./components/CadastroContaRecebe
 const ConexoesWhatsapp = lazy(() => import('./components/ConexoesWhatsapp'));
 const AdminConexoesWhatsapp = lazy(() => import('./components/AdminConexoesWhatsapp'));
 const AdminDisparadorGoogle = lazy(() => import('./components/AdminDisparadorGoogle').then(m => ({ default: m.AdminDisparadorGoogle })));
+const AdminSuperAgenteVendedor = lazy(() => import('./components/AdminSuperAgenteVendedor').then(m => ({ default: m.AdminSuperAgenteVendedor })));
 const ListagemParceiros = lazy(() => import('./components/ListagemParceiros'));
 const CadastroParceiro = lazy(() => import('./components/CadastroParceiro'));
 const CadastroHoteis = lazy(() => import('./components/CadastroHoteis'));
@@ -3024,6 +3025,22 @@ export const App: React.FC = () => {
 
                   <button
                     type="button"
+                    onClick={() => { setActiveTab('super-agente-vendedor'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                      activeTab === 'super-agente-vendedor'
+                        ? 'bg-white/10 text-white font-medium border-l-4 border-amber-400'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined ${activeTab === 'super-agente-vendedor' ? 'text-amber-400' : ''}`}>smart_toy</span>
+                    <span>Super Agente Vendedor</span>
+                    <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                      IA VIP
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => { setActiveTab('admin-notificacoes'); setIsMobileMenuOpen(false); }}
                     className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
                       activeTab === 'admin-notificacoes'
@@ -3519,6 +3536,22 @@ export const App: React.FC = () => {
                 <span>Disparador Google</span>
                 <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
                   Antibloqueio
+                </span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setActiveTab('super-agente-vendedor')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                  activeTab === 'super-agente-vendedor'
+                    ? 'bg-white/10 text-white font-medium border-l-4 border-amber-400'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className={`material-symbols-outlined ${activeTab === 'super-agente-vendedor' ? 'text-amber-400' : ''}`}>smart_toy</span>
+                <span>Super Agente Vendedor</span>
+                <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                  IA VIP
                 </span>
               </button>
 
@@ -4667,6 +4700,13 @@ export const App: React.FC = () => {
           {activeTab === 'disparador-google' && isMasterAdmin && (
             <AdminDisparadorGoogle
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
+              onGoToSuperAgente={() => setActiveTab('super-agente-vendedor')}
+            />
+          )}
+          {activeTab === 'super-agente-vendedor' && isMasterAdmin && (
+            <AdminSuperAgenteVendedor
+              onBackToDashboard={() => setActiveTab('admin-dashboard')}
+              onGoToDisparador={() => setActiveTab('disparador-google')}
             />
           )}
           {activeTab === 'admin-financeiro' && isMasterAdmin && (
@@ -4768,7 +4808,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'disparador-google' && activeTab !== 'admin-notificacoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'logs-sistema' && activeTab !== 'mapa' && activeTab !== 'governanca' && activeTab !== 'lavanderia' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cupons' && activeTab !== 'cadastro-cupom' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
+          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'disparador-google' && activeTab !== 'super-agente-vendedor' && activeTab !== 'admin-notificacoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'logs-sistema' && activeTab !== 'mapa' && activeTab !== 'governanca' && activeTab !== 'lavanderia' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cupons' && activeTab !== 'cadastro-cupom' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
             <div className="p-8 text-center text-[#45464d]">
               <h2 className="text-xl font-bold text-[#0b1c30] mb-2">Tela em construção</h2>
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>

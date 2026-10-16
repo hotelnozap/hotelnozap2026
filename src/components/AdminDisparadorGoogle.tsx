@@ -9,9 +9,13 @@ import { evolutionApiService } from '../services/evolutionApiService';
 
 export interface AdminDisparadorGoogleProps {
   onBackToDashboard: () => void;
+  onGoToSuperAgente?: () => void;
 }
 
-export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ onBackToDashboard }) => {
+export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ 
+  onBackToDashboard,
+  onGoToSuperAgente
+}) => {
   // Lista de Hotéis
   const [hoteis, setHoteis] = useState<HotelGoogleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -463,6 +467,17 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
               </select>
             </div>
 
+            {onGoToSuperAgente && (
+              <button
+                type="button"
+                onClick={onGoToSuperAgente}
+                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 border border-amber-500/40 text-amber-300 hover:text-amber-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-sm">smart_toy</span>
+                Super Agente Vendedor
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onBackToDashboard}
@@ -590,6 +605,18 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
             </span>
           )}
         </button>
+
+        {onGoToSuperAgente && (
+          <button
+            type="button"
+            onClick={onGoToSuperAgente}
+            className="sm:ml-auto flex items-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-black transition-all cursor-pointer shadow-sm group"
+          >
+            <span className="material-symbols-outlined text-base text-amber-400 group-hover:scale-110 transition-transform">smart_toy</span>
+            <span>Fluxo Comercial IA (Vendedor)</span>
+            <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+          </button>
+        )}
       </div>
 
       {/* PAINEL DE CONTROLE DA FILA (SE ATIVA OU EM ANDAMENTO) */}
