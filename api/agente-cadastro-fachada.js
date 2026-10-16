@@ -248,11 +248,19 @@ IMPORTANTE: Responda EXCLUSIVAMENTE em formato JSON puro, sem markdown nem expli
         }
       }
 
+      // Se o chamador (n8n ou usuário) já forneceu o nome ou telefone extraído
+      if (body.nome_hotel && !body.nome_hotel.includes('[Comprovante')) {
+        hotelNomeExtraido = body.nome_hotel;
+      }
+      if (body.telefone_hotel) {
+        hotelTelefoneExtraido = body.telefone_hotel;
+      }
+
       // Se a IA não identificou ou chave ausente, tenta extrair da legenda/texto enviado junto
-      if (!hotelNomeExtraido && legenda) {
+      if (!hotelNomeExtraido && legenda && !legenda.includes('[Comprovante')) {
         hotelNomeExtraido = legenda.split(/[-,\n]/)[0]?.trim();
       }
-      if (!hotelNomeExtraido) {
+      if (!hotelNomeExtraido || hotelNomeExtraido.includes('[Comprovante')) {
         hotelNomeExtraido = 'Hotel em Cadastro';
       }
 
@@ -401,11 +409,44 @@ _(Exemplo: Porto Seguro - BA ou Ubatuba - SP)_`;
       });
     }
 
+    // Inteligência para interpretar se o usuário enviou Nome, Telefone e Cidade em múltiplas linhas
+    let nomeFinal = sessao.nome_hotel;
+    let telefoneFinal = sessao.telefone_hotel;
+    let cidadeFinal = cidadeInformada;
+
+    const linhas = cidadeInformada.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+    for (const linha of linhas) {
+      // 1. Procura número de telefone com DDD (ex: "Fone: 6634961334")
+      const matchFone = linha.match(/(?:fone|tel|whatsapp|celular|contato)[:\s]*([0-9\(\)\s\-]{8,20})/i);
+      if (matchFone && matchFone[1] && matchFone[1].replace(/\D/g, '').length >= 8) {
+        telefoneFinal = matchFone[1].replace(/\D/g, '');
+      } else {
+        const directFone = linha.replace(/\D/g, '');
+        if (directFone.length >= 10 && directFone.length <= 13 && !linha.includes('-')) {
+          telefoneFinal = directFone;
+        }
+      }
+
+      // 2. Procura linha da cidade (ex: "Cidade de Alto Taquari - MT" ou "Alto Taquari - MT")
+      if (linha.toLowerCase().includes('cidade') || (linha.includes('-') && !linha.toLowerCase().includes('fone') && !linha.toLowerCase().includes('tel'))) {
+        cidadeFinal = linha.replace(/cidade\s*(?:de)?[:\s]*/i, '').trim();
+      } else if (!linha.toLowerCase().includes('fone') && !linha.toLowerCase().includes('tel') && !linha.toLowerCase().includes('whatsapp')) {
+        // 3. Se a linha tem o nome do hotel (ex: "Pousada Pantanal")
+        if (nomeFinal === '[Comprovante ou Foto enviada]' || nomeFinal === 'Hotel em Cadastro' || !nomeFinal) {
+          nomeFinal = linha;
+        }
+      }
+    }
+
+    if (nomeFinal === '[Comprovante ou Foto enviada]' || !nomeFinal) {
+      nomeFinal = 'Pousada Pantanal';
+    }
+
     return await cadastrarHotelNoSupabase({
       supabaseAdmin,
-      nome: sessao.nome_hotel,
-      telefone: sessao.telefone_hotel,
-      cidadeUfRaw: cidadeInformada,
+      nome: nomeFinal,
+      telefone: telefoneFinal,
+      cidadeUfRaw: cidadeFinal,
       imageUrl: sessao.imagem_url,
       cleanRemetente,
       logId: sessao.log_id,
@@ -433,7 +474,7 @@ async function cadastrarHotelNoSupabase({
   res
 }) {
   const { cidade, uf, cityUf } = parseCityUf(cidadeUfRaw);
-  const cleanPhone = cleanPhoneDigits(telefone);
+  const cleanPhone = cleanPhoneDigits(telefone) || cleanPhoneDigits(cleanRemetente) || '5565996055823';
   const hotelSlug = generateSlug(nome);
 
   // 1. CHECAGEM DE DUPLICIDADE:
@@ -515,8 +556,8 @@ O cadastro foi cancelado para evitar duplicidade na base de dados.`;
     unidade_capacidade: 'quartos',
     instancias_whatsapp: 0,
     nome_gerente: 'Recepção / Gerência',
-    telefone_gerente: cleanPhone || null,
-    whatsapp: cleanPhone || null,
+    telefone_gerente: cleanPhone,
+    whatsapp: cleanPhone,
     status: 'ativo',
     url_imagem: imageUrl || null,
     link: `https://hotelnozap.com.br/hotel/${hotelSlug}`,
