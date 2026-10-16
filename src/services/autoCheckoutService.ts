@@ -202,11 +202,15 @@ export const autoCheckoutService = {
     // 3. Listeners ao retornar à aba ou trocar de hotel
     const handleRecheck = () => {
       this.verificarEExecutarCheckoutsAutomaticos();
+    };
+
+    const handleHotelChanged = () => {
+      this.verificarEExecutarCheckoutsAutomaticos();
       templateMensagemService.verificarEDispararLembretesCheckinDoDia().catch(() => {});
     };
 
     window.addEventListener('focus', handleRecheck);
-    window.addEventListener('hotel_changed', handleRecheck);
+    window.addEventListener('hotel_changed', handleHotelChanged);
     window.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         handleRecheck();
@@ -217,7 +221,7 @@ export const autoCheckoutService = {
       clearInterval(timer);
       clearInterval(timerLembretes);
       window.removeEventListener('focus', handleRecheck);
-      window.removeEventListener('hotel_changed', handleRecheck);
+      window.removeEventListener('hotel_changed', handleHotelChanged);
     };
   }
 };

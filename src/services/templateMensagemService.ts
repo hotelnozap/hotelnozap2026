@@ -9,6 +9,41 @@ import { currentHotelService } from './supabaseService';
 import { supabase } from '../lib/supabase';
 import { formatPhoneEvolution } from '../utils/masks';
 
+/**
+ * Calcula com precisão as horas restantes até o check-in no fuso do hotel
+ */
+export function calcularHorasAteCheckin(
+  dataCheckinStr: any,
+  horarioCheckinStr: string = '12:00',
+  timeZone: string = 'America/Cuiaba'
+): number {
+  try {
+    if (!dataCheckinStr) return 999;
+    const cleanDate = String(dataCheckinStr).split('T')[0].split(' ')[0];
+    const parts = cleanDate.includes('/') ? cleanDate.split('/') : cleanDate.split('-');
+    let year = 2026, month = 1, day = 1;
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        year = Number(parts[0]);
+        month = Number(parts[1]);
+        day = Number(parts[2]);
+      } else {
+        day = Number(parts[0]);
+        month = Number(parts[1]);
+        year = Number(parts[2]);
+      }
+    }
+    const [h, m] = (horarioCheckinStr || '12:00').split(':').map(Number);
+    // Offsets no Brasil: Cuiabá é UTC-4, Brasília/São Paulo é UTC-3
+    const isCuiaba = String(timeZone || '').includes('Cuiaba');
+    const offsetHours = isCuiaba ? 4 : 3;
+    const checkinUtcMs = Date.UTC(year, month - 1, day, (h || 12) + offsetHours, m || 0, 0);
+    return (checkinUtcMs - Date.now()) / (1000 * 60 * 60);
+  } catch {
+    return 999;
+  }
+}
+
 export type TemplateType = 'boas_vindas' | 'confirmacao' | 'lembrete_checkin' | 'checkout' | 'pix';
 
 export interface TemplateTags {
@@ -21,6 +56,10 @@ export interface TemplateTags {
   checkout?: string;
   valor_total?: string;
   link_pagamento?: string;
+  horario_checkin?: string;
+  horario_checkout?: string;
+  aviso_checkin?: string;
+  frase_tempo?: string;
   [key: string]: string | undefined;
 }
 
@@ -34,15 +73,15 @@ export interface TemplatesConfig {
 
 export const TEMPLATES_PADRAO: TemplatesConfig = {
   boas_vindas:
-    'Olá {nome_hospede}! 😉\nSeja Bem-vindo(a) ao {nome_hotel}. 🫡\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 {link_hotel}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição por aqui!',
+    'Olá, {nome_hospede}! 👋 Seja bem-vindo(a) ao {nome_hotel}.\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 {link_hotel}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
   confirmacao:
-    '🎉 Parabéns {nome_hospede}! Sua reserva no {nome_hotel} foi confirmada com sucesso! 🏨\n\n📌 Acomodação: {tipo_quarto} (Quarto {numero_quarto})\n📅 Check-in: {checkin} (a partir das 12:00)\n📅 Check-out: {checkout}\n💰 Valor Total: {valor_total}\n\n⏰ HORÁRIO E TOLERÂNCIA: O check-in inicia às 12:00 com tolerância de até 8 horas (até às 20:00). Caso ocorra qualquer imprevisto ou atraso na viagem, avise nossa recepção por aqui para mantermos seu quarto garantido!\n\nEstamos ansiosos para recebê-lo(a)!',
+    '🎉 Parabéns, {nome_hospede}! Sua reserva no {nome_hotel} foi confirmada com sucesso! 🏨\n\n📌 Acomodação: {tipo_quarto} (Quarto {numero_quarto})\n📅 Check-in: {checkin} (a partir das {horario_checkin})\n📅 Check-out: {checkout}\n💰 Valor Total: {valor_total}\n\n⏰ Horário de entrada: a partir das {horario_checkin} (aguardamos sua chegada até às 20:00). Caso ocorra qualquer imprevisto ou atraso na viagem, avise nossa recepção com antecedência para mantermos seu quarto garantido!\n\nEstamos ansiosos para recebê-lo(a)!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
   lembrete_checkin:
-    'Olá {nome_hospede}! Amanhã é o dia do seu check-in no {nome_hotel}! 🧳\n\n⏰ Horário de entrada: a partir das 12:00 (Aguardamos sua chegada até às 20:00).\nLocalização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver qualquer imprevisto na estrada, basta responder aqui para mantermos sua recepção garantida!',
+    'Olá, {nome_hospede}! {aviso_checkin} 🧳\n\n⏰ Horário de entrada: a partir das {horario_checkin} (aguardamos sua chegada até às 20:00).\n📍 Localização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver qualquer imprevisto na estrada, avise nossa recepção com antecedência para mantermos sua entrada garantida!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
   checkout:
-    'Olá {nome_hospede}! Esperamos que sua estadia no {nome_hotel} tenha sido maravilhosa! ✨\n\nAgradecemos muito pela preferência. Foi um prazer recebê-lo(a). Poderia nos avaliar com 5 estrelas no Google Maps? Até a próxima viagem!',
+    'Olá, {nome_hospede}! Esperamos que sua estadia no {nome_hotel} tenha sido maravilhosa! ✨\n\nAgradecemos muito pela preferência. Foi um prazer recebê-lo(a). Poderia nos avaliar no Google Maps? Até a próxima viagem!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
   pix:
-    'Olá {nome_hospede}! Para garantir sua reserva no {nome_hotel}, segue a chave PIX para pagamento:\n\n🔑 Chave PIX: {chave_pix}\n💰 Valor: {valor_total}\n\nAssim que efetuar o pagamento, nos envie o comprovante por aqui para confirmação imediata!'
+    'Olá, {nome_hospede}! Para garantir sua reserva no {nome_hotel}, segue a chave PIX para pagamento:\n\n🔑 Chave PIX: {chave_pix}\n💰 Valor Total: {valor_total}\n\nAssim que efetuar o pagamento, envie o comprovante por aqui para confirmação imediata!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_'
 };
 
 export interface AutomacoesConfig {
@@ -320,7 +359,14 @@ export const templateMensagemService = {
   renderTemplate(type: TemplateType, tags: TemplateTags, hotelId?: string): string {
     const templates = this.getHotelTemplates(hotelId);
     const text = templates[type] || TEMPLATES_PADRAO[type] || '';
-    return this.interpolarTemplate(text, tags, hotelId);
+    let rendered = this.interpolarTemplate(text, tags, hotelId);
+
+    const rodapeObrigatorio = '_Esta é uma mensagem automática do sistema, por favor não responder!_';
+    if (!rendered.includes('Esta é uma mensagem automática do sistema, por favor não responder!')) {
+      rendered = `${rendered.trim()}\n\n${rodapeObrigatorio}`;
+    }
+
+    return rendered;
   },
 
   /**
@@ -712,6 +758,19 @@ export const templateMensagemService = {
       return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
+    let horarioCheckin = '12:00';
+    let horarioCheckout = '12:00';
+    try {
+      if (hotelData?.observacoes) {
+        const matchCfg = hotelData.observacoes.match(/<!-- HOTEL_CONFIG_JSON:(.*?):END_HOTEL_CONFIG -->/s);
+        if (matchCfg && matchCfg[1]) {
+          const cfg = JSON.parse(matchCfg[1]);
+          if (cfg.checkInHorario) horarioCheckin = cfg.checkInHorario;
+          if (cfg.checkOutHorario) horarioCheckout = cfg.checkOutHorario;
+        }
+      }
+    } catch {}
+
     const tags: TemplateTags = {
       nome_hospede: hospedeNome,
       nome_hotel: hotelData?.nome || hotelData?.name || hotelData?.razao_social || 'Hotel',
@@ -720,7 +779,10 @@ export const templateMensagemService = {
       tipo_quarto: quartoData?.tipo || quartoData?.nome || dados.tipo_quarto || dados.quartoTipo || 'Acomodação',
       checkin: formatarDataBR(dados.data_checkin || dados.checkIn),
       checkout: formatarDataBR(dados.data_checkout || dados.checkOut),
-      valor_total: formatarMoedaBR(dados.valor_total || dados.valorTotal)
+      valor_total: formatarMoedaBR(dados.valor_total || dados.valorTotal),
+      horario_checkin: horarioCheckin,
+      horario_checkout: horarioCheckout,
+      aviso_checkin: `Hoje é o dia do seu check-in no ${hotelData?.nome || 'Hotel'}!`
     };
 
     return {
@@ -911,11 +973,12 @@ export const templateMensagemService = {
   },
 
   /**
-   * Dispara lembrete de check-in automático
+   * Dispara lembrete de check-in automático (exatamente 6h ou 2h antes do check-in)
    */
   async dispararLembreteCheckinAutomatico(
     hotelId: string | undefined,
-    dados: any
+    dados: any,
+    tipoAntecedencia: '6h' | '2h' = '6h'
   ): Promise<{ success: boolean; via?: string; instanceName?: string; error?: string }> {
     try {
       if (!dados) return { success: false, error: 'Dados não informados' };
@@ -926,13 +989,22 @@ export const templateMensagemService = {
         return { success: false, error: 'Automação de lembrete de check-in desativada' };
       }
 
-      // Proteção anti-duplicidade (2 horas)
-      const reservaId = dados.id || `${dados.nome_hospede}_${dados.numero_quarto}_lembrete`;
-      const cacheKey = `lembrete_checkin_${reservaId}`;
+      // Verificação de segurança no banco de dados para evitar qualquer duplicidade
+      const tagBanco = tipoAntecedencia === '6h'
+        ? '<!-- LEMBRETE_CHECKIN_6H_ENVIADO:true -->'
+        : '<!-- LEMBRETE_CHECKIN_2H_ENVIADO:true -->';
+
+      const observacoesAtuais = String(dados.observacoes || '');
+      if (observacoesAtuais.includes(tagBanco)) {
+        return { success: true, error: `Lembrete ${tipoAntecedencia} já registrado no banco` };
+      }
+
+      // Proteção anti-duplicidade em memória (2 horas)
+      const reservaId = dados.id || `${dados.nome_hospede}_${dados.numero_quarto}_lembrete_${tipoAntecedencia}`;
+      const cacheKey = `lembrete_checkin_${tipoAntecedencia}_${reservaId}`;
       const lastSent = this._recentDispatches.get(cacheKey);
       if (lastSent && Date.now() - lastSent < 2 * 60 * 60 * 1000) {
-        console.info('[templateMensagemService] Lembrete ignorado por anti-duplicidade recente:', cacheKey);
-        return { success: true, error: 'Lembrete já enviado recentemente' };
+        return { success: true, error: `Lembrete ${tipoAntecedencia} já enviado recentemente` };
       }
 
       const info = await this.resolverDadosCompletosReserva(dados, activeHotelId);
@@ -941,15 +1013,47 @@ export const templateMensagemService = {
         return { success: false, error: 'Telefone do hóspede não encontrado.' };
       }
 
-      const mensagem = this.renderTemplate('lembrete_checkin', info.tags, activeHotelId);
-      console.info(`[templateMensagemService] 🚀 Disparando lembrete de check-in para ${info.telefoneDestino}...`);
+      // Frase contextualizada conforme a janela de antecedência (6h ou 2h antes)
+      const avisoCheckin = tipoAntecedencia === '6h'
+        ? `Hoje é o dia do seu check-in no ${info.tags.nome_hotel} (faltam cerca de 6 horas)!`
+        : `Faltam apenas 2 horas para o início do seu check-in no ${info.tags.nome_hotel}!`;
+
+      info.tags.aviso_checkin = avisoCheckin;
+      info.tags.frase_tempo = avisoCheckin;
+
+      let mensagem = this.renderTemplate('lembrete_checkin', info.tags, activeHotelId);
+
+      // Substitui frases antigas como "Amanhã é o dia do seu check-in" pela frase correta do dia
+      if (mensagem.includes('Amanhã é o dia do seu check-in')) {
+        mensagem = mensagem.replace(/Amanhã é o dia do seu check-in no [^!]+!/gi, avisoCheckin);
+      }
+
+      // Garante sempre o rodapé obrigatório
+      const rodapeObrigatorio = '_Esta é uma mensagem automática do sistema, por favor não responder!_';
+      if (!mensagem.includes('Esta é uma mensagem automática do sistema, por favor não responder!')) {
+        mensagem = `${mensagem.trim()}\n\n${rodapeObrigatorio}`;
+      }
+
+      console.info(`[templateMensagemService] 🚀 Disparando lembrete de check-in (${tipoAntecedencia}) para ${info.telefoneDestino}...`);
       const resultado = await this.enviarMensagemWhatsApp(activeHotelId, info.telefoneDestino, mensagem);
 
       if (resultado.success) {
         this._recentDispatches.set(cacheKey, Date.now());
-        console.info(`[templateMensagemService] ✅ Lembrete de check-in enviado com sucesso para ${info.telefoneDestino}`);
+
+        // Grava tag permanente no Supabase para nunca mais reenviar este lembrete para esta reserva
+        if (dados.id) {
+          try {
+            const novasObservacoes = `${observacoesAtuais} ${tagBanco}`.trim();
+            await supabase.from('reservas').update({ observacoes: novasObservacoes }).eq('id', dados.id);
+            dados.observacoes = novasObservacoes;
+          } catch (dbErr) {
+            console.warn('[templateMensagemService] Erro ao gravar tag de lembrete no banco:', dbErr);
+          }
+        }
+
+        console.info(`[templateMensagemService] ✅ Lembrete de check-in (${tipoAntecedencia}) enviado com sucesso para ${info.telefoneDestino}`);
       } else {
-        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar lembrete de check-in para ${info.telefoneDestino}:`, resultado.error);
+        console.warn(`[templateMensagemService] ⚠️ Falha ao enviar lembrete de check-in (${tipoAntecedencia}) para ${info.telefoneDestino}:`, resultado.error);
       }
 
       return resultado;
@@ -1009,46 +1113,67 @@ export const templateMensagemService = {
     }
   },
 
+  // Throttle para executar varredura no máximo uma vez a cada 5 minutos por sessão
+  _ultimoScanCheckin: 0,
+
   /**
-   * Varre as reservas de hoje e amanhã no fuso do hotel e dispara o lembrete de check-in
-   * para reservas com status Confirmada que ainda não receberam a notificação hoje.
+   * Varre as reservas e dispara exatamente 2 mensagens automáticas:
+   * 1. Lembrete de 6 horas antes do check-in
+   * 2. Lembrete de 2 horas antes do check-in
+   * Nunca dispara repetido nem antes de 6h ou após o check-in.
    */
   async verificarEDispararLembretesCheckinDoDia(hotelId?: string): Promise<number> {
     try {
+      const now = Date.now();
+      if (now - this._ultimoScanCheckin < 5 * 60 * 1000) {
+        return 0;
+      }
+      this._ultimoScanCheckin = now;
+
       const activeHotelId = hotelId || currentHotelService.getCurrentHotel()?.id;
       if (!activeHotelId) return 0;
 
       const automacoes = this.getHotelAutomacoes(activeHotelId);
       if (!automacoes.auto_lembrete_checkin) return 0;
 
-      const hoje = new Date();
-      const hojeIso = hoje.toISOString().split('T')[0];
-      const amanha = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
-      const amanhaIso = amanha.toISOString().split('T')[0];
+      const fuso = automacoes.fuso_horario || 'America/Cuiaba';
+      const hojeIso = this.getDataStringNoFuso(fuso);
+      const amanhaIso = this.getDataAmanhaNoFuso(fuso);
 
+      // Consulta reservas ativas/confirmadas para hoje ou amanhã
       const { data: reservas, error } = await supabase
         .from('reservas')
         .select('*')
         .eq('hotel_id', activeHotelId)
-        .in('status', ['Confirmada', 'confirmada', 'Pendente', 'pendente', 'Ativa', 'ativa'])
-        .or(`data_checkin.eq.${hojeIso},data_checkin.eq.${amanhaIso}`);
+        .in('status', ['Confirmada', 'confirmada', 'Ativa', 'ativa', 'Pendente', 'pendente'])
+        .or(`data_checkin.ilike.%${hojeIso}%,data_checkin.ilike.%${amanhaIso}%`);
 
       if (error || !reservas || reservas.length === 0) return 0;
 
       let disparados = 0;
       for (const res of reservas) {
-        const cacheKey = `lembrete_enviado_${res.id}_${hojeIso}`;
-        if (typeof window !== 'undefined' && localStorage.getItem(cacheKey)) continue;
+        const obs = String(res.observacoes || '');
+        const horarioCheckin = '12:00';
+        const diffHours = calcularHorasAteCheckin(res.data_checkin, horarioCheckin, fuso);
 
-        const resultado = await this.dispararLembreteCheckinAutomatico(activeHotelId, res);
-        if (resultado.success) {
-          if (typeof window !== 'undefined') localStorage.setItem(cacheKey, new Date().toISOString());
-          disparados++;
+        // 1ª MENSAGEM: Janela de 6 horas antes (entre 6h e 2h antes)
+        if (diffHours <= 6 && diffHours > 2) {
+          if (!obs.includes('LEMBRETE_CHECKIN_6H_ENVIADO')) {
+            const resultado = await this.dispararLembreteCheckinAutomatico(activeHotelId, res, '6h');
+            if (resultado.success) disparados++;
+          }
+        }
+        // 2ª MENSAGEM: Janela de 2 horas antes (entre 2h e 0h antes)
+        else if (diffHours <= 2 && diffHours >= 0) {
+          if (!obs.includes('LEMBRETE_CHECKIN_2H_ENVIADO')) {
+            const resultado = await this.dispararLembreteCheckinAutomatico(activeHotelId, res, '2h');
+            if (resultado.success) disparados++;
+          }
         }
       }
       return disparados;
     } catch (err) {
-      console.warn('[templateMensagemService] Erro ao verificar lembretes de check-in do dia:', err);
+      console.warn('[templateMensagemService] Erro ao verificar lembretes de check-in:', err);
       return 0;
     }
   },

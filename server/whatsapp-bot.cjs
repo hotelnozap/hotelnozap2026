@@ -179,7 +179,7 @@ async function checkLembretesCheckin(instanceName = 'meutim') {
       const nomeHospede = r.nome_hospede || r.hospedes?.name || 'Hóspede';
       const hotel = await getHotelData(instanceName);
 
-      const msg = `Olá ${nomeHospede}! Amanhã é o dia do seu check-in no ${hotel.nome}! 🧳\n\nAcomodação: Quarto ${r.numero_quarto || 'Principal'}\nHorário de entrada: a partir das 14:00.\nLocalização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver alguma dúvida, basta responder aqui!`;
+      const msg = `Olá, ${nomeHospede}! Hoje é o dia do seu check-in no ${hotel.nome}! 🧳\n\nAcomodação: Quarto ${r.numero_quarto || 'Principal'}\nHorário de entrada: a partir das 12:00 (aguardamos sua chegada até às 20:00).\nLocalização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver qualquer imprevisto na estrada, avise nossa recepção com antecedência para mantermos sua entrada garantida!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_`;
 
       console.log(`[Bot] 📅 Enviando lembrete 24h para ${nomeHospede} (${phone})...`);
 

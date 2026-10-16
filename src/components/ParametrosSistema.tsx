@@ -123,11 +123,11 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
   const [templateType, setTemplateType] = useState<'boas_vindas' | 'confirmacao' | 'lembrete_checkin' | 'checkout' | 'pix'>('boas_vindas');
   
   const [templates, setTemplates] = useState({
-    boas_vindas: 'Olá {nome_hospede}! 👋 Bem-vindo(a) ao {nome_hotel}.\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 {link_hotel}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição por aqui!',
-    confirmacao: '🎉 Parabéns {nome_hospede}! Sua reserva no {nome_hotel} foi confirmada com sucesso! 🏨\n\n📌 Quarto: {tipo_quarto} ({numero_quarto})\n📅 Check-in: {checkin}\n📅 Check-out: {checkout}\n💰 Valor Total: {valor_total}\n\nEstamos ansiosos para recebê-lo(a)!',
-    lembrete_checkin: 'Olá {nome_hospede}! Amanhã é o dia do seu check-in no {nome_hotel}! 🧳\n\nHorário de entrada: a partir das 14:00.\nLocalização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver alguma dúvida, basta responder aqui!',
-    checkout: 'Olá {nome_hospede}! Esperamos que sua estadia no {nome_hotel} tenha sido maravilhosa! ✨\n\nAgradecemos muito pela preferência. Foi um prazer recebê-lo(a). Poderia nos avaliar com 5 estrelas no Google Maps? Até a próxima viagem!',
-    pix: 'Olá {nome_hospede}! Para garantir sua reserva no {nome_hotel}, segue a chave PIX para pagamento:\n\n🔑 Chave PIX: {chave_pix}\n💰 Valor: {valor_total}\n\nAssim que efetuar o pagamento, nos envie o comprovante por aqui para confirmação imediata!'
+    boas_vindas: 'Olá, {nome_hospede}! 👋 Seja bem-vindo(a) ao {nome_hotel}.\n\nPara consultar fotos das acomodações, valores de diárias atualizados e realizar a sua reserva com confirmação imediata, acesse o nosso link oficial:\n\n👉 {link_hotel}\n\n⚠️ É necessário entrar no link acima para verificar a disponibilidade de quartos, simular os preços para as suas datas e garantir sua reserva. Caso tenha qualquer dúvida, estamos à disposição!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
+    confirmacao: '🎉 Parabéns, {nome_hospede}! Sua reserva no {nome_hotel} foi confirmada com sucesso! 🏨\n\n📌 Acomodação: {tipo_quarto} (Quarto {numero_quarto})\n📅 Check-in: {checkin} (a partir das {horario_checkin})\n📅 Check-out: {checkout}\n💰 Valor Total: {valor_total}\n\n⏰ Horário de entrada: a partir das {horario_checkin} (aguardamos sua chegada até às 20:00). Caso ocorra qualquer imprevisto ou atraso na viagem, avise nossa recepção com antecedência para mantermos seu quarto garantido!\n\nEstamos ansiosos para recebê-lo(a)!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
+    lembrete_checkin: 'Olá, {nome_hospede}! {aviso_checkin} 🧳\n\n⏰ Horário de entrada: a partir das {horario_checkin} (aguardamos sua chegada até às 20:00).\n📍 Localização: recepção central.\n\nSe precisar antecipar sua chegada ou tiver qualquer imprevisto na estrada, avise nossa recepção com antecedência para mantermos sua entrada garantida!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
+    checkout: 'Olá, {nome_hospede}! Esperamos que sua estadia no {nome_hotel} tenha sido maravilhosa! ✨\n\nAgradecemos muito pela preferência. Foi um prazer recebê-lo(a). Poderia nos avaliar no Google Maps? Até a próxima viagem!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_',
+    pix: 'Olá, {nome_hospede}! Para garantir sua reserva no {nome_hotel}, segue a chave PIX para pagamento:\n\n🔑 Chave PIX: {chave_pix}\n💰 Valor Total: {valor_total}\n\nAssim que efetuar o pagamento, envie o comprovante por aqui para confirmação imediata!\n\n_Esta é uma mensagem automática do sistema, por favor não responder!_'
   });
 
   // 3. Regras de Negócio & Limites
@@ -1016,7 +1016,7 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
               {[
                 { id: 'boas_vindas', label: 'Boas-Vindas & Primeiro Contato', icon: 'waving_hand' },
                 { id: 'confirmacao', label: 'Confirmação de Reserva', icon: 'check_circle' },
-                { id: 'lembrete_checkin', label: 'Lembrete de Check-in (24h)', icon: 'alarm' },
+                { id: 'lembrete_checkin', label: 'Lembrete de Check-in (6h e 2h antes)', icon: 'alarm' },
                 { id: 'checkout', label: 'Pós Check-out & Avaliação', icon: 'star' },
                 { id: 'pix', label: 'Envio de Chave PIX', icon: 'payments' }
               ].map(t => (
