@@ -1109,7 +1109,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-[#10b981] text-lg shrink-0 mt-0.5">verified</span>
-                  <span><strong>IA Concierge responde em até 5 segundos 24/7:</strong> envia orçamentos, fotos dos quartos e chave PIX automática.</span>
+                  <span><strong>Atendente Virtual responde em até 5 segundos 24/7:</strong> envia orçamentos, fotos dos quartos e chave PIX automática.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-[#10b981] text-lg shrink-0 mt-0.5">verified</span>

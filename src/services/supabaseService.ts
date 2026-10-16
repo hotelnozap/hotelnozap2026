@@ -6541,7 +6541,7 @@ export const comodidadesService = {
         itens: [
           { texto: 'Room service com pedidos diretos pelo Zap', order: 1 },
           { texto: 'Arrumação diária personalizada', order: 2 },
-          { texto: 'Concierge para agendamento de passeios', order: 3 },
+          { texto: 'Recepção para agendamento de passeios', order: 3 },
           { texto: 'Toalhas extras para praia e piscina', order: 4 },
         ],
       },
