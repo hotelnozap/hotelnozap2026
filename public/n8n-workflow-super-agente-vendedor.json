@@ -46,7 +46,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $('Super Agente Vendedor (Roteiro)').item.json.instanceName }}",
+        "url": "https://painelevolution.hotelnozap.com.br/message/sendText/meutim",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -107,7 +107,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $('Super Agente Vendedor (Roteiro)').item.json.instanceName }}",
+        "url": "https://painelevolution.hotelnozap.com.br/message/sendText/meutim",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -126,7 +126,7 @@
           "parameters": [
             {
               "name": "number",
-              "value": "={{ $('Super Agente Vendedor (Roteiro)').item.json.adminWhatsapp }}"
+              "value": "5565996173004"
             },
             {
               "name": "text",
@@ -163,7 +163,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $('Super Agente Vendedor (Roteiro)').item.json.instanceName }}",
+        "url": "https://painelevolution.hotelnozap.com.br/message/sendText/meutim",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
