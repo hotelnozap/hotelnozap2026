@@ -1702,6 +1702,45 @@ export const App: React.FC = () => {
     { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
   ] : filteredHotelMenuItems;
 
+  // ── Bloqueio Inteligente & Alerta: Hotel com Plano / Créditos / Dias Bônus Expirados ──
+  const isUserAuthenticated = Boolean(
+    currentUserRole || 
+    localStorage.getItem('hotelnozap_user_email')
+  );
+
+  const isMasterDefault = Boolean(
+    !activeHotel ||
+    activeHotel.id === 'default' ||
+    activeHotel.id === '11111111-1111-1111-1111-111111111111' ||
+    activeHotel.name?.toLowerCase() === 'hotel master'
+  );
+
+  const hotelCreditInfo = (isUserAuthenticated && isHotelUser && activeHotel && !isMasterDefault)
+    ? creditosService.calcularInfoCreditos(activeHotel)
+    : null;
+
+  const isHotelExpired = Boolean(
+    hotelCreditInfo &&
+    (hotelCreditInfo.status === 'expirado' || activeHotel?.status === 'inativo' || activeHotel?.status === 'bloqueado')
+  );
+
+  // Disparo automático do Modal de Alerta de Expiração de Plano quando faltar 10 dias ou menos (executado sempre no topo incondicionalmente)
+  useEffect(() => {
+    if (isUserAuthenticated && isHotelUser && activeHotel && !isMasterDefault && hotelCreditInfo) {
+      if (hotelCreditInfo.status === 'alerta' || (hotelCreditInfo.diasRestantes <= 10 && hotelCreditInfo.diasRestantes > 0)) {
+        const storageKey = `hotelnozap_alerta_expiracao_dismissed_${activeHotel.id}`;
+        try {
+          const dismissed = sessionStorage.getItem(storageKey);
+          if (!dismissed) {
+            setIsModalAlertaExpiracaoOpen(true);
+          }
+        } catch {
+          setIsModalAlertaExpiracaoOpen(true);
+        }
+      }
+    }
+  }, [isUserAuthenticated, isHotelUser, activeHotel?.id, hotelCreditInfo?.diasRestantes, hotelCreditInfo?.status, isMasterDefault]);
+
   const pathParts = window.location.pathname
     .toLowerCase()
     .replace(/\\/g, '/')
@@ -2405,45 +2444,6 @@ export const App: React.FC = () => {
       </Suspense>
     );
   }
-
-  // ── Bloqueio Inteligente: Hotel com Plano / Créditos / Dias Bônus Expirados ──
-  const isUserAuthenticated = Boolean(
-    currentUserRole || 
-    localStorage.getItem('hotelnozap_user_email')
-  );
-
-  const isMasterDefault = Boolean(
-    !activeHotel ||
-    activeHotel.id === 'default' ||
-    activeHotel.id === '11111111-1111-1111-1111-111111111111' ||
-    activeHotel.name?.toLowerCase() === 'hotel master'
-  );
-
-  const hotelCreditInfo = (isUserAuthenticated && isHotelUser && activeHotel && !isMasterDefault)
-    ? creditosService.calcularInfoCreditos(activeHotel)
-    : null;
-
-  const isHotelExpired = Boolean(
-    hotelCreditInfo &&
-    (hotelCreditInfo.status === 'expirado' || activeHotel?.status === 'inativo' || activeHotel?.status === 'bloqueado')
-  );
-
-  // Disparo automático do Modal de Alerta de Expiração de Plano quando faltar 10 dias ou menos
-  useEffect(() => {
-    if (isUserAuthenticated && isHotelUser && activeHotel && !isMasterDefault && hotelCreditInfo) {
-      if (hotelCreditInfo.status === 'alerta' || (hotelCreditInfo.diasRestantes <= 10 && hotelCreditInfo.diasRestantes > 0)) {
-        const storageKey = `hotelnozap_alerta_expiracao_dismissed_${activeHotel.id}`;
-        try {
-          const dismissed = sessionStorage.getItem(storageKey);
-          if (!dismissed) {
-            setIsModalAlertaExpiracaoOpen(true);
-          }
-        } catch {
-          setIsModalAlertaExpiracaoOpen(true);
-        }
-      }
-    }
-  }, [isUserAuthenticated, isHotelUser, activeHotel?.id, hotelCreditInfo?.diasRestantes, hotelCreditInfo?.status, isMasterDefault]);
 
   if (isHotelExpired && hotelCreditInfo) {
     return (
