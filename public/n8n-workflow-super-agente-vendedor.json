@@ -46,7 +46,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $json.instanceName }}",
+        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $('Super Agente Vendedor (Roteiro)').item.json.instanceName }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -65,11 +65,11 @@
           "parameters": [
             {
               "name": "number",
-              "value": "={{ $json.cleanPhone }}"
+              "value": "={{ $('Super Agente Vendedor (Roteiro)').item.json.cleanPhone }}"
             },
             {
               "name": "text",
-              "value": "={{ $json.resposta }}"
+              "value": "={{ $('Super Agente Vendedor (Roteiro)').item.json.resposta }}"
             }
           ]
         },
@@ -81,7 +81,7 @@
       "typeVersion": 4.2,
       "position": [
         880,
-        300
+        220
       ]
     },
     {
@@ -89,7 +89,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{ $json.acionarAlertaVip }}",
+              "value1": "={{ $('Super Agente Vendedor (Roteiro)').item.json.acionarAlertaVip }}",
               "value2": true
             }
           ]
@@ -100,14 +100,14 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1100,
-        300
+        880,
+        420
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $json.instanceName }}",
+        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $('Super Agente Vendedor (Roteiro)').item.json.instanceName }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -126,11 +126,11 @@
           "parameters": [
             {
               "name": "number",
-              "value": "={{ $json.adminWhatsapp }}"
+              "value": "={{ $('Super Agente Vendedor (Roteiro)').item.json.adminWhatsapp }}"
             },
             {
               "name": "text",
-              "value": "={{ $json.mensagemAlertaEveraldo }}"
+              "value": "={{ $('Super Agente Vendedor (Roteiro)').item.json.mensagemAlertaEveraldo }}"
             }
           ]
         },
@@ -141,8 +141,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1320,
-        220
+        1120,
+        400
       ]
     },
     {
@@ -155,15 +155,15 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1540,
-        220
+        1340,
+        400
       ],
       "webhookId": "wait-followup-5min"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $json.instanceName }}",
+        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $('Super Agente Vendedor (Roteiro)').item.json.instanceName }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -182,11 +182,11 @@
           "parameters": [
             {
               "name": "number",
-              "value": "={{ $json.cleanPhone }}"
+              "value": "={{ $('Super Agente Vendedor (Roteiro)').item.json.cleanPhone }}"
             },
             {
               "name": "text",
-              "value": "={{ $json.mensagemFollowup5Min }}"
+              "value": "={{ $('Super Agente Vendedor (Roteiro)').item.json.mensagemFollowup5Min }}"
             }
           ]
         },
@@ -197,8 +197,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1760,
-        220
+        1560,
+        400
       ]
     }
   ],
@@ -232,13 +232,7 @@
             "node": "Enviar Resposta ao Hotel",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Enviar Resposta ao Hotel": {
-      "main": [
-        [
+          },
           {
             "node": "É Fechamento / Lead Quente?",
             "type": "main",
