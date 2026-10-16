@@ -536,6 +536,65 @@ export class EvolutionApiService {
       return [];
     }
   }
+
+  /**
+   * Verificar se números existem e estão cadastrados no WhatsApp (/chat/whatsappNumbers/:instance)
+   */
+  public async checkWhatsAppNumbers(
+    instanceName: string,
+    numbers: string[]
+  ): Promise<Array<{ number: string; exists: boolean; jid?: string }>> {
+    if (!numbers || numbers.length === 0) return [];
+
+    try {
+      const encodedName = encodeURIComponent(instanceName.trim());
+      const cleanNumbers = numbers.map(n => formatPhoneEvolution(n)).filter(Boolean);
+      if (cleanNumbers.length === 0) return [];
+
+      const res = await fetch(`${this.apiUrl}/chat/whatsappNumbers/${encodedName}`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ numbers: cleanNumbers })
+      });
+
+      if (!res.ok) {
+        console.warn(`[Evolution API] Erro ao checar números no WhatsApp (${res.status}):`, res.statusText);
+        return cleanNumbers.map(num => ({ number: num, exists: false }));
+      }
+
+      const json = await res.json().catch(() => null);
+      if (Array.isArray(json)) {
+        return json.map((item: any) => ({
+          number: item.number,
+          exists: Boolean(item.exists),
+          jid: item.jid
+        }));
+      }
+
+      return cleanNumbers.map(num => ({ number: num, exists: false }));
+    } catch (err) {
+      console.error('[Evolution API] Falha na consulta de whatsappNumbers:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Verificar se um único número possui WhatsApp ativo
+   */
+  public async checkSingleWhatsAppNumber(
+    instanceName: string,
+    number: string
+  ): Promise<{ exists: boolean; jid?: string; number: string; error?: string }> {
+    const clean = formatPhoneEvolution(number);
+    if (!clean) {
+      return { exists: false, number, error: 'Número inválido.' };
+    }
+    const results = await this.checkWhatsAppNumbers(instanceName, [clean]);
+    if (results.length > 0) {
+      return results[0];
+    }
+    return { exists: false, number: clean, error: 'Sem resposta da Evolution API.' };
+  }
 }
 
 export const evolutionApiService = new EvolutionApiService();

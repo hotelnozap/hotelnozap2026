@@ -21,6 +21,16 @@ export interface HotelGoogleItem {
   lastSentAt?: string;
   lastStatus?: 'sucesso' | 'erro';
   observacoes?: string;
+  // Validação real de conta no WhatsApp
+  waStatus?: 'ativo' | 'inexistente' | 'nao_verificado';
+  waJid?: string;
+  waCheckedAt?: string;
+}
+
+export interface WaValidationRecord {
+  exists: boolean;
+  jid?: string;
+  checkedAt: string;
 }
 
 export interface DisparoLog {
@@ -71,6 +81,7 @@ export const TEMPLATES_DISPARO_PADRAO = [
 
 const STORAGE_KEY_LOGS = 'hotelnozap_disparos_google_logs_v1';
 const STORAGE_KEY_DAILY = 'hotelnozap_disparos_google_daily_v1';
+const STORAGE_KEY_WA_VALIDATIONS = 'hotelnozap_disparos_google_wa_validations_v1';
 
 export const disparadorGoogleService = {
   /**
@@ -180,6 +191,7 @@ export const disparadorGoogleService = {
       }
 
       const historyMap = this.getSendHistoryMap();
+      const waMap = this.getWaValidationsMap();
 
       return (data || []).map((h: any) => {
         const rawPhone = h.telefone_gerente || h.whatsapp || '';
@@ -196,6 +208,11 @@ export const disparadorGoogleService = {
           }
         }
 
+        const waRecord = waMap[h.id] || (phoneInfo.cleanPhone ? waMap[phoneInfo.cleanPhone] : undefined);
+        const waStatus: 'ativo' | 'inexistente' | 'nao_verificado' = waRecord
+          ? (waRecord.exists ? 'ativo' : 'inexistente')
+          : 'nao_verificado';
+
         return {
           id: h.id,
           nome: h.nome || 'Hotel sem nome',
@@ -209,7 +226,10 @@ export const disparadorGoogleService = {
           alreadySent: isSentSuccess,
           lastSentAt,
           lastStatus: history?.status || (hasDbTag ? 'sucesso' : undefined),
-          observacoes: h.observacoes || ''
+          observacoes: h.observacoes || '',
+          waStatus,
+          waJid: waRecord?.jid,
+          waCheckedAt: waRecord?.checkedAt
         };
       });
     } catch (err) {
@@ -369,6 +389,94 @@ export const disparadorGoogleService = {
   clearLogs(): void {
     try {
       localStorage.removeItem(STORAGE_KEY_LOGS);
+    } catch { /* ignore */ }
+  },
+
+  /**
+   * Mapa de validações reais de WhatsApp
+   */
+  getWaValidationsMap(): Record<string, WaValidationRecord> {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_WA_VALIDATIONS);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  /**
+   * Salva a validação de um número
+   */
+  saveWaValidation(hotelId: string, cleanPhone: string, exists: boolean, jid?: string): void {
+    try {
+      const map = this.getWaValidationsMap();
+      const record: WaValidationRecord = {
+        exists,
+        jid,
+        checkedAt: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+      if (hotelId) map[hotelId] = record;
+      if (cleanPhone) map[cleanPhone] = record;
+      localStorage.setItem(STORAGE_KEY_WA_VALIDATIONS, JSON.stringify(map));
+    } catch (e) {
+      console.warn('Erro ao salvar validação WA:', e);
+    }
+  },
+
+  /**
+   * Valida se o número de um hotel específico existe no WhatsApp via Evolution API
+   */
+  async validateSingleHotel(
+    instanceName: string,
+    hotel: HotelGoogleItem
+  ): Promise<{ exists: boolean; jid?: string; number: string }> {
+    if (!hotel.cleanPhone) return { exists: false, number: hotel.rawPhone };
+    const res = await evolutionApiService.checkSingleWhatsAppNumber(instanceName, hotel.cleanPhone);
+    this.saveWaValidation(hotel.id, hotel.cleanPhone, res.exists, res.jid);
+    return res;
+  },
+
+  /**
+   * Valida uma lista de hotéis em lotes seguros com callback de progresso
+   */
+  async validateBatchHotels(
+    instanceName: string,
+    hotels: HotelGoogleItem[],
+    onProgress?: (current: number, total: number) => void
+  ): Promise<Record<string, WaValidationRecord>> {
+    const toValidate = hotels.filter(h => Boolean(h.cleanPhone));
+    const batchSize = 10;
+
+    for (let i = 0; i < toValidate.length; i += batchSize) {
+      const chunk = toValidate.slice(i, i + batchSize);
+      const numbers = chunk.map(h => h.cleanPhone);
+      const results = await evolutionApiService.checkWhatsAppNumbers(instanceName, numbers);
+
+      results.forEach(res => {
+        const matchingHotel = chunk.find(
+          h => h.cleanPhone === res.number || res.number.includes(h.cleanPhone) || h.cleanPhone.includes(res.number)
+        );
+        const hotelId = matchingHotel ? matchingHotel.id : '';
+        this.saveWaValidation(hotelId, res.number, res.exists, res.jid);
+      });
+
+      if (onProgress) {
+        onProgress(Math.min(i + batchSize, toValidate.length), toValidate.length);
+      }
+
+      // Pausa segura de 500ms entre requisições de bloco
+      await new Promise(r => setTimeout(r, 500));
+    }
+
+    return this.getWaValidationsMap();
+  },
+
+  /**
+   * Limpar histórico de validações de WhatsApp
+   */
+  clearWaValidations(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY_WA_VALIDATIONS);
     } catch { /* ignore */ }
   }
 };

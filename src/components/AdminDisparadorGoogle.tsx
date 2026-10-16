@@ -42,15 +42,33 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
   const [countdownSegundos, setCountdownSegundos] = useState<number>(0);
   const [hotelAtual, setHotelAtual] = useState<HotelGoogleItem | null>(null);
 
-  // Sub-abas do Disparador: 'disparo' ou 'lista-hoteis'
-  const [activeSubTab, setActiveSubTab] = useState<'disparo' | 'lista-hoteis'>('disparo');
+  // Sub-abas do Disparador: 'disparo' | 'lista-hoteis' | 'validador'
+  const [activeSubTab, setActiveSubTab] = useState<'disparo' | 'lista-hoteis' | 'validador'>('disparo');
 
   // Estados da Aba Lista de Hotéis & Pesquisa
   const [buscaTermo, setBuscaTermo] = useState<string>('');
-  const [filtroStatusLista, setFiltroStatusLista] = useState<'todos' | 'contatados' | 'pendentes' | 'celulares' | 'fixos'>('todos');
+  const [filtroStatusLista, setFiltroStatusLista] = useState<
+    'todos' | 'contatados' | 'pendentes' | 'celulares' | 'fixos' | 'wa-ativo' | 'wa-inexistente'
+  >('todos');
   const [filtroCidadeLista, setFiltroCidadeLista] = useState<string>('todas');
   const [paginaAtual, setPaginaAtual] = useState<number>(1);
   const [itensPorPagina, setItensPorPagina] = useState<number>(25);
+
+  // Estados do Validador de WhatsApp
+  const [numeroAvulso, setNumeroAvulso] = useState<string>('');
+  const [validandoAvulso, setValidandoAvulso] = useState<boolean>(false);
+  const [resultadoAvulso, setResultadoAvulso] = useState<{
+    tested: boolean;
+    number: string;
+    exists: boolean;
+    jid?: string;
+    error?: string;
+  } | null>(null);
+
+  // Validação em Massa e individual
+  const [validandoMassa, setValidandoMassa] = useState<boolean>(false);
+  const [massaProgresso, setMassaProgresso] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+  const [validandoHotelId, setValidandoHotelId] = useState<string | null>(null);
 
   // Logs e Cota Diária
   const [logs, setLogs] = useState<DisparoLog[]>([]);
@@ -111,6 +129,10 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
       if (ignorarJaContatados && h.alreadySent) {
         return false;
       }
+      // Pula números que comprovadamente NÃO existem no WhatsApp para proteger o chip
+      if (h.waStatus === 'inexistente') {
+        return false;
+      }
       return true;
     });
   }, [hoteis, cidadeFiltro, apenasCelulares, ignorarJaContatados]);
@@ -125,7 +147,10 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
   const totalCelularesValidos = hoteis.filter(h => h.isMobile).length;
   const totalFixos = hoteis.filter(h => h.phoneStatus === 'fixo').length;
   const totalJaContatados = hoteis.filter(h => h.alreadySent).length;
-  const totalPendentesEnvio = hoteis.filter(h => h.isMobile && !h.alreadySent).length;
+  const totalPendentesEnvio = hoteis.filter(h => h.isMobile && !h.alreadySent && h.waStatus !== 'inexistente').length;
+  const totalWaAtivos = hoteis.filter(h => h.waStatus === 'ativo').length;
+  const totalWaInexistentes = hoteis.filter(h => h.waStatus === 'inexistente').length;
+  const totalWaNaoVerificados = hoteis.filter(h => h.isMobile && (!h.waStatus || h.waStatus === 'nao_verificado')).length;
 
   // Hotéis filtrados na Aba de Pesquisa / Lista Geral
   const hoteisListaFiltrados = useMemo(() => {
@@ -137,9 +162,11 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
 
       // Filtro por status
       if (filtroStatusLista === 'contatados' && !h.alreadySent) return false;
-      if (filtroStatusLista === 'pendentes' && (!h.isMobile || h.alreadySent)) return false;
+      if (filtroStatusLista === 'pendentes' && (!h.isMobile || h.alreadySent || h.waStatus === 'inexistente')) return false;
       if (filtroStatusLista === 'celulares' && !h.isMobile) return false;
       if (filtroStatusLista === 'fixos' && h.phoneStatus !== 'fixo') return false;
+      if (filtroStatusLista === 'wa-ativo' && h.waStatus !== 'ativo') return false;
+      if (filtroStatusLista === 'wa-inexistente' && h.waStatus !== 'inexistente') return false;
 
       // Busca por termo (nome, cidade, bairro, telefone)
       if (buscaTermo.trim()) {
@@ -186,6 +213,115 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
     const tmpl = TEMPLATES_DISPARO_PADRAO.find(t => t.id === id);
     if (tmpl) {
       setMensagemTemplate(tmpl.texto);
+    }
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // VALIDADOR DE WHATSAPP (AVULSO, INDIVIDUAL E EM MASSA)
+  // ───────────────────────────────────────────────────────────────────────────
+  const handleValidarNumeroAvulso = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!numeroAvulso.trim()) {
+      alert('Por favor, informe um número de telefone com DDD para testar.');
+      return;
+    }
+    if (!selectedInstance) {
+      alert('Selecione uma instância WhatsApp conectada para consultar.');
+      return;
+    }
+
+    setValidandoAvulso(true);
+    setResultadoAvulso(null);
+
+    try {
+      const res = await evolutionApiService.checkSingleWhatsAppNumber(selectedInstance, numeroAvulso);
+      setResultadoAvulso({
+        tested: true,
+        number: numeroAvulso,
+        exists: res.exists,
+        jid: res.jid,
+        error: res.error
+      });
+    } catch (err: any) {
+      setResultadoAvulso({
+        tested: true,
+        number: numeroAvulso,
+        exists: false,
+        error: err?.message || 'Falha ao consultar Evolution API'
+      });
+    } finally {
+      setValidandoAvulso(false);
+    }
+  };
+
+  const handleValidarHotelIndividual = async (hotel: HotelGoogleItem) => {
+    if (!selectedInstance) {
+      alert('Selecione uma instância WhatsApp conectada para validar.');
+      return;
+    }
+    setValidandoHotelId(hotel.id);
+
+    try {
+      const res = await disparadorGoogleService.validateSingleHotel(selectedInstance, hotel);
+      setHoteis(prev =>
+        prev.map(h => {
+          if (h.id === hotel.id) {
+            return {
+              ...h,
+              waStatus: res.exists ? 'ativo' : 'inexistente',
+              waJid: res.jid,
+              waCheckedAt:
+                new Date().toLocaleDateString('pt-BR') +
+                ' ' +
+                new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            };
+          }
+          return h;
+        })
+      );
+    } catch (err) {
+      console.warn('Erro ao validar hotel individual:', err);
+    } finally {
+      setValidandoHotelId(null);
+    }
+  };
+
+  const handleValidarEmMassa = async (loteAlvo: 'todos-celulares' | 'cidade-atual' | 'proximos-50') => {
+    if (!selectedInstance) {
+      alert('Selecione uma instância WhatsApp conectada para validar.');
+      return;
+    }
+
+    let lista: HotelGoogleItem[] = [];
+    if (loteAlvo === 'cidade-atual') {
+      lista = hoteis.filter(
+        h => h.isMobile && (cidadeFiltro === 'todas' || h.cidade.toLowerCase() === cidadeFiltro.toLowerCase())
+      );
+    } else if (loteAlvo === 'proximos-50') {
+      lista = hoteis.filter(h => h.isMobile && h.waStatus !== 'ativo').slice(0, 50);
+    } else {
+      lista = hoteis.filter(h => h.isMobile);
+    }
+
+    if (lista.length === 0) {
+      alert('Nenhum hotel para validar com o critério selecionado.');
+      return;
+    }
+
+    setValidandoMassa(true);
+    setMassaProgresso({ current: 0, total: lista.length });
+
+    try {
+      await disparadorGoogleService.validateBatchHotels(selectedInstance, lista, (current, total) => {
+        setMassaProgresso({ current, total });
+      });
+
+      // Recarrega lista com os dados atualizados
+      await carregarDados();
+    } catch (err) {
+      console.error('Falha na validação em massa:', err);
+    } finally {
+      setValidandoMassa(false);
     }
   };
 
@@ -424,6 +560,33 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
             }`}>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               {totalJaContatados} contatados
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('validador')}
+          className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            activeSubTab === 'validador'
+              ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+              : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+          }`}
+        >
+          <span className="material-symbols-outlined text-base">verified</span>
+          <span>Validador de WhatsApp</span>
+          {totalWaAtivos > 0 && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              activeSubTab === 'validador' ? 'bg-slate-950 text-emerald-300' : 'bg-emerald-500/20 text-emerald-300'
+            }`}>
+              {totalWaAtivos} ativos
+            </span>
+          )}
+          {totalWaInexistentes > 0 && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              activeSubTab === 'validador' ? 'bg-slate-950 text-red-300' : 'bg-red-500/20 text-red-300'
+            }`}>
+              {totalWaInexistentes} sem WA
             </span>
           )}
         </button>
@@ -998,6 +1161,42 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
                   {totalFixos}
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroStatusLista('wa-ativo')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filtroStatusLista === 'wa-ativo'
+                    ? 'bg-emerald-500 text-slate-950 font-black shadow-md'
+                    : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">verified</span>
+                <span>WhatsApp Confirmado</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filtroStatusLista === 'wa-ativo' ? 'bg-slate-950 text-emerald-300' : 'bg-emerald-500/20 text-emerald-300'
+                }`}>
+                  {totalWaAtivos}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroStatusLista('wa-inexistente')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filtroStatusLista === 'wa-inexistente'
+                    ? 'bg-red-500 text-white font-black shadow-md'
+                    : 'bg-red-500/10 text-red-300 hover:bg-red-500/20 border border-red-500/30'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">cancel</span>
+                <span>Sem WhatsApp</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filtroStatusLista === 'wa-inexistente' ? 'bg-slate-950 text-red-300' : 'bg-red-500/20 text-red-300'
+                }`}>
+                  {totalWaInexistentes}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -1053,17 +1252,57 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
                         </td>
                         <td className="py-3 px-4">
                           {phoneRes.formatted ? (
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-slate-300 text-[11px]">{phoneRes.formatted}</span>
-                              {hotel.isMobile ? (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                  WhatsApp
-                                </span>
-                              ) : hotel.phoneStatus === 'fixo' ? (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  Fixo
-                                </span>
-                              ) : null}
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-slate-300 text-[11px]">{phoneRes.formatted}</span>
+                                {hotel.isMobile ? (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                    Celular
+                                  </span>
+                                ) : hotel.phoneStatus === 'fixo' ? (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    Fixo
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {/* Status Real no WhatsApp via Evolution API */}
+                              <div className="flex items-center gap-1.5">
+                                {hotel.waStatus === 'ativo' ? (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                                    title={`Confirmado no WhatsApp (${hotel.waJid || ''}) em ${hotel.waCheckedAt || ''}`}
+                                  >
+                                    <span className="material-symbols-outlined text-[12px] text-emerald-400">verified</span>
+                                    WhatsApp Ativo
+                                  </span>
+                                ) : hotel.waStatus === 'inexistente' ? (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40"
+                                    title="Não possui conta registrada no WhatsApp"
+                                  >
+                                    <span className="material-symbols-outlined text-[12px] text-red-400">cancel</span>
+                                    Sem WhatsApp
+                                  </span>
+                                ) : hotel.isMobile ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleValidarHotelIndividual(hotel)}
+                                    disabled={validandoHotelId === hotel.id}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all cursor-pointer"
+                                    title="Consultar na Evolution API se este número possui WhatsApp ativo agora"
+                                  >
+                                    <span
+                                      className={`material-symbols-outlined text-[12px] ${
+                                        validandoHotelId === hotel.id ? 'animate-spin text-emerald-400' : 'text-slate-400'
+                                      }`}
+                                    >
+                                      sync
+                                    </span>
+                                    {validandoHotelId === hotel.id ? 'Checando...' : 'Checar WA'}
+                                  </button>
+                                ) : null}
+                              </div>
                             </div>
                           ) : (
                             <span className="text-slate-600 italic text-[11px]">Sem telefone</span>
@@ -1170,6 +1409,236 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
                 >
                   Próxima
                   <span className="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ABA 3: VALIDADOR DE WHATSAPP */}
+      {activeSubTab === 'validador' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* BANNER INFORMATIVO */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-emerald-500/30 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-inner">
+                <span className="material-symbols-outlined text-2xl">verified</span>
+              </div>
+              <div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Checagem Direta na Rede Meta / WhatsApp
+                </span>
+                <h2 className="text-lg font-black text-white mt-1">
+                  Validador Oficial de Contas WhatsApp
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Verifique se o número realmente possui cadastro ativo no WhatsApp sem enviar mensagem e sem risco de denúncia.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/80 px-4 py-2.5 rounded-2xl">
+              <span className="material-symbols-outlined text-emerald-400 text-sm">wifi</span>
+              <span className="text-xs text-slate-400 font-medium">Instância Ativa:</span>
+              <strong className="text-white text-xs font-mono">{selectedInstance}</strong>
+            </div>
+          </div>
+
+          {/* GRID DE VALIDAÇÃO: AVULSO + EM MASSA */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* CARD 1: VALIDADOR AVULSO (TESTAR QUALQUER NÚMERO) */}
+            <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-400">dialpad</span>
+                <h3 className="text-base font-black text-white">Validar Número Avulso</h3>
+              </div>
+              <p className="text-xs text-slate-400">
+                Digite qualquer número de telefone (com DDD) para saber instantaneamente se existe conta de WhatsApp vinculada.
+              </p>
+
+              <form onSubmit={handleValidarNumeroAvulso} className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5">Telefone para teste:</label>
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
+                      phone
+                    </span>
+                    <input
+                      type="text"
+                      value={numeroAvulso}
+                      onChange={(e) => setNumeroAvulso(e.target.value)}
+                      placeholder="Ex: 65 99617-3004 ou 65 3624-0000"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-slate-500 font-mono focus:outline-hidden focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={validandoAvulso || !numeroAvulso.trim()}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 transition-all cursor-pointer"
+                >
+                  <span className={`material-symbols-outlined text-base ${validandoAvulso ? 'animate-spin' : ''}`}>
+                    {validandoAvulso ? 'sync' : 'search_check'}
+                  </span>
+                  <span>{validandoAvulso ? 'Consultando WhatsApp...' : 'Verificar se tem WhatsApp'}</span>
+                </button>
+              </form>
+
+              {/* RESULTADO DA CONSULTA AVULSA */}
+              {resultadoAvulso && (
+                <div className="pt-2 animate-in fade-in duration-200">
+                  {resultadoAvulso.exists ? (
+                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 text-left space-y-2">
+                      <div className="flex items-center gap-2 text-emerald-400 font-black text-sm">
+                        <span className="material-symbols-outlined text-xl">check_circle</span>
+                        <span>SIM! NÚMERO CADASTRADO NO WHATSAPP</span>
+                      </div>
+                      <div className="text-xs text-slate-300 font-mono">
+                        Telefone: <strong className="text-white">{resultadoAvulso.number}</strong>
+                      </div>
+                      {resultadoAvulso.jid && (
+                        <div className="text-[11px] text-emerald-400/80 font-mono break-all">
+                          ID Oficial (JID): {resultadoAvulso.jid}
+                        </div>
+                      )}
+                      <div className="pt-2">
+                        <a
+                          href={`https://wa.me/${resultadoAvulso.number.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs transition-all hover:bg-emerald-400"
+                        >
+                          <span className="material-symbols-outlined text-sm">chat</span>
+                          Abrir Conversa no WhatsApp
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/40 text-left space-y-2">
+                      <div className="flex items-center gap-2 text-red-400 font-black text-sm">
+                        <span className="material-symbols-outlined text-xl">cancel</span>
+                        <span>NÃO! NÚMERO SEM CONTA NO WHATSAPP</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        O número <strong className="font-mono text-white">{resultadoAvulso.number}</strong> não possui registro ativo no WhatsApp. Pode ser um telefone fixo convencional, linha desativada ou número restrito.
+                      </p>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-amber-300 font-medium flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm text-amber-400 shrink-0">shield</span>
+                        <span>O disparador inteligente ignora esse número automaticamente para proteger seu chip!</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* CARD 2: VALIDADOR EM MASSA DA BASE DE HOTÉIS */}
+            <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-400">playlist_add_check</span>
+                  <h3 className="text-base font-black text-white">Validação em Lote da Base de Hotéis</h3>
+                </div>
+                <span className="text-[11px] font-mono text-slate-400">
+                  {totalCelularesValidos} celulares na base
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Passe um pente fino na sua lista de hotéis. Os números que não tiverem WhatsApp serão etiquetados como <strong>Sem WhatsApp</strong> e bloqueados para não gastar sua cota diária.
+              </p>
+
+              {/* CARDS RESUMO DO ESTADO ATUAL DA BASE */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-emerald-500/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">WhatsApp Ativo</span>
+                  <span className="text-xl font-black text-white mt-1 block">{totalWaAtivos}</span>
+                  <span className="text-[10px] text-slate-400 block">Contas confirmadas</span>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-red-500/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 block">Sem WhatsApp</span>
+                  <span className="text-xl font-black text-white mt-1 block">{totalWaInexistentes}</span>
+                  <span className="text-[10px] text-slate-400 block">Números descartados</span>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Não Verificados</span>
+                  <span className="text-xl font-black text-white mt-1 block">{totalWaNaoVerificados}</span>
+                  <span className="text-[10px] text-slate-400 block">Aguardando auditoria</span>
+                </div>
+              </div>
+
+              {/* PROGRESSO EM ANDAMENTO (SE HOUVER) */}
+              {validandoMassa && (
+                <div className="p-4 rounded-2xl bg-slate-800 border border-emerald-500/40 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                      Validando números com a Evolution API...
+                    </span>
+                    <span className="font-mono text-white font-black">
+                      {massaProgresso.current} / {massaProgresso.total}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${massaProgresso.total > 0 ? (massaProgresso.current / massaProgresso.total) * 100 : 0}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* BOTÕES DE AÇÃO EM MASSA */}
+              <div className="space-y-2.5 pt-2 border-t border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => handleValidarEmMassa('proximos-50')}
+                    disabled={validandoMassa}
+                    className="p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-left border border-slate-700 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white group-hover:text-emerald-400">
+                        Validar Próximos 50 Hotéis
+                      </span>
+                      <span className="material-symbols-outlined text-sm text-slate-400">arrow_forward</span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      Audita 50 números pendentes em lotes seguros.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleValidarEmMassa('cidade-atual')}
+                    disabled={validandoMassa}
+                    className="p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-left border border-slate-700 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white group-hover:text-emerald-400">
+                        Validar Cidade: {cidadeFiltro === 'todas' ? 'Todas' : cidadeFiltro}
+                      </span>
+                      <span className="material-symbols-outlined text-sm text-slate-400">location_city</span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      Verifica apenas os hotéis da cidade filtrada.
+                    </span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleValidarEmMassa('todos-celulares')}
+                  disabled={validandoMassa}
+                  className="w-full py-3.5 rounded-2xl bg-slate-800 hover:bg-emerald-500/10 hover:border-emerald-500/40 border border-slate-700 text-white hover:text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">checklist</span>
+                  <span>Auditar Todos os Celulares da Base ({totalCelularesValidos} hotéis)</span>
                 </button>
               </div>
             </div>
