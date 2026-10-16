@@ -105,6 +105,7 @@ const CadastroCategoriaContaReceber = lazy(() => import('./components/CadastroCa
 const CadastroContaReceber = lazy(() => import('./components/CadastroContaReceber'));
 const ConexoesWhatsapp = lazy(() => import('./components/ConexoesWhatsapp'));
 const AdminConexoesWhatsapp = lazy(() => import('./components/AdminConexoesWhatsapp'));
+const AdminDisparadorGoogle = lazy(() => import('./components/AdminDisparadorGoogle').then(m => ({ default: m.AdminDisparadorGoogle })));
 const ListagemParceiros = lazy(() => import('./components/ListagemParceiros'));
 const CadastroParceiro = lazy(() => import('./components/CadastroParceiro'));
 const CadastroHoteis = lazy(() => import('./components/CadastroHoteis'));
@@ -1693,6 +1694,7 @@ export const App: React.FC = () => {
     { id: 'creditos-saas', label: 'Controle de Planos & Créditos', icon: 'fact_check' },
     { id: 'usuarios', label: 'Usuários do Sistema', icon: 'manage_accounts' },
     { id: 'admin-conexoes', label: 'Conexões WhatsApp', icon: 'sync_alt' },
+    { id: 'disparador-google', label: 'Disparador Google Maps', icon: 'send_to_mobile' },
     { id: 'admin-notificacoes', label: 'Notificações Push', icon: 'campaign' },
     { id: 'admin-financeiro', label: 'Receita & Repasses', icon: 'payments' },
     { id: 'admin-config', label: 'Parâmetros do Sistema', icon: 'settings_suggest' },
@@ -3006,6 +3008,22 @@ export const App: React.FC = () => {
 
                   <button
                     type="button"
+                    onClick={() => { setActiveTab('disparador-google'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                      activeTab === 'disparador-google'
+                        ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                        : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined ${activeTab === 'disparador-google' ? 'text-emerald-400' : ''}`}>send_to_mobile</span>
+                    <span>Disparador Google</span>
+                    <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                      Antibloqueio
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => { setActiveTab('admin-notificacoes'); setIsMobileMenuOpen(false); }}
                     className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
                       activeTab === 'admin-notificacoes'
@@ -3485,6 +3503,22 @@ export const App: React.FC = () => {
                 <span>Conexões WhatsApp</span>
                 <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
                   {globalWhatsappCount}
+                </span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setActiveTab('disparador-google')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
+                  activeTab === 'disparador-google'
+                    ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className={`material-symbols-outlined ${activeTab === 'disparador-google' ? 'text-emerald-400' : ''}`}>send_to_mobile</span>
+                <span>Disparador Google</span>
+                <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                  Antibloqueio
                 </span>
               </button>
 
@@ -4100,6 +4134,9 @@ export const App: React.FC = () => {
               onNavigateToWhatsApp={() => {
                 setActiveTab('admin-conexoes');
               }}
+              onNavigateToDisparador={() => {
+                setActiveTab('disparador-google');
+              }}
               onNavigateToCaixa={() => {
                 setActiveTab('admin-financeiro');
               }}
@@ -4625,6 +4662,11 @@ export const App: React.FC = () => {
                   console.error('Erro ao navegar para hotel:', e);
                 }
               }}
+            />
+          )}
+          {activeTab === 'disparador-google' && isMasterAdmin && (
+            <AdminDisparadorGoogle
+              onBackToDashboard={() => setActiveTab('admin-dashboard')}
             />
           )}
           {activeTab === 'admin-financeiro' && isMasterAdmin && (

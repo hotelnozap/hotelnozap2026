@@ -36,6 +36,7 @@ export interface AdminMasterDashboardProps {
   onNavigateToConfig?: () => void;
   onNavigateToMercadoPago?: () => void;
   onNavigateToWhatsApp?: () => void;
+  onNavigateToDisparador?: () => void;
   onNavigateToCaixa?: () => void;
   onNavigateToLogs?: () => void;
   onLogout: () => void;
@@ -57,6 +58,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   onNavigateToConfig,
   onNavigateToMercadoPago,
   onNavigateToWhatsApp,
+  onNavigateToDisparador,
   onNavigateToCaixa,
   onNavigateToLogs,
   onLogout,
@@ -597,6 +599,20 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
               <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">0</span>
             </button>
 
+            {onNavigateToDisparador && (
+              <button 
+                type="button"
+                onClick={onNavigateToDisparador}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-emerald-400">send_to_mobile</span>
+                <span>Disparador Google</span>
+                <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                  IA Antiblock
+                </span>
+              </button>
+            )}
+
             <button 
               type="button"
               onClick={onNavigateToCaixa}
@@ -804,6 +820,19 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                   <span className="material-symbols-outlined text-lg">sync_alt</span>
                   <span>WhatsApp Gateway</span>
                 </button>
+
+                {onNavigateToDisparador && (
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); onNavigateToDisparador?.(); }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/5 text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-lg text-emerald-400">send_to_mobile</span>
+                      <span>Disparador Google</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-extrabold">Antibloqueio</span>
+                  </button>
+                )}
 
                 {onNavigateToConfig && (
                   <button 
