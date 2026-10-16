@@ -268,18 +268,20 @@ IMPORTANTE: Responda EXCLUSIVAMENTE em formato JSON puro, sem markdown nem expli
 
       sessoesPendentesMemory.set(cleanRemetente, sessaoData);
 
-      // Também registra log auditável no Supabase
+      // Também registra log auditável e persistente no Supabase
       try {
         await supabaseAdmin.from('logs_sistema').insert([{
-          timestamp: new Date().toISOString(),
-          level: 'info',
+          criado_em: new Date().toISOString(),
+          nivel: 'info',
           modulo: 'sistema',
           acao: 'Foto de Fachada Recebida pelo Agente',
           detalhes: `Foto recebida de ${cleanRemetente}. Identificado: ${hotelNomeExtraido}`,
           ip: 'webhook_whatsapp',
-          metadata: sessaoData
+          metadados: sessaoData
         }]);
-      } catch {}
+      } catch (errLog) {
+        console.warn('[Agente Fachada] Falha ao gravar log no Supabase:', errLog);
+      }
 
       // Se a cidade já foi informada na legenda da foto ou detectada diretamente:
       const cidadeAuto = cidade_uf || cidadeDetectadaNaFoto;
@@ -329,18 +331,43 @@ _(Exemplo: Porto Seguro - BA ou Ubatuba - SP)_`;
   // AÇÃO 2: CONFIRMAR CIDADE, VERIFICAR DUPLICIDADE E CADASTRAR HOTEL
   // ─────────────────────────────────────────────────────────────────────────────
   if (action === 'confirmar_cidade' || action === 'cadastrar_hotel') {
-    const cidadeInformada = cidade_uf || body.cidade || body.texto_mensagem || '';
+    const cidadeInformada = escapeString(cidade_uf || body.cidade || body.texto_mensagem || '');
     if (!cidadeInformada) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
-        error: 'É necessário informar a cidade e estado (UF).'
+        sem_sessao: true,
+        error: 'Texto de cidade vazio.'
       });
     }
 
-    // Busca a sessão pendente pelo número de telefone do remetente
+    // Busca a sessão pendente pelo número de telefone do remetente na memória
     let sessao = sessoesPendentesMemory.get(cleanRemetente);
 
-    // Se não encontrou em memória, verifica se veio dados diretos no body
+    // Se não encontrou em memória volátil, busca no histórico persistente do Supabase logs_sistema
+    if (!sessao) {
+      try {
+        const { data: logs } = await supabaseAdmin
+          .from('logs_sistema')
+          .select('id, metadados')
+          .eq('acao', 'Foto de Fachada Recebida pelo Agente')
+          .order('criado_em', { ascending: false })
+          .limit(10);
+
+        const foundLog = logs?.find(l => {
+          const metaTel = cleanPhoneDigits(l.metadados?.telefone_remetente || '');
+          return metaTel === cleanRemetente || (cleanRemetente.endsWith(metaTel.substring(2)) && metaTel.length >= 10);
+        });
+
+        if (foundLog?.metadados) {
+          sessao = foundLog.metadados;
+          sessao.log_id = foundLog.id;
+        }
+      } catch (errLog) {
+        console.warn('[Agente Fachada] Falha ao recuperar sessão do Supabase:', errLog);
+      }
+    }
+
+    // Se não encontrou em memória nem em log, verifica se veio dados diretos no body
     if (!sessao && body.nome_hotel) {
       sessao = {
         nome_hotel: body.nome_hotel,
@@ -349,11 +376,28 @@ _(Exemplo: Porto Seguro - BA ou Ubatuba - SP)_`;
       };
     }
 
+    // Se ainda assim não houver sessão pendente, significa que o usuário não está em fluxo de cadastro
     if (!sessao) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
-        error: 'Nenhuma foto pendente foi localizada para este número. Por favor, envie primeiro a foto da fachada do hotel.',
-        mensagem_whatsapp: '⚠️ *Nenhuma foto pendente localizada.* Por favor, envie primeiro a foto da fachada do hotel para iniciarmos o cadastro!'
+        sem_sessao: true,
+        error: 'Nenhuma foto pendente foi localizada para este número.'
+      });
+    }
+
+    // Se o usuário solicitou cancelamento
+    const textoLower = cidadeInformada.toLowerCase().trim();
+    if (textoLower === 'cancelar' || textoLower === 'cancela' || textoLower === 'cancel' || textoLower === 'sair') {
+      sessoesPendentesMemory.delete(cleanRemetente);
+      if (sessao.log_id) {
+        try {
+          await supabaseAdmin.from('logs_sistema').update({ acao: 'Foto de Fachada Cancelada' }).eq('id', sessao.log_id);
+        } catch {}
+      }
+      return res.status(200).json({
+        success: true,
+        cancelado: true,
+        mensagem_whatsapp: '❌ *Cadastro de fachada cancelado.* A foto anterior foi descartada. Envie uma nova foto de fachada quando quiser!'
       });
     }
 
@@ -364,6 +408,7 @@ _(Exemplo: Porto Seguro - BA ou Ubatuba - SP)_`;
       cidadeUfRaw: cidadeInformada,
       imageUrl: sessao.imagem_url,
       cleanRemetente,
+      logId: sessao.log_id,
       res
     });
   }
@@ -384,6 +429,7 @@ async function cadastrarHotelNoSupabase({
   cidadeUfRaw,
   imageUrl,
   cleanRemetente,
+  logId,
   res
 }) {
   const { cidade, uf, cityUf } = parseCityUf(cidadeUfRaw);
@@ -429,6 +475,11 @@ async function cadastrarHotelNoSupabase({
   // Se for duplicado, aborta a inserção e responde com o link existente
   if (hotelDuplicado) {
     sessoesPendentesMemory.delete(cleanRemetente);
+    if (logId) {
+      try {
+        await supabaseAdmin.from('logs_sistema').update({ acao: 'Foto de Fachada Duplicada' }).eq('id', logId);
+      } catch {}
+    }
 
     const linkExistente = hotelDuplicado.link?.startsWith('http')
       ? hotelDuplicado.link
@@ -497,6 +548,11 @@ O cadastro foi cancelado para evitar duplicidade na base de dados.`;
 
   // Limpa a sessão pendente
   sessoesPendentesMemory.delete(cleanRemetente);
+  if (logId) {
+    try {
+      await supabaseAdmin.from('logs_sistema').update({ acao: 'Foto de Fachada Concluida' }).eq('id', logId);
+    } catch {}
+  }
 
   const linkFinal = `https://hotelnozap.com.br/hotel/${hotelSlug}`;
   const telFormatado = formatPhoneDisplay(cleanPhone) || 'Não informado';
