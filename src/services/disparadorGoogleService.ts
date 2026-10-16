@@ -185,6 +185,16 @@ export const disparadorGoogleService = {
         const rawPhone = h.telefone_gerente || h.whatsapp || '';
         const phoneInfo = this.resolvePhone(rawPhone);
         const history = historyMap[h.id];
+        const hasDbTag = Boolean(h.observacoes && h.observacoes.includes('[DISPARO_GOOGLE:'));
+        const isSentSuccess = Boolean((history && history.status === 'sucesso') || hasDbTag);
+
+        let lastSentAt = history?.enviadoEm;
+        if (!lastSentAt && hasDbTag) {
+          const match = h.observacoes.match(/\[DISPARO_GOOGLE:\s*([^\]\-]+)/);
+          if (match && match[1]) {
+            lastSentAt = match[1].trim();
+          }
+        }
 
         return {
           id: h.id,
@@ -196,9 +206,9 @@ export const disparadorGoogleService = {
           cleanPhone: phoneInfo.cleanPhone,
           isMobile: phoneInfo.isMobile,
           phoneStatus: phoneInfo.phoneStatus,
-          alreadySent: Boolean(history && history.status === 'sucesso'),
-          lastSentAt: history?.enviadoEm,
-          lastStatus: history?.status,
+          alreadySent: isSentSuccess,
+          lastSentAt,
+          lastStatus: history?.status || (hasDbTag ? 'sucesso' : undefined),
           observacoes: h.observacoes || ''
         };
       });

@@ -42,6 +42,16 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
   const [countdownSegundos, setCountdownSegundos] = useState<number>(0);
   const [hotelAtual, setHotelAtual] = useState<HotelGoogleItem | null>(null);
 
+  // Sub-abas do Disparador: 'disparo' ou 'lista-hoteis'
+  const [activeSubTab, setActiveSubTab] = useState<'disparo' | 'lista-hoteis'>('disparo');
+
+  // Estados da Aba Lista de Hotéis & Pesquisa
+  const [buscaTermo, setBuscaTermo] = useState<string>('');
+  const [filtroStatusLista, setFiltroStatusLista] = useState<'todos' | 'contatados' | 'pendentes' | 'celulares' | 'fixos'>('todos');
+  const [filtroCidadeLista, setFiltroCidadeLista] = useState<string>('todas');
+  const [paginaAtual, setPaginaAtual] = useState<number>(1);
+  const [itensPorPagina, setItensPorPagina] = useState<number>(25);
+
   // Logs e Cota Diária
   const [logs, setLogs] = useState<DisparoLog[]>([]);
   const [dailySentCount, setDailySentCount] = useState<number>(0);
@@ -115,6 +125,50 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
   const totalCelularesValidos = hoteis.filter(h => h.isMobile).length;
   const totalFixos = hoteis.filter(h => h.phoneStatus === 'fixo').length;
   const totalJaContatados = hoteis.filter(h => h.alreadySent).length;
+  const totalPendentesEnvio = hoteis.filter(h => h.isMobile && !h.alreadySent).length;
+
+  // Hotéis filtrados na Aba de Pesquisa / Lista Geral
+  const hoteisListaFiltrados = useMemo(() => {
+    return hoteis.filter(h => {
+      // Filtro por cidade na lista
+      if (filtroCidadeLista !== 'todas' && h.cidade.toLowerCase() !== filtroCidadeLista.toLowerCase()) {
+        return false;
+      }
+
+      // Filtro por status
+      if (filtroStatusLista === 'contatados' && !h.alreadySent) return false;
+      if (filtroStatusLista === 'pendentes' && (!h.isMobile || h.alreadySent)) return false;
+      if (filtroStatusLista === 'celulares' && !h.isMobile) return false;
+      if (filtroStatusLista === 'fixos' && h.phoneStatus !== 'fixo') return false;
+
+      // Busca por termo (nome, cidade, bairro, telefone)
+      if (buscaTermo.trim()) {
+        const termo = buscaTermo.toLowerCase().trim();
+        const nomeMatch = h.nome.toLowerCase().includes(termo);
+        const cidadeMatch = h.cidade.toLowerCase().includes(termo);
+        const bairroMatch = (h.bairro || '').toLowerCase().includes(termo);
+        const foneRawMatch = (h.rawPhone || '').includes(termo);
+        const foneCleanMatch = (h.cleanPhone || '').includes(termo);
+        if (!nomeMatch && !cidadeMatch && !bairroMatch && !foneRawMatch && !foneCleanMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [hoteis, filtroCidadeLista, filtroStatusLista, buscaTermo]);
+
+  // Paginação da lista geral
+  const totalPaginasLista = Math.max(1, Math.ceil(hoteisListaFiltrados.length / itensPorPagina));
+  const hoteisPaginados = useMemo(() => {
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    return hoteisListaFiltrados.slice(inicio, inicio + itensPorPagina);
+  }, [hoteisListaFiltrados, paginaAtual, itensPorPagina]);
+
+  // Resetar página quando os filtros mudarem
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [buscaTermo, filtroStatusLista, filtroCidadeLista, itensPorPagina]);
 
   // Atualiza preview de Spintax
   const handleGerarPreviews = () => {
@@ -328,6 +382,53 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
         </div>
       </div>
 
+      {/* SELETOR DE SUB-ABAS */}
+      <div className="flex flex-wrap items-center gap-3 border-b border-slate-800 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('disparo')}
+          className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            activeSubTab === 'disparo'
+              ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+              : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+          }`}
+        >
+          <span className="material-symbols-outlined text-base">rocket_launch</span>
+          <span>Disparo em Lote &amp; Antibloqueio</span>
+          {filaStatus === 'running' && (
+            <span className="w-2 h-2 rounded-full bg-slate-950 animate-ping" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('lista-hoteis')}
+          className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            activeSubTab === 'lista-hoteis'
+              ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+              : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+          }`}
+        >
+          <span className="material-symbols-outlined text-base">format_list_bulleted</span>
+          <span>Lista de Hotéis &amp; Pesquisa</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            activeSubTab === 'lista-hoteis' ? 'bg-slate-950 text-emerald-400' : 'bg-slate-800 text-slate-300'
+          }`}>
+            {totalHoteis}
+          </span>
+          {totalJaContatados > 0 && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
+              activeSubTab === 'lista-hoteis'
+                ? 'bg-emerald-950/40 text-emerald-900 border border-emerald-900/40'
+                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+            }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              {totalJaContatados} contatados
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* PAINEL DE CONTROLE DA FILA (SE ATIVA OU EM ANDAMENTO) */}
       {(filaStatus === 'running' || filaStatus === 'paused' || filaStatus === 'finished') && (
         <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-2 border-emerald-500/40 rounded-3xl p-6 shadow-2xl animate-in slide-in-from-top-4 duration-300">
@@ -420,8 +521,11 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
         </div>
       )}
 
-      {/* ÁREA DE CONFIGURAÇÃO DO DISPARO */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* ABA 1: DISPARO EM LOTE & ANTIBLOQUEIO */}
+      {activeSubTab === 'disparo' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* ÁREA DE CONFIGURAÇÃO DO DISPARO */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* COLUNA ESQUERDA: FILTROS & REGRAS */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
@@ -726,6 +830,352 @@ export const AdminDisparadorGoogle: React.FC<AdminDisparadorGoogleProps> = ({ on
           </div>
         )}
       </div>
+        </div>
+      )}
+
+      {/* ABA 2: LISTA GERAL DE HOTÉIS & PESQUISA */}
+      {activeSubTab === 'lista-hoteis' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-6 animate-in fade-in duration-200">
+          {/* TOPO: TÍTULO & AÇÕES DE RECARGA */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-400">travel_explore</span>
+                <h2 className="text-lg font-black text-white">Explorador &amp; Auditoria da Base de Hotéis</h2>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Consulte todos os {totalHoteis} hotéis importados do Google Maps. Identifique imediatamente quem já recebeu mensagem, quem está na fila e quem possui telefone fixo protegido.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={carregarDados}
+                disabled={loading}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                title="Recarregar base do Supabase"
+              >
+                <span className={`material-symbols-outlined text-sm ${loading ? 'animate-spin' : ''}`}>sync</span>
+                {loading ? 'Atualizando...' : 'Atualizar Base'}
+              </button>
+            </div>
+          </div>
+
+          {/* BARRA DE PESQUISA E FILTROS RÁPIDOS */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              {/* Campo de Pesquisa Textual */}
+              <div className="md:col-span-8 relative">
+                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
+                  search
+                </span>
+                <input
+                  type="text"
+                  value={buscaTermo}
+                  onChange={(e) => setBuscaTermo(e.target.value)}
+                  placeholder="Pesquisar por nome do hotel, cidade, bairro ou telefone (ex: Recanto, Cuiabá, 6599...)"
+                  className="w-full bg-slate-800/90 border border-slate-700 rounded-2xl pl-10 pr-10 py-3 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500 transition-colors"
+                />
+                {buscaTermo && (
+                  <button
+                    type="button"
+                    onClick={() => setBuscaTermo('')}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Seletor de Cidade */}
+              <div className="md:col-span-4">
+                <select
+                  value={filtroCidadeLista}
+                  onChange={(e) => setFiltroCidadeLista(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-3.5 py-3 text-xs text-white focus:outline-hidden focus:border-emerald-500 cursor-pointer"
+                >
+                  <option value="todas">Todas as Cidades ({hoteis.length})</option>
+                  {cidadesDisponiveis.map(c => (
+                    <option key={c.nome} value={c.nome}>
+                      {c.nome} ({c.qtd} hotéis)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* CHIPS DE FILTRO DE STATUS */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-[11px] font-bold text-slate-400 mr-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm">filter_alt</span>
+                Filtrar por:
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setFiltroStatusLista('todos')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filtroStatusLista === 'todos'
+                    ? 'bg-slate-700 text-white border border-slate-600'
+                    : 'bg-slate-800/60 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                <span>Todos</span>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-900/80 text-slate-300">
+                  {hoteis.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroStatusLista('contatados')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filtroStatusLista === 'contatados'
+                    ? 'bg-emerald-500 text-slate-950 font-black shadow-md'
+                    : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">check_circle</span>
+                <span>Já Contatados</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filtroStatusLista === 'contatados' ? 'bg-slate-950 text-emerald-300' : 'bg-emerald-500/20 text-emerald-300'
+                }`}>
+                  {totalJaContatados}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroStatusLista('pendentes')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filtroStatusLista === 'pendentes'
+                    ? 'bg-blue-500 text-slate-950 font-black shadow-md'
+                    : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">schedule</span>
+                <span>Na Fila de Disparo</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filtroStatusLista === 'pendentes' ? 'bg-slate-950 text-blue-300' : 'bg-blue-500/20 text-blue-300'
+                }`}>
+                  {totalPendentesEnvio}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroStatusLista('celulares')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filtroStatusLista === 'celulares'
+                    ? 'bg-purple-500 text-slate-950 font-black shadow-md'
+                    : 'bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">smartphone</span>
+                <span>Celulares WhatsApp</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filtroStatusLista === 'celulares' ? 'bg-slate-950 text-purple-300' : 'bg-purple-500/20 text-purple-300'
+                }`}>
+                  {totalCelularesValidos}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltroStatusLista('fixos')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filtroStatusLista === 'fixos'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                    : 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">shield</span>
+                <span>Fixos Protegidos</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filtroStatusLista === 'fixos' ? 'bg-slate-950 text-amber-300' : 'bg-amber-500/20 text-amber-300'
+                }`}>
+                  {totalFixos}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* TABELA DE RESULTADOS */}
+          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-800/80 text-slate-400 uppercase text-[10px] font-black tracking-wider">
+                <tr>
+                  <th className="py-3 px-4 w-12 text-center">#</th>
+                  <th className="py-3 px-4">Hotel / Pousada</th>
+                  <th className="py-3 px-4">Cidade / UF</th>
+                  <th className="py-3 px-4">Telefone</th>
+                  <th className="py-3 px-4">Status de Disparo</th>
+                  <th className="py-3 px-4 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-3xl animate-spin text-emerald-400">sync</span>
+                        <span>Carregando hotéis do Google Maps...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : hoteisPaginados.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                      <span className="material-symbols-outlined text-3xl text-slate-600 block mb-2">search_off</span>
+                      Nenhum hotel encontrado para os filtros selecionados.
+                    </td>
+                  </tr>
+                ) : (
+                  hoteisPaginados.map((hotel, idx) => {
+                    const indexGlobal = (paginaAtual - 1) * itensPorPagina + idx + 1;
+                    const phoneRes = disparadorGoogleService.resolvePhone(hotel.rawPhone);
+
+                    return (
+                      <tr key={hotel.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-4 text-center text-slate-500 font-mono text-[11px]">
+                          {indexGlobal}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-white text-xs leading-snug">{hotel.nome}</div>
+                          {hotel.bairro && (
+                            <div className="text-[11px] text-slate-500">Bairro: {hotel.bairro}</div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-slate-300 font-medium">{hotel.cidade}</span>
+                          <span className="text-slate-500 ml-1 font-mono text-[11px]">/ {hotel.uf}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          {phoneRes.formatted ? (
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-slate-300 text-[11px]">{phoneRes.formatted}</span>
+                              {hotel.isMobile ? (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                  WhatsApp
+                                </span>
+                              ) : hotel.phoneStatus === 'fixo' ? (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  Fixo
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-slate-600 italic text-[11px]">Sem telefone</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {hotel.alreadySent ? (
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 shadow-xs">
+                              <span className="material-symbols-outlined text-sm text-emerald-400">check_circle</span>
+                              <span>Já Contatado</span>
+                              {hotel.lastSentAt && (
+                                <span className="text-[10px] text-emerald-400/80 font-mono ml-1">
+                                  • {hotel.lastSentAt}
+                                </span>
+                              )}
+                            </div>
+                          ) : hotel.phoneStatus === 'fixo' ? (
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30" title="Ignorado automaticamente para proteger o chip de suspensões">
+                              <span className="material-symbols-outlined text-sm text-amber-400">shield</span>
+                              <span>Fixo Protegido</span>
+                            </div>
+                          ) : hotel.isMobile ? (
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                              <span className="material-symbols-outlined text-sm text-blue-400">schedule</span>
+                              <span>Pendente na Fila</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-600 text-xs">Sem número válido</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {hotel.cleanPhone ? (
+                            <a
+                              href={`https://wa.me/${hotel.cleanPhone}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
+                              title="Abrir conversa no WhatsApp Web"
+                            >
+                              <span className="material-symbols-outlined text-sm">chat</span>
+                              WhatsApp
+                            </a>
+                          ) : (
+                            <span className="text-slate-600 text-xs">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* CONTROLE DE PAGINAÇÃO E RESULTADOS */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <span>
+                Exibindo <strong>{hoteisListaFiltrados.length === 0 ? 0 : (paginaAtual - 1) * itensPorPagina + 1}</strong> até{' '}
+                <strong>{Math.min(paginaAtual * itensPorPagina, hoteisListaFiltrados.length)}</strong> de{' '}
+                <strong>{hoteisListaFiltrados.length}</strong> hotéis encontrados
+              </span>
+              {hoteisListaFiltrados.length !== totalHoteis && (
+                <span className="text-slate-500">({totalHoteis} no total)</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Seletor de itens por página */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500">Por página:</span>
+                <select
+                  value={itensPorPagina}
+                  onChange={(e) => setItensPorPagina(Number(e.target.value))}
+                  className="bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-1 text-xs focus:outline-hidden cursor-pointer"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+
+              {/* Botões Anterior / Próxima */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                  disabled={paginaAtual <= 1}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-sm">chevron_left</span>
+                  Anterior
+                </button>
+
+                <span className="px-3 py-1 text-slate-300 font-mono text-xs">
+                  {paginaAtual} / {totalPaginasLista}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setPaginaAtual(p => Math.min(totalPaginasLista, p + 1))}
+                  disabled={paginaAtual >= totalPaginasLista}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold transition-all cursor-pointer flex items-center gap-1"
+                >
+                  Próxima
+                  <span className="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
