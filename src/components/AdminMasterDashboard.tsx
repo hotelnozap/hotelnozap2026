@@ -5,6 +5,7 @@ import { Hotel } from './CadastroHoteis';
 import { Partner } from './ListagemParceiros';
 import { Plano } from './ListagemPlanos';
 import { Reserva } from './ListagemReservas';
+import { RadarCliquesGoogle } from './RadarCliquesGoogle';
 
 interface QuartoRede {
   id: string;
@@ -1363,6 +1364,11 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
             </div>
 
           </div>
+
+          {/* ============================================================== */}
+          {/* RADAR DE RESERVAS • HOTÉIS DO GOOGLE (CLIQUES NO WHATSAPP)     */}
+          {/* ============================================================== */}
+          <RadarCliquesGoogle />
 
           {/* ============================================================== */}
           {/* TABELA DE HOTÉIS REAIS & MONITOR MASTER                        */}

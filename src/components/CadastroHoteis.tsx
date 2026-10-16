@@ -44,6 +44,15 @@ export interface Hotel {
   isImportedFromGoogle?: boolean;
   agenteIa?: string;
   isTop10?: boolean;
+  slug?: string;
+  is_demo?: boolean;
+  isDemo?: boolean;
+  rating?: number;
+  reviewsCount?: number;
+  pricePerNight?: number;
+  whatsappPhone?: string;
+  cancellationText?: string;
+  partner_id?: string;
 }
 
 export const INITIAL_HOTEIS: Hotel[] = [

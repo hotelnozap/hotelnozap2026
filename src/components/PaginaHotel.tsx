@@ -7,6 +7,7 @@ import { getAppLoginUrl } from '../utils/partnerUrl';
 import { navigateSpa } from '../utils/navigation';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { maskPhone } from '../utils/masks';
+import { cliquesService } from '../services/cliquesService';
 
 import { slugify } from '../utils/slugify';
 export { slugify };
@@ -732,6 +733,16 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       `Se você é o dono deste hotel e ainda não conhece nosso portal acesse\n` +
       `https://hotelnozap.com.br faça seu cadastro e nunca mais perca uma reserva.`;
     const message = encodeURIComponent(messageText);
+
+    // Registrar demanda de hóspede no Radar Administrativo
+    cliquesService.registrarCliqueWhatsappGoogle({
+      hotel_id: currentHotel.id,
+      hotel_name: currentHotel.name,
+      hotel_city: currentHotel.city,
+      hotel_uf: currentHotel.uf,
+      hotel_phone: currentHotel.whatsappPhone || currentHotel.whatsapp || '',
+      origem: 'pagina_hotel_google'
+    }).catch(() => {});
 
     webhookN8nService.dispararWebhookAtendimento({
       hotel: currentHotel,

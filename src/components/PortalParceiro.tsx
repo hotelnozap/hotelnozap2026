@@ -49,6 +49,10 @@ import { ZapHotelLogo } from './ZapHotelLogo';
 import { supabase } from '../lib/supabase';
 import { maskPhone } from '../utils/masks';
 import { getPartnerReferralLink, getPartnerDirectCheckoutLink } from '../utils/partnerUrl';
+import { Hotel } from './CadastroHoteis';
+import { partnerDemoHotelService } from '../services/partnerDemoHotelService';
+import { currentHotelService } from '../services/supabaseService';
+import { slugify } from '../utils/slugify';
 
 export interface IndicacaoHotel {
   id: string;
@@ -72,12 +76,14 @@ interface PortalParceiroProps {
   onLogout?: () => void;
   onNavigateHome?: () => void;
   onAlternarAmbiente?: () => void;
+  onNavigateToHotelDashboard?: (hotel: Hotel) => void;
 }
 
 export const PortalParceiro: React.FC<PortalParceiroProps> = ({
   onLogout,
   onNavigateHome,
-  onAlternarAmbiente
+  onAlternarAmbiente,
+  onNavigateToHotelDashboard
 }) => {
   // Aba ativa: 'dashboard' | 'indicacoes' | 'financeiro' | 'links' | 'configuracoes'
   const [activeTab, setActiveTab] = useState<'dashboard' | 'indicacoes' | 'financeiro' | 'links' | 'configuracoes'>('dashboard');
@@ -91,6 +97,17 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
   // Modais
   const [modalNovaIndicacao, setModalNovaIndicacao] = useState(false);
   const [hotelDetalhesModal, setHotelDetalhesModal] = useState<IndicacaoHotel | null>(null);
+
+  // Hotel de Demonstração do Parceiro
+  const [partnerDemoHotel, setPartnerDemoHotel] = useState<Hotel | null>(null);
+  const [modalCriarDemo, setModalCriarDemo] = useState(false);
+  const [salvandoDemoHotel, setSalvandoDemoHotel] = useState(false);
+  const [nomeHotelDemo, setNomeHotelDemo] = useState('');
+  const [cidadeHotelDemo, setCidadeHotelDemo] = useState('');
+  const [ufHotelDemo, setUfHotelDemo] = useState('MT');
+  const [whatsappHotelDemo, setWhatsappHotelDemo] = useState('');
+  const [criarQuartosDemo, setCriarQuartosDemo] = useState(true);
+  const [copiadoLinkDemo, setCopiadoLinkDemo] = useState(false);
 
   // Dados do Parceiro Logado
   const [partnerProfile, setPartnerProfile] = useState<{
@@ -276,10 +293,76 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
           cupom: prev.cupom || 'HOTELNOZAP'
         }));
       }
+
+      // 4. Buscar hotel de demonstração do parceiro
+      const demo = await partnerDemoHotelService.buscarHotelDemo(parc?.id, parc?.email || storedEmail);
+      if (demo) {
+        setPartnerDemoHotel(demo);
+      } else {
+        const primeiroNome = (parc?.nome || localStorage.getItem('hotelnozap_user_name') || 'Parceiro').split(' ')[0];
+        setNomeHotelDemo(`Pousada Modelo ${primeiroNome}`);
+        setCidadeHotelDemo(parc?.cidade || 'Cuiabá');
+        setUfHotelDemo(parc?.uf || 'MT');
+        setWhatsappHotelDemo(parc?.whatsapp || '');
+      }
     } catch (err) {
       console.error('Erro ao carregar dados reais do portal do parceiro:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleEntrarNoHotelDemo = () => {
+    if (!partnerDemoHotel) return;
+    const freshActive = {
+      id: partnerDemoHotel.id,
+      name: partnerDemoHotel.name,
+      category: partnerDemoHotel.category || 'Pousada',
+      cityUf: partnerDemoHotel.cityUf || `${partnerDemoHotel.city || ''} - ${partnerDemoHotel.uf || ''}`,
+      cnpj: partnerDemoHotel.cnpj || '',
+      status: partnerDemoHotel.status || 'ativo',
+      imageUrl: partnerDemoHotel.imageUrl || ''
+    };
+    currentHotelService.setCurrentHotel(freshActive);
+    if (onNavigateToHotelDashboard) {
+      onNavigateToHotelDashboard(partnerDemoHotel);
+    } else {
+      localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
+      localStorage.setItem('hotelnozap_active_tab', 'dashboard');
+      window.location.reload();
+    }
+  };
+
+  const handleCopiarLinkDemo = () => {
+    if (!partnerDemoHotel) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://hotelnozap.com.br';
+    const url = `${origin}/hotel/${partnerDemoHotel.slug || slugify(partnerDemoHotel.name)}`;
+    navigator.clipboard.writeText(url);
+    setCopiadoLinkDemo(true);
+    setTimeout(() => setCopiadoLinkDemo(false), 2500);
+  };
+
+  const handleSalvarHotelDemo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nomeHotelDemo.trim()) return;
+    setSalvandoDemoHotel(true);
+    try {
+      const novo = await partnerDemoHotelService.criarHotelDemo({
+        partnerId: partnerProfile.id || 'demo_partner',
+        partnerName: partnerProfile.nome,
+        partnerEmail: partnerProfile.email,
+        hotelName: nomeHotelDemo.trim(),
+        city: cidadeHotelDemo.trim() || 'Cuiabá',
+        uf: ufHotelDemo.trim() || 'MT',
+        whatsappPhone: whatsappHotelDemo.trim() || partnerProfile.whatsapp,
+        criarQuartosExemplo: criarQuartosDemo
+      });
+      setPartnerDemoHotel(novo);
+      setModalCriarDemo(false);
+    } catch (err) {
+      console.error('[PortalParceiro] Erro ao criar hotel demo:', err);
+    } finally {
+      setSalvandoDemoHotel(false);
     }
   };
 
@@ -717,6 +800,29 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botão Cadastrar ou Acessar Hotel Demo Mobile */}
+          {!partnerDemoHotel ? (
+            <button
+              type="button"
+              onClick={() => setModalCriarDemo(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer active:scale-95 transition-transform"
+              title="Cadastrar Hotel de Demonstração para Clientes"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Cadastrar Hotel</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleEntrarNoHotelDemo}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer active:scale-95 transition-transform"
+              title={`Acessar Hotel Demo: ${partnerDemoHotel.name}`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Meu Hotel Demo</span>
+            </button>
+          )}
+
           {/* Botão Alternar Telas Mobile */}
           <button
             type="button"
@@ -854,6 +960,49 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
           </div>
 
           <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+            {/* Botão Hotel de Demonstração do Parceiro */}
+            {!partnerDemoHotel ? (
+              <button
+                type="button"
+                onClick={() => setModalCriarDemo(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer transform hover:scale-[1.02] active:scale-95"
+                title="Cadastrar hotel modelo fictício para demonstrar aos futuros indicados"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Cadastrar Meu Hotel</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-300/80 px-2 py-1 rounded-xl shadow-2xs">
+                <button
+                  type="button"
+                  onClick={handleEntrarNoHotelDemo}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title={`Abrir Painel do Hotel Demo (${partnerDemoHotel.name})`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Entrar no Meu Hotel Demo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopiarLinkDemo}
+                  className="px-2 py-1 text-emerald-800 hover:text-emerald-950 hover:bg-emerald-200/60 rounded-md transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+                  title="Copiar Link Direto do Hotel Demo para enviar aos clientes"
+                >
+                  {copiadoLinkDemo ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-700" />
+                      <span className="text-emerald-800 text-[10px]">Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span className="text-[10px]">Link Demo</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
             {/* Botão Alternar Telas Desktop */}
             <button
               type="button"
@@ -1811,12 +1960,90 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                   />
                   <button
                     onClick={handleCopiarLink}
-                    className="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl text-xs flex items-center justify-center gap-2"
+                    className="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {copiadoLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     <span>{copiadoLink ? 'Copiado!' : 'Copiar Link'}</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Hotel Modelo para Demonstrações ao Vivo */}
+              <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-black text-slate-900 text-sm">Hotel de Demonstração da Franquia</h3>
+                        <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          100% Liberado • Oculto do Showroom
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {partnerDemoHotel 
+                          ? `Hotel ativo: "${partnerDemoHotel.name}" (${partnerDemoHotel.city || partnerDemoHotel.cityUf || 'Modelo'}). Use para demonstrar reservas e painel aos clientes.`
+                          : 'Crie seu hotel fictício para apresentar reservas, quartos, cardápio e IA do WhatsApp aos seus clientes.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!partnerDemoHotel ? (
+                    <button
+                      onClick={() => setModalCriarDemo(true)}
+                      className="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Cadastrar Meu Hotel Demo</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={handleEntrarNoHotelDemo}
+                        className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                      >
+                        <Building2 className="w-4 h-4" />
+                        <span>Abrir Painel do Hotel</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {partnerDemoHotel && (
+                  <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                        Link Direto da Página Pública do seu Hotel Demo (Acesso Exclusivo por Link):
+                      </span>
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${typeof window !== 'undefined' ? window.location.origin : 'https://hotelnozap.com.br'}/hotel/${partnerDemoHotel.slug || slugify(partnerDemoHotel.name)}`}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 font-bold select-all"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 sm:self-end shrink-0">
+                      <button
+                        onClick={handleCopiarLinkDemo}
+                        className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {copiadoLinkDemo ? <Check className="w-4 h-4 text-emerald-700" /> : <Copy className="w-4 h-4" />}
+                        <span>{copiadoLinkDemo ? 'Copiado!' : 'Copiar Link Demo'}</span>
+                      </button>
+                      <a
+                        href={`/hotel/${partnerDemoHotel.slug || slugify(partnerDemoHotel.name)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-emerald-200"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span>Ver Página</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Materiais de Venda Rápidos para WhatsApp */}
@@ -2356,6 +2583,149 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                 Fechar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: CADASTRAR HOTEL DE DEMONSTRAÇÃO DO PARCEIRO                         */}
+      {/* ========================================================================= */}
+      {modalCriarDemo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-base">Cadastrar Meu Hotel Demo</h3>
+                  <p className="text-xs text-slate-500">Exclusivo para demonstrar aos seus futuros clientes</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setModalCriarDemo(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+              <p className="font-extrabold flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Hotel 100% Funcional e Oculto do Showroom</span>
+              </p>
+              <p className="text-amber-800/90 text-[11px] leading-relaxed">
+                Este hotel terá todos os recursos do painel liberados (reservas, quartos, cardápio, etc.). Ele <strong>não aparecerá na lista pública</strong> de hotéis, ficando acessível somente pelo seu link direto.
+              </p>
+            </div>
+
+            <form onSubmit={handleSalvarHotelDemo} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nome do Hotel / Pousada Fictícia:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={nomeHotelDemo}
+                  onChange={(e) => setNomeHotelDemo(e.target.value)}
+                  placeholder="Ex: Pousada Modelo Cuiabá, Hotel Paraíso Demo..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Cidade:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={cidadeHotelDemo}
+                    onChange={(e) => setCidadeHotelDemo(e.target.value)}
+                    placeholder="Ex: Cuiabá"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    UF:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={2}
+                    value={ufHotelDemo}
+                    onChange={(e) => setUfHotelDemo(e.target.value.toUpperCase())}
+                    placeholder="MT"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-center uppercase focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  WhatsApp para Atendimento / Demonstração:
+                </label>
+                <input
+                  type="text"
+                  value={whatsappHotelDemo}
+                  onChange={(e) => setWhatsappHotelDemo(maskPhone(e.target.value))}
+                  placeholder="(65) 99999-9999"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+              </div>
+
+              <div className="pt-1">
+                <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={criarQuartosDemo}
+                    onChange={(e) => setCriarQuartosDemo(e.target.checked)}
+                    className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block">
+                      Pré-cadastrar 3 quartos de exemplo
+                    </span>
+                    <span className="text-[11px] text-slate-500 block leading-tight">
+                      Inclui Suíte Master, Apartamento Casal e Suíte Família com fotos e preços fictícios prontos para demonstração.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  disabled={salvandoDemoHotel}
+                  onClick={() => setModalCriarDemo(false)}
+                  className="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvandoDemoHotel || !nomeHotelDemo.trim()}
+                  className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {salvandoDemoHotel ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Criando Hotel Demo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Criar Meu Hotel Demo</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

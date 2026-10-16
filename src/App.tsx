@@ -2427,6 +2427,20 @@ export const App: React.FC = () => {
             setActiveTab('catalogo-hoteis');
           }}
           onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
+          onNavigateToHotelDashboard={(hotel) => {
+            const freshActive = {
+              id: hotel.id,
+              name: hotel.name,
+              category: hotel.category || 'Pousada',
+              cityUf: hotel.cityUf || `${hotel.city || ''} - ${hotel.uf || ''}`,
+              cnpj: hotel.cnpj || '',
+              status: hotel.status || 'ativo',
+              imageUrl: hotel.imageUrl || ''
+            };
+            currentHotelService.setCurrentHotel(freshActive);
+            setActiveHotel(freshActive);
+            setActiveTab('dashboard');
+          }}
         />
         <ModalAlternarAmbientes
           isOpen={isModalAmbientesOpen}
@@ -2536,6 +2550,20 @@ export const App: React.FC = () => {
               setActiveTab('catalogo-hoteis');
             }}
             onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
+            onNavigateToHotelDashboard={(hotel) => {
+              const freshActive = {
+                id: hotel.id,
+                name: hotel.name,
+                category: hotel.category || 'Pousada',
+                cityUf: hotel.cityUf || `${hotel.city || ''} - ${hotel.uf || ''}`,
+                cnpj: hotel.cnpj || '',
+                status: hotel.status || 'ativo',
+                imageUrl: hotel.imageUrl || ''
+              };
+              currentHotelService.setCurrentHotel(freshActive);
+              setActiveHotel(freshActive);
+              setActiveTab('dashboard');
+            }}
           />
           <ModalAlternarAmbientes
             isOpen={isModalAmbientesOpen}

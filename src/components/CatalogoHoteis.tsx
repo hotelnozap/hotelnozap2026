@@ -108,12 +108,14 @@ export const findCityBySlug = (slug: string, hotels: PublicHotel[]): string | nu
   return null;
 };
 
-// Identifica se um hotel é o Hotel Morada da Lua (ambiente de teste/demonstração)
-export const isHotelMoradaDaLua = (h: { id?: string; name?: string; link?: string } | null | undefined): boolean => {
+// Identifica se um hotel é o Hotel Morada da Lua ou Hotel Demo de Parceiro (oculta do showroom público)
+export const isHotelMoradaDaLua = (h: { id?: string; name?: string; link?: string; is_demo?: boolean; isDemo?: boolean; notes?: string } | null | undefined): boolean => {
   if (!h) return false;
+  if ((h as any).is_demo === true || (h as any).isDemo === true) return true;
+  if ((h.notes || '').includes('[DEMO_PARCEIRO')) return true;
   if (h.id === '3c18756c-d41d-4d7f-873f-57e87e3e2c78') return true;
   const name = (h.name || '').toLowerCase();
-  if (name.includes('morada da lua')) return true;
+  if (name.includes('morada da lua') || name.includes('[demo]') || name.includes('(demo)')) return true;
   const link = (h.link || '').toLowerCase();
   if (link.includes('hotelmoradadalua') || link.includes('moradadalua')) return true;
   return false;
