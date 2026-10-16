@@ -8,6 +8,7 @@ import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInativida
 import { ModalPermissoesApp } from './components/ModalPermissoesApp';
 import { ModalReservasDoDia } from './components/ModalReservasDoDia';
 import { ModalAlternarAmbientes, type TipoAmbiente } from './components/ModalAlternarAmbientes';
+import { ModalAlertaExpiracaoPlano } from './components/ModalAlertaExpiracaoPlano';
 
 // Services & utilities
 import { supabase } from './lib/supabase';
@@ -367,6 +368,9 @@ export const App: React.FC = () => {
   // Modal proativo de Reservas do Dia e Alertas de No-Show na abertura do sistema (Desktop e Mobile)
   const [isModalReservasDiaOpen, setIsModalReservasDiaOpen] = useState<boolean>(false);
   const [totalReservasDiaCount, setTotalReservasDiaCount] = useState<number>(0);
+
+  // Modal de Alerta de Expiração de Plano (10 dias antes do vencimento com CTA)
+  const [isModalAlertaExpiracaoOpen, setIsModalAlertaExpiracaoOpen] = useState<boolean>(false);
 
   useEffect(() => {
     // 1. Se já perguntou antes, nunca abre
@@ -2424,6 +2428,23 @@ export const App: React.FC = () => {
     (hotelCreditInfo.status === 'expirado' || activeHotel?.status === 'inativo' || activeHotel?.status === 'bloqueado')
   );
 
+  // Disparo automático do Modal de Alerta de Expiração de Plano quando faltar 10 dias ou menos
+  useEffect(() => {
+    if (isUserAuthenticated && isHotelUser && activeHotel && !isMasterDefault && hotelCreditInfo) {
+      if (hotelCreditInfo.status === 'alerta' || (hotelCreditInfo.diasRestantes <= 10 && hotelCreditInfo.diasRestantes > 0)) {
+        const storageKey = `hotelnozap_alerta_expiracao_dismissed_${activeHotel.id}`;
+        try {
+          const dismissed = sessionStorage.getItem(storageKey);
+          if (!dismissed) {
+            setIsModalAlertaExpiracaoOpen(true);
+          }
+        } catch {
+          setIsModalAlertaExpiracaoOpen(true);
+        }
+      }
+    }
+  }, [isUserAuthenticated, isHotelUser, activeHotel?.id, hotelCreditInfo?.diasRestantes, hotelCreditInfo?.status, isMasterDefault]);
+
   if (isHotelExpired && hotelCreditInfo) {
     return (
       <Suspense fallback={<PageLoadingFallback />}>
@@ -2630,6 +2651,19 @@ export const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* Botão Alerta de Expiração de Plano (Mobile) */}
+          {!isMasterAdmin && hotelCreditInfo && (hotelCreditInfo.status === 'alerta' || (hotelCreditInfo.diasRestantes <= 10 && hotelCreditInfo.diasRestantes > 0)) && (
+            <button
+              type="button"
+              onClick={() => setIsModalAlertaExpiracaoOpen(true)}
+              className="relative px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400/50 font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer animate-pulse"
+              title="Seu plano está prestes a expirar. Clique para renovar agora."
+            >
+              <span className="material-symbols-outlined text-sm text-amber-400">hourglass_top</span>
+              <span>{hotelCreditInfo.diasRestantes}d</span>
+            </button>
+          )}
+
           {/* Botão Reservas do Dia (Mobile - Exclusivo Hotel, Gerente e Recepção) */}
           {!isMasterAdmin && (isPerfilHotel || isGerente || isRecepcao) && (
             <button
@@ -3832,6 +3866,19 @@ export const App: React.FC = () => {
                   <span className="material-symbols-outlined text-xs text-blue-500">open_in_new</span>
                 </button>
 
+                {/* Botão Alerta de Expiração de Plano (Desktop) */}
+                {!isMasterAdmin && hotelCreditInfo && (hotelCreditInfo.status === 'alerta' || (hotelCreditInfo.diasRestantes <= 10 && hotelCreditInfo.diasRestantes > 0)) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsModalAlertaExpiracaoOpen(true)}
+                    className="relative px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/15 hover:from-amber-500/25 hover:to-orange-500/25 text-amber-900 border border-amber-400 font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer animate-pulse"
+                    title="Seu plano está prestes a expirar. Clique para renovar agora."
+                  >
+                    <span className="material-symbols-outlined text-base text-amber-600">hourglass_top</span>
+                    <span>Plano vence em {hotelCreditInfo.diasRestantes}d • Renovar</span>
+                  </button>
+                )}
+
                 {/* Botão Reservas do Dia (Desktop - Exclusivo Hotel, Gerente e Recepção) */}
                 {!isMasterAdmin && (isPerfilHotel || isGerente || isRecepcao) && (
                   <button
@@ -4854,6 +4901,47 @@ export const App: React.FC = () => {
         userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
         hotelNome={hotelNomeFantasia}
       />
+
+      {/* MODAL DE ALERTA DE EXPIRAÇÃO DE PLANO (10 DIAS ANTES COM CTA) */}
+      {!isMasterAdmin && isHotelUser && activeHotel && hotelCreditInfo && (
+        <ModalAlertaExpiracaoPlano
+          isOpen={isModalAlertaExpiracaoOpen}
+          onClose={() => setIsModalAlertaExpiracaoOpen(false)}
+          hotel={activeHotel}
+          infoCredito={hotelCreditInfo}
+          onPlanRenewed={async () => {
+            try {
+              const dbHoteis = await hoteisService.getHoteis();
+              if (dbHoteis && dbHoteis.length > 0) {
+                const matched = dbHoteis.find(h => h.id === activeHotel.id);
+                if (matched) {
+                  const freshActive: HotelAtivo = {
+                    id: matched.id,
+                    name: matched.name,
+                    category: matched.category,
+                    cityUf: matched.cityUf,
+                    cnpj: matched.cnpj,
+                    status: matched.status,
+                    imageUrl: matched.imageUrl,
+                    plan: matched.plan,
+                    managerName: matched.managerName,
+                    managerEmail: matched.managerEmail,
+                    managerPhone: matched.managerPhone,
+                    managerCpf: matched.managerCpf,
+                    loginEmail: matched.loginEmail,
+                    whatsapp: matched.whatsapp,
+                    notes: (matched as any).notes || (matched as any).observacoes,
+                    isImportedFromGoogle: (matched as any).isImportedFromGoogle
+                  };
+                  currentHotelService.setCurrentHotel(freshActive);
+                  setActiveHotel(freshActive);
+                }
+              }
+            } catch { /* ignore */ }
+            setIsModalAlertaExpiracaoOpen(false);
+          }}
+        />
+      )}
 
     </div>
   );

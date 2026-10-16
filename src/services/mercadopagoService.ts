@@ -648,16 +648,17 @@ export const mercadopagoService = {
 
     try {
       // 1. Calcular validade e registrar créditos SaaS
+      const isAbordagem = (plano?.name || '').toLowerCase().includes('abordagem') || Number(plano?.trialDays || plano?.dias_trial || plano?.bonusDays || plano?.dias_bonus) >= 60;
       const cicloDays = Number(plano?.cicloDays || 30);
       const bonusDays = Number(plano?.bonusDays || 15);
-      const totalDias = cicloDays + bonusDays;
+      const totalDias = isAbordagem ? 60 : (cicloDays + bonusDays);
       const creditos = Number(plano?.creditos || 1);
 
       const now = new Date();
       const expDate = new Date(now.getTime() + totalDias * 24 * 60 * 60 * 1000);
       const todayStr = now.toISOString().split('T')[0];
 
-      creditosService.saveCreditoHotel(hotelId, creditos, expDate.toISOString(), false, todayStr);
+      creditosService.saveCreditoHotel(hotelId, creditos, expDate.toISOString(), isAbordagem, todayStr);
 
       const creditosInfo = {
         saldoCreditos: creditos,

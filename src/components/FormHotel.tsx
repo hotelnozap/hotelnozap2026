@@ -284,12 +284,13 @@ export const FormHotel: React.FC<FormHotelProps> = ({
             if (isGoogleMaps) {
               return 'Grátis (Google Maps)';
             }
-            // No cadastro de novos hotéis, o plano grátis NÃO fica disponível para seleção a não ser que seja Google Maps
+            // No cadastro de novos hotéis, o plano grátis NÃO fica disponível para seleção a não ser que seja Google Maps ou Abordagem Comercial
             const activeList = list.filter((p: any) => {
               if ((p.status || '').toLowerCase() === 'inativo') return false;
               if (!hotelToEdit && !isGoogleMaps) {
                 const pName = (p.name || '').toLowerCase();
-                if (p.basePrice === 0 || pName.includes('grátis') || pName.includes('gratis') || pName.includes('google maps')) {
+                const isAbordagem = pName.includes('abordagem') || Number(p.trialDays || p.bonusDays) >= 60;
+                if (!isAbordagem && (p.basePrice === 0 || pName.includes('google maps') || (pName.includes('grátis') && !pName.includes('abordagem')))) {
                   return false;
                 }
               }
@@ -420,13 +421,14 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlan, planos.length, isGoogleMaps]);
 
-  // Filtrar apenas planos ativos para seleção (no cadastro de novo hotel, o plano grátis do Google Maps não fica disponível a não ser que isGoogleMaps esteja ativo)
+  // Filtrar apenas planos ativos para seleção (no cadastro de novo hotel, o plano grátis do Google Maps não fica disponível a não ser que isGoogleMaps esteja ativo; Abordagem Comercial fica sempre disponível)
   const planosAtivos = useMemo(() => {
     let result = planos.filter(p => {
       if ((p.status || '').toLowerCase() === 'inativo') return false;
       if (!hotelToEdit && !isGoogleMaps) {
         const pName = (p.name || '').toLowerCase();
-        if (p.basePrice === 0 || pName.includes('grátis') || pName.includes('gratis') || pName.includes('google maps')) {
+        const isAbordagem = pName.includes('abordagem') || Number(p.trialDays || p.bonusDays) >= 60;
+        if (!isAbordagem && (p.basePrice === 0 || pName.includes('google maps') || (pName.includes('grátis') && !pName.includes('abordagem')))) {
           return false;
         }
       }
@@ -455,12 +457,13 @@ export const FormHotel: React.FC<FormHotelProps> = ({
     if (isGoogleMaps) return 3650;
     const planoObj = planos.find(p => isPlanSelected(p)) || planos.find(p => p.name?.toLowerCase() === selectedPlan.toLowerCase());
     if (planoObj) {
+      if (planoObj.name.includes('Abordagem') || (Number(planoObj.basePrice) === 0 && Number(planoObj.trialDays || planoObj.bonusDays) >= 60)) return 60;
       if (planoObj.name.includes('1 Crédito')) return 45;
       if (planoObj.name.includes('2 Créditos')) return 75;
       if (planoObj.name.includes('3 Créditos')) return 120;
       if (planoObj.name.includes('6 Créditos')) return 225;
       if (planoObj.name.includes('12 Créditos')) return 425;
-      if (planoObj.name.includes('Grátis') || planoObj.name.includes('Google Maps')) return 3650;
+      if (planoObj.name.includes('Google Maps') || (planoObj.name.includes('Grátis') && !planoObj.name.includes('Abordagem'))) return 3650;
     }
     return 45; // Padrão degustação 45 dias
   }, [selectedPlan, planos, isGoogleMaps]);

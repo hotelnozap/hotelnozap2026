@@ -322,10 +322,12 @@ export const creditosService = {
         dataCompraStr = stored.dataCompra;
       }
     } else {
-      // Se não há registro prévio, o novo hotel ganha 45 dias (30 dias base + 15 bônus de degustação)
+      // Se não há registro prévio, verifica se é o plano de abordagem comercial (60 dias) ou padrão (45 dias)
+      const isPlanoAbordagem = planLower.includes('abordagem') || planLower.includes('60 dias') || planLower.includes('60d');
+      const diasIniciais = isPlanoAbordagem ? 60 : 45;
       const baseDate = hotel?.createdAt ? new Date(hotel.createdAt) : new Date();
       dataCompraStr = baseDate.toISOString().split('T')[0];
-      expiracaoDate = new Date(baseDate.getTime() + 45 * 24 * 60 * 60 * 1000);
+      expiracaoDate = new Date(baseDate.getTime() + diasIniciais * 24 * 60 * 60 * 1000);
       saldoCreditos = 1;
       emDegustacao = true;
 

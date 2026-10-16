@@ -43,7 +43,7 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
         p.status !== 'Inativo' &&
         !p.name?.toLowerCase().includes('maps') &&
         !p.name?.toLowerCase().includes('legado') &&
-        Number(p.basePrice) > 0
+        (Number(p.basePrice) > 0 || p.name?.toLowerCase().includes('abordagem') || Number(p.trialDays || p.bonusDays) >= 60)
       ).sort((a: any, b: any) => {
         const ordA = Number(String(a.order || a.ordem || '').replace(/\D/g, '')) || 0;
         const ordB = Number(String(b.order || b.ordem || '').replace(/\D/g, '')) || 0;
@@ -968,9 +968,11 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
                           <div className="mb-4 pb-4 border-b border-slate-100">
                             <div className="flex items-baseline gap-1.5 flex-wrap">
                               <span className="font-black text-slate-900 text-2xl sm:text-3xl">
-                                {Number(p.basePrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                {Number(p.basePrice) === 0 ? 'Grátis' : Number(p.basePrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                               </span>
-                              <span className="text-xs font-semibold text-slate-500">{periodText}</span>
+                              <span className="text-xs font-semibold text-slate-500">
+                                {Number(p.basePrice) === 0 ? '(60 dias cortesia)' : periodText}
+                              </span>
                             </div>
                           </div>
 
