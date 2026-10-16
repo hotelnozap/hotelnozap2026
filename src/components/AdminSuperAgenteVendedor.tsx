@@ -22,7 +22,14 @@ export const AdminSuperAgenteVendedor: React.FC<AdminSuperAgenteVendedorProps> =
   const [instances, setInstances] = useState<any[]>([]);
 
   // Sub-aba ativa
-  const [activeTab, setActiveTab] = useState<'conversas' | 'simulador' | 'roteiro'>('conversas');
+  const [activeTab, setActiveTab] = useState<'conversas' | 'simulador' | 'roteiro' | 'n8n'>('n8n');
+
+  // Estados da Integração n8n
+  const [n8nTestando, setN8nTestando] = useState<boolean>(false);
+  const [n8nTestResult, setN8nTestResult] = useState<any | null>(null);
+  const [sincronizandoEvolution, setSincronizandoEvolution] = useState<boolean>(false);
+  const [sincronizacaoResult, setSincronizacaoResult] = useState<string | null>(null);
+  const [copiadoJson, setCopiadoJson] = useState<boolean>(false);
 
   // Conversas & Leads
   const [conversas, setConversas] = useState<Record<string, LeadConversa>>(superAgenteVendedorService.getConversas());
@@ -140,6 +147,64 @@ export const AdminSuperAgenteVendedor: React.FC<AdminSuperAgenteVendedorProps> =
     setSimulando(false);
   };
 
+  // Copiar JSON do Workflow n8n
+  const handleCopiarJsonWorkflow = async () => {
+    try {
+      const res = await fetch('/n8n-workflow-super-agente-vendedor.json');
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      setCopiadoJson(true);
+      setTimeout(() => setCopiadoJson(false), 3000);
+    } catch (e) {
+      alert('Não foi possível copiar automaticamente. Baixe o arquivo pelo botão ao lado.');
+    }
+  };
+
+  // Baixar JSON do Workflow n8n
+  const handleBaixarJsonWorkflow = () => {
+    const a = document.createElement('a');
+    a.href = '/n8n-workflow-super-agente-vendedor.json';
+    a.download = 'n8n-workflow-super-agente-vendedor.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // Testar Webhook no n8n
+  const handleTestarN8n = async () => {
+    setN8nTestando(true);
+    setN8nTestResult(null);
+    try {
+      const res = await superAgenteVendedorService.testarWebhookN8n(config.n8nWebhookUrl);
+      setN8nTestResult(res);
+    } catch (err: any) {
+      setN8nTestResult({ success: false, error: err?.message || 'Erro ao disparar webhook' });
+    } finally {
+      setN8nTestando(false);
+    }
+  };
+
+  // Sincronizar na Evolution API
+  const handleSincronizarEvolution = async () => {
+    setSincronizandoEvolution(true);
+    setSincronizacaoResult(null);
+    try {
+      const res = await superAgenteVendedorService.apontarWebhookEvolutionParaN8n(
+        config.instanciaMonitorada || 'meutim',
+        config.n8nWebhookUrl
+      );
+      if (res.success) {
+        setSincronizacaoResult('✅ Webhook da Evolution API atualizado com sucesso para o n8n!');
+      } else {
+        setSincronizacaoResult(`❌ Erro: ${res.error}`);
+      }
+    } catch (err: any) {
+      setSincronizacaoResult(`❌ Erro: ${err?.message}`);
+    } finally {
+      setSincronizandoEvolution(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* HEADER PRINCIPAL */}
@@ -247,6 +312,24 @@ export const AdminSuperAgenteVendedor: React.FC<AdminSuperAgenteVendedorProps> =
 
       {/* SELETOR DE SUB-ABAS */}
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-800 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab('n8n')}
+          className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+            activeTab === 'n8n'
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg shadow-orange-500/20'
+              : 'bg-slate-900 border border-slate-800 text-amber-300 hover:text-white hover:border-slate-700'
+          }`}
+        >
+          <span className="material-symbols-outlined text-base">hub</span>
+          <span>⚡ Integração n8n &amp; Workflow</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            activeTab === 'n8n' ? 'bg-slate-950 text-amber-300' : 'bg-amber-500/20 text-amber-300'
+          }`}>
+            OFICIAL
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveTab('conversas')}
@@ -845,6 +928,279 @@ export const AdminSuperAgenteVendedor: React.FC<AdminSuperAgenteVendedorProps> =
                 Salvar Roteiro &amp; Configurações
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ABA 4: INTEGRAÇÃO N8N & WORKFLOW */}
+      {activeTab === 'n8n' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* BANNER DE DESTAQUE N8N */}
+          <div className="bg-gradient-to-r from-slate-900 via-orange-950/20 to-slate-900 border-2 border-orange-500/40 rounded-3xl p-6 sm:p-7 shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0 shadow-inner">
+                  <span className="material-symbols-outlined text-3xl">hub</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                      Motor de Automação Oficial
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">
+                      Portal n8n Hotel no Zap
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1">
+                    Super Agente Vendedor no n8n
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                    O robô comercial é orquestrado diretamente dentro do seu servidor n8n. Ele recebe as mensagens da Evolution API, responde as dúvidas dos hotéis, envia o link da LP e agenda o follow-up de 5 minutos.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <a
+                  href="https://portaln8n.hotelnozap.com.br"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs transition-all flex items-center gap-2 shadow-lg shadow-orange-950/30 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">open_in_new</span>
+                  Abrir Painel n8n
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 BOTÕES DE AÇÃO RÁPIDA */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* CARD 1: COPIAR JSON */}
+            <div className="bg-slate-900 border border-slate-800 hover:border-orange-500/40 rounded-3xl p-5 transition-all shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center mb-3">
+                  <span className="material-symbols-outlined text-xl">content_copy</span>
+                </div>
+                <h3 className="text-sm font-black text-white">Copiar Workflow (Ctrl+V)</h3>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Copia a estrutura completa de 6 nós para colar direto dentro de uma tela vazia no n8n.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopiarJsonWorkflow}
+                className="mt-4 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-orange-500/20 text-orange-300 font-bold text-xs border border-orange-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {copiadoJson ? 'check' : 'content_copy'}
+                </span>
+                <span>{copiadoJson ? 'Copiado para a Memória!' : 'Copiar JSON do Workflow'}</span>
+              </button>
+            </div>
+
+            {/* CARD 2: BAIXAR JSON */}
+            <div className="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 rounded-3xl p-5 transition-all shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3">
+                  <span className="material-symbols-outlined text-xl">download</span>
+                </div>
+                <h3 className="text-sm font-black text-white">Baixar Arquivo .json</h3>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Baixe o arquivo oficial pronto para importar via menu "Import from File" no seu n8n.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleBaixarJsonWorkflow}
+                className="mt-4 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">download</span>
+                <span>Baixar Workflow .json</span>
+              </button>
+            </div>
+
+            {/* CARD 3: TESTAR WEBHOOK */}
+            <div className="bg-slate-900 border border-slate-800 hover:border-blue-500/40 rounded-3xl p-5 transition-all shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-3">
+                  <span className="material-symbols-outlined text-xl">science</span>
+                </div>
+                <h3 className="text-sm font-black text-white">Testar Disparo no n8n</h3>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Envia um payload simulado de mensagem recebida para você ver o fluxo executando no n8n.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleTestarN8n}
+                disabled={n8nTestando}
+                className="mt-4 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-blue-500/20 text-blue-300 font-bold text-xs border border-blue-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {n8nTestando ? 'sync' : 'play_arrow'}
+                </span>
+                <span>{n8nTestando ? 'Enviando ao n8n...' : 'Disparar Teste Real'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* RETORNO DO TESTE N8N (SE HOUVER) */}
+          {n8nTestResult && (
+            <div className={`p-4 rounded-2xl border text-xs animate-in fade-in duration-200 ${
+              n8nTestResult.success
+                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                : 'bg-red-950/40 border-red-500/40 text-red-300'
+            }`}>
+              <div className="flex items-center gap-2 font-bold mb-1">
+                <span className="material-symbols-outlined text-base">
+                  {n8nTestResult.success ? 'check_circle' : 'error'}
+                </span>
+                <span>
+                  {n8nTestResult.success
+                    ? `Disparo realizado com sucesso! Status HTTP ${n8nTestResult.status} (200 OK)`
+                    : `Falha no teste: ${n8nTestResult.error}`}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                {n8nTestResult.success
+                  ? 'Verifique a aba Executions (Execuções) no seu n8n para ver o fluxo processando o lead de teste!'
+                  : 'Certifique-se de que o workflow está Ativo (Published) no n8n ou com o nó Webhook em modo "Listen for test event".'}
+              </p>
+            </div>
+          )}
+
+          {/* CONFIGURAÇÃO DA WEBHOOK URL & SINCRONIZAÇÃO COM A EVOLUTION API */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+            <h3 className="text-sm font-black text-white flex items-center gap-2">
+              <span className="material-symbols-outlined text-orange-400">settings_ethernet</span>
+              URL do Webhook no n8n &amp; Sincronização na Evolution API
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div className="md:col-span-8">
+                <label className="text-xs font-bold text-slate-300 block mb-1">
+                  Endpoint do Webhook no n8n:
+                </label>
+                <input
+                  type="text"
+                  value={config.n8nWebhookUrl || ''}
+                  onChange={(e) => setConfig({ ...config, n8nWebhookUrl: e.target.value })}
+                  placeholder="https://portaln8n.hotelnozap.com.br/webhook/super-agente-vendedor"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-2.5 text-xs text-white font-mono focus:outline-hidden"
+                />
+              </div>
+
+              <div className="md:col-span-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSalvarConfig(config)}
+                  className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-sm">save</span>
+                  Salvar URL
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSincronizarEvolution}
+                  disabled={sincronizandoEvolution}
+                  className="flex-1 px-4 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-orange-950/20 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    {sincronizandoEvolution ? 'sync' : 'link'}
+                  </span>
+                  <span>{sincronizandoEvolution ? 'Sincronizando...' : 'Vincular na Evolution API'}</span>
+                </button>
+              </div>
+            </div>
+
+            {sincronizacaoResult && (
+              <p className="text-xs font-semibold text-slate-300 bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                {sincronizacaoResult}
+              </p>
+            )}
+          </div>
+
+          {/* ARQUITETURA VISUAL DO WORKFLOW */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+            <h3 className="text-sm font-black text-white flex items-center gap-2">
+              <span className="material-symbols-outlined text-emerald-400">schema</span>
+              Arquitetura dos Nós Configurados no Workflow do n8n
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                <span className="text-[10px] font-black uppercase text-orange-400">Nó 1</span>
+                <h4 className="text-xs font-bold text-white mt-0.5">Webhook Evolution API</h4>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Recebe eventos <code className="text-emerald-300">MESSAGES_UPSERT</code> da instância <code className="text-white">meutim</code>.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                <span className="text-[10px] font-black uppercase text-blue-400">Nó 2</span>
+                <h4 className="text-xs font-bold text-white mt-0.5">Filtro Anti-Loop &amp; Extração</h4>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Ignora mensagens enviadas pelo chip (<code className="text-amber-300">fromMe: true</code>) e ignora grupos/status.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                <span className="text-[10px] font-black uppercase text-purple-400">Nó 3</span>
+                <h4 className="text-xs font-bold text-white mt-0.5">Classificador de Roteiro</h4>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Identifica "Quem fala?", "Preço / Demonstração", "Já temos sistema", "É robô?" e gera as respostas oficiais.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                <span className="text-[10px] font-black uppercase text-emerald-400">Nó 4</span>
+                <h4 className="text-xs font-bold text-white mt-0.5">Enviar Resposta ao Hotel</h4>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Dispara a mensagem pelo endpoint <code className="text-white">POST /message/sendText</code> da Evolution API.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                <span className="text-[10px] font-black uppercase text-amber-400">Nó 5</span>
+                <h4 className="text-xs font-bold text-white mt-0.5">Alerta VIP WhatsApp Everaldo</h4>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Quando o lead demonstrar interesse, envia alerta instantâneo para seu WhatsApp (<code className="text-white">5565996173004</code>).
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                <span className="text-[10px] font-black uppercase text-pink-400">Nó 6 &amp; 7</span>
+                <h4 className="text-xs font-bold text-white mt-0.5">Wait 5 Min + Follow-up</h4>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Aguarda 5 minutos e envia a mensagem de suporte perguntando se deu tudo certo com o cadastro da LP.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* PASSO A PASSO PARA IMPORTAR NO N8N */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-3">
+            <h3 className="text-sm font-black text-white flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-400">help</span>
+              Como Ativar no n8n em 1 Minuto:
+            </h3>
+
+            <ol className="list-decimal list-inside space-y-2 text-xs text-slate-300 leading-relaxed">
+              <li>
+                Clique no botão laranja acima <strong className="text-white">"Copiar JSON do Workflow"</strong> (ou baixe o arquivo .json).
+              </li>
+              <li>
+                Acesse o painel do seu n8n (<a href="https://portaln8n.hotelnozap.com.br" target="_blank" rel="noopener noreferrer" className="text-orange-400 underline">portaln8n.hotelnozap.com.br</a>).
+              </li>
+              <li>
+                Crie um novo workflow e simplesmente pressione <strong className="text-white">Ctrl + V</strong> dentro da tela do n8n (todos os nós aparecerão automaticamente conectados).
+              </li>
+              <li>
+                Clique no botão de ativação <strong className="text-emerald-400">"Publish / Ativar"</strong> no topo direito do n8n. Pronto!
+              </li>
+            </ol>
           </div>
         </div>
       )}

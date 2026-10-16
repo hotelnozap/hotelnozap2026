@@ -1,0 +1,288 @@
+{
+  "name": "Hotel no Zap - Super Agente Vendedor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "super-agente-vendedor",
+        "options": {}
+      },
+      "id": "node-webhook-evolution",
+      "name": "Webhook Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "webhookId": "super-agente-vendedor"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai dados essenciais do payload da Evolution API v1 / v2\nconst body = $input.first().json.body || $input.first().json;\n\n// Se for evento MESSAGES_UPSERT da Evolution API\nconst data = body.data || body;\nconst key = data.key || {};\n\n// 1. Ignora mensagens enviadas pelo próprio chip (fromMe: true)\nif (key.fromMe === true) {\n  return [];\n}\n\n// 2. Extrai o número do remetente\nconst remoteJid = key.remoteJid || '';\nif (!remoteJid || remoteJid.includes('@g.us') || remoteJid.includes('status@broadcast')) {\n  // Ignora grupos e status do WhatsApp\n  return [];\n}\n\nconst cleanPhone = remoteJid.replace(/\\D/g, '');\n\n// 3. Extrai o texto da mensagem\nconst message = data.message || {};\nconst text = message.conversation ||\n  message.extendedTextMessage?.text ||\n  message.imageMessage?.caption ||\n  '';\n\nif (!text || text.trim().length === 0) {\n  return [];\n}\n\nconst pushName = data.pushName || 'Parceiro';\nconst primeiroNome = pushName.split(' ')[0] || 'Parceiro';\n\nreturn [{\n  json: {\n    remoteJid,\n    cleanPhone,\n    pushName,\n    primeiroNome,\n    textoRecebido: text.trim(),\n    instanceName: body.instance || 'meutim',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "node-filter-anti-loop",
+      "name": "Filtro Anti-Loop & Extração",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Classificador de Intenção do Super Agente Vendedor - Hotel no Zap\nconst item = $input.first().json;\nconst texto = (item.textoRecebido || '').toLowerCase();\nconst primeiroNome = item.primeiroNome || 'Parceiro';\n\nconst LINK_CADASTRO = 'https://lp.hotelnozap.com.br';\nconst ADMIN_WHATSAPP = '5565996173004'; // Sr. Everaldo Souza\n\nlet intencao = 'GERAL';\nlet resposta = '';\nlet acionarFechamento = false;\nlet acionarAlertaVip = false;\nlet descartar = false;\n\n// Regra 1: Quem fala / Do que se trata?\nif (\n  texto.includes('quem fala') ||\n  texto.includes('quem é') ||\n  texto.includes('de onde é') ||\n  texto.includes('do que se trata') ||\n  texto.includes('qual o assunto') ||\n  texto.includes('quem tá falando') ||\n  texto.includes('quem esta falando')\n) {\n  intencao = 'QUEM_FALA';\n  resposta = 'Oi! Aqui é o *Everaldo Souza*, fundador do *Hotel no Zap* aqui de MT. Encontrei o hotel de vocês no Google e entrei em contato direto porque criamos a Plataforma de Gestão de Hotéis com Inteligência Artificial especializada para hotéis e pousadas atenderem hóspedes no WhatsApp.';\n}\n// Regra 2: Fechamento / Preço / Demonstração / Como pago / Pode ligar?\nelse if (\n  texto.includes('preço') ||\n  texto.includes('preco') ||\n  texto.includes('valor') ||\n  texto.includes('quanto custa') ||\n  texto.includes('plano') ||\n  texto.includes('pode me ligar') ||\n  texto.includes('me liga') ||\n  texto.includes('como pago') ||\n  texto.includes('como funciona') ||\n  texto.includes('quero testar') ||\n  texto.includes('quero conhecer') ||\n  texto.includes('como cadastro') ||\n  texto.includes('link')\n) {\n  intencao = 'FECHAMENTO';\n  acionarFechamento = true;\n  acionarAlertaVip = true;\n  resposta = `Maravilha! Você pode fazer a ativação imediata do seu hotel por este link inteiramente grátis:\\n🔗 ${LINK_CADASTRO}\\n\\nLeva menos de 2 minutos para preencher. Vou ficar te aguardando por aqui!`;\n}\n// Regra 3: Objeção de Sistema Atual\nelse if (\n  texto.includes('já temos sistema') ||\n  texto.includes('ja temos sistema') ||\n  texto.includes('já uso') ||\n  texto.includes('ja uso') ||\n  texto.includes('tenho pms') ||\n  texto.includes('hsystem') ||\n  texto.includes('totvs') ||\n  texto.includes('desbravador') ||\n  texto.includes('foco') ||\n  texto.includes('silbeck')\n) {\n  intencao = 'OBJECAO_SISTEMA';\n  resposta = 'Que excelente! O Hotel no Zap não precisa substituir o sistema de vocês caso não queiram. Nossa tecnologia atua como o Vendedor e Recepcionista com Inteligência Artificial no WhatsApp do hotel para responder na hora e fechar reservas diretas sem pagar comissão para Booking ou Airbnb.';\n}\n// Regra 4: É robô?\nelse if (\n  texto.includes('é robô') ||\n  texto.includes('e robo') ||\n  texto.includes('é ia') ||\n  texto.includes('inteligencia artificial') ||\n  texto.includes('mensagem automatica')\n) {\n  intencao = 'OBJECAO_ROBO';\n  resposta = 'Sou a Inteligência Artificial desenvolvida pelo Everaldo aqui no Hotel no Zap! Nosso objetivo é libertar a sua recepção das mensagens repetitivas de cotação e fotos no WhatsApp, atendendo os hóspedes em menos de 3 segundos.';\n}\n// Regra 5: Descarte / Sem interesse\nelse if (\n  texto.includes('não tenho interesse') ||\n  texto.includes('nao tenho interesse') ||\n  texto.includes('não quero') ||\n  texto.includes('nao quero') ||\n  texto.includes('pare de enviar') ||\n  texto.includes('remover') ||\n  texto.includes('sai fora')\n) {\n  intencao = 'DESCARTE';\n  descartar = true;\n  resposta = 'Entendido perfeitamente! Já registrei aqui e não te enviaremos mais mensagens. Um abraço e ótimas reservas!';\n}\n// Regra 6: Positivo / Apresentação Geral\nelse {\n  intencao = 'GERAL';\n  resposta = `Olá! Tudo bem, ${primeiroNome}? Me chamo Everaldo, sou fundador do Hotel no Zap aqui no MT. Vocês perdem muito tempo na recepção respondendo dúvidas e fechando reservas no WhatsApp? Desenvolvemos uma IA que atende em segundos e fecha reservas diretas sem comissão!`;\n}\n\n// Mensagem de follow-up que será disparada 5 minutos após o link\nconst mensagemFollowup5Min = `${primeiroNome}, deu tudo certo com o preenchimento do cadastro pelo link? Se tiver qualquer dúvida estou por aqui para te ajudar a finalizar!`;\n\n// Mensagem de alerta para o Everaldo\nconst mensagemAlertaEveraldo = `🚨 *NOVO CLIENTE EM FECHAMENTO - HOTEL NO ZAP!*\\n\\n📱 *Lead:* ${item.pushName} (${item.cleanPhone})\\n💬 *Disse:* \"${item.textoRecebido}\"\\n🎯 *Ação:* Link da LP enviado e follow-up de 5 minutos iniciado!\\n\\n👉 *Clique para falar com ele no WhatsApp:*\\nhttps://wa.me/${item.cleanPhone}`;\n\nreturn [{\n  json: {\n    ...item,\n    intencao,\n    resposta,\n    acionarFechamento,\n    acionarAlertaVip,\n    descartar,\n    mensagemFollowup5Min,\n    mensagemAlertaEveraldo,\n    adminWhatsapp: ADMIN_WHATSAPP\n  }\n}];"
+      },
+      "id": "node-motor-vendedor",
+      "name": "Super Agente Vendedor (Roteiro)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D45D6901E2E9-4218-A667-AA493D7E80EE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.cleanPhone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.resposta }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-send-lead-response",
+      "name": "Enviar Resposta ao Hotel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.acionarAlertaVip }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "node-if-fechamento",
+      "name": "É Fechamento / Lead Quente?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D45D6901E2E9-4218-A667-AA493D7E80EE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.adminWhatsapp }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagemAlertaEveraldo }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-send-vip-alert",
+      "name": "Alerta VIP WhatsApp Everaldo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "node-wait-5min",
+      "name": "Aguardar 5 Minutos",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        220
+      ],
+      "webhookId": "wait-followup-5min"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://painelevolution.hotelnozap.com.br/message/sendText/{{ $json.instanceName }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "D45D6901E2E9-4218-A667-AA493D7E80EE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.cleanPhone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagemFollowup5Min }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-send-followup",
+      "name": "Follow-up 5 Minutos ao Hotel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Evolution API": {
+      "main": [
+        [
+          {
+            "node": "Filtro Anti-Loop & Extração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro Anti-Loop & Extração": {
+      "main": [
+        [
+          {
+            "node": "Super Agente Vendedor (Roteiro)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Super Agente Vendedor (Roteiro)": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta ao Hotel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta ao Hotel": {
+      "main": [
+        [
+          {
+            "node": "É Fechamento / Lead Quente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Fechamento / Lead Quente?": {
+      "main": [
+        [
+          {
+            "node": "Alerta VIP WhatsApp Everaldo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Alerta VIP WhatsApp Everaldo": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 5 Minutos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 5 Minutos": {
+      "main": [
+        [
+          {
+            "node": "Follow-up 5 Minutos ao Hotel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

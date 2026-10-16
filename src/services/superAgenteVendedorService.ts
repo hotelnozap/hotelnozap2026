@@ -18,6 +18,9 @@ export interface SuperAgenteConfig {
   delayMinSegundos: number; // 8s
   delayMaxSegundos: number; // 15s
   simularDigitando: boolean; // true
+  // Integração com n8n
+  usarMotorN8n: boolean;
+  n8nWebhookUrl: string;
   // Textos Oficiais Aprovados
   mensagemApresentacao: string;
   mensagemFechamentoLink: string;
@@ -73,6 +76,8 @@ export const CONFIG_PADRAO_SUPER_AGENTE: SuperAgenteConfig = {
   delayMinSegundos: 8,
   delayMaxSegundos: 15,
   simularDigitando: true,
+  usarMotorN8n: true,
+  n8nWebhookUrl: 'https://portaln8n.hotelnozap.com.br/webhook/super-agente-vendedor',
   mensagemApresentacao:
     'Oi! Aqui é o *Everaldo Souza*, fundador do *Hotel no Zap* aqui de MT. Encontrei o hotel de vocês no Google e entrei em contato direto porque criamos a Plataforma de Gestão de Hotéis com Inteligência Artificial especializada para hotéis e pousadas atenderem hóspedes no WhatsApp.',
   mensagemFechamentoLink:
@@ -519,6 +524,96 @@ export const superAgenteVendedorService = {
     try {
       localStorage.removeItem(STORAGE_KEY_CONVERSAS);
     } catch { /* ignore */ }
+  },
+
+  /**
+   * Dispara um teste real de mensagem simulada para o Webhook do n8n
+   */
+  async testarWebhookN8n(urlCustom?: string): Promise<{ success: boolean; status?: number; error?: string; payloadEnviado?: any }> {
+    const config = this.getConfig();
+    const webhookUrl = urlCustom || config.n8nWebhookUrl || 'https://portaln8n.hotelnozap.com.br/webhook/super-agente-vendedor';
+
+    // Monta o payload no padrão exato da Evolution API (MESSAGES_UPSERT)
+    const payload = {
+      event: 'messages.upsert',
+      instance: config.instanciaMonitorada || 'meutim',
+      data: {
+        key: {
+          remoteJid: '5565999998888@s.whatsapp.net',
+          fromMe: false,
+          id: 'TEST_N8N_' + Date.now()
+        },
+        pushName: 'Hotel Teste MT',
+        message: {
+          conversation: 'Qual o valor do plano anual? Como funciona para testar?'
+        },
+        messageTimestamp: Math.floor(Date.now() / 1000)
+      },
+      destination: webhookUrl,
+      date_time: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        return {
+          success: false,
+          status: response.status,
+          error: `Erro HTTP ${response.status}: ${text || 'Falha ao acionar webhook n8n'}`,
+          payloadEnviado: payload
+        };
+      }
+
+      return {
+        success: true,
+        status: response.status,
+        payloadEnviado: payload
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err?.message || 'Falha de conexão com o portal n8n.',
+        payloadEnviado: payload
+      };
+    }
+  },
+
+  /**
+   * Configura o webhook da Evolution API diretamente para o endpoint do n8n
+   */
+  async apontarWebhookEvolutionParaN8n(instanceName: string, webhookUrl: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const evolutionUrl = (evolutionApiService as any).apiUrl || 'https://painelevolution.hotelnozap.com.br';
+      const apiKey = (evolutionApiService as any).apiKey || 'D45D6901E2E9-4218-A667-AA493D7E80EE';
+
+      const res = await fetch(`${evolutionUrl}/webhook/set/${encodeURIComponent(instanceName.trim())}`, {
+        method: 'POST',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          enabled: true,
+          url: webhookUrl.trim(),
+          webhookByEvents: false,
+          events: ['MESSAGES_UPSERT']
+        })
+      });
+
+      const json = await res.json().catch(() => null);
+      if (res.ok) {
+        return { success: true, message: 'Webhook da Evolution API atualizado com sucesso para o n8n!' };
+      }
+      return { success: false, error: json?.message || `Erro HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Erro ao conectar à Evolution API' };
+    }
   }
 };
 
