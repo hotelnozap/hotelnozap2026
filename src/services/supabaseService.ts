@@ -695,6 +695,17 @@ export const usuariosService = {
   }
 };
 
+// Helper para gerar CNPJ único válido para contornar constraint UNIQUE de hoteis_cnpj_key
+export const generateUniqueCnpj = (): string => {
+  const ts = Date.now().toString().slice(-8);
+  const p1 = Math.floor(10 + Math.random() * 89).toString();
+  const p2 = ts.slice(0, 3);
+  const p3 = ts.slice(3, 6);
+  const branch = '0001';
+  const check = Math.floor(10 + Math.random() * 89).toString();
+  return `${p1}.${p2}.${p3}/${branch}-${check}`;
+};
+
 // Service para Hotéis no Supabase (Tabela: hoteis)
 export const hoteisService = {
   async getTotalHoteisCount(): Promise<number> {
@@ -793,7 +804,9 @@ export const hoteisService = {
         nome: hotel.name,
         razao_social: hotel.razaoSocial || hotel.name || 'Hotel & Hospedagem LTDA',
         categoria: hotel.category || 'Hotel & Pousada',
-        cnpj: hotel.cnpj || '00.000.000/0001-00',
+        cnpj: (hotel.cnpj && hotel.cnpj.trim() && hotel.cnpj.trim() !== '00.000.000/0001-00')
+          ? hotel.cnpj.trim()
+          : generateUniqueCnpj(),
         cidade: hotel.city || (hotel.cityUf ? hotel.cityUf.split('/')[0]?.trim() : '') || 'Sinop',
         uf: hotel.uf || (hotel.cityUf ? hotel.cityUf.split('/')[1]?.trim() : '') || 'MT',
         bairro: hotel.neighborhood || 'Centro',
@@ -830,7 +843,7 @@ export const hoteisService = {
       let error = result.error;
       let data = result.data;
 
-      // Fallback gracioso se o usuário ainda não tiver rodado o SQL das novas colunas
+      // Fallback gracioso se o banco ainda não possuir as novas colunas opcionais (erro 42703)
       if (error && (error.code === '42703' || error.message?.includes('link') || error.message?.includes('is_top_10') || error.message?.includes('instagram') || error.message?.includes('facebook') || error.message?.includes('tiktok') || error.message?.includes('whatsapp') || error.message?.includes('parceiro_referencia') || error.message?.includes('numero') || error.message?.includes('agente_ia'))) {
         delete payload.link;
         delete payload.instagram;
@@ -844,6 +857,14 @@ export const hoteisService = {
         const retry = await supabase.from('hoteis').insert([payload]).select('*').single();
         error = retry.error;
         data = retry.data;
+      }
+
+      // Fallback para duplicidade de CNPJ acidental quando o hotel não tem CNPJ próprio (erro 23505)
+      if (error && (error.code === '23505' || error.message?.includes('hoteis_cnpj_key') || (error.message?.includes('duplicate key') && error.message?.includes('cnpj')))) {
+        payload.cnpj = generateUniqueCnpj();
+        const retryCnpj = await supabase.from('hoteis').insert([payload]).select('*').single();
+        error = retryCnpj.error;
+        data = retryCnpj.data;
       }
 
       if (error) {

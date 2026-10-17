@@ -56,7 +56,7 @@ export interface ModalImportarGoogleMapsProps {
 }
 
 // Gera um CNPJ único e válido para contornar a constraint UNIQUE do Supabase
-const generateUniqueCnpj = (): string => {
+export const generateUniqueCnpj = (): string => {
   const ts = Date.now().toString().slice(-8);
   const p1 = Math.floor(10 + Math.random() * 89).toString();
   const p2 = ts.slice(0, 3);

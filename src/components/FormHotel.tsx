@@ -34,7 +34,7 @@ import {
 } from '../utils/hotelUrl';
 import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
 import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
-import { CIDADES_MATO_GROSSO_142 } from './ModalImportarGoogleMaps';
+import { CIDADES_MATO_GROSSO_142, generateUniqueCnpj } from './ModalImportarGoogleMaps';
 
 
 export interface FormHotelProps {
@@ -1075,7 +1075,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
         name: nomeFantasia,
         razaoSocial: razaoSocial.trim() || nomeFantasia.trim(),
         category: category,
-        cnpj: cnpj || '00.000.000/0001-00',
+        cnpj: (cnpj.trim() && cnpj.trim() !== '00.000.000/0001-00') ? cnpj.trim() : generateUniqueCnpj(),
         city: city.trim(),
         uf: uf ? uf.toUpperCase().trim() : '',
         cityUf: (city.trim() && uf.trim()) ? `${city.trim()} / ${uf.trim().toUpperCase()}` : (city.trim() || uf.trim().toUpperCase()),
