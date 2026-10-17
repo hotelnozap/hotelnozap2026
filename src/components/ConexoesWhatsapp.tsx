@@ -77,6 +77,8 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
   const [criandoInstancia, setCriandoInstancia] = useState(false);
   const [deleteConfirmInstance, setDeleteConfirmInstance] = useState<WhatsappInstance | null>(null);
   const [excluindoInstancia, setExcluindoInstancia] = useState(false);
+  const [logoutConfirmInstance, setLogoutConfirmInstance] = useState<WhatsappInstance | null>(null);
+  const [desconectandoInstancia, setDesconectandoInstancia] = useState(false);
 
   // Form States para Nova Conexão
   const [novoNome, setNovoNome] = useState('');
@@ -848,7 +850,33 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
     try {
       const evoList = await evolutionApiService.fetchInstances();
       const metaMap = evolutionApiService.getLocalMetadata(currentHotel.id);
-      const mapped = mapEvolutionToUi(evoList, metaMap);
+
+      // 🏷️ Regra do Hotel: cada hotel tem sua própria instância (nomedohotel01, nomedohotel02...)
+      const cleanHotelName = (currentHotel?.name || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+
+      const hotelSavedInstance = (currentHotel.instanceName || (currentHotel as any).nome_instancia || '').trim().toLowerCase();
+
+      const evoListDoHotel = evoList.filter((evo) => {
+        const evoNameLower = (evo.name || '').trim().toLowerCase();
+
+        // 1. Corresponde à instância cadastrada no banco Supabase para este hotel
+        if (hotelSavedInstance && evoNameLower === hotelSavedInstance) return true;
+
+        // 2. Corresponde à regra de nomenclatura (nomedohotel01, nomedohotel02...)
+        if (cleanHotelName && evoNameLower.startsWith(cleanHotelName)) return true;
+
+        // 3. Metadado explicitamente vinculado ao hotelId
+        if (metaMap[evo.name]?.hotelId === currentHotel.id) return true;
+
+        // Bloqueia e oculta instâncias de outros hotéis e a master ('meutim')
+        return false;
+      });
+
+      const mapped = mapEvolutionToUi(evoListDoHotel, metaMap);
       setInstances(mapped);
       await carregarDadosPlano(mapped);
 
@@ -960,23 +988,26 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
 
     setCriandoInstancia(true);
     try {
-      // 🏷️ Prefixo amigável com identificador do hotel para ser visto no painel da Evolution API:
-      // Ex: hot001_recepcao_1234
-      const cleanHotelPrefix = (currentHotel?.id || 'hotel')
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '')
-        .substring(0, 8);
-
-      const cleanSlug = novoNome
+      // 🏷️ Regra do nome da instância: nomedohotel01 tudo junto, se houver mais de uma nomedohotel02
+      const cleanHotelName = (currentHotel?.name || 'hotel')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]/g, '_')
-        .replace(/^_+|_+$/g, '')
-        .substring(0, 15);
+        .replace(/[^a-z0-9]/g, '');
 
-      const uniqueSuffix = Math.floor(1000 + Math.random() * 9000).toString();
-      const finalInstanceName = `${cleanHotelPrefix}_${cleanSlug || 'wa'}_${uniqueSuffix}`;
+      // Consulta instâncias existentes no servidor da Evolution API para obter o próximo número
+      const evoList = await evolutionApiService.fetchInstances();
+      const existingMatchingNumbers = evoList
+        .map(i => (i.name || '').toLowerCase().trim())
+        .filter(n => n.startsWith(cleanHotelName))
+        .map(n => {
+          const suffix = n.replace(cleanHotelName, '');
+          const parsed = parseInt(suffix, 10);
+          return isNaN(parsed) ? 0 : parsed;
+        });
+
+      const nextNum = existingMatchingNumbers.length > 0 ? Math.max(...existingMatchingNumbers) + 1 : 1;
+      const finalInstanceName = `${cleanHotelName}${nextNum.toString().padStart(2, '0')}`;
 
       const res = await evolutionApiService.createInstance(finalInstanceName, {
         qrcode: true,
@@ -1018,7 +1049,7 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
       // Abre imediatamente o modal de QR Code para escaneamento
       const novaInstanciaUi: WhatsappInstance = {
         id: finalInstanceName,
-        code: `WZ${uniqueSuffix.slice(-2)}`,
+        code: `WZ${nextNum.toString().padStart(2, '0')}`,
         name: newMeta.displayName,
         instanceName: finalInstanceName,
         phone: novoTelefone ? maskPhone(novoTelefone) : 'Aguardando pareamento',
@@ -1135,9 +1166,14 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
   };
 
   // Desconectar (Logout)
-  const handleLogoutInstance = async (inst: WhatsappInstance) => {
-    if (!confirm(`Deseja desconectar a sessão do WhatsApp da instância "${inst.name}"?`)) return;
+  const handleLogoutInstance = (inst: WhatsappInstance) => {
+    setLogoutConfirmInstance(inst);
+  };
 
+  const handleConfirmLogout = async () => {
+    if (!logoutConfirmInstance) return;
+    const inst = logoutConfirmInstance;
+    setDesconectandoInstancia(true);
     showToast(`Desconectando "${inst.name}"...`);
     try {
       await evolutionApiService.logoutInstance(inst.instanceName);
@@ -1145,8 +1181,11 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
         prev.map((i) => (i.instanceName === inst.instanceName ? { ...i, status: 'desconectado' } : i))
       );
       showToast(`Instância "${inst.name}" desconectada.`);
+      setLogoutConfirmInstance(null);
     } catch {
       showToast('Erro ao desconectar instância.');
+    } finally {
+      setDesconectandoInstancia(false);
     }
   };
 
@@ -3533,8 +3572,20 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
                   className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#003400]/30"
                 />
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  A instância será gerada com o identificador do hotel no painel da Evolution API.
+                  Identificador de exibição interna da conexão.
                 </span>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-600">Instância na Evolution API:</span>
+                  <span className="font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded text-[11px]">
+                    {((currentHotel?.name || 'hotel').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')) + (instances.length + 1).toString().padStart(2, '0')}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-tight">
+                  Regra do sistema: cada hotel possui sua própria instância isolada no painel da Evolution (<code>nomedohotel01</code>, <code>02</code>...).
+                </p>
               </div>
 
               <div>
@@ -3938,6 +3989,71 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
                   <>
                     <span className="material-symbols-outlined text-base">delete</span>
                     <span>Confirmar Exclusão</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO DE DESCONEXÃO */}
+      {logoutConfirmInstance && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-amber-200">
+            <div className="px-6 py-4 bg-amber-600 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-2xl">power_settings_new</span>
+                <h3 className="font-bold text-base">Desconectar Sessão WhatsApp</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLogoutConfirmInstance(null)}
+                disabled={desconectandoInstancia}
+                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 text-slate-700 text-xs sm:text-sm space-y-3">
+              <p className="leading-relaxed">
+                Deseja desconectar a sessão do WhatsApp da instância{' '}
+                <strong className="text-slate-900">"{logoutConfirmInstance.name}"</strong> (
+                <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono font-bold text-amber-900">{logoutConfirmInstance.instanceName}</code>)?
+              </p>
+              <div className="text-xs text-amber-900 bg-amber-50 p-3.5 rounded-xl border border-amber-200 font-medium leading-relaxed flex items-start gap-2.5">
+                <span className="material-symbols-outlined text-amber-600 text-base shrink-0 mt-0.5">warning</span>
+                <span>
+                  O WhatsApp deste número será desvinculado no aparelho. Para restabelecer o atendimento e respostas da IA, será necessário ler o QR Code novamente.
+                </span>
+              </div>
+            </div>
+
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setLogoutConfirmInstance(null)}
+                disabled={desconectandoInstancia}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmLogout}
+                disabled={desconectandoInstancia}
+                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {desconectandoInstancia ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Desconectando...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-base">logout</span>
+                    <span>Desconectar Sessão</span>
                   </>
                 )}
               </button>
