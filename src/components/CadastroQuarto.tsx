@@ -270,51 +270,120 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
     };
   }, []);
 
+  // Helper para normalizar comodidades garantindo a estrutura ComodidadeCategoria com array de itens válido
+  const normalizeComodidadesCategorias = (raw: any): ComodidadeCategoria[] => {
+    if (!raw) {
+      return comodidadesService.getSeedPadrao();
+    }
+
+    if (Array.isArray(raw)) {
+      if (raw.length === 0) {
+        return comodidadesService.getSeedPadrao();
+      }
+
+      // Caso: array com strings simples (ex: ['Ar Condicionado', 'Wi-Fi Grátis'])
+      const hasStrings = raw.some(item => typeof item === 'string');
+      if (hasStrings) {
+        const itensFormatados = raw.map((item: any, idx: number) => {
+          const texto = typeof item === 'string' ? item : (item?.texto || item?.nome || '');
+          return {
+            texto: String(texto || '').trim(),
+            order: idx + 1
+          };
+        }).filter(it => it.texto.length > 0);
+
+        return [
+          {
+            id: `cat-inclusas-${Date.now()}`,
+            nome: 'Comodidades Inclusas',
+            icon: 'hotel',
+            iconClass: '',
+            iconColor: '#006c49',
+            order: 1,
+            status: 'ativo',
+            itens: itensFormatados.length > 0 ? itensFormatados : [{ texto: 'Ar-condicionado e Wi-Fi', order: 1 }]
+          }
+        ];
+      }
+
+      // Caso: array de objetos ComodidadeCategoria
+      return raw.map((c: any, cIdx: number) => {
+        let itensList: any[] = [];
+        if (Array.isArray(c?.itens)) {
+          itensList = c.itens.map((it: any, iIdx: number) => ({
+            texto: typeof it === 'string' ? it : String(it?.texto || it?.nome || '').trim(),
+            order: Number(it?.order) || iIdx + 1
+          })).filter((it: any) => it.texto.length > 0);
+        } else if (typeof c?.texto === 'string') {
+          itensList = [{ texto: c.texto.trim(), order: 1 }];
+        } else if (typeof c?.nome === 'string' && !c?.itens) {
+          itensList = [{ texto: c.nome.trim(), order: 1 }];
+        }
+
+        if (itensList.length === 0) {
+          itensList = [{ texto: '', order: 1 }];
+        }
+
+        return {
+          id: c?.id || `cat-${cIdx + 1}-${Date.now()}`,
+          nome: c?.nome || (cIdx === 0 ? 'Comodidades Principais' : `Categoria ${cIdx + 1}`),
+          icon: c?.icon || 'spa',
+          iconClass: c?.iconClass || '',
+          iconColor: c?.iconColor || '#006c49',
+          order: Number(c?.order) || cIdx + 1,
+          status: c?.status || 'ativo',
+          itens: itensList
+        };
+      });
+    }
+
+    if (typeof raw === 'object' && Array.isArray(raw.comodidades)) {
+      return normalizeComodidadesCategorias(raw.comodidades);
+    }
+
+    return comodidadesService.getSeedPadrao();
+  };
+
   // COMODIDADES & CONFORTO INCLUSOS (NÍVEL QUARTO)
   const [comodidadesCategorias, setComodidadesCategorias] = useState<ComodidadeCategoria[]>(() => {
-    if (editingQuarto?.comodidades && Array.isArray(editingQuarto.comodidades) && editingQuarto.comodidades.length > 0) {
-      return editingQuarto.comodidades;
-    }
-    if (editingQuarto?.items?.comodidades && Array.isArray(editingQuarto.items.comodidades) && editingQuarto.items.comodidades.length > 0) {
-      return editingQuarto.items.comodidades;
-    }
-    return comodidadesService.getSeedPadrao();
+    const raw = editingQuarto?.comodidades || editingQuarto?.items?.comodidades;
+    return normalizeComodidadesCategorias(raw);
   });
 
   const handleAddCategoria = () => {
     setComodidadesCategorias(prev => [
-      ...prev,
+      ...(prev || []),
       {
         id: `new-${Date.now()}`,
         nome: '',
         icon: 'category',
         iconClass: '',
         iconColor: '#006c49',
-        order: prev.length + 1,
+        order: (prev || []).length + 1,
         status: 'ativo',
         itens: [{ texto: '', order: 1 }],
       },
     ]);
   };
   const handleRemoveCategoria = (idx: number) => {
-    setComodidadesCategorias(prev => prev.filter((_, i) => i !== idx).map((c, i) => ({ ...c, order: i + 1 })));
+    setComodidadesCategorias(prev => (prev || []).filter((_, i) => i !== idx).map((c, i) => ({ ...c, order: i + 1 })));
   };
   const handleChangeCategoria = (idx: number, field: keyof ComodidadeCategoria, value: any) => {
-    setComodidadesCategorias(prev => prev.map((c, i) => i === idx ? { ...c, [field]: value } : c));
+    setComodidadesCategorias(prev => (prev || []).map((c, i) => i === idx ? { ...c, [field]: value } : c));
   };
   const handleAddItem = (catIdx: number) => {
-    setComodidadesCategorias(prev => prev.map((c, i) => i === catIdx
-      ? { ...c, itens: [...c.itens, { texto: '', order: c.itens.length + 1 }] }
+    setComodidadesCategorias(prev => (prev || []).map((c, i) => i === catIdx
+      ? { ...c, itens: [...(c.itens || []), { texto: '', order: (c.itens || []).length + 1 }] }
       : c));
   };
   const handleRemoveItem = (catIdx: number, itemIdx: number) => {
-    setComodidadesCategorias(prev => prev.map((c, i) => i === catIdx
-      ? { ...c, itens: c.itens.filter((_, k) => k !== itemIdx).map((it, z) => ({ ...it, order: z + 1 })) }
+    setComodidadesCategorias(prev => (prev || []).map((c, i) => i === catIdx
+      ? { ...c, itens: (c.itens || []).filter((_, k) => k !== itemIdx).map((it, z) => ({ ...it, order: z + 1 })) }
       : c));
   };
   const handleChangeItem = (catIdx: number, itemIdx: number, texto: string) => {
-    setComodidadesCategorias(prev => prev.map((c, i) => i === catIdx
-      ? { ...c, itens: c.itens.map((it, k) => k === itemIdx ? { ...it, texto } : it) }
+    setComodidadesCategorias(prev => (prev || []).map((c, i) => i === catIdx
+      ? { ...c, itens: (c.itens || []).map((it, k) => k === itemIdx ? { ...it, texto } : it) }
       : c));
   };
 
@@ -337,13 +406,8 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
     setQuantidadeCamas(String(editingQuarto.beds || ''));
     setValorDiaria(String(editingQuarto.dailyPrice || ''));
     setObservacoes(editingQuarto.notes || '');
-    if (editingQuarto.comodidades && Array.isArray(editingQuarto.comodidades) && editingQuarto.comodidades.length > 0) {
-      setComodidadesCategorias(editingQuarto.comodidades);
-    } else if (editingQuarto.items?.comodidades && Array.isArray(editingQuarto.items.comodidades) && editingQuarto.items.comodidades.length > 0) {
-      setComodidadesCategorias(editingQuarto.items.comodidades);
-    } else {
-      setComodidadesCategorias(comodidadesService.getSeedPadrao());
-    }
+    const rawComodidades = editingQuarto.comodidades || editingQuarto.items?.comodidades;
+    setComodidadesCategorias(normalizeComodidadesCategorias(rawComodidades));
     const rawVideo = editingQuarto.videoUrl || (editingQuarto as any).video || (editingQuarto as any).video_url || editingQuarto.items?.videoUrl || editingQuarto.items?.video || '';
     setVideoUrl(rawVideo);
 
@@ -402,14 +466,9 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
     setValorDiaria(String(target.dailyPrice || target.valorDiaria || target.valor_diaria || ''));
     setObservacoes(target.notes || target.observacoes || '');
 
-    // 4. Comodidades (cópia profunda para evitar mutação)
-    if (target.comodidades && Array.isArray(target.comodidades) && target.comodidades.length > 0) {
-      setComodidadesCategorias(JSON.parse(JSON.stringify(target.comodidades)));
-    } else if (target.items?.comodidades && Array.isArray(target.items.comodidades) && target.items.comodidades.length > 0) {
-      setComodidadesCategorias(JSON.parse(JSON.stringify(target.items.comodidades)));
-    } else {
-      setComodidadesCategorias(comodidadesService.getSeedPadrao());
-    }
+    // 4. Comodidades (cópia normalizada e profunda para evitar mutação)
+    const rawCloneComodidades = target.comodidades || target.items?.comodidades;
+    setComodidadesCategorias(normalizeComodidadesCategorias(rawCloneComodidades));
 
     // 5. Destaques
     try {
@@ -1384,8 +1443,8 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
             )}
 
             <div className="space-y-4">
-              {comodidadesCategorias.map((cat, catIdx) => (
-                <div key={`cat-${catIdx}-${cat.id || cat.nome}`} className="border border-slate-200 rounded-2xl p-4 md:p-5 bg-slate-50/40 space-y-4">
+              {(comodidadesCategorias || []).map((cat, catIdx) => (
+                <div key={`cat-${catIdx}-${cat?.id || cat?.nome || catIdx}`} className="border border-slate-200 rounded-2xl p-4 md:p-5 bg-slate-50/40 space-y-4">
                   
                   {/* Cabeçalho da Categoria */}
                   <div className="grid grid-cols-12 gap-3 items-end">
@@ -1394,7 +1453,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
                       <input
                         type="number"
                         min={1}
-                        value={cat.order}
+                        value={cat?.order ?? 1}
                         onChange={(e) => handleChangeCategoria(catIdx, 'order', Number(e.target.value) || 1)}
                         className="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-slate-800 bg-white font-bold text-center"
                       />
@@ -1403,7 +1462,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
                       <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Nome da Categoria</label>
                       <input
                         type="text"
-                        value={cat.nome}
+                        value={cat?.nome ?? ''}
                         onChange={(e) => handleChangeCategoria(catIdx, 'nome', e.target.value)}
                         placeholder="Ex: Banho & Bem-Estar Privativo"
                         className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs sm:text-sm font-semibold focus:outline-none focus:border-emerald-600 bg-white"
@@ -1612,10 +1671,10 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
                     </div>
 
                     <div className="space-y-2">
-                      {cat.itens.length === 0 && (
+                      {(cat?.itens || []).length === 0 && (
                         <p className="text-[11px] text-slate-400 italic py-1">Nenhum item adicionado nesta categoria.</p>
                       )}
-                      {cat.itens.map((item, itemIdx) => (
+                      {(cat?.itens || []).map((item, itemIdx) => (
                         <div key={`item-${catIdx}-${itemIdx}`} className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
                             <span className="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
@@ -1623,7 +1682,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
                           <span className="w-6 text-center text-[10px] text-slate-400 font-mono font-bold">{itemIdx + 1}</span>
                           <input
                             type="text"
-                            value={item.texto}
+                            value={item?.texto || ''}
                             onChange={(e) => handleChangeItem(catIdx, itemIdx, e.target.value)}
                             placeholder="Ex: Banheira de hidromassagem com iluminação LED"
                             className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-emerald-600 bg-white"
