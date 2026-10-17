@@ -2704,10 +2704,10 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
                   />
                   <div>
                     <span className="text-xs font-bold text-slate-800 block">
-                      Pré-cadastrar 3 quartos de exemplo
+                      Pré-cadastrar 10 quartos de exemplo
                     </span>
                     <span className="text-[11px] text-slate-500 block leading-tight">
-                      Inclui Suíte Master, Apartamento Casal e Suíte Família com fotos e preços fictícios prontos para demonstração.
+                      Inclui 10 quartos divididos entre Solteiro (3), Casal (4) e Triplo (3), com fotos, valores e comodidades prontas para demonstração.
                     </span>
                   </div>
                 </label>
