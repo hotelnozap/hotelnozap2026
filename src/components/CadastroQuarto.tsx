@@ -270,15 +270,87 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
     };
   }, []);
 
+const DEFAULT_COMODIDADES_SEED: ComodidadeCategoria[] = [
+  {
+    id: 'seed-cat-1',
+    nome: 'Banho & Bem-Estar Privativo',
+    icon: 'spa',
+    iconClass: '',
+    iconColor: '#006c49',
+    order: 1,
+    status: 'ativo',
+    itens: [
+      { texto: 'Banheira de hidromassagem dupla com iluminação LED', order: 1 },
+      { texto: 'Amenities de luxo e higiene pessoal', order: 2 },
+      { texto: 'Roupões macios e ducha dupla a gás', order: 3 },
+      { texto: 'Secador de cabelo de alta potência', order: 4 },
+    ],
+  },
+  {
+    id: 'seed-cat-2',
+    nome: 'Tecnologia & Entretenimento',
+    icon: 'tv',
+    iconClass: '',
+    iconColor: '#006c49',
+    order: 2,
+    status: 'ativo',
+    itens: [
+      { texto: 'Smart TV 55" 4K com apps liberados', order: 1 },
+      { texto: 'Som Bluetooth integrado', order: 2 },
+      { texto: 'Wi-Fi Fibra 500M de alta velocidade', order: 3 },
+      { texto: 'Tomadas USB ao lado da cama', order: 4 },
+    ],
+  },
+  {
+    id: 'seed-cat-3',
+    nome: 'Gastronomia & Bar Privativo',
+    icon: 'coffee',
+    iconClass: '',
+    iconColor: '#006c49',
+    order: 3,
+    status: 'ativo',
+    itens: [
+      { texto: 'Cafeteira Nespresso com cápsulas de cortesia', order: 1 },
+      { texto: 'Frigobar abastecido com água cortesia', order: 2 },
+      { texto: 'Jogo de taças para vinho e espumante', order: 3 },
+      { texto: 'Café da manhã servido na varanda', order: 4 },
+    ],
+  },
+  {
+    id: 'seed-cat-4',
+    nome: 'Serviços Exclusivos no WhatsApp',
+    icon: 'chat',
+    iconClass: '',
+    iconColor: '#006c49',
+    order: 4,
+    status: 'ativo',
+    itens: [
+      { texto: 'Cardápio digital com pedidos pelo WhatsApp', order: 1 },
+      { texto: 'Concierge e reservas de passeios pela IA', order: 2 },
+      { texto: 'Atendimento e suporte ao hóspede 24h', order: 3 },
+    ],
+  },
+];
+
   // Helper para normalizar comodidades garantindo a estrutura ComodidadeCategoria com array de itens válido
   const normalizeComodidadesCategorias = (raw: any): ComodidadeCategoria[] => {
+    const getSeed = () => {
+      try {
+        if (typeof comodidadesService?.getSeedPadrao === 'function') {
+          const s = comodidadesService.getSeedPadrao();
+          if (Array.isArray(s) && s.length > 0) return s;
+        }
+      } catch {}
+      return DEFAULT_COMODIDADES_SEED;
+    };
+
     if (!raw) {
-      return comodidadesService.getSeedPadrao();
+      return getSeed();
     }
 
     if (Array.isArray(raw)) {
       if (raw.length === 0) {
-        return comodidadesService.getSeedPadrao();
+        return getSeed();
       }
 
       // Caso: array com strings simples (ex: ['Ar Condicionado', 'Wi-Fi Grátis'])
@@ -290,7 +362,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
             texto: String(texto || '').trim(),
             order: idx + 1
           };
-        }).filter(it => it.texto.length > 0);
+        }).filter(it => (it.texto || '').length > 0);
 
         return [
           {
@@ -313,7 +385,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
           itensList = c.itens.map((it: any, iIdx: number) => ({
             texto: typeof it === 'string' ? it : String(it?.texto || it?.nome || '').trim(),
             order: Number(it?.order) || iIdx + 1
-          })).filter((it: any) => it.texto.length > 0);
+          })).filter((it: any) => (it?.texto || '').length > 0);
         } else if (typeof c?.texto === 'string') {
           itensList = [{ texto: c.texto.trim(), order: 1 }];
         } else if (typeof c?.nome === 'string' && !c?.itens) {
@@ -341,7 +413,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
       return normalizeComodidadesCategorias(raw.comodidades);
     }
 
-    return comodidadesService.getSeedPadrao();
+    return getSeed();
   };
 
   // COMODIDADES & CONFORTO INCLUSOS (NÍVEL QUARTO)
@@ -413,8 +485,12 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
 
     const loadEditingDestaques = async () => {
       try {
+        if (!editingQuarto?.id) {
+          setQuartoDestaquesIds([]);
+          return;
+        }
         const ds = await destaquesQuartoService.getDestaquesDoQuarto(editingQuarto.id);
-        setQuartoDestaquesIds(ds.map(d => d.id));
+        setQuartoDestaquesIds(Array.isArray(ds) ? ds.map(d => d.id) : []);
       } catch (_) {
         setQuartoDestaquesIds([]);
       }
@@ -1359,14 +1435,14 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3 max-h-64 overflow-y-auto pr-1">
-              {destaquesList.filter(d => d.status === 'ativo').length === 0 && (
+              {(destaquesList || []).filter(d => d && d.status === 'ativo').length === 0 && (
                 <div className="col-span-full text-center text-xs text-[#45464d] py-4 italic bg-white rounded-lg border border-dashed border-slate-300">
                   Nenhum destaque cadastrado. Acesse o Mapa de Quartos → "Gerenciar Destaques" para criar.
                 </div>
               )}
-              {destaquesList
-                .filter(d => d.status === 'ativo')
-                .sort((a, b) => a.order - b.order)
+              {(destaquesList || [])
+                .filter(d => d && d.status === 'ativo')
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
                 .map((d) => (
                   <label
                     key={d.id}
@@ -1374,7 +1450,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
                   >
                     <input
                       type="checkbox"
-                      checked={quartoDestaquesIds.includes(d.id)}
+                      checked={(quartoDestaquesIds || []).includes(d.id)}
                       onChange={() => handleToggleDestaqueSelection(d.id)}
                       className="w-4 h-4 text-[#ea580c] bg-white border-[#c6c6cd] rounded focus:ring-[#ea580c] shrink-0"
                     />
@@ -1428,7 +1504,7 @@ export const CadastroQuarto: React.FC<CadastroQuartoProps> = ({ onBack, onSave, 
               </div>
             </div>
 
-            {comodidadesCategorias.length === 0 && (
+            {(comodidadesCategorias || []).length === 0 && (
               <div className="p-6 border border-dashed border-slate-300 rounded-2xl bg-slate-50/50 text-center">
                 <p className="text-xs text-slate-500 mb-2">Nenhuma categoria de comodidade cadastrada neste quarto.</p>
                 <button

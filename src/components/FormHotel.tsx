@@ -21,7 +21,10 @@ import {
   parceirosService,
   usuariosService,
   categoriasHoteisService,
-  CategoriaHotelData
+  CategoriaHotelData,
+  isParceiroUser,
+  isAdminMasterUser,
+  filterPlanosByRole
 } from '../services/supabaseService';
 import { creditosService, InfoCreditoHotel } from '../services/creditosService';
 import { supabase } from '../lib/supabase';
@@ -33,8 +36,10 @@ import {
   extractHotelSlug
 } from '../utils/hotelUrl';
 import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
-import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
 import { CIDADES_MATO_GROSSO_142, generateUniqueCnpj } from './ModalImportarGoogleMaps';
+import { evolutionApiService, generateHotelInstanceName } from '../services/evolutionApiService';
+import { QUARTOS_PADRAO_10_EXEMPLO, cadastrar10QuartosPadrao } from '../services/partnerDemoHotelService';
+import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
 
 
 export interface FormHotelProps {
@@ -285,18 +290,35 @@ export const FormHotel: React.FC<FormHotelProps> = ({
             if (isGoogleMaps) {
               return 'Grátis (Google Maps)';
             }
-            // No cadastro de novos hotéis, o plano grátis NÃO fica disponível para seleção a não ser que seja Google Maps ou Abordagem Comercial
+            const isParceiro = isParceiroUser();
+            const isAdmin = isAdminMasterUser();
             const activeList = list.filter((p: any) => {
               if ((p.status || '').toLowerCase() === 'inativo') return false;
+              const isPartnerPlan = Boolean(
+                p.exclusivo_parceiro ||
+                (p.tag && p.tag.toLowerCase().includes('parceiro')) ||
+                (p.name && p.name.toLowerCase().includes('parceiro'))
+              );
+              if (isPartnerPlan && !isParceiro && !isAdmin) {
+                return false;
+              }
               if (!hotelToEdit && !isGoogleMaps) {
                 const pName = (p.name || '').toLowerCase();
                 const isAbordagem = pName.includes('abordagem') || Number(p.trialDays || p.bonusDays) >= 60;
-                if (!isAbordagem && (p.basePrice === 0 || pName.includes('google maps') || (pName.includes('grátis') && !pName.includes('abordagem')))) {
+                if (!isAbordagem && !isPartnerPlan && (p.basePrice === 0 || pName.includes('google maps') || (pName.includes('grátis') && !pName.includes('abordagem')))) {
                   return false;
                 }
               }
               return true;
             });
+            if (!hotelToEdit && isParceiro) {
+              const partnerPlan = activeList.find((p: any) => 
+                p.exclusivo_parceiro || 
+                p.name?.toLowerCase().includes('parceiro') || 
+                p.tag?.toLowerCase().includes('parceiro')
+              );
+              if (partnerPlan) return partnerPlan.name;
+            }
             if (prev) {
               const matched = activeList.find((p: any) => 
                 p.name?.toLowerCase() === prev.toLowerCase() || 
@@ -422,14 +444,25 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlan, planos.length, isGoogleMaps]);
 
-  // Filtrar apenas planos ativos para seleção (no cadastro de novo hotel, o plano grátis do Google Maps não fica disponível a não ser que isGoogleMaps esteja ativo; Abordagem Comercial fica sempre disponível)
+  // Filtrar apenas planos ativos para seleção (no cadastro de novo hotel, o plano grátis do Google Maps não fica disponível a não ser que isGoogleMaps esteja ativo; Plano de Parceiro só aparece para Parceiro ou Master Admin)
   const planosAtivos = useMemo(() => {
+    const isParceiro = isParceiroUser();
+    const isAdmin = isAdminMasterUser();
+
     let result = planos.filter(p => {
       if ((p.status || '').toLowerCase() === 'inativo') return false;
+      const isPartnerPlan = Boolean(
+        p.exclusivo_parceiro ||
+        (p.tag && p.tag.toLowerCase().includes('parceiro')) ||
+        (p.name && p.name.toLowerCase().includes('parceiro'))
+      );
+      if (isPartnerPlan && !isParceiro && !isAdmin) {
+        return false;
+      }
       if (!hotelToEdit && !isGoogleMaps) {
         const pName = (p.name || '').toLowerCase();
         const isAbordagem = pName.includes('abordagem') || Number(p.trialDays || p.bonusDays) >= 60;
-        if (!isAbordagem && (p.basePrice === 0 || pName.includes('google maps') || (pName.includes('grátis') && !pName.includes('abordagem')))) {
+        if (!isAbordagem && !isPartnerPlan && (p.basePrice === 0 || pName.includes('google maps') || (pName.includes('grátis') && !pName.includes('abordagem')))) {
           return false;
         }
       }
@@ -683,8 +716,24 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       '';
   });
   const [instanceName, setInstanceName] = useState(hotelToEdit?.instanceName || '');
+  const [isInstanceNameManuallyEdited, setIsInstanceNameManuallyEdited] = useState(Boolean(hotelToEdit?.instanceName));
   const [apiUrl, setApiUrl] = useState(hotelToEdit?.apiUrl || '');
   const [apiKey, setApiKey] = useState(hotelToEdit?.apiKey || '');
+
+  const handleInstanceNameChange = (val: string) => {
+    setIsInstanceNameManuallyEdited(true);
+    setInstanceName(val.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  };
+
+  const handleRegenerateInstanceName = () => {
+    setIsInstanceNameManuallyEdited(false);
+    if (nomeFantasia.trim()) {
+      const existingNames = existingHoteis.map(h => h.instanceName || h.nome_instancia).filter(Boolean);
+      const suggested = generateHotelInstanceName(nomeFantasia, existingNames);
+      setInstanceName(suggested);
+      showToast(`Instância recalculada no padrão oficial: ${suggested}`);
+    }
+  };
 
   // Seção 6: Observações
   const [notes, setNotes] = useState(hotelToEdit?.notes || '');
@@ -769,6 +818,11 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       return;
     }
     setNomeFantasia(val);
+    if (!isInstanceNameManuallyEdited && val.trim()) {
+      const existingNames = existingHoteis.map(h => h.instanceName || h.nome_instancia).filter(Boolean);
+      const suggestedInstance = generateHotelInstanceName(val, existingNames);
+      setInstanceName(suggestedInstance);
+    }
     if (!isLinkManuallyEdited) {
       if (val.trim()) {
         const uniqueUrl = generateUniqueHotelUrl(val, existingHoteis, hotelToEdit?.id);
@@ -801,8 +855,55 @@ export const FormHotel: React.FC<FormHotelProps> = ({
     let isMounted = true;
 
     const loadHotelData = async () => {
-      // Quando for cadastro de novo hotel, limpa TODOS os campos para garantir que nada venha preenchido/mockado
+      // Quando for cadastro de novo hotel:
       if (!isProfileView && !hotelToEdit) {
+        const isParceiro = isParceiroUser();
+        if (isParceiro) {
+          const partnerName = (typeof window !== 'undefined' && (localStorage.getItem('hotelnozap_partner_name') || localStorage.getItem('hotelnozap_user_name') || 'Carlos')) || 'Carlos';
+          const partnerEmail = (typeof window !== 'undefined' && (localStorage.getItem('hotelnozap_partner_email') || localStorage.getItem('hotelnozap_user_email') || '')) || '';
+          const partnerPhone = (typeof window !== 'undefined' && (localStorage.getItem('hotelnozap_partner_phone') || localStorage.getItem('hotelnozap_user_phone') || '')) || '';
+
+          const defaultHotelName = `Pousada Modelo ${partnerName}`;
+          setNomeFantasia(defaultHotelName);
+          setRazaoSocial(`${defaultHotelName} LTDA`);
+          setCnpj('');
+          setCategory('Pousada');
+          setStars('4');
+          setCapacity(10);
+          setPhone(partnerPhone);
+          setWhatsappSocial(partnerPhone);
+          setCity('Cuiabá');
+          setUf('MT');
+          setNeighborhood('Centro');
+          setStreet('Avenida Principal');
+          setStreetNumber('100');
+          setCep('78000-000');
+          setManagerName(partnerName);
+          setManagerEmail(partnerEmail);
+          setManagerWhatsapp(partnerPhone);
+          setManagerRole('Parceiro / Franqueado');
+          setLoginEmail(partnerEmail);
+          setPassword('123456');
+          setConfirmPassword('123456');
+          setSelectedPlan('Parceiro VIP (12 Meses)');
+          setNotes(`[DEMO_PARCEIRO] Hotel do parceiro ${partnerName}`);
+
+          const existingNames = existingHoteis.map((h: any) => h.instanceName || h.nome_instancia).filter(Boolean);
+          const instName = generateHotelInstanceName(defaultHotelName, existingNames);
+          setInstanceName(instName);
+
+          const uniqueUrl = generateUniqueHotelUrl(defaultHotelName, existingHoteis);
+          setLink(uniqueUrl);
+          setIsUrlAvailable(true);
+
+          setLogoPreview('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000');
+          setStatus('ativo');
+          setIsGoogleMaps(false);
+          setDataCompra(new Date().toISOString().split('T')[0]);
+          return;
+        }
+
+        // Cadastro manual de novo hotel para administrador geral
         setNomeFantasia('');
         setRazaoSocial('');
         setCnpj('');
@@ -1151,6 +1252,28 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       } else {
         let hotelCriadoId: string | null = null;
         try {
+          // Regra Global: Toda criação de hotel provisiona a instância na Evolution API no padrão nomedohotel01
+          const existingInstNames = existingHoteis.map((h: any) => h.instanceName || h.nome_instancia).filter(Boolean);
+          const finalInstanceName = (instanceName.trim() || generateHotelInstanceName(nomeFantasia, existingInstNames)).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+          try {
+            await evolutionApiService.createInstance(finalInstanceName, { qrcode: true });
+            console.log(`[FormHotel] Instância Evolution API ${finalInstanceName} provisionada com sucesso.`);
+          } catch (instError) {
+            console.warn(`[FormHotel] Aviso ao provisionar instância Evolution (${finalInstanceName}):`, instError);
+          }
+
+          payload.instanceName = finalInstanceName;
+          payload.whatsappInstances = Math.max(Number(payload.whatsappInstances || 1), 1);
+
+          if (isParceiroUser()) {
+            (payload as any).is_demo = true;
+            (payload as any).isDemo = true;
+            if (!payload.notes || !payload.notes.includes('[DEMO_PARCEIRO]')) {
+              payload.notes = payload.notes ? `${payload.notes} [DEMO_PARCEIRO]` : '[DEMO_PARCEIRO]';
+            }
+          }
+
           const hotelRes = await hoteisService.createHotel(payload);
           if (!hotelRes.success || !hotelRes.id) {
             throw new Error(hotelRes.error || 'Não foi possível cadastrar o hotel no banco de dados.');
@@ -1164,8 +1287,40 @@ export const FormHotel: React.FC<FormHotelProps> = ({
             dataCompra
           );
 
+          // Cadastro automático dos 10 quartos (3 solteiro, 4 casal, 3 triplo)
+          if (isParceiroUser() || Number(calculatedCapacity) === 10) {
+            try {
+              await cadastrar10QuartosPadrao(hotelCriadoId);
+              console.log(`[FormHotel] 10 quartos padrão vinculados com sucesso ao hotel ${hotelCriadoId}`);
+            } catch (qErr) {
+              console.warn('[FormHotel] Erro ao cadastrar 10 quartos padrão:', qErr);
+            }
+          }
+
+          if (isParceiroUser()) {
+            try {
+              const demoObj = {
+                id: hotelCriadoId,
+                name: nomeFantasia,
+                isDemo: true,
+                is_demo: true,
+                instanceName: finalInstanceName,
+                ...payload
+              };
+              localStorage.setItem('hotelnozap_partner_demo_active', JSON.stringify(demoObj));
+              const partnerEmail = (localStorage.getItem('hotelnozap_user_email') || '').toLowerCase().trim();
+              if (partnerEmail) {
+                localStorage.setItem(`hotelnozap_partner_demo_${partnerEmail}`, JSON.stringify(demoObj));
+              }
+              window.dispatchEvent(new CustomEvent('partner_demo_hotel_updated', { detail: demoObj }));
+            } catch (_) {}
+          }
+
           if (loginEmail && loginEmail.trim()) {
-            if (!password || password.trim().length < 6) {
+            const effectivePassword = password.trim() || (isParceiroUser() ? '123456' : '');
+            const effectiveConfirmPassword = confirmPassword.trim() || (isParceiroUser() ? '123456' : '');
+
+            if (!effectivePassword || effectivePassword.length < 6) {
               if (hotelCriadoId) {
                 try { await hoteisService.deleteHotel(hotelCriadoId); } catch (_) {}
               }
@@ -1177,7 +1332,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
               }, 200);
               return;
             }
-            if (confirmPassword !== password) {
+            if (effectiveConfirmPassword !== effectivePassword) {
               if (hotelCriadoId) {
                 try { await hoteisService.deleteHotel(hotelCriadoId); } catch (_) {}
               }
@@ -1205,7 +1360,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
               city: city.trim(),
               uf: uf.trim().toUpperCase(),
               hotel_id: hotelCriadoId
-            }, password, { adminMode: true });
+            }, effectivePassword, { adminMode: true });
 
             if (!userRes.success) {
               if (hotelCriadoId) {
@@ -2475,6 +2630,110 @@ export const FormHotel: React.FC<FormHotelProps> = ({
           </div>
         </div>
 
+        {/* SEÇÃO ESPECIAL: 10 QUARTOS PRÉ-CONFIGURADOS (PARCEIRO / CAPACIDADE 10) */}
+        {(isParceiroUser() || Number(capacity) === 10 || !isEditing) && (
+          <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-[#003400] text-white rounded-2xl p-5 md:p-7 shadow-lg border border-emerald-500/30 space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-xl">bed</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base md:text-lg font-black tracking-tight text-white">
+                      10 Quartos Pré-configurados Inclusos
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-400 text-slate-950">
+                      Prontos no Mapa
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-200/80 mt-0.5">
+                    Divisão oficial: <strong>3 Solteiro</strong> • <strong>4 Casal</strong> • <strong>3 Triplo</strong> com valores, comodidades e fotos HD.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/10 border border-white/20 text-emerald-300">
+                  Total: 10 Quartos Prontos
+                </span>
+              </div>
+            </div>
+
+            {/* Grid dos 10 quartos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {QUARTOS_PADRAO_10_EXEMPLO.map((q) => {
+                const isSolteiro = q.tipo === 'Solteiro';
+                const isCasal = q.tipo === 'Casal';
+
+                return (
+                  <div
+                    key={q.numero}
+                    className="group relative bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-400/50 rounded-xl p-3 transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-xs"
+                  >
+                    <div>
+                      <div className="relative h-24 rounded-lg overflow-hidden mb-2 bg-slate-800">
+                        <img
+                          src={q.foto_capa}
+                          alt={`Quarto ${q.numero}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-1.5 left-1.5">
+                          <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black font-mono bg-black/75 backdrop-blur-xs text-white border border-white/20">
+                            Nº {q.numero}
+                          </span>
+                        </div>
+                        <div className="absolute top-1.5 right-1.5">
+                          <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider ${
+                            isSolteiro ? 'bg-blue-600 text-white' : isCasal ? 'bg-rose-600 text-white' : 'bg-purple-600 text-white'
+                          }`}>
+                            {q.tipo}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">
+                          {q.categoria}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-semibold">
+                          {q.andar}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-slate-300 line-clamp-2 leading-tight mb-2 font-normal">
+                        {q.observacoes}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">group</span>
+                        <span>{q.capacidade} hóspede{q.capacidade > 1 ? 's' : ''}</span>
+                      </span>
+                      <span className="text-xs font-black text-emerald-400 font-mono">
+                        R$ {q.valor_diaria.toFixed(2)}
+                        <span className="text-[9px] text-slate-400 font-normal">/dia</span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-emerald-200/90">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-400 text-base">auto_awesome</span>
+                <span>
+                  Estes 10 quartos serão gerados automaticamente no banco de dados e aparecerão no Mapa de Quartos da pousada.
+                </span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px] shrink-0 border border-emerald-400/30">
+                Inclusos Automaticamente
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* SEÇÃO 3: DADOS DO PROPRIETÁRIO / RESPONSÁVEL GERAL */}
         <div className="bg-white rounded-2xl p-5 md:p-7 border border-slate-200 shadow-xs space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
@@ -2823,19 +3082,35 @@ export const FormHotel: React.FC<FormHotelProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Nome da Instância
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Nome da Instância (WhatsApp)
+                </label>
+                <button
+                  type="button"
+                  onClick={handleRegenerateInstanceName}
+                  className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
+                  title="Recalcular no padrão nomedohotel01"
+                >
+                  Regenerar Padrão
+                </button>
+              </div>
               <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-slate-400 font-mono text-xs">inst_</span>
+                <span className="material-symbols-outlined absolute left-3.5 top-2.5 text-emerald-600 text-base">
+                  hub
+                </span>
                 <input 
                   type="text" 
                   value={instanceName}
-                  onChange={(e) => setInstanceName(e.target.value)}
-                  className="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-slate-50/30 font-mono font-semibold"
+                  onChange={(e) => handleInstanceNameChange(e.target.value)}
+                  placeholder="nomedohotel01"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:border-[#003400] bg-slate-50/30 font-mono font-bold text-slate-900"
                 />
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">Identificador único sem espaços</p>
+              <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs text-emerald-600">verified</span>
+                <span>Padrão Evolution: <strong>nomedohotel01</strong></span>
+              </p>
             </div>
 
             <div className="space-y-1">

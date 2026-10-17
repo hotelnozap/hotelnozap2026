@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { maskCnpj, maskPhone, maskCep, maskCpf, isValidCpf, isValidCnpj, getCpfValidationStatus, getCnpjValidationStatus } from '../utils/masks';
 import { fetchAddressByCep } from '../utils/viacep';
-import { hoteisService, planosService, usuariosService, categoriasHoteisService, CategoriaHotelData } from '../services/supabaseService';
+import { 
+  hoteisService, 
+  planosService, 
+  usuariosService, 
+  categoriasHoteisService, 
+  CategoriaHotelData,
+  isParceiroUser,
+  isAdminMasterUser
+} from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { getAppLoginUrl } from '../utils/partnerUrl';
 import { generateUniqueHotelUrl, formatHotelUrl, isHotelUrlAvailable, checkHotelUrlAvailabilityInSupabase } from '../utils/hotelUrl';
@@ -39,12 +47,23 @@ const LpNovoHotel: React.FC<LpNovoHotelProps> = ({ onNavigateToLP, onNavigateToL
   const [loadingPlanos, setLoadingPlanos] = useState(true);
   useEffect(() => {
     planosService.getPlanos().then(data => {
-      const active = (data || []).filter((p: any) =>
-        p.status !== 'Inativo' &&
-        !p.name?.toLowerCase().includes('maps') &&
-        !p.name?.toLowerCase().includes('legado') &&
-        (Number(p.basePrice) > 0 || p.name?.toLowerCase().includes('abordagem') || Number(p.trialDays || p.bonusDays) >= 60)
-      ).sort((a: any, b: any) => {
+      const isParceiro = isParceiroUser() || isAdminMasterUser();
+      const active = (data || []).filter((p: any) => {
+        if (p.status === 'Inativo') return false;
+        if (p.name?.toLowerCase().includes('maps') || p.name?.toLowerCase().includes('legado')) return false;
+
+        const isPartnerPlan = Boolean(
+          p.exclusivo_parceiro ||
+          (p.tag && p.tag.toLowerCase().includes('parceiro')) ||
+          (p.name && p.name.toLowerCase().includes('parceiro'))
+        );
+
+        if (isPartnerPlan) {
+          return isParceiro;
+        }
+
+        return Number(p.basePrice) > 0 || p.name?.toLowerCase().includes('abordagem') || Number(p.trialDays || p.bonusDays) >= 60;
+      }).sort((a: any, b: any) => {
         const ordA = Number(String(a.order || a.ordem || '').replace(/\D/g, '')) || 0;
         const ordB = Number(String(b.order || b.ordem || '').replace(/\D/g, '')) || 0;
         return ordA - ordB;

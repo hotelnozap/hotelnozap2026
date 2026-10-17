@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { planosService } from '../services/supabaseService';
+import { planosService, isParceiroUser, isAdminMasterUser } from '../services/supabaseService';
 import { InfoCreditoHotel } from '../services/creditosService';
 import { CheckoutPlanoStep } from './CheckoutPlanoStep';
 
@@ -22,12 +22,23 @@ export const TelaPlanoExpirado: React.FC<TelaPlanoExpiradoProps> = ({
 
   useEffect(() => {
     planosService.getPlanos().then(data => {
-      const active = (data || []).filter((p: any) =>
-        p.status !== 'Inativo' &&
-        !p.name?.toLowerCase().includes('maps') &&
-        !p.name?.toLowerCase().includes('legado') &&
-        Number(p.basePrice) > 0
-      ).sort((a: any, b: any) => {
+      const isParceiro = isParceiroUser() || isAdminMasterUser();
+      const active = (data || []).filter((p: any) => {
+        if (p.status === 'Inativo') return false;
+        if (p.name?.toLowerCase().includes('maps') || p.name?.toLowerCase().includes('legado')) return false;
+
+        const isPartnerPlan = Boolean(
+          p.exclusivo_parceiro ||
+          (p.tag && p.tag.toLowerCase().includes('parceiro')) ||
+          (p.name && p.name.toLowerCase().includes('parceiro'))
+        );
+
+        if (isPartnerPlan) {
+          return isParceiro;
+        }
+
+        return Number(p.basePrice) > 0;
+      }).sort((a: any, b: any) => {
         const ordA = Number(String(a.order || a.ordem || '').replace(/\D/g, '')) || 0;
         const ordB = Number(String(b.order || b.ordem || '').replace(/\D/g, '')) || 0;
         return ordA - ordB;

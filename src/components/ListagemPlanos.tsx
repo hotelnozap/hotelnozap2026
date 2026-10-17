@@ -37,6 +37,44 @@ export interface Plano {
 
 const INITIAL_PLANOS: Plano[] = [
   {
+    id: 'plano-parceiro-12m',
+    order: '#00-PARCEIRO',
+    emoji: '🤝',
+    name: 'Parceiro VIP (12 Meses)',
+    tag: 'Exclusivo Parceiro',
+    isFeatured: true,
+    description: 'Plano exclusivo para Franqueados e Parceiros HotelNoZap • 12 meses (365 dias) de vigência com 1 instância WhatsApp inclusa',
+    periodicity: 'Anual',
+    basePrice: 0.00,
+    pricePeriodText: 'R$ 0,00',
+    priceSubtitle: '12 meses inclusos (365 dias) • Exclusivo para Parceiros',
+    trialDays: 365,
+    bonusDays: 365,
+    cycleDiscount: '100% OFF',
+    roomLimit: 15,
+    roomLimitText: 'Capacidade para até 15 quartos',
+    roomExtraPriceText: 'Sem custo adicional',
+    extraRoomPrice: 0,
+    allowExtraRooms: true,
+    whatsappConnections: 1,
+    whatsappConnectionsText: '1 Conexão WhatsApp oficial inclusa',
+    whatsappExtraPriceText: 'R$ 49,90/adicional',
+    extraWaPrice: 49.90,
+    allowExtraWa: true,
+    hotelsSubscribersCount: 1,
+    status: 'Ativo',
+    features: [
+      'Exclusivo para Franqueados e Parceiros HotelNoZap',
+      'Vigência de 12 Meses (365 dias de acesso)',
+      '1 Conexão WhatsApp oficial inclusa',
+      'Até 15 Quartos inclusos',
+      'Motor de Reservas WhatsApp com IA',
+      'Catálogo Digital & Cardápio Integrado',
+      'Mapa de Ocupação & Governança',
+      'Valor R$ 0,00 (100% Isento para Parceiros)'
+    ]
+  },
+  {
     id: 'gratis-google-maps',
     order: '#00',
     emoji: '🗺️',
@@ -1274,7 +1312,9 @@ export const ListagemPlanos: React.FC<ListagemPlanosProps> = ({
                                 <span className="font-bold text-slate-900 text-sm">{plan.name}</span>
                                 {plan.tag && (
                                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                    plan.tag === 'Mais Vendido' 
+                                    plan.tag === 'Exclusivo Parceiro'
+                                      ? 'bg-emerald-900 text-emerald-100 border-emerald-700 shadow-xs font-black'
+                                      : plan.tag === 'Mais Vendido' 
                                       ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
                                       : plan.tag.includes('%') || plan.tag.toLowerCase().includes('desconto')
                                       ? 'bg-amber-100 text-amber-800 border-amber-200'

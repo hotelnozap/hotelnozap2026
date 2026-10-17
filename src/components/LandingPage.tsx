@@ -365,9 +365,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onN
         setLoadingPlanos(true);
         const data = await planosService.getPlanos();
         if (data && data.length > 0 && isMounted) {
-          // Filtrar planos ativos e comerciais (exclui inativos, legado e grátis)
+          // Filtrar planos ativos e comerciais (exclui inativos, legado, parceiro e grátis)
           const activePlanos = data
-            .filter((p: any) => p.status !== 'Inativo' && !p.name?.toLowerCase().includes('legado') && !p.name?.toLowerCase().includes('maps') && Number(p.basePrice || p.valor_base) > 0)
+            .filter((p: any) => 
+              p.status !== 'Inativo' && 
+              !p.name?.toLowerCase().includes('legado') && 
+              !p.name?.toLowerCase().includes('maps') && 
+              !p.name?.toLowerCase().includes('parceiro') &&
+              !p.tag?.toLowerCase().includes('parceiro') &&
+              !p.exclusivo_parceiro &&
+              Number(p.basePrice || p.valor_base) > 0
+            )
             .map((p: any) => {
               const cleanTag = (p.tag !== undefined && p.tag !== null) ? String(p.tag).trim() : '';
 

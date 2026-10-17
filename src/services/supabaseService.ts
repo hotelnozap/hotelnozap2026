@@ -5883,11 +5883,87 @@ export interface PlanoDB {
   atualizado_em?: string;
 }
 
+export function isParceiroUser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const role = (localStorage.getItem('hotelnozap_user_role') || '').toLowerCase().trim();
+  const cargo = (localStorage.getItem('hotelnozap_user_cargo') || '').toLowerCase().trim();
+  const email = (localStorage.getItem('hotelnozap_user_email') || '').toLowerCase().trim();
+  return role.includes('parceiro') || role.includes('franqueado') || cargo.includes('parceiro') || cargo.includes('franqueado');
+}
+
+export function isAdminMasterUser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const role = (localStorage.getItem('hotelnozap_user_role') || '').toLowerCase().trim();
+  const email = (localStorage.getItem('hotelnozap_user_email') || '').toLowerCase().trim();
+  return role.includes('master') || role.includes('super admin') || role.includes('administrador') || 
+         email.includes('admin@hotelnozap.com.br') || email.includes('contato@carloshoteis.com.br') || email.includes('meutim');
+}
+
+export const FALLBACK_PLANO_PARCEIRO = {
+  id: 'plano-parceiro-12m',
+  order: '#00-PARCEIRO',
+  emoji: '🤝',
+  name: 'Parceiro VIP (12 Meses)',
+  tag: 'Exclusivo Parceiro',
+  description: 'Plano exclusivo para Franqueados e Parceiros HotelNoZap • 12 meses (365 dias) de vigência com 1 instância WhatsApp inclusa',
+  periodicity: 'Anual',
+  basePrice: 0.00,
+  pricePeriodText: 'R$ 0,00',
+  priceSubtitle: '12 meses inclusos (365 dias) • Exclusivo para Parceiros',
+  trialDays: 365,
+  bonusDays: 365,
+  cycleDiscount: '100% OFF',
+  roomLimit: 15,
+  roomLimitText: 'Capacidade para até 15 quartos',
+  roomExtraPriceText: 'Sem custo adicional',
+  extraRoomPrice: 0,
+  allowExtraRooms: true,
+  whatsappConnections: 1,
+  whatsappConnectionsText: '1 Conexão WhatsApp oficial inclusa',
+  whatsappExtraPriceText: 'R$ 49,90/adicional',
+  extraWaPrice: 49.90,
+  allowExtraWa: true,
+  hotelsSubscribersCount: 1,
+  status: 'Ativo',
+  isFeatured: true,
+  exclusivo_parceiro: true,
+  features: [
+    'Exclusivo para Franqueados e Parceiros HotelNoZap',
+    'Vigência de 12 Meses (365 dias de acesso)',
+    '1 Conexão WhatsApp oficial inclusa',
+    'Até 15 Quartos inclusos',
+    'Motor de Reservas WhatsApp com IA',
+    'Catálogo Digital & Cardápio Integrado',
+    'Mapa de Ocupação & Governança',
+    'Valor R$ 0,00 (100% Isento para Parceiros)'
+  ],
+  disabledFeatures: []
+};
+
+export function filterPlanosByRole(planosList: any[], allowPartnerPlans?: boolean): any[] {
+  const isParceiro = allowPartnerPlans !== undefined ? allowPartnerPlans : (isParceiroUser() || isAdminMasterUser());
+  return (planosList || []).filter((p: any) => {
+    const isPartnerExclusive = Boolean(
+      p.exclusivo_parceiro ||
+      (p.tag && p.tag.toLowerCase().includes('parceiro')) ||
+      (p.name && p.name.toLowerCase().includes('parceiro')) ||
+      (p.nome && p.nome.toLowerCase().includes('parceiro'))
+    );
+    if (isPartnerExclusive) {
+      return isParceiro;
+    }
+    return true;
+  });
+}
+
 export function mapPlanoDBToFrontend(row: any): any {
   const ordemNum = Number(row.ordem) || 1;
   const destaque = Boolean(row.destaque);
   const valorBase = Number(row.valor_base) || 0;
   const periodicidade = (row.periodicidade || 'Mensal');
+  const nomeLower = (row.nome || '').toLowerCase();
+  const tagLower = (row.tag || '').toLowerCase();
+  const isPartnerPlan = nomeLower.includes('parceiro') || tagLower.includes('parceiro') || Boolean(row.exclusivo_parceiro);
 
   let pricePeriodText = '/mês';
   if (periodicidade.toLowerCase() === 'anual') pricePeriodText = '/ano';
@@ -5899,7 +5975,10 @@ export function mapPlanoDBToFrontend(row: any): any {
     : (Number(row.dias_trial) || 0);
 
   let priceSubtitle = 'Cobrança recorrente';
-  if (valorBase === 0 || (row.nome || '').toLowerCase().includes('free')) {
+  if (isPartnerPlan && valorBase === 0) {
+    priceSubtitle = '12 meses inclusos (365 dias) • Exclusivo para Parceiros';
+    pricePeriodText = 'R$ 0,00';
+  } else if (valorBase === 0 || nomeLower.includes('free')) {
     priceSubtitle = bonusVal === 0
       ? 'Acesso gratuito limitado contínuo até upgrade'
       : `Período com ${bonusVal} dias de bônus inclusos`;
@@ -5911,11 +5990,25 @@ export function mapPlanoDBToFrontend(row: any): any {
     priceSubtitle = 'Cobrança mensal recorrente via PIX ou Cartão';
   }
 
-  const emoji = destaque ? '🥈' : (row.nome || '').toLowerCase().includes('free') ? '🎁' : ordemNum === 1 ? '🥇' : ordemNum === 2 ? '⚡' : ordemNum === 3 ? '🎖️' : ordemNum === 4 ? '💎' : '📦';
+  const emoji = isPartnerPlan 
+    ? '🤝' 
+    : destaque 
+    ? '🥈' 
+    : nomeLower.includes('free') 
+    ? '🎁' 
+    : ordemNum === 1 
+    ? '🥇' 
+    : ordemNum === 2 
+    ? '⚡' 
+    : ordemNum === 3 
+    ? '🎖️' 
+    : ordemNum === 4 
+    ? '💎' 
+    : '📦';
 
   return {
     id: row.id,
-    order: `#0${ordemNum}`,
+    order: row.ordem === 0 || ordemNum === 0 ? '#00-PARCEIRO' : `#0${ordemNum}`,
     emoji,
     name: row.nome || '',
     tag: row.tag || undefined,
@@ -5940,6 +6033,7 @@ export function mapPlanoDBToFrontend(row: any): any {
     hotelsSubscribersCount: Number(row.hoteis_assinantes) || 0,
     status: row.status === 'Inativo' ? 'Inativo' : 'Ativo',
     isFeatured: destaque,
+    exclusivo_parceiro: isPartnerPlan,
     features: Array.isArray(row.recursos) ? row.recursos : [],
     disabledFeatures: Array.isArray(row.recursos_desabilitados) ? row.recursos_desabilitados : []
   };
@@ -5955,15 +6049,24 @@ export const planosService = {
 
       if (error) {
         console.warn('Erro ao buscar planos no Supabase:', error);
-        return [];
+        return [FALLBACK_PLANO_PARCEIRO];
       }
       if (data && data.length > 0) {
-        return data.map(mapPlanoDBToFrontend);
+        const mapped = data.map(mapPlanoDBToFrontend);
+        const hasPartnerPlan = mapped.some((p: any) => 
+          p.exclusivo_parceiro ||
+          (p.name && p.name.toLowerCase().includes('parceiro')) ||
+          (p.tag && p.tag.toLowerCase().includes('parceiro'))
+        );
+        if (!hasPartnerPlan) {
+          mapped.unshift(FALLBACK_PLANO_PARCEIRO);
+        }
+        return mapped;
       }
     } catch (err) {
       console.warn('Falha de conexão ao buscar planos no Supabase:', err);
     }
-    return [];
+    return [FALLBACK_PLANO_PARCEIRO];
   },
 
   async createPlano(plano: any): Promise<any | null> {

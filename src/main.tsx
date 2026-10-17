@@ -54,7 +54,6 @@ if (typeof window !== 'undefined') {
       msg.includes('dynamically imported module') ||
       msg.includes('failed to fetch dynamically imported module') ||
       msg.includes('error loading dynamically imported module') ||
-      msg.includes('failed to fetch') ||
       error?.name === 'ChunkLoadError'
     ) {
       event.preventDefault();
@@ -86,7 +85,6 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
       msg.includes('dynamically imported module') ||
       msg.includes('failed to fetch dynamically imported module') ||
       msg.includes('error loading dynamically imported module') ||
-      msg.includes('failed to fetch') ||
       error?.name === 'ChunkLoadError';
 
     if (isChunkError && typeof window !== 'undefined') {

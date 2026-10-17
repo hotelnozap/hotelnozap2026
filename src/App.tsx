@@ -9,6 +9,7 @@ import { ModalPermissoesApp } from './components/ModalPermissoesApp';
 import { ModalReservasDoDia } from './components/ModalReservasDoDia';
 import { ModalAlternarAmbientes, type TipoAmbiente } from './components/ModalAlternarAmbientes';
 import { ModalAlertaExpiracaoPlano } from './components/ModalAlertaExpiracaoPlano';
+import { SafeModuleBoundary } from './components/SafeModuleBoundary';
 
 // Services & utilities
 import { supabase } from './lib/supabase';
@@ -1770,7 +1771,7 @@ export const App: React.FC = () => {
       if (isDemoHotelAtivo) {
         return;
       }
-      const rotasPermitidas = ['portal-parceiro', 'area-hospede', 'minhaconta', 'catalogo-hoteis', 'pagina-hotel', 'detalhes-quarto', 'cardapio-hotel', 'pagina-404'];
+      const rotasPermitidas = ['portal-parceiro', 'cadastro-novo-hotel', 'area-hospede', 'minhaconta', 'catalogo-hoteis', 'pagina-hotel', 'detalhes-quarto', 'cardapio-hotel', 'pagina-404'];
       if (!rotasPermitidas.includes(activeTab)) {
         setActiveTab('portal-parceiro');
       }
@@ -2583,6 +2584,10 @@ export const App: React.FC = () => {
             setActiveTab('catalogo-hoteis');
           }}
           onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
+          onNavigateToCreateHotel={() => {
+            setHotelToEdit(null);
+            setActiveTab('cadastro-novo-hotel');
+          }}
           onNavigateToHotelDashboard={(hotel) => {
             const freshActive: HotelAtivo = {
               id: hotel.id,
@@ -2681,8 +2686,8 @@ export const App: React.FC = () => {
         } catch { return false; }
       })();
 
-      if (activeTab === 'dashboard' && temDemo) {
-        // Permite a renderização normal do dashboard com hotel demo ativo!
+      if ((activeTab === 'dashboard' && temDemo) || activeTab === 'cadastro-novo-hotel') {
+        // Permite a renderização normal do dashboard com hotel demo ativo ou o cadastro de novo hotel!
       } else if (activeTab === 'minhaconta' || activeTab === 'area-hospede') {
         window.history.replaceState({}, '', '/minhaconta');
         return (
@@ -2727,6 +2732,10 @@ export const App: React.FC = () => {
                 setActiveTab('catalogo-hoteis');
               }}
               onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
+              onNavigateToCreateHotel={() => {
+                setHotelToEdit(null);
+                setActiveTab('cadastro-novo-hotel');
+              }}
               onNavigateToHotelDashboard={(hotel) => {
                 const freshActive: HotelAtivo = {
                   id: hotel.id,
@@ -4446,55 +4455,60 @@ export const App: React.FC = () => {
               onNavigateToCadastroQuarto={() => {
                 setQuartoToEdit(null);
                 setQuartoToClone(null);
+                try { localStorage.setItem('hotelnozap_active_tab', 'cadastro-quarto'); } catch {}
                 setActiveTab('cadastro-quarto');
               }}
               onCloneQuarto={(room) => {
                 const r = room as any;
                 const cat = r.category || r.categoria || r.items?.categoria || r.items?.category || '';
                 const tip = r.type || r.tipo || r.tipoQuarto || r.items?.tipoQuarto || r.items?.type || '';
+                const photosList = Array.isArray(r.photos) ? r.photos : (r.fotoCapa ? [r.fotoCapa] : (r.imageUrl ? [r.imageUrl] : []));
                 setQuartoToEdit(null);
                 setQuartoToClone({
-                  id: room.id,
+                  id: String(room.id || ''),
                   number: '',
-                  name: room.name || `Quarto ${room.number}`,
+                  name: room.name || (room.number ? `Quarto ${room.number}` : ''),
                   category: cat,
-                  floor: room.floor,
-                  capacity: room.capacity,
-                  dailyPrice: room.dailyPrice,
-                  active: room.active,
+                  floor: room.floor || r.andar || '1º Andar',
+                  capacity: Number(room.capacity) || 2,
+                  dailyPrice: Number(room.dailyPrice || r.valor_diaria) || 0,
+                  active: room.active !== undefined ? Boolean(room.active) : true,
                   status: 'livre',
-                  photos: r.photos,
-                  videoUrl: r.videoUrl || r.video,
-                  notes: r.notes,
-                  items: r.items,
-                  beds: r.beds,
+                  photos: photosList,
+                  videoUrl: r.videoUrl || r.video || '',
+                  notes: r.notes || r.observacoes || '',
+                  items: (r.items && typeof r.items === 'object') ? r.items : {},
+                  beds: Number(r.beds) || 1,
                   type: tip,
-                  comodidades: r.comodidades || r.items?.comodidades,
+                  comodidades: r.comodidades || r.items?.comodidades || [],
                 });
+                try { localStorage.setItem('hotelnozap_active_tab', 'cadastro-quarto'); } catch {}
                 setActiveTab('cadastro-quarto');
               }}
               onEditQuarto={(room) => {
                 const r = room as any;
-                const cat = r.category || r.categoria || r.items?.categoria || r.items?.category || '';
-                const tip = r.type || r.tipo || r.tipoQuarto || r.items?.tipoQuarto || r.items?.type || '';
+                const cat = r.category || r.categoria || r.items?.categoria || r.items?.category || 'Standard';
+                const tip = r.type || r.tipo || r.tipoQuarto || r.items?.tipoQuarto || r.items?.type || 'Casal';
+                const photosList = Array.isArray(r.photos) ? r.photos : (r.fotoCapa ? [r.fotoCapa] : (r.imageUrl ? [r.imageUrl] : []));
                 setQuartoToClone(null);
                 setQuartoToEdit({
-                  id: room.id,
-                  number: room.number,
-                  name: room.name,
+                  id: String(room.id || ''),
+                  number: String(room.number || r.numero || ''),
+                  name: room.name || (room.number ? `Quarto ${room.number}` : ''),
                   category: cat,
-                  floor: room.floor,
-                  capacity: room.capacity,
-                  dailyPrice: room.dailyPrice,
-                  active: room.active,
-                  status: room.status,
-                  photos: r.photos,
-                  notes: r.notes,
-                  items: r.items,
-                  beds: r.beds,
+                  floor: room.floor || r.andar || '1º Andar',
+                  capacity: Number(room.capacity) || 2,
+                  dailyPrice: Number(room.dailyPrice || r.valor_diaria) || 0,
+                  active: room.active !== undefined ? Boolean(room.active) : true,
+                  status: room.status || 'livre',
+                  photos: photosList,
+                  notes: r.notes || r.observacoes || '',
+                  items: (r.items && typeof r.items === 'object') ? r.items : {},
+                  beds: Number(r.beds) || 1,
                   type: tip,
-                  comodidades: r.comodidades || r.items?.comodidades,
+                  comodidades: r.comodidades || r.items?.comodidades || [],
                 });
+                try { localStorage.setItem('hotelnozap_active_tab', 'cadastro-quarto'); } catch {}
                 setActiveTab('cadastro-quarto');
               }}
               onNavigateToItens={() => setActiveTab('itens-quartos')}
@@ -4526,19 +4540,31 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'cadastro-quarto' && (
-            <CadastroQuarto 
+            <SafeModuleBoundary
+              fallbackTitle="Não foi possível carregar o formulário do quarto"
+              backLabel="Voltar ao Mapa de Quartos"
               onBack={() => {
                 setQuartoToEdit(null);
                 setQuartoToClone(null);
+                try { localStorage.setItem('hotelnozap_active_tab', 'mapa'); } catch {}
                 setActiveTab('mapa');
-              }} 
-              editingQuarto={quartoToEdit}
-              cloningQuarto={quartoToClone}
-              onClearEditingQuarto={() => {
-                setQuartoToEdit(null);
-                setQuartoToClone(null);
               }}
-            />
+            >
+              <CadastroQuarto 
+                onBack={() => {
+                  setQuartoToEdit(null);
+                  setQuartoToClone(null);
+                  try { localStorage.setItem('hotelnozap_active_tab', 'mapa'); } catch {}
+                  setActiveTab('mapa');
+                }} 
+                editingQuarto={quartoToEdit}
+                cloningQuarto={quartoToClone}
+                onClearEditingQuarto={() => {
+                  setQuartoToEdit(null);
+                  setQuartoToClone(null);
+                }}
+              />
+            </SafeModuleBoundary>
           )}
           {activeTab === 'destaques-quarto' && (
             <CadastroDestaquesQuarto
@@ -4847,17 +4873,17 @@ export const App: React.FC = () => {
               key={hotelToEdit ? hotelToEdit.id : 'novo-hotel'}
               hotelToEdit={hotelToEdit}
               preselectedPartner={preselectedPartner}
-              isAdmin={isMasterAdmin}
+              isAdmin={isMasterAdmin || isParceiroUser}
               userRole={currentUserRole}
               onBack={() => {
                 setPreselectedPartner(null);
                 setHotelToEdit(null);
-                setActiveTab('cadastro-hoteis');
+                setActiveTab(isParceiroUser ? 'portal-parceiro' : 'cadastro-hoteis');
               }}
               onSaveSuccess={() => {
                 setPreselectedPartner(null);
                 setHotelToEdit(null);
-                setActiveTab('cadastro-hoteis');
+                setActiveTab(isParceiroUser ? 'portal-parceiro' : 'cadastro-hoteis');
               }}
             />
           )}

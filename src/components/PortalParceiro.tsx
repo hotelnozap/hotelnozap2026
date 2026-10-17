@@ -77,13 +77,15 @@ interface PortalParceiroProps {
   onNavigateHome?: () => void;
   onAlternarAmbiente?: () => void;
   onNavigateToHotelDashboard?: (hotel: Hotel) => void;
+  onNavigateToCreateHotel?: () => void;
 }
 
 export const PortalParceiro: React.FC<PortalParceiroProps> = ({
   onLogout,
   onNavigateHome,
   onAlternarAmbiente,
-  onNavigateToHotelDashboard
+  onNavigateToHotelDashboard,
+  onNavigateToCreateHotel
 }) => {
   // Aba ativa: 'dashboard' | 'indicacoes' | 'financeiro' | 'links' | 'configuracoes'
   const [activeTab, setActiveTab] = useState<'dashboard' | 'indicacoes' | 'financeiro' | 'links' | 'configuracoes'>('dashboard');
@@ -819,7 +821,13 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
           {!partnerDemoHotel ? (
             <button
               type="button"
-              onClick={() => setModalCriarDemo(true)}
+              onClick={() => {
+                if (onNavigateToCreateHotel) {
+                  onNavigateToCreateHotel();
+                } else {
+                  setModalCriarDemo(true);
+                }
+              }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer active:scale-95 transition-transform"
               title="Cadastrar Hotel de Demonstração para Clientes"
             >
@@ -979,7 +987,13 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
             {!partnerDemoHotel ? (
               <button
                 type="button"
-                onClick={() => setModalCriarDemo(true)}
+                onClick={() => {
+                  if (onNavigateToCreateHotel) {
+                    onNavigateToCreateHotel();
+                  } else {
+                    setModalCriarDemo(true);
+                  }
+                }}
                 className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer transform hover:scale-[1.02] active:scale-95"
                 title="Cadastrar hotel modelo fictício para demonstrar aos futuros indicados"
               >
@@ -2007,7 +2021,13 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
 
                   {!partnerDemoHotel ? (
                     <button
-                      onClick={() => setModalCriarDemo(true)}
+                      onClick={() => {
+                        if (onNavigateToCreateHotel) {
+                          onNavigateToCreateHotel();
+                        } else {
+                          setModalCriarDemo(true);
+                        }
+                      }}
                       className="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer shrink-0"
                     >
                       <Plus className="w-4 h-4" />

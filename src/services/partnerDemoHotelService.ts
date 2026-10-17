@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { Hotel } from '../components/CadastroHoteis';
 import { slugify } from '../utils/slugify';
 import { generateUniqueCnpj, quartosService } from './supabaseService';
+import { evolutionApiService, generateHotelInstanceName } from './evolutionApiService';
 
 export interface CriarHotelDemoParams {
   partnerId: string;
@@ -15,6 +16,283 @@ export interface CriarHotelDemoParams {
 }
 
 const LOCAL_STORAGE_DEMO_PREFIX = 'hotelnozap_partner_demo_';
+
+export const QUARTOS_PADRAO_10_EXEMPLO = [
+  // ==============================
+  // 3 QUARTOS DE SOLTEIRO
+  // ==============================
+  {
+    numero: '101',
+    tipo: 'Solteiro',
+    categoria: 'Standard',
+    andar: '1º Andar',
+    capacidade: 1,
+    beds: 1,
+    valor_diaria: 120.00,
+    status: 'disponivel',
+    observacoes: 'Quarto aconchegante com 1 cama de solteiro box, ar condicionado split, Wi-Fi 500MB, mesa de apoio e frigobar.',
+    foto_capa: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Standard',
+      tipoQuarto: 'Solteiro',
+      comodidades: ['Ar Condicionado', 'Wi-Fi Grátis', 'Frigobar', 'Smart TV']
+    },
+    active: true
+  },
+  {
+    numero: '102',
+    tipo: 'Solteiro',
+    categoria: 'Executivo',
+    andar: '1º Andar',
+    capacidade: 1,
+    beds: 1,
+    valor_diaria: 145.00,
+    status: 'disponivel',
+    observacoes: 'Ideal para viagens corporativas. Cama de solteiro especial, bancada de trabalho ergonômica, ar silencioso e ducha pressurizada.',
+    foto_capa: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Executivo',
+      tipoQuarto: 'Solteiro',
+      comodidades: ['Ar Condicionado', 'Wi-Fi 500MB', 'Bancada de Trabalho', 'Smart TV', 'Frigobar']
+    },
+    active: true
+  },
+  {
+    numero: '103',
+    tipo: 'Solteiro',
+    categoria: 'Standard',
+    andar: '1º Andar',
+    capacidade: 1,
+    beds: 1,
+    valor_diaria: 120.00,
+    status: 'disponivel',
+    observacoes: 'Quarto prático e confortável para viajantes solo. Roupa de cama premium, cortinas blackout e ambiente silencioso.',
+    foto_capa: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Standard',
+      tipoQuarto: 'Solteiro',
+      comodidades: ['Ar Condicionado', 'Wi-Fi Grátis', 'Frigobar']
+    },
+    active: true
+  },
+
+  // ==============================
+  // 4 QUARTOS DE CASAL
+  // ==============================
+  {
+    numero: '201',
+    tipo: 'Casal',
+    categoria: 'Standard',
+    andar: '2º Andar',
+    capacidade: 2,
+    beds: 1,
+    valor_diaria: 180.00,
+    status: 'disponivel',
+    observacoes: 'Apartamento casal standard com cama queen, ar-condicionado split, Wi-Fi rápido e iluminação acolhedora.',
+    foto_capa: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Standard',
+      tipoQuarto: 'Casal',
+      comodidades: ['Cama Queen', 'Ar Condicionado', 'Wi-Fi', 'Smart TV 43"', 'Frigobar']
+    },
+    active: true
+  },
+  {
+    numero: '202',
+    tipo: 'Casal',
+    categoria: 'Luxo',
+    andar: '2º Andar',
+    capacidade: 2,
+    beds: 1,
+    valor_diaria: 240.00,
+    status: 'disponivel',
+    observacoes: 'Suíte charmosa com cama queen size, ar condicionado split, varanda privativa com vista e amenities especiais.',
+    foto_capa: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Luxo',
+      tipoQuarto: 'Casal',
+      comodidades: ['Cama Queen', 'Varanda Privativa', 'Ar Condicionado', 'Smart TV 50"', 'Frigobar', 'Cafeteira']
+    },
+    active: true
+  },
+  {
+    numero: '203',
+    tipo: 'Casal',
+    categoria: 'Master',
+    andar: '2º Andar',
+    capacidade: 2,
+    beds: 1,
+    valor_diaria: 280.00,
+    status: 'disponivel',
+    observacoes: 'Suíte Casal Master com cama King Size, enxoval 300 fios, banheira de hidromassagem e iluminação cênica.',
+    foto_capa: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Master',
+      tipoQuarto: 'Casal',
+      comodidades: ['Cama King Size', 'Banheira Hidro', 'Varanda', 'Smart TV 55"', 'Ar Inverter', 'Frigobar']
+    },
+    active: true
+  },
+  {
+    numero: '204',
+    tipo: 'Casal',
+    categoria: 'Standard',
+    andar: '2º Andar',
+    capacidade: 2,
+    beds: 1,
+    valor_diaria: 180.00,
+    status: 'disponivel',
+    observacoes: 'Quarto casal moderno, decorado em tons neutros, isolamento acústico e colchão com pillow top.',
+    foto_capa: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Standard',
+      tipoQuarto: 'Casal',
+      comodidades: ['Cama de Casal', 'Ar Condicionado', 'Wi-Fi', 'Smart TV', 'Frigobar']
+    },
+    active: true
+  },
+
+  // ==============================
+  // 3 QUARTOS TRIPLOS
+  // ==============================
+  {
+    numero: '301',
+    tipo: 'Triplo',
+    categoria: 'Família',
+    andar: '3º Andar',
+    capacidade: 3,
+    beds: 2,
+    valor_diaria: 290.00,
+    status: 'disponivel',
+    observacoes: 'Suíte Tripla Família composta por 1 cama de casal e 1 cama de solteiro. Amplo espaço, frigobar grande e guarda-roupa.',
+    foto_capa: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Família',
+      tipoQuarto: 'Triplo',
+      comodidades: ['1 Cama Casal + 1 Solteiro', 'Ar Condicionado', 'Smart TV 50"', 'Frigobar', 'Wi-Fi']
+    },
+    active: true
+  },
+  {
+    numero: '302',
+    tipo: 'Triplo',
+    categoria: 'Standard',
+    andar: '3º Andar',
+    capacidade: 3,
+    beds: 3,
+    valor_diaria: 270.00,
+    status: 'disponivel',
+    observacoes: 'Apartamento Triplo com 3 camas individuais de solteiro. Excelente opção para grupos, amigos ou viagens corporativas.',
+    foto_capa: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Standard',
+      tipoQuarto: 'Triplo',
+      comodidades: ['3 Camas de Solteiro', 'Ar Condicionado', 'Wi-Fi 500MB', 'Tomadas Individuais', 'Frigobar']
+    },
+    active: true
+  },
+  {
+    numero: '303',
+    tipo: 'Triplo',
+    categoria: 'Superior',
+    andar: '3º Andar',
+    capacidade: 3,
+    beds: 2,
+    valor_diaria: 320.00,
+    status: 'disponivel',
+    observacoes: 'Suíte Tripla Superior com 1 cama Queen e 1 de solteiro, vista panorâmica da cidade, varanda e acabamento refinado.',
+    foto_capa: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=800',
+    fotos: ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=800'],
+    items: {
+      categoria: 'Superior',
+      tipoQuarto: 'Triplo',
+      comodidades: ['1 Cama Queen + 1 Solteiro', 'Varanda Panorâmica', 'Ar Inverter', 'Smart TV', 'Frigobar']
+    },
+    active: true
+  }
+];
+
+/**
+ * Função utilitária para cadastrar os 10 quartos padrão (3 solteiro, 4 casal, 3 triplo) para um hotel
+ */
+export async function cadastrar10QuartosPadrao(hotelId: string): Promise<boolean> {
+  if (!hotelId) return false;
+  try {
+    const rowsToInsert = QUARTOS_PADRAO_10_EXEMPLO.map(q => ({
+      hotel_id: hotelId,
+      numero: q.numero,
+      tipo: q.tipo,
+      andar: q.andar,
+      status: q.status,
+      capacidade: q.capacidade,
+      valor_diaria: q.valor_diaria,
+      observacoes: q.observacoes,
+      fotos: q.fotos,
+      foto_capa: q.foto_capa,
+      items: q.items,
+      beds: q.beds,
+      active: q.active
+    }));
+
+    const { error: errQuartos } = await supabase.from('quartos').insert(rowsToInsert);
+    if (errQuartos) {
+      console.warn('[cadastrar10QuartosPadrao] Tentando fallback simplificado:', errQuartos.message);
+      const simplified = rowsToInsert.map(r => ({
+        hotel_id: r.hotel_id,
+        numero: r.numero,
+        tipo: r.tipo,
+        andar: r.andar,
+        status: r.status,
+        capacidade: r.capacidade,
+        valor_diaria: r.valor_diaria,
+        observacoes: r.observacoes
+      }));
+      await supabase.from('quartos').insert(simplified);
+    }
+
+    // Cache local de quartos
+    try {
+      const syncedLocal = QUARTOS_PADRAO_10_EXEMPLO.map((q, idx) => ({
+        id: `seed_${hotelId}_${q.numero}_${idx}`,
+        hotel_id: hotelId,
+        number: q.numero,
+        name: `Quarto ${q.numero} (${q.tipo})`,
+        category: q.categoria,
+        categoria: q.categoria,
+        status: 'livre',
+        floor: q.andar,
+        capacity: q.capacidade,
+        dailyPrice: q.valor_diaria,
+        active: true,
+        photos: q.fotos,
+        fotoCapa: q.foto_capa,
+        imageUrl: q.foto_capa,
+        notes: q.observacoes,
+        observacoes: q.observacoes,
+        items: q.items,
+        comodidades: q.items.comodidades,
+        beds: q.beds,
+        type: q.tipo,
+        tipoQuarto: q.tipo
+      }));
+      quartosService.saveLocalQuartos(syncedLocal, hotelId);
+    } catch {}
+
+    return true;
+  } catch (err) {
+    console.warn('[cadastrar10QuartosPadrao] Erro:', err);
+    return false;
+  }
+}
 
 export const partnerDemoHotelService = {
   /**
@@ -86,7 +364,7 @@ export const partnerDemoHotelService = {
             whatsapp: demoFound.whatsapp || '',
             capacity: Number(demoFound.capacidade) || 10,
             status: demoFound.status || 'ativo',
-            plan: demoFound.plano || 'Profissional',
+            plan: demoFound.plano || 'Parceiro VIP (12 Meses)',
             slug: demoFound.link ? demoFound.link.replace('/hotel/', '').replace('/hoteis/', '') : slugify(hotelName),
             cnpj: demoFound.cnpj || '00.000.000/0001-99',
             whatsappInstances: Number(demoFound.instancias_whatsapp) || 1,
@@ -117,6 +395,14 @@ export const partnerDemoHotelService = {
     const uniqueSlug = `${rawSlug}-${Math.random().toString(36).substring(2, 6)}`;
     const cleanPhone = (params.whatsappPhone || '').replace(/\D/g, '');
     const cnpjGerado = generateUniqueCnpj();
+    const instanceName = generateHotelInstanceName(params.hotelName.trim());
+
+    // Criar instância na Evolution API conforme a regra oficial
+    try {
+      await evolutionApiService.createInstance(instanceName, { qrcode: true });
+    } catch (e) {
+      console.warn('[partnerDemoHotelService] Falha ao criar instância na Evolution API:', e);
+    }
 
     // Mapeamento exato de colunas em português para a tabela 'hoteis' do Supabase
     const hotelPayload: Record<string, any> = {
@@ -134,7 +420,9 @@ export const partnerDemoHotelService = {
       email_login: params.partnerEmail.toLowerCase().trim(),
       capacidade: 10,
       status: 'ativo',
-      plano: 'Profissional',
+      plano: 'Parceiro VIP (12 Meses)',
+      instancias_whatsapp: 1,
+      nome_instancia: instanceName,
       link: `/hotel/${uniqueSlug}`,
       observacoes: `[DEMO_PARCEIRO_${params.partnerId}] [DEMO] Hotel de Demonstração do Franqueado ${params.partnerName}`,
       parceiro_referencia: params.partnerId
@@ -197,7 +485,7 @@ export const partnerDemoHotelService = {
       cnpj: cnpjGerado,
       managerName: params.partnerName || 'Gestor Franqueado',
       status: 'ativo',
-      plan: 'Profissional',
+      plan: 'Parceiro VIP (12 Meses)',
       slug: uniqueSlug,
       notes: hotelPayload.observacoes,
       is_demo: true,
@@ -220,274 +508,7 @@ export const partnerDemoHotelService = {
 
     // 3. Cadastrar 10 Quartos de Exemplo (3 Solteiro, 4 Casal, 3 Triplo) no Supabase
     if (params.criarQuartosExemplo !== false && hotelCriadoId && !hotelCriadoId.startsWith('demo_')) {
-      try {
-        const quartosExemplo = [
-          // ==============================
-          // 3 QUARTOS DE SOLTEIRO
-          // ==============================
-          {
-            numero: '101',
-            tipo: 'Solteiro',
-            categoria: 'Standard',
-            andar: '1º Andar',
-            capacidade: 1,
-            beds: 1,
-            valor_diaria: 120.00,
-            status: 'disponivel',
-            observacoes: 'Quarto aconchegante com 1 cama de solteiro box, ar condicionado split, Wi-Fi 500MB, mesa de apoio e frigobar.',
-            foto_capa: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Standard',
-              tipoQuarto: 'Solteiro',
-              comodidades: ['Ar Condicionado', 'Wi-Fi Grátis', 'Frigobar', 'Smart TV']
-            },
-            active: true
-          },
-          {
-            numero: '102',
-            tipo: 'Solteiro',
-            categoria: 'Executivo',
-            andar: '1º Andar',
-            capacidade: 1,
-            beds: 1,
-            valor_diaria: 145.00,
-            status: 'disponivel',
-            observacoes: 'Ideal para viagens corporativas. Cama de solteiro especial, bancada de trabalho ergonômica, ar silencioso e ducha pressurizada.',
-            foto_capa: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Executivo',
-              tipoQuarto: 'Solteiro',
-              comodidades: ['Ar Condicionado', 'Wi-Fi 500MB', 'Bancada de Trabalho', 'Smart TV', 'Frigobar']
-            },
-            active: true
-          },
-          {
-            numero: '103',
-            tipo: 'Solteiro',
-            categoria: 'Standard',
-            andar: '1º Andar',
-            capacidade: 1,
-            beds: 1,
-            valor_diaria: 120.00,
-            status: 'disponivel',
-            observacoes: 'Quarto prático e confortável para viajantes solo. Roupa de cama premium, cortinas blackout e ambiente silencioso.',
-            foto_capa: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Standard',
-              tipoQuarto: 'Solteiro',
-              comodidades: ['Ar Condicionado', 'Wi-Fi Grátis', 'Frigobar']
-            },
-            active: true
-          },
-
-          // ==============================
-          // 4 QUARTOS DE CASAL
-          // ==============================
-          {
-            numero: '201',
-            tipo: 'Casal',
-            categoria: 'Standard',
-            andar: '2º Andar',
-            capacidade: 2,
-            beds: 1,
-            valor_diaria: 180.00,
-            status: 'disponivel',
-            observacoes: 'Apartamento casal standard com cama queen, ar-condicionado split, Wi-Fi rápido e iluminação acolhedora.',
-            foto_capa: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Standard',
-              tipoQuarto: 'Casal',
-              comodidades: ['Cama Queen', 'Ar Condicionado', 'Wi-Fi', 'Smart TV 43"', 'Frigobar']
-            },
-            active: true
-          },
-          {
-            numero: '202',
-            tipo: 'Casal',
-            categoria: 'Luxo',
-            andar: '2º Andar',
-            capacidade: 2,
-            beds: 1,
-            valor_diaria: 240.00,
-            status: 'disponivel',
-            observacoes: 'Suíte charmosa com cama queen size, ar condicionado split, varanda privativa com vista e amenities especiais.',
-            foto_capa: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Luxo',
-              tipoQuarto: 'Casal',
-              comodidades: ['Cama Queen', 'Varanda Privativa', 'Ar Condicionado', 'Smart TV 50"', 'Frigobar', 'Cafeteira']
-            },
-            active: true
-          },
-          {
-            numero: '203',
-            tipo: 'Casal',
-            categoria: 'Master',
-            andar: '2º Andar',
-            capacidade: 2,
-            beds: 1,
-            valor_diaria: 280.00,
-            status: 'disponivel',
-            observacoes: 'Suíte Casal Master com cama King Size, enxoval 300 fios, banheira de hidromassagem e iluminação cênica.',
-            foto_capa: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Master',
-              tipoQuarto: 'Casal',
-              comodidades: ['Cama King Size', 'Banheira Hidro', 'Varanda', 'Smart TV 55"', 'Ar Inverter', 'Frigobar']
-            },
-            active: true
-          },
-          {
-            numero: '204',
-            tipo: 'Casal',
-            categoria: 'Standard',
-            andar: '2º Andar',
-            capacidade: 2,
-            beds: 1,
-            valor_diaria: 180.00,
-            status: 'disponivel',
-            observacoes: 'Quarto casal moderno, decorado em tons neutros, isolamento acústico e colchão com pillow top.',
-            foto_capa: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Standard',
-              tipoQuarto: 'Casal',
-              comodidades: ['Cama de Casal', 'Ar Condicionado', 'Wi-Fi', 'Smart TV', 'Frigobar']
-            },
-            active: true
-          },
-
-          // ==============================
-          // 3 QUARTOS TRIPLOS
-          // ==============================
-          {
-            numero: '301',
-            tipo: 'Triplo',
-            categoria: 'Família',
-            andar: '3º Andar',
-            capacidade: 3,
-            beds: 2,
-            valor_diaria: 290.00,
-            status: 'disponivel',
-            observacoes: 'Suíte Tripla Família composta por 1 cama de casal e 1 cama de solteiro. Amplo espaço, frigobar grande e guarda-roupa.',
-            foto_capa: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Família',
-              tipoQuarto: 'Triplo',
-              comodidades: ['1 Cama Casal + 1 Solteiro', 'Ar Condicionado', 'Smart TV 50"', 'Frigobar', 'Wi-Fi']
-            },
-            active: true
-          },
-          {
-            numero: '302',
-            tipo: 'Triplo',
-            categoria: 'Standard',
-            andar: '3º Andar',
-            capacidade: 3,
-            beds: 3,
-            valor_diaria: 270.00,
-            status: 'disponivel',
-            observacoes: 'Apartamento Triplo com 3 camas individuais de solteiro. Excelente opção para grupos, amigos ou viagens corporativas.',
-            foto_capa: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Standard',
-              tipoQuarto: 'Triplo',
-              comodidades: ['3 Camas de Solteiro', 'Ar Condicionado', 'Wi-Fi 500MB', 'Tomadas Individuais', 'Frigobar']
-            },
-            active: true
-          },
-          {
-            numero: '303',
-            tipo: 'Triplo',
-            categoria: 'Superior',
-            andar: '3º Andar',
-            capacidade: 3,
-            beds: 2,
-            valor_diaria: 320.00,
-            status: 'disponivel',
-            observacoes: 'Suíte Tripla Superior com 1 cama Queen e 1 de solteiro, vista panorâmica da cidade, varanda e acabamento refinado.',
-            foto_capa: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=800',
-            fotos: ['https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=800'],
-            items: {
-              categoria: 'Superior',
-              tipoQuarto: 'Triplo',
-              comodidades: ['1 Cama Queen + 1 Solteiro', 'Varanda Panorâmica', 'Ar Inverter', 'Smart TV', 'Frigobar']
-            },
-            active: true
-          }
-        ];
-
-        const rowsToInsert = quartosExemplo.map(q => ({
-          hotel_id: hotelCriadoId,
-          numero: q.numero,
-          tipo: q.tipo,
-          andar: q.andar,
-          status: q.status,
-          capacidade: q.capacidade,
-          valor_diaria: q.valor_diaria,
-          observacoes: q.observacoes,
-          fotos: q.fotos,
-          foto_capa: q.foto_capa,
-          items: q.items,
-          beds: q.beds,
-          active: q.active
-        }));
-
-        const { error: errQuartos } = await supabase.from('quartos').insert(rowsToInsert);
-        if (errQuartos) {
-          console.warn('[partnerDemoHotelService] Inserindo quartos com fallback simplificado:', errQuartos.message);
-          const simplified = rowsToInsert.map(r => ({
-            hotel_id: r.hotel_id,
-            numero: r.numero,
-            tipo: r.tipo,
-            andar: r.andar,
-            status: r.status,
-            capacidade: r.capacidade,
-            valor_diaria: r.valor_diaria,
-            observacoes: r.observacoes
-          }));
-          await supabase.from('quartos').insert(simplified);
-        }
-
-        // Sincroniza cache local de quartos para o painel abrir instantâneo
-        try {
-          const syncedLocal = quartosExemplo.map((q, idx) => ({
-            id: `seed_${hotelCriadoId}_${q.numero}_${idx}`,
-            hotel_id: hotelCriadoId,
-            number: q.numero,
-            name: `Quarto ${q.numero} (${q.tipo})`,
-            category: q.categoria,
-            categoria: q.categoria,
-            status: 'livre',
-            floor: q.andar,
-            capacity: q.capacidade,
-            dailyPrice: q.valor_diaria,
-            active: true,
-            photos: q.fotos,
-            fotoCapa: q.foto_capa,
-            imageUrl: q.foto_capa,
-            notes: q.observacoes,
-            observacoes: q.observacoes,
-            items: q.items,
-            comodidades: q.items.comodidades,
-            beds: q.beds,
-            type: q.tipo,
-            tipoQuarto: q.tipo
-          }));
-          quartosService.saveLocalQuartos(syncedLocal, hotelCriadoId);
-        } catch {}
-
-      } catch (errQuartosGeral) {
-        console.warn('[partnerDemoHotelService] Erro ao cadastrar 10 quartos de exemplo:', errQuartosGeral);
-      }
+      await cadastrar10QuartosPadrao(hotelCriadoId);
     }
 
     return hotelFinal;

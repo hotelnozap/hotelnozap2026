@@ -597,5 +597,30 @@ export class EvolutionApiService {
   }
 }
 
+/**
+ * Gera o nome padronizado da instância da Evolution API:
+ * Regra: nomedohotel01 tudo junto, sem acento, sem espaço, minúsculo.
+ * Se já existir: nomedohotel02, nomedohotel03, etc.
+ */
+export function generateHotelInstanceName(hotelName: string, existingList: string[] = []): string {
+  const base = (hotelName || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  const prefix = base || 'hotel';
+
+  const lowerSet = new Set((existingList || []).map(s => (s || '').toLowerCase().trim()));
+
+  for (let i = 1; i <= 99; i++) {
+    const candidate = `${prefix}${String(i).padStart(2, '0')}`;
+    if (!lowerSet.has(candidate)) {
+      return candidate;
+    }
+  }
+  return `${prefix}01`;
+}
+
 export const evolutionApiService = new EvolutionApiService();
 export default evolutionApiService;
+
