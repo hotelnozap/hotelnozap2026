@@ -34,6 +34,7 @@ import {
 } from '../utils/hotelUrl';
 import { generateMockHotelData, findPlanoTesteName } from '../utils/mockHotelData';
 import { useHotelSecurityCheck, SecurityFieldBadge } from '../hooks/useHotelSecurityCheck';
+import { CIDADES_MATO_GROSSO_142 } from './ModalImportarGoogleMaps';
 
 
 export interface FormHotelProps {
@@ -208,7 +209,7 @@ export const FormHotel: React.FC<FormHotelProps> = ({
   const [streetNumber, setStreetNumber] = useState<string>((hotelToEdit as any)?.streetNumber || '');
   const [neighborhood, setNeighborhood] = useState(hotelToEdit?.neighborhood || '');
   const [city, setCity] = useState(hotelToEdit?.city || (hotelToEdit?.cityUf ? hotelToEdit.cityUf.split('/')[0].trim() : ''));
-  const [uf, setUf] = useState(hotelToEdit?.uf || (hotelToEdit?.cityUf ? hotelToEdit.cityUf.split('/')[1]?.trim() || '' : ''));
+  const [uf, setUf] = useState(hotelToEdit?.uf || (hotelToEdit?.cityUf ? hotelToEdit.cityUf.split('/')[1]?.trim() || 'MT' : 'MT'));
 
   // Redes Sociais do Hotel (Opcionais)
   const [instagram, setInstagram] = useState(hotelToEdit?.instagram || '');
@@ -516,6 +517,116 @@ export const FormHotel: React.FC<FormHotelProps> = ({
     originalCnpj: originalCnpj || hotelToEdit?.cnpj || null,
     isEditing
   });
+
+  // Verificação Anti-Duplicidade de Hotel (WhatsApp e Nome + Cidade)
+  const [duplicityError, setDuplicityError] = useState<{ field: 'whatsapp' | 'nome' | 'cidade'; message: string } | null>(null);
+  const [isCheckingDuplicity, setIsCheckingDuplicity] = useState(false);
+
+  const checkHotelDuplicity = async (
+    nome: string,
+    cidade: string,
+    whatsapp: string,
+    excludeId?: string | null
+  ): Promise<{ isDuplicate: boolean; message?: string; field?: 'whatsapp' | 'nome' | 'cidade' }> => {
+    const cleanPhone = (whatsapp || '').replace(/\D/g, '');
+    const cleanNome = (nome || '').trim().toLowerCase();
+    const cleanCidade = (cidade || '').trim().toLowerCase();
+
+    try {
+      // 1. Checagem por WhatsApp (Identificador Unívoco)
+      if (cleanPhone.length >= 8) {
+        let queryPhone = supabase
+          .from('hoteis')
+          .select('id, nome, cidade, uf, whatsapp, telefone_gerente');
+
+        if (excludeId) {
+          queryPhone = queryPhone.neq('id', excludeId);
+        }
+
+        const { data: hoteisComTelefone, error: errPhone } = await queryPhone;
+        if (!errPhone && hoteisComTelefone) {
+          const last8 = cleanPhone.slice(-8);
+          const match = hoteisComTelefone.find(h => {
+            const hWpp = (h.whatsapp || '').replace(/\D/g, '');
+            const hGer = (h.telefone_gerente || '').replace(/\D/g, '');
+            return (hWpp && hWpp.endsWith(last8)) || (hGer && hGer.endsWith(last8));
+          });
+
+          if (match) {
+            return {
+              isDuplicate: true,
+              field: 'whatsapp',
+              message: `Este WhatsApp já está cadastrado no hotel "${match.nome}" (${match.cidade || 'sem cidade'}/${match.uf || 'MT'}).`
+            };
+          }
+        }
+      }
+
+      // 2. Checagem por Nome + Cidade (Identificador Geográfico)
+      if (cleanNome.length >= 3 && cleanCidade.length >= 3) {
+        let queryNome = supabase
+          .from('hoteis')
+          .select('id, nome, cidade, uf')
+          .ilike('cidade', cleanCidade);
+
+        if (excludeId) {
+          queryNome = queryNome.neq('id', excludeId);
+        }
+
+        const { data: hoteisNaCidade, error: errNome } = await queryNome;
+        if (!errNome && hoteisNaCidade) {
+          const match = hoteisNaCidade.find(h => {
+            const hNome = (h.nome || '').trim().toLowerCase();
+            return hNome === cleanNome;
+          });
+
+          if (match) {
+            return {
+              isDuplicate: true,
+              field: 'nome',
+              message: `Já existe um hotel cadastrado com o nome "${match.nome}" em ${match.cidade || cleanCidade}.`
+            };
+          }
+        }
+      }
+
+      return { isDuplicate: false };
+    } catch (err) {
+      console.warn('Erro ao checar duplicidade de hotel:', err);
+      return { isDuplicate: false };
+    }
+  };
+
+  // Checagem em tempo real com Debounce (600ms)
+  useEffect(() => {
+    let isCurrent = true;
+    const cleanPhone = (whatsappSocial || '').replace(/\D/g, '');
+    const cleanNome = (nomeFantasia || '').trim();
+    const cleanCidade = (city || '').trim();
+
+    if (cleanPhone.length < 8 && (cleanNome.length < 3 || cleanCidade.length < 3)) {
+      setDuplicityError(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingDuplicity(true);
+      const res = await checkHotelDuplicity(cleanNome, cleanCidade, cleanPhone, effectiveHotelId);
+      if (isCurrent) {
+        if (res.isDuplicate) {
+          setDuplicityError({ field: res.field || 'nome', message: res.message || 'Hotel já cadastrado.' });
+        } else {
+          setDuplicityError(null);
+        }
+        setIsCheckingDuplicity(false);
+      }
+    }, 600);
+
+    return () => {
+      isCurrent = false;
+      clearTimeout(timer);
+    };
+  }, [whatsappSocial, nomeFantasia, city, effectiveHotelId]);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -851,12 +962,47 @@ export const FormHotel: React.FC<FormHotelProps> = ({
       return;
     }
 
-    if (isGoogleMaps && !whatsappSocial.trim()) {
-      showToast('Por favor, informe o WhatsApp para contato do hotel.');
-      return;
+    if (isGoogleMaps) {
+      if (!whatsappSocial.trim()) {
+        showToast('Por favor, informe o WhatsApp para contato do hotel.');
+        return;
+      }
+      if (!city.trim()) {
+        showToast('Por favor, informe a Cidade do hotel.');
+        return;
+      }
+
+      // Validação Anti-Duplicidade no Cadastro Google Maps
+      const dupCheck = await checkHotelDuplicity(
+        nomeFantasia,
+        city,
+        whatsappSocial,
+        effectiveHotelId
+      );
+
+      if (dupCheck.isDuplicate) {
+        setDuplicityError({ field: dupCheck.field || 'nome', message: dupCheck.message || 'Hotel já cadastrado.' });
+        showToast(`Alerta de Duplicidade: ${dupCheck.message}`);
+        return;
+      }
     }
 
     if (!isGoogleMaps) {
+      // Validação Anti-Duplicidade Geral (se preenchidos WhatsApp e Cidade)
+      if (whatsappSocial.trim() || (nomeFantasia.trim() && city.trim())) {
+        const dupCheck = await checkHotelDuplicity(
+          nomeFantasia,
+          city,
+          whatsappSocial,
+          effectiveHotelId
+        );
+
+        if (dupCheck.isDuplicate) {
+          setDuplicityError({ field: dupCheck.field || 'nome', message: dupCheck.message || 'Hotel já cadastrado.' });
+          showToast(`Alerta de Duplicidade: ${dupCheck.message}`);
+          return;
+        }
+      }
       if (!isEditing && loginEmail.trim() && !password.trim()) {
         showToast('Por favor, informe a Senha de Acesso Master para o novo hotel.');
         return;
@@ -1323,13 +1469,21 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                   <span className="text-[11px] text-slate-400 mt-1.5">Foto exibida no catálogo público e na página do estabelecimento.</span>
                 </div>
 
-                {/* Campos Nome do Hotel e WhatsApp */}
-                <div className="md:col-span-7 flex flex-col gap-5 justify-center pt-1">
+                {/* Campos Nome do Hotel, WhatsApp, Cidade e UF */}
+                <div className="md:col-span-7 flex flex-col gap-4 justify-center pt-1">
                   {/* Nome do Hotel */}
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-nome-hotel">
-                      Nome do Hotel <span className="text-red-600">*</span>
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-nome-hotel">
+                        Nome do Hotel <span className="text-red-600">*</span>
+                      </label>
+                      {isCheckingDuplicity && (
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1 font-semibold">
+                          <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                          Checando duplicidade...
+                        </span>
+                      )}
+                    </div>
                     <div className="relative flex items-center">
                       <span className="material-symbols-outlined absolute left-3.5 text-slate-400 text-lg pointer-events-none">domain</span>
                       <input 
@@ -1338,32 +1492,99 @@ export const FormHotel: React.FC<FormHotelProps> = ({
                         required
                         value={nomeFantasia}
                         onChange={(e) => handleNomeFantasiaChange(e.target.value)}
-                        placeholder="Ex: Pousada Recanto dos Corais" 
-                        className="w-full pl-11 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs"
+                        placeholder="Ex: Hotel Pantanal Norte" 
+                        className={`w-full pl-11 pr-3.5 py-2.5 rounded-xl border text-sm font-semibold focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs transition-colors ${
+                          duplicityError?.field === 'nome' ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                        }`}
                       />
                     </div>
-                    <span className="text-[11px] text-slate-500">Nome oficial de identificação do estabelecimento.</span>
+                    {duplicityError?.field === 'nome' ? (
+                      <span className="text-[11px] font-bold text-red-600 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">error</span>
+                        {duplicityError.message}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-slate-500">Nome oficial de identificação do estabelecimento.</span>
+                    )}
                   </div>
 
-                  {/* WhatsApp para Contato */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-whatsapp-contato">
-                      WhatsApp para Contato <span className="text-red-600">*</span>
-                    </label>
-                    <div className="relative flex items-center">
-                      <span className="material-symbols-outlined absolute left-3.5 text-emerald-600 text-lg pointer-events-none">chat</span>
+                  {/* Linha 2: WhatsApp, Cidade e UF */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    {/* WhatsApp para Contato */}
+                    <div className="sm:col-span-6 space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-whatsapp-contato">
+                        WhatsApp Contato <span className="text-red-600">*</span>
+                      </label>
+                      <div className="relative flex items-center">
+                        <span className="material-symbols-outlined absolute left-3 text-emerald-600 text-lg pointer-events-none">chat</span>
+                        <input 
+                          id="gm-whatsapp-contato"
+                          type="text" 
+                          required
+                          value={whatsappSocial}
+                          onChange={(e) => setWhatsappSocial(maskPhone(e.target.value))}
+                          placeholder="(00) 00000-0000" 
+                          maxLength={15}
+                          className={`w-full pl-10 pr-3 py-2.5 rounded-xl border text-sm font-semibold focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs font-mono transition-colors ${
+                            duplicityError?.field === 'whatsapp' ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                          }`}
+                        />
+                      </div>
+                      {duplicityError?.field === 'whatsapp' ? (
+                        <span className="text-[10px] font-bold text-red-600 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">error</span>
+                          {duplicityError.message}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-500">WhatsApp direto dos hóspedes.</span>
+                      )}
+                    </div>
+
+                    {/* Cidade */}
+                    <div className="sm:col-span-4 space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-cidade">
+                        Cidade <span className="text-red-600">*</span>
+                      </label>
+                      <div className="relative flex items-center">
+                        <span className="material-symbols-outlined absolute left-3 text-blue-600 text-lg pointer-events-none">location_city</span>
+                        <input 
+                          id="gm-cidade"
+                          type="text" 
+                          required
+                          list="cidades-sugestoes-gm"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          placeholder="Ex: Cuiabá" 
+                          className={`w-full pl-10 pr-3 py-2.5 rounded-xl border text-sm font-semibold focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs transition-colors ${
+                            duplicityError?.field === 'cidade' ? 'border-red-400 bg-red-50/30' : 'border-slate-200'
+                          }`}
+                        />
+                        <datalist id="cidades-sugestoes-gm">
+                          {CIDADES_MATO_GROSSO_142.map((cidadeItem) => (
+                            <option key={cidadeItem} value={cidadeItem} />
+                          ))}
+                        </datalist>
+                      </div>
+                      <span className="text-[11px] text-slate-500">Município sede.</span>
+                    </div>
+
+                    {/* UF */}
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider" htmlFor="gm-uf">
+                        UF <span className="text-red-600">*</span>
+                      </label>
                       <input 
-                        id="gm-whatsapp-contato"
+                        id="gm-uf"
                         type="text" 
                         required
-                        value={whatsappSocial}
-                        onChange={(e) => setWhatsappSocial(maskPhone(e.target.value))}
-                        placeholder="(00) 00000-0000" 
-                        maxLength={15}
-                        className="w-full pl-11 pr-3.5 py-3 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs font-mono"
+                        maxLength={2}
+                        value={uf || 'MT'}
+                        onChange={(e) => setUf(e.target.value.toUpperCase())}
+                        placeholder="MT" 
+                        className="w-full px-2 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-center focus:outline-none focus:border-[#003400] focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/40 text-slate-900 shadow-xs uppercase"
                       />
+                      <span className="text-[11px] text-slate-500 text-center block">Estado</span>
                     </div>
-                    <span className="text-[11px] text-slate-500">Número do WhatsApp direto que receberá o contato dos hóspedes.</span>
                   </div>
                 </div>
               </div>

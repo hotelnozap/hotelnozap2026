@@ -1,26 +1,34 @@
 {
+  "id": "nWQ8ZJpKeTrYl5Ry",
   "name": "Hotel no Zap - Super Agente Vendedor",
+  "description": null,
+  "active": true,
+  "activeVersionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+  "createdAt": "2026-10-16T17:56:03.503Z",
+  "updatedAt": "2026-10-16T21:44:10.584Z",
+  "isArchived": false,
+  "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+  "versionCounter": 15,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "super-agente-vendedor",
-        "options": {}
-      },
       "id": "node-webhook-vendedor",
       "name": "Webhook Evolution API",
+      "webhookId": "webhook-super-agente-vendedor",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         100,
         300
       ],
-      "webhookId": "webhook-super-agente-vendedor"
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "super-agente-vendedor",
+        "options": {}
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const body = $input.first()?.json?.body || $input.first()?.json || {};\nconst data = body.data || body;\n\nconst fromMe = data.key?.fromMe === true || body.fromMe === true;\nconst remoteJid = data.key?.remoteJid || body.remoteJid || '';\n\nif (remoteJid.includes('@g.us') || remoteJid.includes('broadcast') || remoteJid.includes('@newsletter')) {\n  return [];\n}\n\nconst rawNumber = remoteJid ? remoteJid.split('@')[0] : (data.key?.participant || '').split('@')[0];\nconst cleanPhone = rawNumber ? rawNumber.replace(/\\D/g, '') : '';\nif (!cleanPhone) {\n  return [];\n}\n\nconst msgObj = data.message || body.message || {};\nlet text = '';\nlet messageType = 'texto';\n\nif (data.messageType === 'conversation' || msgObj.conversation) {\n  text = msgObj.conversation || '';\n} else if (data.messageType === 'extendedTextMessage' || msgObj.extendedTextMessage) {\n  text = msgObj.extendedTextMessage?.text || '';\n} else if (data.messageType === 'audioMessage' || msgObj.audioMessage) {\n  messageType = 'voz';\n}\n\nconst pushName = data.pushName || body.pushName || 'Parceiro';\nconst primeiroNome = pushName.split(' ')[0] || 'Parceiro';\n\n// CASO 1: Mensagem enviada pelo próprio Everaldo (fromMe: true)\nif (fromMe) {\n  const comando = text.trim().toLowerCase();\n  const isReativar = comando === '#ia' || comando === '#ativar' || comando === 'ativar ia';\n  return [{\n    json: {\n      fromMe: true,\n      acao: isReativar ? 'reativar' : 'pausar',\n      telefone: cleanPhone,\n      mensagem: text.trim()\n    }\n  }];\n}\n\n// CASO 2: Mensagem enviada pelo CLIENTE (fromMe: false)\nreturn [{\n  json: {\n    fromMe: false,\n    instanceName: 'meutim',\n    tipo: messageType,\n    telefone: cleanPhone,\n    pushName,\n    primeiroNome,\n    mensagem: text.trim(),\n    mimetype: msgObj.audioMessage?.mimetype || 'audio/ogg',\n    base64: '',\n    rawMessage: msgObj,\n    messageId: data.key?.id || String(Date.now()),\n    timestamp: Date.now()\n  }\n}];"
-      },
       "id": "node-normalizar-dados",
       "name": "Normalizar Dados",
       "type": "n8n-nodes-base.code",
@@ -28,9 +36,20 @@
       "position": [
         320,
         300
-      ]
+      ],
+      "parameters": {
+        "jsCode": "const body = $input.first()?.json?.body || $input.first()?.json || {};\nconst data = body.data || body;\nconst key = data.key || body.key || {};\n\nconst fromMe = key.fromMe === true;\nconst remoteJid = key.remoteJid || '';\n\nif (remoteJid.includes('@g.us') || remoteJid.includes('broadcast') || remoteJid.includes('@newsletter')) {\n  return [];\n}\n\nconst rawNumber = remoteJid ? remoteJid.split('@')[0] : (key.participant || '').split('@')[0];\nconst cleanPhone = rawNumber ? rawNumber.replace(/\\D/g, '') : '';\nif (!cleanPhone) {\n  return [];\n}\n\nconst msgObj = data.message || body.message || {};\nlet text = '';\nlet messageType = 'texto';\n\nif (data.messageType === 'conversation' || msgObj.conversation) {\n  text = msgObj.conversation || '';\n} else if (data.messageType === 'extendedTextMessage' || msgObj.extendedTextMessage) {\n  text = msgObj.extendedTextMessage?.text || '';\n} else if (data.messageType === 'audioMessage' || msgObj.audioMessage) {\n  messageType = 'voz';\n}\n\nconst pushName = data.pushName || body.pushName || 'Parceiro';\nconst primeiroNome = pushName.split(' ')[0] || 'Parceiro';\nconst comando = text.trim().toLowerCase();\nconst isComandoReativar = comando === '#ia' || comando === '#ativar' || comando === 'ativar ia';\n\nreturn [{\n  json: {\n    fromMe,\n    isComandoReativar,\n    instanceName: 'meutim',\n    tipo: messageType,\n    telefone: cleanPhone,\n    pushName,\n    primeiroNome,\n    mensagem: text.trim(),\n    mimetype: msgObj.audioMessage?.mimetype || 'audio/ogg',\n    base64: '',\n    rawMessage: msgObj,\n    messageId: key.id || String(Date.now()),\n    timestamp: Date.now()\n  }\n}];"
+      }
     },
     {
+      "id": "node-switch-origem",
+      "name": "Switch: Origem da Mensagem",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        540,
+        300
+      ],
       "parameters": {
         "rules": {
           "values": [
@@ -79,37 +98,37 @@
           ]
         },
         "options": {}
-      },
-      "id": "node-switch-origem",
-      "name": "Switch: Origem da Mensagem",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.2,
-      "position": [
-        540,
-        300
-      ]
+      }
     },
     {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ $json.acao }}",
-              "value2": "reativar"
-            }
-          ]
-        }
-      },
       "id": "node-if-reativar",
       "name": "É Comando #ia / #ativar?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        760,
-        100
-      ]
+        1200,
+        40
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isComandoReativar }}",
+              "value2": true
+            }
+          ]
+        }
+      }
     },
     {
+      "id": "node-redis-despausar",
+      "name": "Redis: Reativar IA Imediatamente",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        -20
+      ],
       "parameters": {
         "operation": "delete",
         "key": "=pausa:vendedor:meutim:{{ $json.telefone }}"
@@ -119,17 +138,17 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-despausar",
-      "name": "Redis: Reativar IA Imediatamente",
+      }
+    },
+    {
+      "id": "node-redis-pausar-2h",
+      "name": "Redis: Pausar IA por 2 Horas",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1000,
-        40
-      ]
-    },
-    {
+        1420,
+        100
+      ],
       "parameters": {
         "operation": "set",
         "key": "=pausa:vendedor:meutim:{{ $json.telefone }}",
@@ -143,17 +162,17 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-pausar-2h",
-      "name": "Redis: Pausar IA por 2 Horas",
+      }
+    },
+    {
+      "id": "node-redis-checar-pausa",
+      "name": "Redis: Checar Status de Pausa",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1000,
-        180
-      ]
-    },
-    {
+        760,
+        400
+      ],
       "parameters": {
         "operation": "get",
         "key": "=pausa:vendedor:meutim:{{ $json.telefone }}",
@@ -164,37 +183,37 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-checar-pausa",
-      "name": "Redis: Checar Status de Pausa",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        760,
-        400
-      ]
+      }
     },
     {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ String($json.propertyName ?? '') }}",
-              "value2": "pausado"
-            }
-          ]
-        }
-      },
       "id": "node-if-ia-pausada",
       "name": "IA está Pausada?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        980,
+        1200,
         400
-      ]
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.iaPausada }}",
+              "value2": false
+            }
+          ]
+        }
+      }
     },
     {
+      "id": "node-switch-voz",
+      "name": "Switch: Texto ou Voz?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1200,
+        500
+      ],
       "parameters": {
         "rules": {
           "values": [
@@ -243,17 +262,17 @@
           ]
         },
         "options": {}
-      },
-      "id": "node-switch-voz",
-      "name": "Switch: Texto ou Voz?",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.2,
-      "position": [
-        1200,
-        500
-      ]
+      }
     },
     {
+      "id": "node-baixar-audio",
+      "name": "Evolution: Baixar Áudio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        620
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://painelevolution.hotelnozap.com.br/chat/getBase64FromMediaMessage/meutim",
@@ -281,20 +300,9 @@
             }
           }
         }
-      },
-      "id": "node-baixar-audio",
-      "name": "Evolution: Baixar Áudio",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1420,
-        620
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const prevData = $('Normalizar Dados').first()?.json || {};\nconst item = $input.first()?.json || {};\n\nconst base64Data = item.base64 || item.data?.base64 || prevData.base64 || '';\nconst mimeType = item.mimetype || item.data?.mimetype || 'audio/ogg';\n\nconst binaryData = {\n  data: base64Data,\n  mimeType: mimeType,\n  fileName: 'audio.ogg'\n};\n\nreturn [{\n  json: {\n    ...prevData,\n    base64Loaded: Boolean(base64Data)\n  },\n  binary: {\n    file: binaryData,\n    data: binaryData\n  }\n}];"
-      },
       "id": "node-prep-binario",
       "name": "Preparar Binário do Áudio",
       "type": "n8n-nodes-base.code",
@@ -302,9 +310,20 @@
       "position": [
         1640,
         620
-      ]
+      ],
+      "parameters": {
+        "jsCode": "const prevData = $('Normalizar Dados').first()?.json || {};\nconst item = $input.first()?.json || {};\n\nconst base64Data = item.base64 || item.data?.base64 || prevData.base64 || '';\nconst mimeType = item.mimetype || item.data?.mimetype || 'audio/ogg';\n\nconst binaryData = {\n  data: base64Data,\n  mimeType: mimeType,\n  fileName: 'audio.ogg'\n};\n\nreturn [{\n  json: {\n    ...prevData,\n    base64Loaded: Boolean(base64Data)\n  },\n  binary: {\n    file: binaryData,\n    data: binaryData\n  }\n}];"
+      }
     },
     {
+      "id": "node-whisper",
+      "name": "OpenAI: Transcrever Áudio (Whisper)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1860,
+        620
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.openai.com/v1/audio/transcriptions",
@@ -336,20 +355,9 @@
           "id": "qolmiCqcrID0XaTc",
           "name": "OpenAI account"
         }
-      },
-      "id": "node-whisper",
-      "name": "OpenAI: Transcrever Áudio (Whisper)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1860,
-        620
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const prevData = $('Normalizar Dados').first()?.json || {};\nconst whisperResult = $input.first()?.json || {};\n\nconst transcrito = whisperResult.text ? String(whisperResult.text).trim() : '';\nconst textoFinal = transcrito.length > 0 ? transcrito : '[Mensagem de áudio]';\n\nreturn [{\n  json: {\n    ...prevData,\n    mensagem: textoFinal,\n    transcricaoVoz: transcrito,\n    isAudioTranscribed: true\n  }\n}];"
-      },
       "id": "node-definir-transcricao",
       "name": "Definir Mensagem Transcrita",
       "type": "n8n-nodes-base.code",
@@ -357,9 +365,20 @@
       "position": [
         2080,
         620
-      ]
+      ],
+      "parameters": {
+        "jsCode": "const prevData = $('Normalizar Dados').first()?.json || {};\nconst whisperResult = $input.first()?.json || {};\n\nconst transcrito = whisperResult.text ? String(whisperResult.text).trim() : '';\nconst textoFinal = transcrito.length > 0 ? transcrito : '[Mensagem de áudio]';\n\nreturn [{\n  json: {\n    ...prevData,\n    mensagem: textoFinal,\n    transcricaoVoz: transcrito,\n    isAudioTranscribed: true\n  }\n}];"
+      }
     },
     {
+      "id": "node-redis-ler-buffer",
+      "name": "Redis: Ler Buffer Atual",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        400
+      ],
       "parameters": {
         "operation": "get",
         "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
@@ -370,20 +389,9 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-ler-buffer",
-      "name": "Redis: Ler Buffer Atual",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        1420,
-        400
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "let current = '';\nlet info = $('Normalizar Dados').first()?.json || {};\n\ntry {\n  const voz = $('Definir Mensagem Transcrita').first()?.json;\n  if (voz && voz.mensagem) {\n    info = voz;\n    current = voz.mensagem;\n  }\n} catch (e) {}\n\nif (!current) {\n  current = info.mensagem || '';\n}\n\nconst prev = $input.first()?.json?.propertyName ?? $input.first()?.json?.value ?? '';\nconst combined = (prev && typeof prev === 'string' && prev.trim().length > 0)\n  ? `${prev.trim()} ${current.trim()}`\n  : current.trim();\n\nreturn [{\n  json: {\n    ...info,\n    mensagemBuffer: combined\n  }\n}];"
-      },
       "id": "node-acumular-msg",
       "name": "Acumular Mensagens",
       "type": "n8n-nodes-base.code",
@@ -391,9 +399,20 @@
       "position": [
         1640,
         400
-      ]
+      ],
+      "parameters": {
+        "jsCode": "let current = '';\nlet info = $('Normalizar Dados').first()?.json || {};\n\ntry {\n  const voz = $('Definir Mensagem Transcrita').first()?.json;\n  if (voz && voz.mensagem) {\n    info = voz;\n    current = voz.mensagem;\n  }\n} catch (e) {}\n\nif (!current) {\n  current = info.mensagem || '';\n}\n\nconst prev = $input.first()?.json?.propertyName ?? $input.first()?.json?.value ?? '';\nconst combined = (prev && typeof prev === 'string' && prev.trim().length > 0)\n  ? `${prev.trim()} ${current.trim()}`\n  : current.trim();\n\nreturn [{\n  json: {\n    ...info,\n    mensagemBuffer: combined\n  }\n}];"
+      }
     },
     {
+      "id": "node-redis-salvar-buffer",
+      "name": "Redis: Salvar Buffer",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1860,
+        400
+      ],
       "parameters": {
         "operation": "set",
         "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
@@ -404,17 +423,17 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-salvar-buffer",
-      "name": "Redis: Salvar Buffer",
+      }
+    },
+    {
+      "id": "node-redis-gravar-lock",
+      "name": "Redis: Gravar Lock Execucao",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1860,
+        2080,
         400
-      ]
-    },
-    {
+      ],
       "parameters": {
         "operation": "set",
         "key": "=lock:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
@@ -425,32 +444,32 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-gravar-lock",
-      "name": "Redis: Gravar Lock Execucao",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        2080,
-        400
-      ]
+      }
     },
     {
-      "parameters": {
-        "amount": 8,
-        "unit": "seconds"
-      },
       "id": "node-wait-debounce",
       "name": "Esperar 8s (Debounce)",
+      "webhookId": "wait-debounce-vendedor",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
         2300,
         400
       ],
-      "webhookId": "wait-debounce-vendedor"
+      "parameters": {
+        "amount": 8,
+        "unit": "seconds"
+      }
     },
     {
+      "id": "node-redis-ler-lock",
+      "name": "Redis: Ler Lock Atual",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2520,
+        400
+      ],
       "parameters": {
         "operation": "get",
         "key": "=lock:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
@@ -461,17 +480,17 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-ler-lock",
-      "name": "Redis: Ler Lock Atual",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        2520,
-        400
-      ]
+      }
     },
     {
+      "id": "node-if-ultima-msg",
+      "name": "É a Última Mensagem?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2740,
+        400
+      ],
       "parameters": {
         "conditions": {
           "string": [
@@ -481,17 +500,17 @@
             }
           ]
         }
-      },
-      "id": "node-if-ultima-msg",
-      "name": "É a Última Mensagem?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        2740,
-        400
-      ]
+      }
     },
     {
+      "id": "node-redis-pegar-buffer",
+      "name": "Redis: Pegar Buffer Completo",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        300
+      ],
       "parameters": {
         "operation": "get",
         "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
@@ -502,17 +521,17 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-pegar-buffer",
-      "name": "Redis: Pegar Buffer Completo",
+      }
+    },
+    {
+      "id": "node-redis-limpar-buffer",
+      "name": "Redis: Limpar Buffer",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2960,
+        3180,
         300
-      ]
-    },
-    {
+      ],
       "parameters": {
         "operation": "delete",
         "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}"
@@ -522,20 +541,9 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-limpar-buffer",
-      "name": "Redis: Limpar Buffer",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        3180,
-        300
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const bufferContent = $input.first()?.json?.propertyName || '';\nlet fallback = '';\nlet pushName = 'Parceiro';\nlet primeiroNome = 'Parceiro';\n\ntry {\n  const norm = $('Normalizar Dados').first()?.json;\n  if (norm) {\n    fallback = norm.mensagem || '';\n    pushName = norm.pushName || 'Parceiro';\n    primeiroNome = norm.primeiroNome || 'Parceiro';\n  }\n} catch (e) {}\n\nconst mensagemCompleta = (bufferContent && bufferContent.trim().length > 0)\n  ? bufferContent.trim()\n  : fallback.trim();\n\nreturn [{\n  json: {\n    instance: 'meutim',\n    telefone: $('Normalizar Dados').item.json.telefone,\n    pushName,\n    primeiroNome,\n    mensagemCompleta\n  }\n}];"
-      },
       "id": "node-agrupar",
       "name": "Agrupar Mensagens em Uma",
       "type": "n8n-nodes-base.code",
@@ -543,9 +551,20 @@
       "position": [
         3400,
         300
-      ]
+      ],
+      "parameters": {
+        "jsCode": "const bufferContent = $input.first()?.json?.propertyName || '';\nlet fallback = '';\nlet pushName = 'Parceiro';\nlet primeiroNome = 'Parceiro';\n\ntry {\n  const norm = $('Normalizar Dados').first()?.json;\n  if (norm) {\n    fallback = norm.mensagem || '';\n    pushName = norm.pushName || 'Parceiro';\n    primeiroNome = norm.primeiroNome || 'Parceiro';\n  }\n} catch (e) {}\n\nconst mensagemCompleta = (bufferContent && bufferContent.trim().length > 0)\n  ? bufferContent.trim()\n  : fallback.trim();\n\nreturn [{\n  json: {\n    instance: 'meutim',\n    telefone: $('Normalizar Dados').item.json.telefone,\n    pushName,\n    primeiroNome,\n    mensagemCompleta\n  }\n}];"
+      }
     },
     {
+      "id": "node-digitando",
+      "name": "Evolution: Digitando...",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3620,
+        300
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://painelevolution.hotelnozap.com.br/chat/sendPresence/meutim",
@@ -568,24 +587,9 @@
         "options": {
           "neverError": true
         }
-      },
-      "id": "node-digitando",
-      "name": "Evolution: Digitando...",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3620,
-        300
-      ]
+      }
     },
     {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $('Agrupar Mensagens em Uma').item.json.mensagemCompleta }}",
-        "options": {
-          "systemMessage": "Você é Everaldo Souza, fundador do Hotel no Zap aqui de Mato Grosso (MT).\nVocê está conversando diretamente com proprietários, gerentes ou recepcionistas de hotéis e pousadas pelo WhatsApp.\n\nSEU OBJETIVO:\nApresentar com calma e acolhimento a tecnologia do Hotel no Zap, tirar dúvidas com simpatia e convidá-los a conhecer a ativação gratuita pela Landing Page oficial:\n🔗 https://lp.hotelnozap.com.br\n\nDIRETRIZES DE COMUNICAÇÃO:\n1. Tom de voz: Cordial, mato-grossense, acolhedor, profissional, direto e humano. NUNCA seja insistente ou afobado.\n2. Seja natural: Não mande textos gigantes. Mande respostas curtas e fáceis de ler no WhatsApp de um hoteleiro ocupado.\n3. Se perguntarem \"Quem fala?\" ou \"Do que se trata?\":\n   Diga: \"Oi! Aqui é o *Everaldo Souza*, fundador do *Hotel no Zap* aqui de MT. Encontrei o hotel de vocês no Google e passei para dar um alô porque desenvolvemos uma Inteligência Artificial especializada para hotéis e pousadas atenderem hóspedes no WhatsApp e fecharem reservas diretas sem pagar comissão. Se fizer sentido para vocês, posso te mostrar como funciona.\"\n4. Se perguntarem preço, como funciona, como testar ou pedirem o link:\n   Diga de forma amigável: \"Maravilha! Você pode fazer a ativação imediata do seu hotel por este link inteiramente grátis:\n🔗 https://lp.hotelnozap.com.br\n\nLeva menos de 2 minutinhos para preencher. Se precisar de qualquer ajuda, estou à disposição por aqui!\"\n5. Se disserem \"já temos sistema\":\n   Explique com tranquilidade que o Hotel no Zap se integra e não precisa substituir o sistema atual deles; ele atua diretamente no WhatsApp para desafogar a recepção das mensagens repetitivas de cotação e fotos.\n6. Se disserem \"não tenho interesse\" ou \"ainda não\":\n   Respeite imediatamente com simpatia e deseje sucesso e ótimas reservas. NUNCA insista.\n7. Se perguntarem se é robô:\n   Diga com naturalidade que é a tecnologia de IA que o Everaldo criou aqui no MT para ajudar a recepção dos hotéis.\n8. NUNCA use jargões de robô como \"Sou uma IA desenvolvida pela OpenAI\"."
-        }
-      },
       "id": "node-ai-agent",
       "name": "AI Agent Super Vendedor",
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -593,9 +597,24 @@
       "position": [
         3860,
         300
-      ]
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Agrupar Mensagens em Uma').item.json.mensagemCompleta }}",
+        "options": {
+          "systemMessage": "Você é Everaldo Souza, fundador do Hotel no Zap aqui de Mato Grosso (MT).\nVocê está conversando diretamente com proprietários, gerentes ou recepcionistas de hotéis e pousadas pelo WhatsApp.\n\nSEU OBJETIVO:\nApresentar com calma e acolhimento a tecnologia do Hotel no Zap, tirar dúvidas com simpatia e convidá-los a conhecer a ativação gratuita pela Landing Page oficial:\n🔗 https://lp.hotelnozap.com.br\n\nDIRETRIZES DE COMUNICAÇÃO:\n1. Tom de voz: Cordial, mato-grossense, acolhedor, profissional, direto e humano. NUNCA seja insistente ou afobado.\n2. Seja natural: Não mande textos gigantes. Mande respostas curtas e fáceis de ler no WhatsApp de um hoteleiro ocupado.\n3. Se perguntarem \"Quem fala?\" ou \"Do que se trata?\":\n   Diga: \"Oi! Aqui é o *Everaldo Souza*, fundador do *Hotel no Zap* aqui de MT. Encontrei o hotel de vocês no Google e passei para dar um alô porque desenvolvemos uma Inteligência Artificial especializada para hotéis e pousadas atenderem hóspedes no WhatsApp e fecharem reservas diretas sem pagar comissão. Se fizer sentido para vocês, posso te mostrar como funciona.\"\n4. Se perguntarem preço, como funciona, como testar ou pedirem o link:\n   Diga de forma amigável: \"Maravilha! Você pode fazer a ativação imediata do seu hotel por este link inteiramente grátis:\n🔗 https://lp.hotelnozap.com.br\n\nLeva menos de 2 minutinhos para preencher. Se precisar de qualquer ajuda, estou à disposição por aqui!\"\n5. Se disserem \"já temos sistema\":\n   Explique com tranquilidade que o Hotel no Zap se integra e não precisa substituir o sistema atual deles; ele atua diretamente no WhatsApp para desafogar a recepção das mensagens repetitivas de cotação e fotos.\n6. Se disserem \"não tenho interesse\" ou \"ainda não\":\n   Respeite imediatamente com simpatia e deseje sucesso e ótimas reservas. NUNCA insista.\n7. Se perguntarem se é robô:\n   Diga com naturalidade que é a tecnologia de IA que o Everaldo criou aqui no MT para ajudar a recepção dos hotéis.\n8. NUNCA use jargões de robô como \"Sou uma IA desenvolvida pela OpenAI\"."
+        }
+      }
     },
     {
+      "id": "node-openai-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3780,
+        520
+      ],
       "parameters": {
         "model": {
           "__rl": true,
@@ -611,17 +630,17 @@
           "id": "qolmiCqcrID0XaTc",
           "name": "OpenAI account"
         }
-      },
-      "id": "node-openai-model",
-      "name": "OpenAI Chat Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
-      "position": [
-        3780,
-        520
-      ]
+      }
     },
     {
+      "id": "node-postgres-memory",
+      "name": "Postgres Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        3980,
+        520
+      ],
       "parameters": {
         "sessionIdType": "customKey",
         "sessionKey": "=vendedor_{{ $('Agrupar Mensagens em Uma').item.json.telefone }}"
@@ -631,20 +650,9 @@
           "id": "DHnvh0hAbAzbkdbR",
           "name": "SupabasePostgres"
         }
-      },
-      "id": "node-postgres-memory",
-      "name": "Postgres Chat Memory",
-      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
-      "typeVersion": 1.3,
-      "position": [
-        3980,
-        520
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const agentOutput = $input.first().json.output || $input.first().json.text || '';\nconst hotelInfo = $('Agrupar Mensagens em Uma').first().json;\nconst textoRecebido = (hotelInfo.mensagemCompleta || '').toLowerCase();\n\n// Detecta se é lead quente ou se o link foi enviado\nconst contemLink = agentOutput.includes('hotelnozap.com.br');\nconst pediuPrecoOuLink = textoRecebido.includes('preço') ||\n  textoRecebido.includes('preco') ||\n  textoRecebido.includes('valor') ||\n  textoRecebido.includes('quanto custa') ||\n  textoRecebido.includes('como funciona') ||\n  textoRecebido.includes('link') ||\n  textoRecebido.includes('quero testar') ||\n  textoRecebido.includes('cadastro');\n\nconst leadQuente = contemLink || pediuPrecoOuLink;\n\nconst mensagemAlertaEveraldo = `🚨 *LEAD QUENTE - HOTEL NO ZAP!*\\n\\n📱 *Lead:* ${hotelInfo.pushName} (${hotelInfo.telefone})\\n💬 *Disse:* \"${hotelInfo.mensagemCompleta}\"\\n🎯 *Status:* ${contemLink ? 'Link da LP enviado pela IA!' : 'Demonstrou interesse comercial!'}\\n\\n👉 *Falar com ele no WhatsApp:*\\nhttps://wa.me/${hotelInfo.telefone}`;\n\nreturn [{\n  json: {\n    telefone: hotelInfo.telefone,\n    pushName: hotelInfo.pushName,\n    primeiroNome: hotelInfo.primeiroNome,\n    resposta: agentOutput.trim(),\n    leadQuente,\n    mensagemAlertaEveraldo,\n    adminWhatsapp: '5565996173004'\n  }\n}];"
-      },
       "id": "node-formatar-resposta",
       "name": "Formatar Resposta & Decisão",
       "type": "n8n-nodes-base.code",
@@ -652,9 +660,20 @@
       "position": [
         4220,
         300
-      ]
+      ],
+      "parameters": {
+        "jsCode": "const agentOutput = $input.first().json.output || $input.first().json.text || '';\nconst hotelInfo = $('Agrupar Mensagens em Uma').first().json;\nconst textoRecebido = (hotelInfo.mensagemCompleta || '').toLowerCase();\n\n// Detecta se é lead quente ou se o link foi enviado\nconst contemLink = agentOutput.includes('hotelnozap.com.br');\nconst pediuPrecoOuLink = textoRecebido.includes('preço') ||\n  textoRecebido.includes('preco') ||\n  textoRecebido.includes('valor') ||\n  textoRecebido.includes('quanto custa') ||\n  textoRecebido.includes('como funciona') ||\n  textoRecebido.includes('link') ||\n  textoRecebido.includes('quero testar') ||\n  textoRecebido.includes('cadastro');\n\nconst leadQuente = contemLink || pediuPrecoOuLink;\n\nconst mensagemAlertaEveraldo = `🚨 *LEAD QUENTE - HOTEL NO ZAP!*\\n\\n📱 *Lead:* ${hotelInfo.pushName} (${hotelInfo.telefone})\\n💬 *Disse:* \"${hotelInfo.mensagemCompleta}\"\\n🎯 *Status:* ${contemLink ? 'Link da LP enviado pela IA!' : 'Demonstrou interesse comercial!'}\\n\\n👉 *Falar com ele no WhatsApp:*\\nhttps://wa.me/${hotelInfo.telefone}`;\n\nreturn [{\n  json: {\n    telefone: hotelInfo.telefone,\n    pushName: hotelInfo.pushName,\n    primeiroNome: hotelInfo.primeiroNome,\n    resposta: agentOutput.trim(),\n    leadQuente,\n    mensagemAlertaEveraldo,\n    adminWhatsapp: '5565996173004'\n  }\n}];"
+      }
     },
     {
+      "id": "node-enviar-resposta",
+      "name": "Enviar Resposta ao Hotel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4460,
+        200
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://painelevolution.hotelnozap.com.br/message/sendText/meutim",
@@ -687,17 +706,17 @@
         "options": {
           "neverError": true
         }
-      },
-      "id": "node-enviar-resposta",
-      "name": "Enviar Resposta ao Hotel",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        4460,
-        200
-      ]
+      }
     },
     {
+      "id": "node-if-lead-quente",
+      "name": "É Lead Quente?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        4460,
+        420
+      ],
       "parameters": {
         "conditions": {
           "string": [
@@ -707,17 +726,17 @@
             }
           ]
         }
-      },
-      "id": "node-if-lead-quente",
-      "name": "É Lead Quente?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        4460,
-        420
-      ]
+      }
     },
     {
+      "id": "node-alerta-vip",
+      "name": "Alerta VIP WhatsApp Everaldo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4700,
+        420
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://painelevolution.hotelnozap.com.br/message/sendText/meutim",
@@ -750,14 +769,78 @@
         "options": {
           "neverError": true
         }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "=bot:enviando:meutim:{{ $json.telefone }}",
+        "options": {}
       },
-      "id": "node-alerta-vip",
-      "name": "Alerta VIP WhatsApp Everaldo",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "credentials": {
+        "redis": {
+          "id": "izbtMulFvWH7nvzx",
+          "name": "Redis account"
+        }
+      },
+      "continueOnFail": true,
+      "id": "node-redis-check-bot-vendedor",
+      "name": "Redis: Checar Flag Bot Enviando",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
       "position": [
-        4700,
-        420
+        760,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const isBot = Boolean($input.first()?.json?.propertyName);\nconst norm = $('Normalizar Dados').first()?.json || {};\nif (isBot) {\n  return []; // Eco do envio do próprio robô\n}\nreturn [{\n  json: {\n    ...norm,\n    isEveraldo: true\n  }\n}];"
+      },
+      "id": "node-code-is-bot-vendedor",
+      "name": "É Mensagem da Própria IA?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pausa = $input.first()?.json?.propertyName ?? null;\nconst original = $('Normalizar Dados').first()?.json || {};\n\nreturn [{\n  json: {\n    ...original,\n    iaPausada: pausa === 'pausado'\n  }\n}];"
+      },
+      "id": "node-code-restaurar-dados-vendedor",
+      "name": "Restaurar Dados e Checar Pausa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=bot:enviando:meutim:{{ $json.telefone }}",
+        "value": "1",
+        "options": {
+          "ttl": 25
+        }
+      },
+      "credentials": {
+        "redis": {
+          "id": "izbtMulFvWH7nvzx",
+          "name": "Redis account"
+        }
+      },
+      "id": "node-redis-flag-bot-vendedor",
+      "name": "Redis: Gravar Flag Bot Enviando",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        4460,
+        100
       ]
     }
   ],
@@ -788,7 +871,7 @@
       "main": [
         [
           {
-            "node": "É Comando #ia / #ativar?",
+            "node": "Redis: Checar Flag Bot Enviando",
             "type": "main",
             "index": 0
           }
@@ -824,7 +907,7 @@
       "main": [
         [
           {
-            "node": "IA está Pausada?",
+            "node": "Restaurar Dados e Checar Pausa",
             "type": "main",
             "index": 0
           }
@@ -833,14 +916,14 @@
     },
     "IA está Pausada?": {
       "main": [
-        [],
         [
           {
             "node": "Switch: Texto ou Voz?",
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "Switch: Texto ou Voz?": {
@@ -1069,6 +1152,11 @@
             "index": 0
           },
           {
+            "node": "Redis: Gravar Flag Bot Enviando",
+            "type": "main",
+            "index": 0
+          },
+          {
             "node": "É Lead Quente?",
             "type": "main",
             "index": 0
@@ -1087,9 +1175,1235 @@
         ],
         []
       ]
+    },
+    "Redis: Checar Flag Bot Enviando": {
+      "main": [
+        [
+          {
+            "node": "É Mensagem da Própria IA?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Mensagem da Própria IA?": {
+      "main": [
+        [
+          {
+            "node": "É Comando #ia / #ativar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restaurar Dados e Checar Pausa": {
+      "main": [
+        [
+          {
+            "node": "IA está Pausada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
+  "nodeGroups": [],
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {
+    "Webhook Evolution API": [
+      {
+        "json": {
+          "headers": {
+            "host": "portaln8n.hotelnozap.com.br",
+            "content-length": "258",
+            "content-type": "application/json",
+            "x-forwarded-for": "170.80.62.202",
+            "x-forwarded-host": "portaln8n.hotelnozap.com.br",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "5c73ca8db79b",
+            "x-real-ip": "170.80.62.202",
+            "accept-encoding": "gzip"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "event": "messages.upsert",
+            "instance": "meutim",
+            "data": {
+              "key": {
+                "remoteJid": "5565996173004@s.whatsapp.net",
+                "fromMe": false,
+                "id": "TEST_VALIDO_1792175308740"
+              },
+              "pushName": "Hotel Teste Everaldo",
+              "message": {
+                "conversation": "Qual o valor do plano anual? Como pago?"
+              }
+            }
+          },
+          "webhookUrl": "https://webhookn8n.hotelnozap.com.br/webhook/super-agente-vendedor",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "nWQ8ZJpKeTrYl5Ry",
+      "projectId": "nNQbMzPT5Ix8Ifu7",
+      "project": {
+        "id": "nNQbMzPT5Ix8Ifu7",
+        "name": "Hotel No Zap <hotelnozap@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
+        "createdAt": "2026-09-21T14:03:00.561Z",
+        "updatedAt": "2026-09-21T14:13:01.540Z"
+      },
+      "createdAt": "2026-10-16T17:56:03.503Z",
+      "updatedAt": "2026-10-16T17:56:03.503Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+    "workflowId": "nWQ8ZJpKeTrYl5Ry",
+    "nodes": [
+      {
+        "id": "node-webhook-vendedor",
+        "name": "Webhook Evolution API",
+        "webhookId": "webhook-super-agente-vendedor",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "super-agente-vendedor",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-normalizar-dados",
+        "name": "Normalizar Dados",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          320,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const body = $input.first()?.json?.body || $input.first()?.json || {};\nconst data = body.data || body;\n\nconst fromMe = data.key?.fromMe === true || body.fromMe === true;\nconst remoteJid = data.key?.remoteJid || body.remoteJid || '';\n\nif (remoteJid.includes('@g.us') || remoteJid.includes('broadcast') || remoteJid.includes('@newsletter')) {\n  return [];\n}\n\nconst rawNumber = remoteJid ? remoteJid.split('@')[0] : (data.key?.participant || '').split('@')[0];\nconst cleanPhone = rawNumber ? rawNumber.replace(/\\D/g, '') : '';\nif (!cleanPhone) {\n  return [];\n}\n\nconst msgObj = data.message || body.message || {};\nlet text = '';\nlet messageType = 'texto';\n\nif (data.messageType === 'conversation' || msgObj.conversation) {\n  text = msgObj.conversation || '';\n} else if (data.messageType === 'extendedTextMessage' || msgObj.extendedTextMessage) {\n  text = msgObj.extendedTextMessage?.text || '';\n} else if (data.messageType === 'audioMessage' || msgObj.audioMessage) {\n  messageType = 'voz';\n}\n\nconst pushName = data.pushName || body.pushName || 'Parceiro';\nconst primeiroNome = pushName.split(' ')[0] || 'Parceiro';\n\n// CASO 1: Mensagem enviada pelo próprio Everaldo (fromMe: true)\nif (fromMe) {\n  const comando = text.trim().toLowerCase();\n  const isReativar = comando === '#ia' || comando === '#ativar' || comando === 'ativar ia';\n  return [{\n    json: {\n      fromMe: true,\n      acao: isReativar ? 'reativar' : 'pausar',\n      telefone: cleanPhone,\n      mensagem: text.trim()\n    }\n  }];\n}\n\n// CASO 2: Mensagem enviada pelo CLIENTE (fromMe: false)\nreturn [{\n  json: {\n    fromMe: false,\n    instanceName: 'meutim',\n    tipo: messageType,\n    telefone: cleanPhone,\n    pushName,\n    primeiroNome,\n    mensagem: text.trim(),\n    mimetype: msgObj.audioMessage?.mimetype || 'audio/ogg',\n    base64: '',\n    rawMessage: msgObj,\n    messageId: data.key?.id || String(Date.now()),\n    timestamp: Date.now()\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-switch-origem",
+        "name": "Switch: Origem da Mensagem",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          540,
+          300
+        ],
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "output": 0,
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.fromMe }}",
+                      "rightValue": true,
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "output": 1,
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.fromMe }}",
+                      "rightValue": false,
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node-if-reativar",
+        "name": "É Comando #ia / #ativar?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          760,
+          100
+        ],
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.acao }}",
+                "value2": "reativar"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-redis-despausar",
+        "name": "Redis: Reativar IA Imediatamente",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          1000,
+          40
+        ],
+        "parameters": {
+          "operation": "delete",
+          "key": "=pausa:vendedor:meutim:{{ $json.telefone }}"
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-redis-pausar-2h",
+        "name": "Redis: Pausar IA por 2 Horas",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          1000,
+          180
+        ],
+        "parameters": {
+          "operation": "set",
+          "key": "=pausa:vendedor:meutim:{{ $json.telefone }}",
+          "value": "pausado",
+          "options": {
+            "ttl": 7200
+          }
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-redis-checar-pausa",
+        "name": "Redis: Checar Status de Pausa",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          760,
+          400
+        ],
+        "parameters": {
+          "operation": "get",
+          "key": "=pausa:vendedor:meutim:{{ $json.telefone }}",
+          "options": {}
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-if-ia-pausada",
+        "name": "IA está Pausada?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          980,
+          400
+        ],
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ String($json.propertyName ?? '') }}",
+                "value2": "pausado"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-switch-voz",
+        "name": "Switch: Texto ou Voz?",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          1200,
+          500
+        ],
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "output": 0,
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $('Normalizar Dados').item.json.tipo }}",
+                      "rightValue": "texto",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "output": 1,
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict"
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $('Normalizar Dados').item.json.tipo }}",
+                      "rightValue": "voz",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node-baixar-audio",
+        "name": "Evolution: Baixar Áudio",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1420,
+          620
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://painelevolution.hotelnozap.com.br/chat/getBase64FromMediaMessage/meutim",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "D45D6901E2E9-4218-A667-AA493D7E80EE"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ message: $('Normalizar Dados').item.json.rawMessage, convertToMp4: false }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "node-prep-binario",
+        "name": "Preparar Binário do Áudio",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1640,
+          620
+        ],
+        "parameters": {
+          "jsCode": "const prevData = $('Normalizar Dados').first()?.json || {};\nconst item = $input.first()?.json || {};\n\nconst base64Data = item.base64 || item.data?.base64 || prevData.base64 || '';\nconst mimeType = item.mimetype || item.data?.mimetype || 'audio/ogg';\n\nconst binaryData = {\n  data: base64Data,\n  mimeType: mimeType,\n  fileName: 'audio.ogg'\n};\n\nreturn [{\n  json: {\n    ...prevData,\n    base64Loaded: Boolean(base64Data)\n  },\n  binary: {\n    file: binaryData,\n    data: binaryData\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-whisper",
+        "name": "OpenAI: Transcrever Áudio (Whisper)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1860,
+          620
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.openai.com/v1/audio/transcriptions",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "openAiApi",
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "parameterType": "formBinaryData",
+                "name": "file",
+                "inputDataFieldName": "file"
+              },
+              {
+                "name": "model",
+                "value": "whisper-1"
+              },
+              {
+                "name": "language",
+                "value": "pt"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "qolmiCqcrID0XaTc",
+            "name": "OpenAI account"
+          }
+        }
+      },
+      {
+        "id": "node-definir-transcricao",
+        "name": "Definir Mensagem Transcrita",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2080,
+          620
+        ],
+        "parameters": {
+          "jsCode": "const prevData = $('Normalizar Dados').first()?.json || {};\nconst whisperResult = $input.first()?.json || {};\n\nconst transcrito = whisperResult.text ? String(whisperResult.text).trim() : '';\nconst textoFinal = transcrito.length > 0 ? transcrito : '[Mensagem de áudio]';\n\nreturn [{\n  json: {\n    ...prevData,\n    mensagem: textoFinal,\n    transcricaoVoz: transcrito,\n    isAudioTranscribed: true\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-redis-ler-buffer",
+        "name": "Redis: Ler Buffer Atual",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          1420,
+          400
+        ],
+        "parameters": {
+          "operation": "get",
+          "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
+          "options": {}
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-acumular-msg",
+        "name": "Acumular Mensagens",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1640,
+          400
+        ],
+        "parameters": {
+          "jsCode": "let current = '';\nlet info = $('Normalizar Dados').first()?.json || {};\n\ntry {\n  const voz = $('Definir Mensagem Transcrita').first()?.json;\n  if (voz && voz.mensagem) {\n    info = voz;\n    current = voz.mensagem;\n  }\n} catch (e) {}\n\nif (!current) {\n  current = info.mensagem || '';\n}\n\nconst prev = $input.first()?.json?.propertyName ?? $input.first()?.json?.value ?? '';\nconst combined = (prev && typeof prev === 'string' && prev.trim().length > 0)\n  ? `${prev.trim()} ${current.trim()}`\n  : current.trim();\n\nreturn [{\n  json: {\n    ...info,\n    mensagemBuffer: combined\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-redis-salvar-buffer",
+        "name": "Redis: Salvar Buffer",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          1860,
+          400
+        ],
+        "parameters": {
+          "operation": "set",
+          "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
+          "value": "={{ $json.mensagemBuffer }}"
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-redis-gravar-lock",
+        "name": "Redis: Gravar Lock Execucao",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          2080,
+          400
+        ],
+        "parameters": {
+          "operation": "set",
+          "key": "=lock:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
+          "value": "={{ $execution.id }}"
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-wait-debounce",
+        "name": "Esperar 8s (Debounce)",
+        "webhookId": "wait-debounce-vendedor",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2300,
+          400
+        ],
+        "parameters": {
+          "amount": 8,
+          "unit": "seconds"
+        }
+      },
+      {
+        "id": "node-redis-ler-lock",
+        "name": "Redis: Ler Lock Atual",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          2520,
+          400
+        ],
+        "parameters": {
+          "operation": "get",
+          "key": "=lock:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
+          "options": {}
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-if-ultima-msg",
+        "name": "É a Última Mensagem?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          2740,
+          400
+        ],
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ String($json.propertyName ?? $json.value ?? '') }}",
+                "value2": "={{ String($execution.id) }}"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-redis-pegar-buffer",
+        "name": "Redis: Pegar Buffer Completo",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          2960,
+          300
+        ],
+        "parameters": {
+          "operation": "get",
+          "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}",
+          "options": {}
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-redis-limpar-buffer",
+        "name": "Redis: Limpar Buffer",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          3180,
+          300
+        ],
+        "parameters": {
+          "operation": "delete",
+          "key": "=buffer:vendedor:meutim:{{ $('Normalizar Dados').item.json.telefone }}"
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-agrupar",
+        "name": "Agrupar Mensagens em Uma",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3400,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const bufferContent = $input.first()?.json?.propertyName || '';\nlet fallback = '';\nlet pushName = 'Parceiro';\nlet primeiroNome = 'Parceiro';\n\ntry {\n  const norm = $('Normalizar Dados').first()?.json;\n  if (norm) {\n    fallback = norm.mensagem || '';\n    pushName = norm.pushName || 'Parceiro';\n    primeiroNome = norm.primeiroNome || 'Parceiro';\n  }\n} catch (e) {}\n\nconst mensagemCompleta = (bufferContent && bufferContent.trim().length > 0)\n  ? bufferContent.trim()\n  : fallback.trim();\n\nreturn [{\n  json: {\n    instance: 'meutim',\n    telefone: $('Normalizar Dados').item.json.telefone,\n    pushName,\n    primeiroNome,\n    mensagemCompleta\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-digitando",
+        "name": "Evolution: Digitando...",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3620,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://painelevolution.hotelnozap.com.br/chat/sendPresence/meutim",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "apikey",
+                "value": "D45D6901E2E9-4218-A667-AA493D7E80EE"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"number\": \"{{ $json.telefone }}\",\n  \"presence\": \"composing\",\n  \"delay\": 2500\n}",
+          "options": {
+            "neverError": true
+          }
+        }
+      },
+      {
+        "id": "node-ai-agent",
+        "name": "AI Agent Super Vendedor",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.6,
+        "position": [
+          3860,
+          300
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $('Agrupar Mensagens em Uma').item.json.mensagemCompleta }}",
+          "options": {
+            "systemMessage": "Você é Everaldo Souza, fundador do Hotel no Zap aqui de Mato Grosso (MT).\nVocê está conversando diretamente com proprietários, gerentes ou recepcionistas de hotéis e pousadas pelo WhatsApp.\n\nSEU OBJETIVO:\nApresentar com calma e acolhimento a tecnologia do Hotel no Zap, tirar dúvidas com simpatia e convidá-los a conhecer a ativação gratuita pela Landing Page oficial:\n🔗 https://lp.hotelnozap.com.br\n\nDIRETRIZES DE COMUNICAÇÃO:\n1. Tom de voz: Cordial, mato-grossense, acolhedor, profissional, direto e humano. NUNCA seja insistente ou afobado.\n2. Seja natural: Não mande textos gigantes. Mande respostas curtas e fáceis de ler no WhatsApp de um hoteleiro ocupado.\n3. Se perguntarem \"Quem fala?\" ou \"Do que se trata?\":\n   Diga: \"Oi! Aqui é o *Everaldo Souza*, fundador do *Hotel no Zap* aqui de MT. Encontrei o hotel de vocês no Google e passei para dar um alô porque desenvolvemos uma Inteligência Artificial especializada para hotéis e pousadas atenderem hóspedes no WhatsApp e fecharem reservas diretas sem pagar comissão. Se fizer sentido para vocês, posso te mostrar como funciona.\"\n4. Se perguntarem preço, como funciona, como testar ou pedirem o link:\n   Diga de forma amigável: \"Maravilha! Você pode fazer a ativação imediata do seu hotel por este link inteiramente grátis:\n🔗 https://lp.hotelnozap.com.br\n\nLeva menos de 2 minutinhos para preencher. Se precisar de qualquer ajuda, estou à disposição por aqui!\"\n5. Se disserem \"já temos sistema\":\n   Explique com tranquilidade que o Hotel no Zap se integra e não precisa substituir o sistema atual deles; ele atua diretamente no WhatsApp para desafogar a recepção das mensagens repetitivas de cotação e fotos.\n6. Se disserem \"não tenho interesse\" ou \"ainda não\":\n   Respeite imediatamente com simpatia e deseje sucesso e ótimas reservas. NUNCA insista.\n7. Se perguntarem se é robô:\n   Diga com naturalidade que é a tecnologia de IA que o Everaldo criou aqui no MT para ajudar a recepção dos hotéis.\n8. NUNCA use jargões de robô como \"Sou uma IA desenvolvida pela OpenAI\"."
+          }
+        }
+      },
+      {
+        "id": "node-openai-model",
+        "name": "OpenAI Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          3780,
+          520
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4.1-mini"
+          },
+          "options": {
+            "temperature": 0.4
+          }
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "qolmiCqcrID0XaTc",
+            "name": "OpenAI account"
+          }
+        }
+      },
+      {
+        "id": "node-postgres-memory",
+        "name": "Postgres Chat Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+        "typeVersion": 1.3,
+        "position": [
+          3980,
+          520
+        ],
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "=vendedor_{{ $('Agrupar Mensagens em Uma').item.json.telefone }}"
+        },
+        "credentials": {
+          "postgres": {
+            "id": "DHnvh0hAbAzbkdbR",
+            "name": "SupabasePostgres"
+          }
+        }
+      },
+      {
+        "id": "node-formatar-resposta",
+        "name": "Formatar Resposta & Decisão",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4220,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const agentOutput = $input.first().json.output || $input.first().json.text || '';\nconst hotelInfo = $('Agrupar Mensagens em Uma').first().json;\nconst textoRecebido = (hotelInfo.mensagemCompleta || '').toLowerCase();\n\n// Detecta se é lead quente ou se o link foi enviado\nconst contemLink = agentOutput.includes('hotelnozap.com.br');\nconst pediuPrecoOuLink = textoRecebido.includes('preço') ||\n  textoRecebido.includes('preco') ||\n  textoRecebido.includes('valor') ||\n  textoRecebido.includes('quanto custa') ||\n  textoRecebido.includes('como funciona') ||\n  textoRecebido.includes('link') ||\n  textoRecebido.includes('quero testar') ||\n  textoRecebido.includes('cadastro');\n\nconst leadQuente = contemLink || pediuPrecoOuLink;\n\nconst mensagemAlertaEveraldo = `🚨 *LEAD QUENTE - HOTEL NO ZAP!*\\n\\n📱 *Lead:* ${hotelInfo.pushName} (${hotelInfo.telefone})\\n💬 *Disse:* \"${hotelInfo.mensagemCompleta}\"\\n🎯 *Status:* ${contemLink ? 'Link da LP enviado pela IA!' : 'Demonstrou interesse comercial!'}\\n\\n👉 *Falar com ele no WhatsApp:*\\nhttps://wa.me/${hotelInfo.telefone}`;\n\nreturn [{\n  json: {\n    telefone: hotelInfo.telefone,\n    pushName: hotelInfo.pushName,\n    primeiroNome: hotelInfo.primeiroNome,\n    resposta: agentOutput.trim(),\n    leadQuente,\n    mensagemAlertaEveraldo,\n    adminWhatsapp: '5565996173004'\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-enviar-resposta",
+        "name": "Enviar Resposta ao Hotel",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4460,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://painelevolution.hotelnozap.com.br/message/sendText/meutim",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "D45D6901E2E9-4218-A667-AA493D7E80EE"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "number",
+                "value": "={{ $json.telefone }}"
+              },
+              {
+                "name": "text",
+                "value": "={{ $json.resposta }}"
+              }
+            ]
+          },
+          "options": {
+            "neverError": true
+          }
+        }
+      },
+      {
+        "id": "node-if-lead-quente",
+        "name": "É Lead Quente?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          4460,
+          420
+        ],
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ String($json.leadQuente) }}",
+                "value2": "true"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-alerta-vip",
+        "name": "Alerta VIP WhatsApp Everaldo",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4700,
+          420
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://painelevolution.hotelnozap.com.br/message/sendText/meutim",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "D45D6901E2E9-4218-A667-AA493D7E80EE"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "number",
+                "value": "5565996173004"
+              },
+              {
+                "name": "text",
+                "value": "={{ $('Formatar Resposta & Decisão').item.json.mensagemAlertaEveraldo }}"
+              }
+            ]
+          },
+          "options": {
+            "neverError": true
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook Evolution API": {
+        "main": [
+          [
+            {
+              "node": "Normalizar Dados",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalizar Dados": {
+        "main": [
+          [
+            {
+              "node": "Switch: Origem da Mensagem",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch: Origem da Mensagem": {
+        "main": [
+          [
+            {
+              "node": "É Comando #ia / #ativar?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Redis: Checar Status de Pausa",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "É Comando #ia / #ativar?": {
+        "main": [
+          [
+            {
+              "node": "Redis: Reativar IA Imediatamente",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Redis: Pausar IA por 2 Horas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis: Checar Status de Pausa": {
+        "main": [
+          [
+            {
+              "node": "IA está Pausada?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IA está Pausada?": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Switch: Texto ou Voz?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch: Texto ou Voz?": {
+        "main": [
+          [
+            {
+              "node": "Redis: Ler Buffer Atual",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Evolution: Baixar Áudio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Evolution: Baixar Áudio": {
+        "main": [
+          [
+            {
+              "node": "Preparar Binário do Áudio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preparar Binário do Áudio": {
+        "main": [
+          [
+            {
+              "node": "OpenAI: Transcrever Áudio (Whisper)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI: Transcrever Áudio (Whisper)": {
+        "main": [
+          [
+            {
+              "node": "Definir Mensagem Transcrita",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Definir Mensagem Transcrita": {
+        "main": [
+          [
+            {
+              "node": "Redis: Ler Buffer Atual",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis: Ler Buffer Atual": {
+        "main": [
+          [
+            {
+              "node": "Acumular Mensagens",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Acumular Mensagens": {
+        "main": [
+          [
+            {
+              "node": "Redis: Salvar Buffer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis: Salvar Buffer": {
+        "main": [
+          [
+            {
+              "node": "Redis: Gravar Lock Execucao",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis: Gravar Lock Execucao": {
+        "main": [
+          [
+            {
+              "node": "Esperar 8s (Debounce)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Esperar 8s (Debounce)": {
+        "main": [
+          [
+            {
+              "node": "Redis: Ler Lock Atual",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis: Ler Lock Atual": {
+        "main": [
+          [
+            {
+              "node": "É a Última Mensagem?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "É a Última Mensagem?": {
+        "main": [
+          [
+            {
+              "node": "Redis: Pegar Buffer Completo",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Redis: Pegar Buffer Completo": {
+        "main": [
+          [
+            {
+              "node": "Redis: Limpar Buffer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis: Limpar Buffer": {
+        "main": [
+          [
+            {
+              "node": "Agrupar Mensagens em Uma",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Agrupar Mensagens em Uma": {
+        "main": [
+          [
+            {
+              "node": "Evolution: Digitando...",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Evolution: Digitando...": {
+        "main": [
+          [
+            {
+              "node": "AI Agent Super Vendedor",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent Super Vendedor",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres Chat Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent Super Vendedor",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent Super Vendedor": {
+        "main": [
+          [
+            {
+              "node": "Formatar Resposta & Decisão",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Formatar Resposta & Decisão": {
+        "main": [
+          [
+            {
+              "node": "Enviar Resposta ao Hotel",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "É Lead Quente?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "É Lead Quente?": {
+        "main": [
+          [
+            {
+              "node": "Alerta VIP WhatsApp Everaldo",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Hotel No Zap",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-10-16T21:44:10.586Z",
+    "updatedAt": "2026-10-16T21:44:10.586Z",
+    "workflowPublishHistory": [
+      {
+        "id": 220,
+        "workflowId": "nWQ8ZJpKeTrYl5Ry",
+        "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+        "event": "activated",
+        "userId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
+        "createdAt": "2026-10-16T21:44:11.763Z"
+      },
+      {
+        "id": 221,
+        "workflowId": "nWQ8ZJpKeTrYl5Ry",
+        "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+        "event": "deactivated",
+        "userId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
+        "createdAt": "2026-10-16T21:44:12.917Z"
+      },
+      {
+        "id": 222,
+        "workflowId": "nWQ8ZJpKeTrYl5Ry",
+        "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+        "event": "activated",
+        "userId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
+        "createdAt": "2026-10-16T21:44:12.956Z"
+      }
+    ]
   }
 }
