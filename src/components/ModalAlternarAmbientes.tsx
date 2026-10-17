@@ -14,6 +14,8 @@ export interface ModalAlternarAmbientesProps {
   temCadastroHospede?: boolean;
   temCadastroParceiro?: boolean;
   temCadastroHotel?: boolean;
+  temHotelDemo?: boolean;
+  hotelDemoNome?: string;
   userEmail?: string;
   userName?: string;
   hotelNome?: string;
@@ -31,6 +33,8 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
   temCadastroHospede = false,
   temCadastroParceiro = false,
   temCadastroHotel = false,
+  temHotelDemo = false,
+  hotelDemoNome = '',
   userEmail = '',
   userName = '',
   hotelNome = 'Hotel no Zap'
@@ -48,7 +52,7 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
     bordaHover: string;
   }> = [];
 
-  // 1. Painel do Hotel: SOMENTE visível se for Hotel/Gerente, tiver cadastro de hotel ou for Master Admin
+  // 1. Painel do Hotel: Visível se for Hotel/Gerente, tiver cadastro de hotel, for Master Admin OU se tiver Hotel Demo
   const podeAcessarHotel = isAdmin || isHotel || temCadastroHotel;
   if (podeAcessarHotel) {
     ambientes.push({
@@ -60,6 +64,18 @@ export const ModalAlternarAmbientes: React.FC<ModalAlternarAmbientesProps> = ({
       badgeCor: 'bg-emerald-100 text-emerald-900 border-emerald-300',
       iconeCor: 'bg-emerald-500/10 text-emerald-700',
       bordaHover: 'hover:border-emerald-500 hover:shadow-emerald-500/10'
+    });
+  } else if (temHotelDemo || isParceiro) {
+    // Para franqueados/parceiros com Hotel Demo de Demonstração
+    ambientes.push({
+      id: 'hotel',
+      titulo: 'Painel do Meu Hotel Demo (Demonstração)',
+      subtitulo: hotelDemoNome || hotelNome || 'Pousada de Demonstração',
+      descricao: 'Painel 100% liberado com reservas, quartos, mapa e cardápio para demonstrar aos seus futuros clientes.',
+      icone: 'hotel',
+      badgeCor: 'bg-amber-100 text-amber-900 border-amber-300',
+      iconeCor: 'bg-amber-500/10 text-amber-700',
+      bordaHover: 'hover:border-amber-500 hover:shadow-amber-500/10'
     });
   }
 

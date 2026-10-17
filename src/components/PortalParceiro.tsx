@@ -327,13 +327,18 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
       notes: partnerDemoHotel.notes || `[DEMO_PARCEIRO:${partnerProfile.id || 'partner'}]`
     };
     currentHotelService.setCurrentHotel(freshActive as any);
-    localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
-    localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
-    localStorage.setItem('hotelnozap_active_tab', 'dashboard');
+    try {
+      localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
+      localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
+      localStorage.setItem('hotelnozap_partner_demo_active', JSON.stringify(partnerDemoHotel));
+      localStorage.setItem('hotelnozap_active_tab', 'dashboard');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('partner_demo_hotel_updated', { detail: partnerDemoHotel }));
+      }
+    } catch {}
+
     if (onNavigateToHotelDashboard) {
       onNavigateToHotelDashboard(freshActive as any);
-    } else {
-      window.location.reload();
     }
   };
 
@@ -362,6 +367,12 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
         criarQuartosExemplo: criarQuartosDemo
       });
       setPartnerDemoHotel(novo);
+      try {
+        localStorage.setItem('hotelnozap_partner_demo_active', JSON.stringify(novo));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('partner_demo_hotel_updated', { detail: novo }));
+        }
+      } catch {}
       setModalCriarDemo(false);
     } catch (err) {
       console.error('[PortalParceiro] Erro ao criar hotel demo:', err);

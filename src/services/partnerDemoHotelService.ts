@@ -21,15 +21,27 @@ export const partnerDemoHotelService = {
    */
   async buscarHotelDemo(partnerId?: string, partnerEmail?: string): Promise<Hotel | null> {
     // 1. Tentar ler do cache local primeiro
-    if (partnerId) {
-      try {
+    try {
+      if (partnerId) {
         const cached = localStorage.getItem(`${LOCAL_STORAGE_DEMO_PREFIX}${partnerId}`);
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed && parsed.id) return parsed;
         }
-      } catch {}
-    }
+      }
+      if (partnerEmail) {
+        const cachedEmail = localStorage.getItem(`${LOCAL_STORAGE_DEMO_PREFIX}${partnerEmail.toLowerCase().trim()}`);
+        if (cachedEmail) {
+          const parsed = JSON.parse(cachedEmail);
+          if (parsed && parsed.id) return parsed;
+        }
+      }
+      const cachedActive = localStorage.getItem('hotelnozap_partner_demo_active');
+      if (cachedActive) {
+        const parsed = JSON.parse(cachedActive);
+        if (parsed && parsed.id) return parsed;
+      }
+    } catch {}
 
     if (!partnerId && !partnerEmail) return null;
 
@@ -193,7 +205,16 @@ export const partnerDemoHotelService = {
 
     // 2. Salvar no cache local para disponibilidade instantânea
     try {
-      localStorage.setItem(`${LOCAL_STORAGE_DEMO_PREFIX}${params.partnerId}`, JSON.stringify(hotelFinal));
+      if (params.partnerId) {
+        localStorage.setItem(`${LOCAL_STORAGE_DEMO_PREFIX}${params.partnerId}`, JSON.stringify(hotelFinal));
+      }
+      if (params.partnerEmail) {
+        localStorage.setItem(`${LOCAL_STORAGE_DEMO_PREFIX}${params.partnerEmail.toLowerCase().trim()}`, JSON.stringify(hotelFinal));
+      }
+      localStorage.setItem('hotelnozap_partner_demo_active', JSON.stringify(hotelFinal));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('partner_demo_hotel_updated', { detail: hotelFinal }));
+      }
     } catch {}
 
     // 3. Cadastrar Quartos de Exemplo (se solicitado e se hotel foi criado no Supabase)

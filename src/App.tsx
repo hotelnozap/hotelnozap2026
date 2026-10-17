@@ -36,6 +36,7 @@ import { autoCheckoutService } from './services/autoCheckoutService';
 import { autoNoShowService } from './services/autoNoShowService';
 import { locationService } from './services/locationService';
 import { slugify } from './utils/slugify';
+import { partnerDemoHotelService } from './services/partnerDemoHotelService';
 
 // Types only (erased at runtime, zero bundle cost)
 import type { EditingQuartoData } from './components/CadastroQuarto';
@@ -474,7 +475,14 @@ export const App: React.FC = () => {
           if (savedRole && savedEmail) {
             const roleLower = savedRole.toLowerCase();
             if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
-              setActiveTab('portal-parceiro');
+              const savedTab = localStorage.getItem('hotelnozap_active_tab');
+              const curH = currentHotelService.getCurrentHotel();
+              const isCurDemo = Boolean(curH && (curH.is_demo || (curH as any).isDemo || (curH.notes || '').includes('[DEMO_PARCEIRO') || curH.id?.startsWith('demo_')));
+              if (savedTab === 'dashboard' && isCurDemo) {
+                setActiveTab('dashboard');
+              } else {
+                setActiveTab('portal-parceiro');
+              }
             } else if (roleLower.includes('camareira') || roleLower.includes('governanca')) {
               setActiveTab('camareira');
             } else {
@@ -607,6 +615,50 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Usuário e Perfis Autenticados
+  const [currentUserRole, setCurrentUserRole] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('hotelnozap_user_role');
+      if (saved) return saved;
+    } catch { /* ignore */ }
+    return '';
+  });
+
+  const [currentUserName, setCurrentUserName] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('hotelnozap_user_name');
+      if (saved && saved.trim()) return saved.trim();
+    } catch { /* ignore */ }
+    return 'Everaldo Souza';
+  });
+
+  const userInitials = (() => {
+    const parts = (currentUserName || 'Everaldo Souza').trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return (parts[0]?.[0] || 'E').toUpperCase();
+  })();
+
+  useEffect(() => {
+    const handleRoleChanged = (e: any) => {
+      if (e?.detail) {
+        setCurrentUserRole(e.detail);
+      } else {
+        const saved = localStorage.getItem('hotelnozap_user_role');
+        if (saved) setCurrentUserRole(saved);
+      }
+      try {
+        const savedName = localStorage.getItem('hotelnozap_user_name');
+        if (savedName && savedName.trim()) setCurrentUserName(savedName.trim());
+      } catch { /* ignore */ }
+    };
+    window.addEventListener('user_role_changed', handleRoleChanged);
+    window.addEventListener('storage', handleRoleChanged);
+    return () => {
+      window.removeEventListener('user_role_changed', handleRoleChanged);
+      window.removeEventListener('storage', handleRoleChanged);
+    };
+  }, []);
+
   // Modal Multitelas / Alternador de Ambientes
   const [isModalAmbientesOpen, setIsModalAmbientesOpen] = useState(false);
   const [userCadastros, setUserCadastros] = useState<{ temHospede: boolean; temParceiro: boolean; temHotel: boolean }>({
@@ -653,6 +705,72 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Hotel Demo do parceiro (quando logado como parceiro/franqueado)
+  const [partnerDemoInfo, setPartnerDemoInfo] = useState<{ id: string; name: string; full: any } | null>(() => {
+    try {
+      const storedEmail = (localStorage.getItem('hotelnozap_user_email') || '').trim().toLowerCase();
+      const storedId = localStorage.getItem('hotelnozap_user_id') || '';
+      const cachedActive = localStorage.getItem('hotelnozap_partner_demo_active');
+      if (cachedActive) {
+        const parsed = JSON.parse(cachedActive);
+        if (parsed?.id) return { id: parsed.id, name: parsed.name, full: parsed };
+      }
+      if (storedEmail) {
+        const cachedEmail = localStorage.getItem(`hotelnozap_partner_demo_${storedEmail}`);
+        if (cachedEmail) {
+          const parsed = JSON.parse(cachedEmail);
+          if (parsed?.id) return { id: parsed.id, name: parsed.name, full: parsed };
+        }
+      }
+      if (storedId) {
+        const cachedId = localStorage.getItem(`hotelnozap_partner_demo_${storedId}`);
+        if (cachedId) {
+          const parsed = JSON.parse(cachedId);
+          if (parsed?.id) return { id: parsed.id, name: parsed.name, full: parsed };
+        }
+      }
+      const cur = currentHotelService.getCurrentHotel();
+      if (cur && (cur.is_demo || (cur as any).isDemo || (cur.notes || '').includes('[DEMO_PARCEIRO') || cur.id?.startsWith('demo_'))) {
+        return { id: cur.id, name: cur.name, full: cur };
+      }
+    } catch {}
+    return null;
+  });
+
+  useEffect(() => {
+    let cancel = false;
+    const carregarDemo = async () => {
+      try {
+        const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase().trim();
+        const storedEmail = (localStorage.getItem('hotelnozap_user_email') || '').trim().toLowerCase();
+        const storedId = localStorage.getItem('hotelnozap_user_id') || '';
+        if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
+          const demo = await partnerDemoHotelService.buscarHotelDemo(storedId, storedEmail);
+          if (!cancel && demo && demo.id) {
+            setPartnerDemoInfo({ id: demo.id, name: demo.name, full: demo });
+            localStorage.setItem('hotelnozap_partner_demo_active', JSON.stringify(demo));
+          }
+        }
+      } catch (err) {
+        console.warn('Aviso ao carregar hotel demo no App:', err);
+      }
+    };
+    carregarDemo();
+
+    const handleDemoUpdated = (e: any) => {
+      const demo = e?.detail;
+      if (demo && demo.id) {
+        setPartnerDemoInfo({ id: demo.id, name: demo.name, full: demo });
+        localStorage.setItem('hotelnozap_partner_demo_active', JSON.stringify(demo));
+      }
+    };
+    window.addEventListener('partner_demo_hotel_updated', handleDemoUpdated);
+    return () => {
+      cancel = true;
+      window.removeEventListener('partner_demo_hotel_updated', handleDemoUpdated);
+    };
+  }, [currentUserRole]);
+
   const handleAlternarAmbiente = (ambiente: TipoAmbiente) => {
     const roleLowerCurrent = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase().trim();
     const isMasterAdminCurrent = (
@@ -665,8 +783,41 @@ export const App: React.FC = () => {
 
     switch (ambiente) {
       case 'hotel':
-        if (isMasterAdminCurrent || (!isParceiroCurrent && !roleLowerCurrent.includes('hospede')) || userCadastros.temHotel || (isParceiroCurrent && Boolean(currentHotelService.getCurrentHotel()?.is_demo))) {
+        if (isMasterAdminCurrent || (!isParceiroCurrent && !roleLowerCurrent.includes('hospede')) || userCadastros.temHotel) {
           setActiveTab('dashboard');
+        } else if (isParceiroCurrent) {
+          const demoObj = partnerDemoInfo?.full || (() => {
+            try {
+              const cur = currentHotelService.getCurrentHotel();
+              if (cur && (cur.is_demo || (cur as any).isDemo || (cur.notes || '').includes('[DEMO_PARCEIRO'))) return cur;
+              const cached = localStorage.getItem('hotelnozap_partner_demo_active');
+              if (cached) return JSON.parse(cached);
+            } catch {}
+            return null;
+          })();
+
+          if (demoObj && demoObj.id) {
+            const freshActive: HotelAtivo = {
+              id: demoObj.id,
+              name: demoObj.name,
+              category: demoObj.category || 'Pousada',
+              cityUf: demoObj.cityUf || `${demoObj.city || ''} - ${demoObj.uf || ''}`,
+              cnpj: demoObj.cnpj || '',
+              status: demoObj.status || 'ativo',
+              imageUrl: demoObj.imageUrl || '',
+              is_demo: true,
+              isDemo: true,
+              notes: demoObj.notes || '[DEMO_PARCEIRO]'
+            };
+            currentHotelService.setCurrentHotel(freshActive);
+            setActiveHotel(freshActive);
+            localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
+            localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
+            localStorage.setItem('hotelnozap_active_tab', 'dashboard');
+            setActiveTab('dashboard');
+          } else {
+            alert('Você ainda não cadastrou seu Hotel Demo. No Portal do Parceiro, clique em "Cadastrar Meu Hotel Demo" no topo.');
+          }
         } else {
           alert('Acesso restrito: seu perfil não possui hotel cadastrado.');
         }
@@ -855,6 +1006,19 @@ export const App: React.FC = () => {
     const syncActiveHotel = async () => {
       try {
         const current = currentHotelService.getCurrentHotel();
+        const isCurrentDemo = Boolean(
+          current && (
+            current.is_demo || 
+            (current as any).isDemo || 
+            (current.notes || '').includes('[DEMO_PARCEIRO') || 
+            current.id?.startsWith('demo_')
+          )
+        );
+        if (isCurrentDemo) {
+          setActiveHotel(current);
+          return;
+        }
+
         const dbHoteis = await hoteisService.getHoteis();
         if (dbHoteis && dbHoteis.length > 0) {
           const matched = dbHoteis.find(h => h.id === current.id) || dbHoteis[0];
@@ -920,48 +1084,7 @@ export const App: React.FC = () => {
     ? activeHotel.cityUf 
     : (hotelNomeFantasia.toLowerCase() === 'hotel no zap' ? 'Hotel Ativo' : 'Hotel no Zap');
 
-  const [currentUserRole, setCurrentUserRole] = useState<string>(() => {
-    try {
-      const saved = localStorage.getItem('hotelnozap_user_role');
-      if (saved) return saved;
-    } catch { /* ignore */ }
-    return '';
-  });
 
-  const [currentUserName, setCurrentUserName] = useState<string>(() => {
-    try {
-      const saved = localStorage.getItem('hotelnozap_user_name');
-      if (saved && saved.trim()) return saved.trim();
-    } catch { /* ignore */ }
-    return 'Everaldo Souza';
-  });
-
-  const userInitials = (() => {
-    const parts = (currentUserName || 'Everaldo Souza').trim().split(/\s+/);
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return (parts[0]?.[0] || 'E').toUpperCase();
-  })();
-
-  useEffect(() => {
-    const handleRoleChanged = (e: any) => {
-      if (e?.detail) {
-        setCurrentUserRole(e.detail);
-      } else {
-        const saved = localStorage.getItem('hotelnozap_user_role');
-        if (saved) setCurrentUserRole(saved);
-      }
-      try {
-        const savedName = localStorage.getItem('hotelnozap_user_name');
-        if (savedName && savedName.trim()) setCurrentUserName(savedName.trim());
-      } catch { /* ignore */ }
-    };
-    window.addEventListener('user_role_changed', handleRoleChanged);
-    window.addEventListener('storage', handleRoleChanged);
-    return () => {
-      window.removeEventListener('user_role_changed', handleRoleChanged);
-      window.removeEventListener('storage', handleRoleChanged);
-    };
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -1262,6 +1385,13 @@ export const App: React.FC = () => {
       }
       if (roleLower.includes('parceiro') || roleLower.includes('franqueado')) {
         if (isPublicOrHotelRoute) return;
+        const savedTab = localStorage.getItem('hotelnozap_active_tab');
+        const curH = currentHotelService.getCurrentHotel();
+        const isCurDemo = Boolean(curH && (curH.is_demo || (curH as any).isDemo || (curH.notes || '').includes('[DEMO_PARCEIRO') || curH.id?.startsWith('demo_')));
+        if (savedTab === 'dashboard' && isCurDemo) {
+          setActiveTab('dashboard');
+          return;
+        }
         setActiveTab('portal-parceiro');
         return;
       }
@@ -1381,12 +1511,19 @@ export const App: React.FC = () => {
 
   // Helper para identificar se o hotel ativo atual é um hotel modelo/demonstração
   const isDemoHotelAtivo = Boolean(
-    activeHotel && (
+    (activeHotel && (
       (activeHotel as any).is_demo === true || 
       (activeHotel as any).isDemo === true || 
       (typeof activeHotel.notes === 'string' && activeHotel.notes.includes('[DEMO_PARCEIRO')) ||
       (typeof activeHotel.id === 'string' && activeHotel.id.startsWith('demo_'))
-    )
+    )) ||
+    (() => {
+      try {
+        const cur = currentHotelService.getCurrentHotel();
+        return Boolean(cur && (cur.is_demo || (cur as any).isDemo || (cur.notes || '').includes('[DEMO_PARCEIRO') || cur.id?.startsWith('demo_')));
+      } catch { return false; }
+    })() ||
+    Boolean(isParceiroUser && partnerDemoInfo?.id && activeTab === 'dashboard')
   );
 
   // 5. Hotel / Recepção / Gerente (permite que o franqueado opere com plenos recursos seu hotel de demonstração)
@@ -2271,6 +2408,8 @@ export const App: React.FC = () => {
           userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
           userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
           hotelNome={hotelNomeFantasia}
+          temHotelDemo={Boolean(partnerDemoInfo?.id)}
+          hotelDemoNome={partnerDemoInfo?.name}
         />
       </Suspense>
     );
@@ -2480,6 +2619,8 @@ export const App: React.FC = () => {
           userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
           userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
           hotelNome={hotelNomeFantasia}
+          temHotelDemo={Boolean(partnerDemoInfo?.id)}
+          hotelDemoNome={partnerDemoInfo?.name}
         />
       </Suspense>
     );
@@ -2531,7 +2672,18 @@ export const App: React.FC = () => {
   // ── FIREWALL DE SEGURANÇA MÁXIMA: BLOQUEIO DE ACESSO INDEVIDO AO DASHBOARD DO HOTEL OU MASTER ADMIN ──
   if (!isHotelUser && !isMasterAdmin) {
     if (isParceiroUser) {
-      if (activeTab === 'minhaconta' || activeTab === 'area-hospede') {
+      const temDemo = isDemoHotelAtivo || Boolean(partnerDemoInfo?.id) || (() => {
+        try {
+          const cached = localStorage.getItem('hotelnozap_partner_demo_active');
+          if (cached) return true;
+          const cur = currentHotelService.getCurrentHotel();
+          return Boolean(cur && (cur.is_demo || (cur as any).isDemo || (cur.notes || '').includes('[DEMO_PARCEIRO') || cur.id?.startsWith('demo_')));
+        } catch { return false; }
+      })();
+
+      if (activeTab === 'dashboard' && temDemo) {
+        // Permite a renderização normal do dashboard com hotel demo ativo!
+      } else if (activeTab === 'minhaconta' || activeTab === 'area-hospede') {
         window.history.replaceState({}, '', '/minhaconta');
         return (
           <Suspense fallback={<PageLoadingFallback />}>
@@ -2559,59 +2711,64 @@ export const App: React.FC = () => {
               userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
               userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
               hotelNome={hotelNomeFantasia}
+              temHotelDemo={Boolean(partnerDemoInfo?.id)}
+              hotelDemoNome={partnerDemoInfo?.name}
+            />
+          </Suspense>
+        );
+      } else {
+        return (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PortalParceiro
+              onLogout={async () => {
+                await handleLogout();
+              }}
+              onNavigateHome={() => {
+                setActiveTab('catalogo-hoteis');
+              }}
+              onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
+              onNavigateToHotelDashboard={(hotel) => {
+                const freshActive: HotelAtivo = {
+                  id: hotel.id,
+                  name: hotel.name,
+                  category: hotel.category || 'Pousada',
+                  cityUf: hotel.cityUf || `${hotel.city || ''} - ${hotel.uf || ''}`,
+                  cnpj: hotel.cnpj || '',
+                  status: hotel.status || 'ativo',
+                  imageUrl: hotel.imageUrl || '',
+                  is_demo: true,
+                  isDemo: true,
+                  notes: (hotel as any).notes || '[DEMO_PARCEIRO]'
+                };
+                currentHotelService.setCurrentHotel(freshActive);
+                setActiveHotel(freshActive);
+                localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
+                localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
+                localStorage.setItem('hotelnozap_active_tab', 'dashboard');
+                setActiveTab('dashboard');
+              }}
+            />
+            <ModalAlternarAmbientes
+              isOpen={isModalAmbientesOpen}
+              onClose={() => setIsModalAmbientesOpen(false)}
+              ambienteAtual="parceiro"
+              onSelecionarAmbiente={handleAlternarAmbiente}
+              isAdmin={isMasterAdmin}
+              isParceiro={isParceiroUser}
+              isHotel={isHotelUser}
+              isHospede={isHospedeUser}
+              temCadastroHospede={userCadastros.temHospede}
+              temCadastroParceiro={userCadastros.temParceiro}
+              temCadastroHotel={userCadastros.temHotel}
+              userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
+              userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
+              hotelNome={hotelNomeFantasia}
+              temHotelDemo={Boolean(partnerDemoInfo?.id)}
+              hotelDemoNome={partnerDemoInfo?.name}
             />
           </Suspense>
         );
       }
-      return (
-        <Suspense fallback={<PageLoadingFallback />}>
-          <PortalParceiro
-            onLogout={async () => {
-              await handleLogout();
-            }}
-            onNavigateHome={() => {
-              setActiveTab('catalogo-hoteis');
-            }}
-            onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
-            onNavigateToHotelDashboard={(hotel) => {
-              const freshActive: HotelAtivo = {
-                id: hotel.id,
-                name: hotel.name,
-                category: hotel.category || 'Pousada',
-                cityUf: hotel.cityUf || `${hotel.city || ''} - ${hotel.uf || ''}`,
-                cnpj: hotel.cnpj || '',
-                status: hotel.status || 'ativo',
-                imageUrl: hotel.imageUrl || '',
-                is_demo: true,
-                isDemo: true,
-                notes: (hotel as any).notes || '[DEMO_PARCEIRO]'
-              };
-              currentHotelService.setCurrentHotel(freshActive);
-              setActiveHotel(freshActive);
-              localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
-              localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
-              localStorage.setItem('hotelnozap_active_tab', 'dashboard');
-              setActiveTab('dashboard');
-            }}
-          />
-          <ModalAlternarAmbientes
-            isOpen={isModalAmbientesOpen}
-            onClose={() => setIsModalAmbientesOpen(false)}
-            ambienteAtual="parceiro"
-            onSelecionarAmbiente={handleAlternarAmbiente}
-            isAdmin={isMasterAdmin}
-            isParceiro={isParceiroUser}
-            isHotel={isHotelUser}
-            isHospede={isHospedeUser}
-            temCadastroHospede={userCadastros.temHospede}
-            temCadastroParceiro={userCadastros.temParceiro}
-            temCadastroHotel={userCadastros.temHotel}
-            userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
-            userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
-            hotelNome={hotelNomeFantasia}
-          />
-        </Suspense>
-      );
     }
 
     if (isHospedeUser) {
@@ -2642,6 +2799,8 @@ export const App: React.FC = () => {
             userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
             userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
             hotelNome={hotelNomeFantasia}
+            temHotelDemo={Boolean(partnerDemoInfo?.id)}
+            hotelDemoNome={partnerDemoInfo?.name}
           />
         </Suspense>
       );
@@ -5076,6 +5235,8 @@ export const App: React.FC = () => {
         userEmail={(() => { try { return localStorage.getItem('hotelnozap_user_email') || ''; } catch { return ''; } })()}
         userName={(() => { try { return localStorage.getItem('hotelnozap_user_name') || 'Usuário'; } catch { return 'Usuário'; } })()}
         hotelNome={hotelNomeFantasia}
+        temHotelDemo={Boolean(partnerDemoInfo?.id)}
+        hotelDemoNome={partnerDemoInfo?.name}
       />
 
       {/* MODAL DE ALERTA DE EXPIRAÇÃO DE PLANO (10 DIAS ANTES COM CTA) */}
