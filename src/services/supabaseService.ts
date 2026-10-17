@@ -52,6 +52,8 @@ export interface HotelAtivo {
   notes?: string;
   agenteIa?: string;
   isImportedFromGoogle?: boolean;
+  is_demo?: boolean;
+  isDemo?: boolean;
 }
 
 export const DEFAULT_HOTEL: HotelAtivo = {

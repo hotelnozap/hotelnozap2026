@@ -665,7 +665,7 @@ export const App: React.FC = () => {
 
     switch (ambiente) {
       case 'hotel':
-        if (isMasterAdminCurrent || (!isParceiroCurrent && !roleLowerCurrent.includes('hospede')) || userCadastros.temHotel) {
+        if (isMasterAdminCurrent || (!isParceiroCurrent && !roleLowerCurrent.includes('hospede')) || userCadastros.temHotel || (isParceiroCurrent && Boolean(currentHotelService.getCurrentHotel()?.is_demo))) {
           setActiveTab('dashboard');
         } else {
           alert('Acesso restrito: seu perfil não possui hotel cadastrado.');
@@ -1379,13 +1379,26 @@ export const App: React.FC = () => {
   // 4. Camareira
   const isCamareiraUser = (userRoleClean.includes('camareira') || userRoleClean.includes('governanca')) && !isMasterAdmin;
 
-  // 5. Hotel / Recepção / Gerente
-  const isHotelUser = !isMasterAdmin && !isParceiroUser && !isHospedeUser && !isCamareiraUser && (
-    userRoleClean.includes('hotel') || 
-    userRoleClean.includes('gerente') || 
-    userRoleClean.includes('recep') || 
-    userRoleClean.includes('financeiro') ||
-    Boolean(activeHotel?.id && activeHotel.id !== 'default' && activeHotel.id !== '11111111-1111-1111-1111-111111111111')
+  // Helper para identificar se o hotel ativo atual é um hotel modelo/demonstração
+  const isDemoHotelAtivo = Boolean(
+    activeHotel && (
+      (activeHotel as any).is_demo === true || 
+      (activeHotel as any).isDemo === true || 
+      (typeof activeHotel.notes === 'string' && activeHotel.notes.includes('[DEMO_PARCEIRO')) ||
+      (typeof activeHotel.id === 'string' && activeHotel.id.startsWith('demo_'))
+    )
+  );
+
+  // 5. Hotel / Recepção / Gerente (permite que o franqueado opere com plenos recursos seu hotel de demonstração)
+  const isHotelUser = !isMasterAdmin && !isHospedeUser && !isCamareiraUser && (
+    (!isParceiroUser && (
+      userRoleClean.includes('hotel') || 
+      userRoleClean.includes('gerente') || 
+      userRoleClean.includes('recep') || 
+      userRoleClean.includes('financeiro') ||
+      Boolean(activeHotel?.id && activeHotel.id !== 'default' && activeHotel.id !== '11111111-1111-1111-1111-111111111111')
+    )) ||
+    (isParceiroUser && isDemoHotelAtivo)
   );
 
   const isRecepcao = isHotelUser && (
@@ -1617,12 +1630,15 @@ export const App: React.FC = () => {
         setActiveTab('admin-dashboard');
       }
     } else if (isParceiroUser) {
+      if (isDemoHotelAtivo) {
+        return;
+      }
       const rotasPermitidas = ['portal-parceiro', 'area-hospede', 'minhaconta', 'catalogo-hoteis', 'pagina-hotel', 'detalhes-quarto', 'cardapio-hotel', 'pagina-404'];
       if (!rotasPermitidas.includes(activeTab)) {
         setActiveTab('portal-parceiro');
       }
     }
-  }, [isHotelUser, isMasterAdmin, isParceiroUser, isRecepcao, isGerente, canAccessLavanderia, activeTab]);
+  }, [isHotelUser, isMasterAdmin, isParceiroUser, isRecepcao, isGerente, canAccessLavanderia, activeTab, isDemoHotelAtivo]);
 
   // Garante estritamente que o Modal de Reservas do Dia nunca fique aberto para administrador master ou parceiro
   useEffect(() => {
@@ -1723,6 +1739,7 @@ export const App: React.FC = () => {
     : null;
 
   const isHotelExpired = Boolean(
+    !isDemoHotelAtivo &&
     hotelCreditInfo &&
     (hotelCreditInfo.status === 'expirado' || activeHotel?.status === 'inativo' || activeHotel?.status === 'bloqueado')
   );
@@ -2428,17 +2445,23 @@ export const App: React.FC = () => {
           }}
           onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
           onNavigateToHotelDashboard={(hotel) => {
-            const freshActive = {
+            const freshActive: HotelAtivo = {
               id: hotel.id,
               name: hotel.name,
               category: hotel.category || 'Pousada',
               cityUf: hotel.cityUf || `${hotel.city || ''} - ${hotel.uf || ''}`,
               cnpj: hotel.cnpj || '',
               status: hotel.status || 'ativo',
-              imageUrl: hotel.imageUrl || ''
+              imageUrl: hotel.imageUrl || '',
+              is_demo: true,
+              isDemo: true,
+              notes: (hotel as any).notes || '[DEMO_PARCEIRO]'
             };
             currentHotelService.setCurrentHotel(freshActive);
             setActiveHotel(freshActive);
+            localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
+            localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
+            localStorage.setItem('hotelnozap_active_tab', 'dashboard');
             setActiveTab('dashboard');
           }}
         />
@@ -2551,17 +2574,23 @@ export const App: React.FC = () => {
             }}
             onAlternarAmbiente={() => setIsModalAmbientesOpen(true)}
             onNavigateToHotelDashboard={(hotel) => {
-              const freshActive = {
+              const freshActive: HotelAtivo = {
                 id: hotel.id,
                 name: hotel.name,
                 category: hotel.category || 'Pousada',
                 cityUf: hotel.cityUf || `${hotel.city || ''} - ${hotel.uf || ''}`,
                 cnpj: hotel.cnpj || '',
                 status: hotel.status || 'ativo',
-                imageUrl: hotel.imageUrl || ''
+                imageUrl: hotel.imageUrl || '',
+                is_demo: true,
+                isDemo: true,
+                notes: (hotel as any).notes || '[DEMO_PARCEIRO]'
               };
               currentHotelService.setCurrentHotel(freshActive);
               setActiveHotel(freshActive);
+              localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
+              localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
+              localStorage.setItem('hotelnozap_active_tab', 'dashboard');
               setActiveTab('dashboard');
             }}
           />
@@ -2645,6 +2674,24 @@ export const App: React.FC = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-screen overflow-hidden bg-[#f8f9ff]">
       
+      {/* BANNER MODO DEMONSTRAÇÃO MOBILE */}
+      {isParceiroUser && isDemoHotelAtivo && (
+        <div className="bg-[#002600] text-white px-3 py-1.5 flex items-center justify-between text-[11px] font-bold border-b border-emerald-500/30 z-50 lg:hidden shrink-0">
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="truncate">Hotel Demo: <strong className="text-emerald-300">{activeHotel?.name}</strong></span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('portal-parceiro')}
+            className="px-2.5 py-1 bg-emerald-400 text-slate-950 font-black rounded text-[10px] flex items-center gap-1 shrink-0 cursor-pointer shadow-xs active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-[13px]">arrow_back</span>
+            <span>Parceiro</span>
+          </button>
+        </div>
+      )}
+
       {/* MOBILE TOP NAVIGATION HEADER */}
       <header 
         className="sticky top-0 z-40 flex justify-between items-center w-full px-4 h-16 border-b border-[#c6c6cd]/40 shadow-sm lg:hidden shrink-0"
@@ -3931,6 +3978,25 @@ export const App: React.FC = () => {
       {/* MAIN CONTENT AREA */}
       <main className={`flex-1 flex flex-col ${isMasterAdmin ? 'lg:ml-72' : 'lg:ml-[280px]'} h-full overflow-hidden bg-[#f8f9ff]`}>
         
+        {/* BANNER MODO DEMONSTRAÇÃO DO FRANQUEADO */}
+        {isParceiroUser && isDemoHotelAtivo && (
+          <div className="hidden lg:flex bg-gradient-to-r from-[#003400] via-[#004d00] to-slate-900 text-white px-8 py-2.5 items-center justify-between text-xs font-bold border-b border-emerald-500/40 z-30 shrink-0 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Ambiente de Demonstração do Franqueado: <strong className="text-emerald-300 font-extrabold">{activeHotel?.name}</strong></span>
+              <span className="text-emerald-300/80 font-normal">• Painel 100% liberado para apresentar e demonstrar aos clientes</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('portal-parceiro')}
+              className="px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-transform active:scale-95"
+            >
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
+              <span>Voltar ao Portal do Parceiro</span>
+            </button>
+          </div>
+        )}
+
         {/* DESKTOP TOP HEADER */}
         {isHotelUser && (
           <header className="hidden lg:flex items-center justify-between w-full px-6 sm:px-8 lg:px-10 bg-[#f8f9ff] h-16 border-b border-[#c6c6cd]/40 shrink-0">

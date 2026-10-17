@@ -321,14 +321,18 @@ export const PortalParceiro: React.FC<PortalParceiroProps> = ({
       cityUf: partnerDemoHotel.cityUf || `${partnerDemoHotel.city || ''} - ${partnerDemoHotel.uf || ''}`,
       cnpj: partnerDemoHotel.cnpj || '',
       status: partnerDemoHotel.status || 'ativo',
-      imageUrl: partnerDemoHotel.imageUrl || ''
+      imageUrl: partnerDemoHotel.imageUrl || '',
+      is_demo: true,
+      isDemo: true,
+      notes: partnerDemoHotel.notes || `[DEMO_PARCEIRO:${partnerProfile.id || 'partner'}]`
     };
-    currentHotelService.setCurrentHotel(freshActive);
+    currentHotelService.setCurrentHotel(freshActive as any);
+    localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
+    localStorage.setItem('hotelnozap_hotel_atual', JSON.stringify({ id: freshActive.id, name: freshActive.name }));
+    localStorage.setItem('hotelnozap_active_tab', 'dashboard');
     if (onNavigateToHotelDashboard) {
-      onNavigateToHotelDashboard(partnerDemoHotel);
+      onNavigateToHotelDashboard(freshActive as any);
     } else {
-      localStorage.setItem('hotelnozap_current_hotel', JSON.stringify(freshActive));
-      localStorage.setItem('hotelnozap_active_tab', 'dashboard');
       window.location.reload();
     }
   };
