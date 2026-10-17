@@ -108,6 +108,29 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
 
   const currentHotel = useMemo(() => currentHotelService.getCurrentHotel(), []);
 
+  // 🏷️ Regra do Hotel: nome limpo tudo junto e próximo número (01, 02...)
+  const cleanHotelPrefix = useMemo(() => {
+    return (currentHotel?.name || 'hotel')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  }, [currentHotel?.name]);
+
+  const suggestedInstanceName = useMemo(() => {
+    const existingMatchingNumbers = instances
+      .map(i => (i.instanceName || i.name || '').toLowerCase().trim())
+      .filter(n => n.startsWith(cleanHotelPrefix))
+      .map(n => {
+        const suffix = n.replace(cleanHotelPrefix, '');
+        const parsed = parseInt(suffix, 10);
+        return isNaN(parsed) ? 0 : parsed;
+      });
+
+    const nextNum = existingMatchingNumbers.length > 0 ? Math.max(...existingMatchingNumbers) + 1 : 1;
+    return `${cleanHotelPrefix}${nextNum.toString().padStart(2, '0')}`;
+  }, [cleanHotelPrefix, instances]);
+
   // ==========================================
   // ==========================================
   // ESTADOS DAS ABAS: INSTÂNCIAS, ATENDIMENTOS, TEMPLATES & BLACKLIST
@@ -1034,6 +1057,8 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
       // Tenta vincular o nome da instância no cadastro do hotel no Supabase caso esteja em branco
       try {
         await hoteisService.updateHotel(currentHotel.id, { instanceName: finalInstanceName });
+        const updatedCurrent = { ...currentHotel, instanceName: finalInstanceName };
+        currentHotelService.setCurrentHotel(updatedCurrent);
       } catch {}
 
       setIsNovaConexaoOpen(false);
@@ -3580,7 +3605,7 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-600">Instância na Evolution API:</span>
                   <span className="font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded text-[11px]">
-                    {((currentHotel?.name || 'hotel').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')) + (instances.length + 1).toString().padStart(2, '0')}
+                    {suggestedInstanceName}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-tight">
