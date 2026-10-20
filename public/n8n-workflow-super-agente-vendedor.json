@@ -3,12 +3,12 @@
   "name": "Hotel no Zap - Super Agente Vendedor",
   "description": null,
   "active": true,
-  "activeVersionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
+  "activeVersionId": "20d37e88-2350-4379-8fd3-f239bce77843",
   "createdAt": "2026-10-16T17:56:03.503Z",
-  "updatedAt": "2026-10-17T17:33:39.955Z",
+  "updatedAt": "2026-10-20T17:20:52.013Z",
   "isArchived": false,
-  "versionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
-  "versionCounter": 16,
+  "versionId": "20d37e88-2350-4379-8fd3-f239bce77843",
+  "versionCounter": 17,
   "sourceWorkflowId": null,
   "triggerCount": 1,
   "nodes": [
@@ -142,7 +142,7 @@
     },
     {
       "id": "node-redis-pausar-2h",
-      "name": "Redis: Pausar IA por 2 Minutos",
+      "name": "Redis: Pausar IA por 30 Minutos",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
@@ -154,10 +154,10 @@
         "key": "=pausa:vendedor:meutim:{{ $json.telefone }}",
         "value": "pausado",
         "options": {
-          "ttl": 120
+          "ttl": 1800
         },
         "expire": true,
-        "ttl": 120
+        "ttl": 1800
       },
       "credentials": {
         "redis": {
@@ -902,7 +902,7 @@
         ],
         [
           {
-            "node": "Redis: Pausar IA por 2 Minutos",
+            "node": "Redis: Pausar IA por 30 Minutos",
             "type": "main",
             "index": 0
           }
@@ -1287,7 +1287,7 @@
     }
   ],
   "activeVersion": {
-    "versionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
+    "versionId": "20d37e88-2350-4379-8fd3-f239bce77843",
     "workflowId": "nWQ8ZJpKeTrYl5Ry",
     "nodes": [
       {
@@ -1420,7 +1420,7 @@
       },
       {
         "id": "node-redis-pausar-2h",
-        "name": "Redis: Pausar IA por 2 Horas",
+        "name": "Redis: Pausar IA por 2 Minutos",
         "type": "n8n-nodes-base.redis",
         "typeVersion": 1,
         "position": [
@@ -1432,8 +1432,10 @@
           "key": "=pausa:vendedor:meutim:{{ $json.telefone }}",
           "value": "pausado",
           "options": {
-            "ttl": 7200
-          }
+            "ttl": 120
+          },
+          "expire": true,
+          "ttl": 120
         },
         "credentials": {
           "redis": {
@@ -2062,7 +2064,11 @@
         "parameters": {
           "operation": "get",
           "key": "=bot:enviando:meutim:{{ $json.telefone }}",
-          "options": {}
+          "options": {
+            "ttl": 25
+          },
+          "expire": true,
+          "ttl": 25
         },
         "credentials": {
           "redis": {
@@ -2174,7 +2180,7 @@
           ],
           [
             {
-              "node": "Redis: Pausar IA por 2 Horas",
+              "node": "Redis: Pausar IA por 2 Minutos",
               "type": "main",
               "index": 0
             }
@@ -2493,16 +2499,16 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "createdAt": "2026-10-17T17:33:39.960Z",
-    "updatedAt": "2026-10-17T17:33:39.960Z",
+    "createdAt": "2026-10-20T17:20:52.018Z",
+    "updatedAt": "2026-10-20T17:20:52.018Z",
     "workflowPublishHistory": [
       {
-        "id": 226,
+        "id": 230,
         "workflowId": "nWQ8ZJpKeTrYl5Ry",
-        "versionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
+        "versionId": "20d37e88-2350-4379-8fd3-f239bce77843",
         "event": "activated",
         "userId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
-        "createdAt": "2026-10-17T17:33:40.260Z"
+        "createdAt": "2026-10-20T17:20:52.343Z"
       }
     ]
   }

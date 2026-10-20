@@ -9,7 +9,7 @@
 - [tech] O n8n do portal portaln8n.hotelnozap.com.br é atualizado diretamente via Public API (PUT /api/v1/workflows/EdzWFVAC3AAshCiL) → tech-decisions.md
 - [tech] Chave da Public API do n8n gravada no .env (N8N_API_KEY) para atualização direta de workflows (Super Agente: nWQ8ZJpKeTrYl5Ry) → tech-decisions.md
 - [tech] No Super Agente Vendedor (nWQ8ZJpKeTrYl5Ry), follow-up automático cego foi removido para evitar ban/spam; o agente só responde quando o cliente fala, e gera apenas Alerta VIP para o Everaldo (5565996173004) → tech-decisions.md
-- [tech] Intervenção humana no Atendente Virtual e Super Agente: mensagens enviadas pelo Everaldo (fromMe: true) ativam pausa de 2 minutos no Redis (pausa:atendimento e pausa:vendedor com expire: true, TTL 120s); o comando #ia reativa na hora → tech-decisions.md
+- [tech] Intervenção humana no Atendente Virtual e Super Agente: mensagens enviadas pelo Everaldo (fromMe: true) ativam pausa de 30 minutos no Redis (pausa:atendimento e pausa:vendedor com expire: true, TTL 1800s); o comando #ia reativa na hora → tech-decisions.md
 - [feature] Hotéis Demo para Parceiros: Ocultos do showroom público via CatalogoHoteis (is_demo: true ou tag [DEMO_PARCEIRO]), botão 'Cadastrar Meu Hotel' no cabeçalho do parceiro que desaparece após cadastro dando lugar a 'Entrar no Meu Hotel Demo' + link direto → tech-decisions.md
 
 ## Feedback
