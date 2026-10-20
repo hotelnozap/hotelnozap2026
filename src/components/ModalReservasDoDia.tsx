@@ -123,6 +123,27 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
     }
   };
 
+  // Fechar modal e reconhecer no-shows para que sumam definitivamente
+  const handleFecharModal = () => {
+    if (resumo?.noShowsCancelados && resumo.noShowsCancelados.length > 0) {
+      resumo.noShowsCancelados.forEach((r: any) => {
+        try {
+          localStorage.setItem(`noshow_reconhecido_${r.id}`, 'true');
+        } catch {}
+      });
+    }
+    onClose();
+  };
+
+  // Dispensar um alerta de No-Show individual
+  const handleDispensarNoShow = (reservaId: string) => {
+    try {
+      localStorage.setItem(`noshow_reconhecido_${reservaId}`, 'true');
+      showToast('Alerta de cancelamento dispensado.');
+      carregarDados();
+    } catch {}
+  };
+
   // Abrir WhatsApp do hóspede
   const handleAbrirWhatsApp = (telefone?: string, nome?: string) => {
     if (!telefone) {
@@ -171,7 +192,7 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleFecharModal}
             className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
             title="Fechar Janela"
           >
@@ -403,14 +424,25 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
                               <span className="text-xs text-slate-500 font-medium">
                                 Quarto disponível para nova locação.
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => handleAbrirWhatsApp(res.telefone_hospede || res.telefone, res.nome_hospede)}
-                                className="ml-auto py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-sm">chat</span>
-                                WhatsApp
-                              </button>
+                              <div className="ml-auto flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDispensarNoShow(res.id)}
+                                  className="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                  title="Dispensar este alerta"
+                                >
+                                  <span className="material-symbols-outlined text-sm">visibility_off</span>
+                                  Dispensar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAbrirWhatsApp(res.telefone_hospede || res.telefone, res.nome_hospede)}
+                                  className="py-1.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-sm">chat</span>
+                                  WhatsApp
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
@@ -498,7 +530,7 @@ export const ModalReservasDoDia: React.FC<ModalReservasDoDiaProps> = ({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleFecharModal}
             className="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-[#003400] hover:bg-black text-white font-bold text-xs shadow-md transition-all cursor-pointer"
           >
             Entendido, Acessar Sistema

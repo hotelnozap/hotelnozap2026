@@ -384,8 +384,28 @@ export const autoNoShowService = {
         checkoutsHoje.push(r);
       }
 
-      // No-shows cancelados recentes (cancelados hoje ou ontem por no-show)
+      // No-shows cancelados de HOJE que ainda não foram dispensados/vistos
       if (status.includes('canc') && r.observacoes && r.observacoes.includes('NO-SHOW')) {
+        // 1. Checagem de data estrita: apenas no-shows do dia atual (checkin de hoje ou cancelada hoje)
+        let dataCancelamento = '';
+        const matchData = r.observacoes.match(/Cancelada em (\d{2})\/(\d{2})\/(\d{4})/);
+        if (matchData) {
+          dataCancelamento = `${matchData[3]}-${matchData[2]}-${matchData[1]}`;
+        }
+
+        const isDeHoje = checkinIso === hojeNoFuso || dataCancelamento === hojeNoFuso;
+        if (!isDeHoje) {
+          // Reservas canceladas em datas anteriores NUNCA devem aparecer no painel do dia atual
+          continue;
+        }
+
+        // 2. Checagem se já foi dispensada / reconhecida pelo usuário
+        const keyReconhecido = `noshow_reconhecido_${r.id}`;
+        const jaReconhecido = typeof window !== 'undefined' && localStorage.getItem(keyReconhecido) === 'true';
+        if (jaReconhecido) {
+          continue;
+        }
+
         noShowsCancelados.push(r);
       }
     }
