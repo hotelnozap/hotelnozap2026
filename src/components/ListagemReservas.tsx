@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { ModalCheckoutRecebimento } from './ModalCheckoutRecebimento';
 import { ModalCheckinEntrada } from './ModalCheckinEntrada';
 import { ModalEnviarTemplateWhatsApp } from './ModalEnviarTemplateWhatsApp';
+import { ModalEditarReserva } from './ModalEditarReserva';
 import { caixaService } from '../services/caixaService';
 import { templateMensagemService } from '../services/templateMensagemService';
 import { autoCheckoutService } from '../services/autoCheckoutService';
@@ -66,6 +67,13 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
   const [whatsappDefaultTemplate, setWhatsappDefaultTemplate] = useState<any>('confirmacao');
   const [reservaToDelete, setReservaToDelete] = useState<Reserva | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [editingReserva, setEditingReserva] = useState<Reserva | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleOpenEditar = (res: Reserva) => {
+    setEditingReserva(res);
+    setIsEditModalOpen(true);
+  };
 
   const reservasRef = useRef<Reserva[]>([]);
   reservasRef.current = reservas;
@@ -738,7 +746,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                   <span className="material-symbols-outlined text-[14px]">visibility</span> Ver
                 </button>
                 <button
-                  onClick={() => showToast(`Editar reserva ${reserva.reservaNumber}`)}
+                  onClick={() => handleOpenEditar(reserva)}
                   className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#FDB116] hover:bg-amber-500 text-white rounded text-xs font-medium transition-colors shadow-sm cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">edit</span> Editar
@@ -983,7 +991,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                             <span className="hidden xl:inline">Ver</span>
                           </button>
                           <button
-                            onClick={() => showToast(`Editar reserva ${reserva.reservaNumber}`)}
+                            onClick={() => handleOpenEditar(reserva)}
                             className="inline-flex items-center gap-1 px-2 py-1.5 bg-[#FDB116] hover:bg-amber-500 active:scale-95 text-slate-900 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer"
                             title="Editar Reserva"
                           >
@@ -1119,7 +1127,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                         Ver
                       </button>
                       <button
-                        onClick={() => showToast(`Editar reserva ${reserva.reservaNumber}`)}
+                        onClick={() => handleOpenEditar(reserva)}
                         className="flex-1 py-2 px-2.5 bg-[#FDB116] hover:bg-[#e59f13] text-white rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -1264,6 +1272,19 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                         Cancelar
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = selectedReserva;
+                        setIsVerModalOpen(false);
+                        handleOpenEditar(target);
+                      }}
+                      className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold rounded-lg transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
+                      title="Editar dados da reserva ou reativar"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
+                      Editar / Reativar
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1419,6 +1440,23 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
           setCheckinModalReserva(null);
         }}
       />
+
+      {/* MODAL DE EDIÇÃO E REATIVAÇÃO DE RESERVAS */}
+      {isEditModalOpen && editingReserva && (
+        <ModalEditarReserva
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingReserva(null);
+          }}
+          reserva={editingReserva}
+          quartosDisponiveis={quartosList}
+          onSaveSuccess={(msg) => {
+            showToast(msg);
+            fetchReservas(true);
+          }}
+        />
+      )}
 
       {/* MODAL DE DISPARO DE TEMPLATES DE WHATSAPP (EVOLUTION API) */}
       {whatsappModalReserva && (

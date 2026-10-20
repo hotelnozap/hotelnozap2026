@@ -4479,6 +4479,103 @@ export const reservasService = {
     }
   },
 
+  /**
+   * Atualiza os dados de uma reserva existente (incluindo reativação de reservas canceladas)
+   */
+  async updateReserva(id: string, updates: {
+    nome_hospede?: string;
+    numero_quarto?: string;
+    quarto_id?: string;
+    hospede_id?: string;
+    data_checkin?: string;
+    data_checkout?: string;
+    valor_total?: number;
+    status?: string;
+    observacoes?: string;
+    forma_pagamento?: string;
+  }): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const payload: any = {};
+      if (updates.nome_hospede !== undefined) payload.nome_hospede = updates.nome_hospede;
+      if (updates.numero_quarto !== undefined) payload.numero_quarto = updates.numero_quarto;
+      if (updates.quarto_id !== undefined) payload.quarto_id = updates.quarto_id;
+      if (updates.hospede_id !== undefined) payload.hospede_id = updates.hospede_id;
+      if (updates.data_checkin !== undefined) payload.data_checkin = updates.data_checkin;
+      if (updates.data_checkout !== undefined) payload.data_checkout = updates.data_checkout;
+      if (updates.valor_total !== undefined) payload.valor_total = updates.valor_total;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.observacoes !== undefined) payload.observacoes = updates.observacoes;
+      if (updates.forma_pagamento !== undefined) payload.forma_pagamento = updates.forma_pagamento;
+
+      const { data, error } = await supabase
+        .from('reservas')
+        .update(payload)
+        .eq('id', id)
+        .select('*')
+        .single();
+
+      if (error || !data) {
+        console.error('Erro ao atualizar reserva no Supabase:', error);
+        return { success: false, error: error?.message || 'Erro ao atualizar' };
+      }
+
+      const qId = data.quarto_id;
+      const qNum = data.numero_quarto;
+      const hId = data.hotel_id;
+      const statusLower = (data.status || '').toLowerCase();
+
+      // Ajuste de status do quarto vinculado
+      if (statusLower.includes('hosped')) {
+        if (qId) await supabase.from('quartos').update({ status: 'ocupado' }).eq('id', qId);
+        if (qNum) {
+          let q = supabase.from('quartos').update({ status: 'ocupado' }).eq('numero', String(qNum));
+          if (hId) q = q.eq('hotel_id', hId);
+          await q;
+        }
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId: qId, numero: qNum, status: 'ocupado' } }));
+        }
+      } else if (statusLower.includes('confirmad') || statusLower.includes('pendent')) {
+        // Se a reserva foi reativada ou confirmada, desmarca no-show se houver
+        if (typeof window !== 'undefined') {
+          try { localStorage.removeItem(`noshow_reconhecido_${id}`); } catch {}
+          window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId: qId, numero: qNum, status: 'reservado' } }));
+        }
+      } else if (statusLower.includes('canc')) {
+        if (qId) await supabase.from('quartos').update({ status: 'livre' }).eq('id', qId);
+        if (qNum) {
+          let q = supabase.from('quartos').update({ status: 'livre' }).eq('numero', String(qNum));
+          if (hId) q = q.eq('hotel_id', hId);
+          await q;
+        }
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId: qId, numero: qNum, status: 'livre' } }));
+        }
+      } else if (statusLower.includes('concl') || statusLower.includes('finaliz')) {
+        if (qId) await supabase.from('quartos').update({ status: 'limpeza' }).eq('id', qId);
+        if (qNum) {
+          let q = supabase.from('quartos').update({ status: 'limpeza' }).eq('numero', String(qNum));
+          if (hId) q = q.eq('hotel_id', hId);
+          await q;
+        }
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId: qId, numero: qNum, status: 'limpeza' } }));
+        }
+      }
+
+      this.invalidateCache();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: data }));
+        window.dispatchEvent(new Event('hotel_quarto_modificado'));
+      }
+
+      return { success: true, data };
+    } catch (err: any) {
+      console.error('Exceção ao atualizar reserva:', err);
+      return { success: false, error: err?.message || 'Erro inesperado' };
+    }
+  },
+
   async updateReservaStatus(id: string, newStatus: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
