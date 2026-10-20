@@ -4,9 +4,11 @@ import {
   evolutionApiService,
   EvolutionApiInstance,
   QrCodeResponse,
-  InstanceMetadata
+  InstanceMetadata,
+  generateHotelInstanceName
 } from '../services/evolutionApiService';
 import { currentHotelService, hoteisService, planosService } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
 import {
   templateMensagemService,
   TemplateType,
@@ -874,6 +876,21 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
       const evoList = await evolutionApiService.fetchInstances();
       const metaMap = evolutionApiService.getLocalMetadata(currentHotel.id);
 
+      // 🏷️ Buscar dados atualizados do hotel diretamente no Supabase em tempo real
+      let dbInstanceName = '';
+      try {
+        const { data: hDb } = await supabase
+          .from('hoteis')
+          .select('id, nome, nome_instancia, instancias_whatsapp')
+          .eq('id', currentHotel.id)
+          .single();
+        if (hDb?.nome_instancia) {
+          dbInstanceName = hDb.nome_instancia.trim().toLowerCase();
+        }
+      } catch (errDb) {
+        console.warn('Aviso ao consultar nome_instancia do hotel no Supabase:', errDb);
+      }
+
       // 🏷️ Regra do Hotel: cada hotel tem sua própria instância (nomedohotel01, nomedohotel02...)
       const cleanHotelName = (currentHotel?.name || '')
         .toLowerCase()
@@ -881,7 +898,12 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]/g, '');
 
-      const hotelSavedInstance = (currentHotel.instanceName || (currentHotel as any).nome_instancia || '').trim().toLowerCase();
+      const hotelSavedInstance = (
+        dbInstanceName ||
+        currentHotel.instanceName ||
+        (currentHotel as any).nome_instancia ||
+        ''
+      ).trim().toLowerCase();
 
       const evoListDoHotel = evoList.filter((evo) => {
         const evoNameLower = (evo.name || '').trim().toLowerCase();
@@ -895,7 +917,7 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
         // 3. Metadado explicitamente vinculado ao hotelId
         if (metaMap[evo.name]?.hotelId === currentHotel.id) return true;
 
-        // Bloqueia e oculta instâncias de outros hotéis e a master ('meutim')
+        // Bloqueia e oculta instâncias de outros hotéis
         return false;
       });
 
@@ -1288,14 +1310,70 @@ export const ConexoesWhatsapp: React.FC<ConexoesWhatsappProps> = ({
         {activeSubTab === 'instancias' ? (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
+              onClick={async () => {
+                // 1. Se já há instância carregada na tela, abre o QR Code dela
                 if (instances.length > 0) {
                   const target = instances.find((i) => i.status === 'aguardando') || instances[0];
+                  if (target.status === 'conectado') {
+                    showToast(`Instância "${target.name}" já está conectada ao WhatsApp!`);
+                  }
                   handleAbrirQrCodeModal(target);
-                } else if (hotelPlanInfo.canCreateMore) {
-                  setIsNovaConexaoOpen(true);
-                } else {
-                  setIsUpgradeModalOpen(true);
+                  return;
+                }
+
+                // 2. Se a lista estiver vazia, obter ou criar a instância oficial e abrir QR Code na hora
+                try {
+                  setCarregando(true);
+                  let targetInstanceName = '';
+
+                  const { data: hDb } = await supabase
+                    .from('hoteis')
+                    .select('id, nome, nome_instancia')
+                    .eq('id', currentHotel.id)
+                    .single();
+
+                  if (hDb?.nome_instancia && hDb.nome_instancia.trim()) {
+                    targetInstanceName = hDb.nome_instancia.trim().toLowerCase();
+                  } else {
+                    const evoList = await evolutionApiService.fetchInstances();
+                    const existingNames = evoList.map((e) => e.name);
+                    targetInstanceName = generateHotelInstanceName(currentHotel.name || 'hotel', existingNames);
+                  }
+
+                  // Provisionar na Evolution API
+                  try {
+                    await evolutionApiService.createInstance(targetInstanceName, { qrcode: true });
+                  } catch (errCreate) {
+                    console.warn('Aviso ao criar instância na Evolution API:', errCreate);
+                  }
+
+                  // Salvar nome da instância no Supabase se não tinha
+                  if (!hDb?.nome_instancia) {
+                    await hoteisService.updateHotel(currentHotel.id, { instanceName: targetInstanceName });
+                  }
+
+                  // Recarregar instâncias
+                  await carregarInstancias(true);
+
+                  // Abrir diretamente o QR Code na tela
+                  handleAbrirQrCodeModal({
+                    id: targetInstanceName,
+                    code: targetInstanceName,
+                    name: 'Recepção WhatsApp',
+                    instanceName: targetInstanceName,
+                    phone: '',
+                    department: 'Recepção & Check-in',
+                    status: 'aguardando',
+                    battery: 'Desconhecido',
+                    device: 'WhatsApp Evolution',
+                    lastActivity: 'Agora',
+                    messagesSentToday: 0
+                  });
+                } catch (err) {
+                  console.error('Erro ao conectar ou abrir QR code:', err);
+                  showToast('Não foi possível carregar o QR Code. Tente novamente.');
+                } finally {
+                  setCarregando(false);
                 }
               }}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#10B981] hover:bg-emerald-600 text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-xs transition cursor-pointer active:scale-95"

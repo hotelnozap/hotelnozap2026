@@ -126,6 +126,10 @@ export const currentHotelService = {
           status: h.status,
           imageUrl: h.imageUrl,
           link: h.link,
+          instanceName: h.instanceName || (h as any).nome_instancia || '',
+          whatsappInstances: h.whatsappInstances ?? (h as any).instancias_whatsapp ?? 1,
+          plan: h.plan,
+          notes: (h as any).notes || (h as any).observacoes || '',
           agenteIa: h.agenteIa || 'Sofia'
         }));
       }

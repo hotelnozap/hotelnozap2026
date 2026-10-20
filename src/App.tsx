@@ -4394,7 +4394,10 @@ export const App: React.FC = () => {
                   cityUf: hotel.cityUf,
                   cnpj: hotel.cnpj,
                   status: hotel.status,
-                  imageUrl: hotel.imageUrl
+                  imageUrl: hotel.imageUrl,
+                  instanceName: hotel.instanceName || (hotel as any).nome_instancia || '',
+                  whatsappInstances: hotel.whatsappInstances ?? (hotel as any).instancias_whatsapp ?? 1,
+                  plan: hotel.plan
                 };
                 currentHotelService.setCurrentHotel(freshActive);
                 setActiveHotel(freshActive);
@@ -4827,7 +4830,10 @@ export const App: React.FC = () => {
                   cityUf: hotel.cityUf,
                   cnpj: hotel.cnpj,
                   status: hotel.status,
-                  imageUrl: hotel.imageUrl
+                  imageUrl: hotel.imageUrl,
+                  instanceName: hotel.instanceName || (hotel as any).nome_instancia || '',
+                  whatsappInstances: hotel.whatsappInstances ?? (hotel as any).instancias_whatsapp ?? 1,
+                  plan: hotel.plan
                 };
                 currentHotelService.setCurrentHotel(freshActive);
                 setActiveHotel(freshActive);
@@ -4945,7 +4951,10 @@ export const App: React.FC = () => {
                   cnpj: hotel.cnpj,
                   cityUf: hotel.cityUf,
                   status: hotel.status as any,
-                  imageUrl: hotel.imageUrl
+                  imageUrl: hotel.imageUrl,
+                  instanceName: hotel.instanceName || (hotel as any).nome_instancia || '',
+                  whatsappInstances: hotel.whatsappInstances ?? (hotel as any).instancias_whatsapp ?? 1,
+                  plan: hotel.plan
                 });
                 setActiveTab('dashboard');
               }}
@@ -4966,7 +4975,10 @@ export const App: React.FC = () => {
                       cnpj: targetHotel.cnpj,
                       cityUf: targetHotel.cityUf,
                       status: targetHotel.status as any,
-                      imageUrl: targetHotel.imageUrl
+                      imageUrl: targetHotel.imageUrl,
+                      instanceName: targetHotel.instanceName || (targetHotel as any).nome_instancia || '',
+                      whatsappInstances: targetHotel.whatsappInstances ?? (targetHotel as any).instancias_whatsapp ?? 1,
+                      plan: targetHotel.plan
                     });
                     setActiveTab('dashboard');
                   }
