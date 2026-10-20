@@ -3,12 +3,12 @@
   "name": "Hotel no Zap - Super Agente Vendedor",
   "description": null,
   "active": true,
-  "activeVersionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+  "activeVersionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
   "createdAt": "2026-10-16T17:56:03.503Z",
-  "updatedAt": "2026-10-16T21:44:10.584Z",
+  "updatedAt": "2026-10-17T17:33:39.955Z",
   "isArchived": false,
-  "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
-  "versionCounter": 15,
+  "versionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
+  "versionCounter": 16,
   "sourceWorkflowId": null,
   "triggerCount": 1,
   "nodes": [
@@ -142,7 +142,7 @@
     },
     {
       "id": "node-redis-pausar-2h",
-      "name": "Redis: Pausar IA por 2 Horas",
+      "name": "Redis: Pausar IA por 2 Minutos",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
@@ -154,8 +154,10 @@
         "key": "=pausa:vendedor:meutim:{{ $json.telefone }}",
         "value": "pausado",
         "options": {
-          "ttl": 7200
-        }
+          "ttl": 120
+        },
+        "expire": true,
+        "ttl": 120
       },
       "credentials": {
         "redis": {
@@ -772,31 +774,32 @@
       }
     },
     {
+      "id": "node-redis-check-bot-vendedor",
+      "name": "Redis: Checar Flag Bot Enviando",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "continueOnFail": true,
+      "position": [
+        760,
+        40
+      ],
       "parameters": {
         "operation": "get",
         "key": "=bot:enviando:meutim:{{ $json.telefone }}",
-        "options": {}
+        "options": {
+          "ttl": 25
+        },
+        "expire": true,
+        "ttl": 25
       },
       "credentials": {
         "redis": {
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "continueOnFail": true,
-      "id": "node-redis-check-bot-vendedor",
-      "name": "Redis: Checar Flag Bot Enviando",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        760,
-        40
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const isBot = Boolean($input.first()?.json?.propertyName);\nconst norm = $('Normalizar Dados').first()?.json || {};\nif (isBot) {\n  return []; // Eco do envio do próprio robô\n}\nreturn [{\n  json: {\n    ...norm,\n    isEveraldo: true\n  }\n}];"
-      },
       "id": "node-code-is-bot-vendedor",
       "name": "É Mensagem da Própria IA?",
       "type": "n8n-nodes-base.code",
@@ -804,12 +807,12 @@
       "position": [
         980,
         40
-      ]
+      ],
+      "parameters": {
+        "jsCode": "const isBot = Boolean($input.first()?.json?.propertyName);\nconst norm = $('Normalizar Dados').first()?.json || {};\nif (isBot) {\n  return []; // Eco do envio do próprio robô\n}\nreturn [{\n  json: {\n    ...norm,\n    isEveraldo: true\n  }\n}];"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const pausa = $input.first()?.json?.propertyName ?? null;\nconst original = $('Normalizar Dados').first()?.json || {};\n\nreturn [{\n  json: {\n    ...original,\n    iaPausada: pausa === 'pausado'\n  }\n}];"
-      },
       "id": "node-code-restaurar-dados-vendedor",
       "name": "Restaurar Dados e Checar Pausa",
       "type": "n8n-nodes-base.code",
@@ -817,9 +820,20 @@
       "position": [
         980,
         400
-      ]
+      ],
+      "parameters": {
+        "jsCode": "const pausa = $input.first()?.json?.propertyName ?? null;\nconst original = $('Normalizar Dados').first()?.json || {};\n\nreturn [{\n  json: {\n    ...original,\n    iaPausada: pausa === 'pausado'\n  }\n}];"
+      }
     },
     {
+      "id": "node-redis-flag-bot-vendedor",
+      "name": "Redis: Gravar Flag Bot Enviando",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        4460,
+        100
+      ],
       "parameters": {
         "operation": "set",
         "key": "=bot:enviando:meutim:{{ $json.telefone }}",
@@ -833,15 +847,7 @@
           "id": "izbtMulFvWH7nvzx",
           "name": "Redis account"
         }
-      },
-      "id": "node-redis-flag-bot-vendedor",
-      "name": "Redis: Gravar Flag Bot Enviando",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        4460,
-        100
-      ]
+      }
     }
   ],
   "connections": {
@@ -896,7 +902,7 @@
         ],
         [
           {
-            "node": "Redis: Pausar IA por 2 Horas",
+            "node": "Redis: Pausar IA por 2 Minutos",
             "type": "main",
             "index": 0
           }
@@ -1281,7 +1287,7 @@
     }
   ],
   "activeVersion": {
-    "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+    "versionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
     "workflowId": "nWQ8ZJpKeTrYl5Ry",
     "nodes": [
       {
@@ -1310,7 +1316,7 @@
           300
         ],
         "parameters": {
-          "jsCode": "const body = $input.first()?.json?.body || $input.first()?.json || {};\nconst data = body.data || body;\n\nconst fromMe = data.key?.fromMe === true || body.fromMe === true;\nconst remoteJid = data.key?.remoteJid || body.remoteJid || '';\n\nif (remoteJid.includes('@g.us') || remoteJid.includes('broadcast') || remoteJid.includes('@newsletter')) {\n  return [];\n}\n\nconst rawNumber = remoteJid ? remoteJid.split('@')[0] : (data.key?.participant || '').split('@')[0];\nconst cleanPhone = rawNumber ? rawNumber.replace(/\\D/g, '') : '';\nif (!cleanPhone) {\n  return [];\n}\n\nconst msgObj = data.message || body.message || {};\nlet text = '';\nlet messageType = 'texto';\n\nif (data.messageType === 'conversation' || msgObj.conversation) {\n  text = msgObj.conversation || '';\n} else if (data.messageType === 'extendedTextMessage' || msgObj.extendedTextMessage) {\n  text = msgObj.extendedTextMessage?.text || '';\n} else if (data.messageType === 'audioMessage' || msgObj.audioMessage) {\n  messageType = 'voz';\n}\n\nconst pushName = data.pushName || body.pushName || 'Parceiro';\nconst primeiroNome = pushName.split(' ')[0] || 'Parceiro';\n\n// CASO 1: Mensagem enviada pelo próprio Everaldo (fromMe: true)\nif (fromMe) {\n  const comando = text.trim().toLowerCase();\n  const isReativar = comando === '#ia' || comando === '#ativar' || comando === 'ativar ia';\n  return [{\n    json: {\n      fromMe: true,\n      acao: isReativar ? 'reativar' : 'pausar',\n      telefone: cleanPhone,\n      mensagem: text.trim()\n    }\n  }];\n}\n\n// CASO 2: Mensagem enviada pelo CLIENTE (fromMe: false)\nreturn [{\n  json: {\n    fromMe: false,\n    instanceName: 'meutim',\n    tipo: messageType,\n    telefone: cleanPhone,\n    pushName,\n    primeiroNome,\n    mensagem: text.trim(),\n    mimetype: msgObj.audioMessage?.mimetype || 'audio/ogg',\n    base64: '',\n    rawMessage: msgObj,\n    messageId: data.key?.id || String(Date.now()),\n    timestamp: Date.now()\n  }\n}];"
+          "jsCode": "const body = $input.first()?.json?.body || $input.first()?.json || {};\nconst data = body.data || body;\nconst key = data.key || body.key || {};\n\nconst fromMe = key.fromMe === true;\nconst remoteJid = key.remoteJid || '';\n\nif (remoteJid.includes('@g.us') || remoteJid.includes('broadcast') || remoteJid.includes('@newsletter')) {\n  return [];\n}\n\nconst rawNumber = remoteJid ? remoteJid.split('@')[0] : (key.participant || '').split('@')[0];\nconst cleanPhone = rawNumber ? rawNumber.replace(/\\D/g, '') : '';\nif (!cleanPhone) {\n  return [];\n}\n\nconst msgObj = data.message || body.message || {};\nlet text = '';\nlet messageType = 'texto';\n\nif (data.messageType === 'conversation' || msgObj.conversation) {\n  text = msgObj.conversation || '';\n} else if (data.messageType === 'extendedTextMessage' || msgObj.extendedTextMessage) {\n  text = msgObj.extendedTextMessage?.text || '';\n} else if (data.messageType === 'audioMessage' || msgObj.audioMessage) {\n  messageType = 'voz';\n}\n\nconst pushName = data.pushName || body.pushName || 'Parceiro';\nconst primeiroNome = pushName.split(' ')[0] || 'Parceiro';\nconst comando = text.trim().toLowerCase();\nconst isComandoReativar = comando === '#ia' || comando === '#ativar' || comando === 'ativar ia';\n\nreturn [{\n  json: {\n    fromMe,\n    isComandoReativar,\n    instanceName: 'meutim',\n    tipo: messageType,\n    telefone: cleanPhone,\n    pushName,\n    primeiroNome,\n    mensagem: text.trim(),\n    mimetype: msgObj.audioMessage?.mimetype || 'audio/ogg',\n    base64: '',\n    rawMessage: msgObj,\n    messageId: key.id || String(Date.now()),\n    timestamp: Date.now()\n  }\n}];"
         }
       },
       {
@@ -1378,15 +1384,15 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 1,
         "position": [
-          760,
-          100
+          1200,
+          40
         ],
         "parameters": {
           "conditions": {
-            "string": [
+            "boolean": [
               {
-                "value1": "={{ $json.acao }}",
-                "value2": "reativar"
+                "value1": "={{ $json.isComandoReativar }}",
+                "value2": true
               }
             ]
           }
@@ -1398,8 +1404,8 @@
         "type": "n8n-nodes-base.redis",
         "typeVersion": 1,
         "position": [
-          1000,
-          40
+          1420,
+          -20
         ],
         "parameters": {
           "operation": "delete",
@@ -1418,8 +1424,8 @@
         "type": "n8n-nodes-base.redis",
         "typeVersion": 1,
         "position": [
-          1000,
-          180
+          1420,
+          100
         ],
         "parameters": {
           "operation": "set",
@@ -1463,15 +1469,15 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 1,
         "position": [
-          980,
+          1200,
           400
         ],
         "parameters": {
           "conditions": {
-            "string": [
+            "boolean": [
               {
-                "value1": "={{ String($json.propertyName ?? '') }}",
-                "value2": "pausado"
+                "value1": "={{ $json.iaPausada }}",
+                "value2": false
               }
             ]
           }
@@ -2042,6 +2048,78 @@
             "neverError": true
           }
         }
+      },
+      {
+        "id": "node-redis-check-bot-vendedor",
+        "name": "Redis: Checar Flag Bot Enviando",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "continueOnFail": true,
+        "position": [
+          760,
+          40
+        ],
+        "parameters": {
+          "operation": "get",
+          "key": "=bot:enviando:meutim:{{ $json.telefone }}",
+          "options": {}
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "id": "node-code-is-bot-vendedor",
+        "name": "É Mensagem da Própria IA?",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          980,
+          40
+        ],
+        "parameters": {
+          "jsCode": "const isBot = Boolean($input.first()?.json?.propertyName);\nconst norm = $('Normalizar Dados').first()?.json || {};\nif (isBot) {\n  return []; // Eco do envio do próprio robô\n}\nreturn [{\n  json: {\n    ...norm,\n    isEveraldo: true\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-code-restaurar-dados-vendedor",
+        "name": "Restaurar Dados e Checar Pausa",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          980,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const pausa = $input.first()?.json?.propertyName ?? null;\nconst original = $('Normalizar Dados').first()?.json || {};\n\nreturn [{\n  json: {\n    ...original,\n    iaPausada: pausa === 'pausado'\n  }\n}];"
+        }
+      },
+      {
+        "id": "node-redis-flag-bot-vendedor",
+        "name": "Redis: Gravar Flag Bot Enviando",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          4460,
+          100
+        ],
+        "parameters": {
+          "operation": "set",
+          "key": "=bot:enviando:meutim:{{ $json.telefone }}",
+          "value": "1",
+          "options": {
+            "ttl": 25
+          }
+        },
+        "credentials": {
+          "redis": {
+            "id": "izbtMulFvWH7nvzx",
+            "name": "Redis account"
+          }
+        }
       }
     ],
     "connections": {
@@ -2071,7 +2149,7 @@
         "main": [
           [
             {
-              "node": "É Comando #ia / #ativar?",
+              "node": "Redis: Checar Flag Bot Enviando",
               "type": "main",
               "index": 0
             }
@@ -2107,7 +2185,7 @@
         "main": [
           [
             {
-              "node": "IA está Pausada?",
+              "node": "Restaurar Dados e Checar Pausa",
               "type": "main",
               "index": 0
             }
@@ -2116,14 +2194,14 @@
       },
       "IA está Pausada?": {
         "main": [
-          [],
           [
             {
               "node": "Switch: Texto ou Voz?",
               "type": "main",
               "index": 0
             }
-          ]
+          ],
+          []
         ]
       },
       "Switch: Texto ou Voz?": {
@@ -2352,6 +2430,11 @@
               "index": 0
             },
             {
+              "node": "Redis: Gravar Flag Bot Enviando",
+              "type": "main",
+              "index": 0
+            },
+            {
               "node": "É Lead Quente?",
               "type": "main",
               "index": 0
@@ -2370,6 +2453,39 @@
           ],
           []
         ]
+      },
+      "Redis: Checar Flag Bot Enviando": {
+        "main": [
+          [
+            {
+              "node": "É Mensagem da Própria IA?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "É Mensagem da Própria IA?": {
+        "main": [
+          [
+            {
+              "node": "É Comando #ia / #ativar?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Restaurar Dados e Checar Pausa": {
+        "main": [
+          [
+            {
+              "node": "IA está Pausada?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "nodeGroups": [],
@@ -2377,32 +2493,16 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "createdAt": "2026-10-16T21:44:10.586Z",
-    "updatedAt": "2026-10-16T21:44:10.586Z",
+    "createdAt": "2026-10-17T17:33:39.960Z",
+    "updatedAt": "2026-10-17T17:33:39.960Z",
     "workflowPublishHistory": [
       {
-        "id": 220,
+        "id": 226,
         "workflowId": "nWQ8ZJpKeTrYl5Ry",
-        "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
+        "versionId": "ddbeca51-290d-4b1e-b4d1-460818f351c4",
         "event": "activated",
         "userId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
-        "createdAt": "2026-10-16T21:44:11.763Z"
-      },
-      {
-        "id": 221,
-        "workflowId": "nWQ8ZJpKeTrYl5Ry",
-        "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
-        "event": "deactivated",
-        "userId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
-        "createdAt": "2026-10-16T21:44:12.917Z"
-      },
-      {
-        "id": 222,
-        "workflowId": "nWQ8ZJpKeTrYl5Ry",
-        "versionId": "18b724d9-1c6e-426b-b263-ed0ba97dbbb6",
-        "event": "activated",
-        "userId": "cfaa0b22-7349-4c5b-ae13-6d3e988ea44b",
-        "createdAt": "2026-10-16T21:44:12.956Z"
+        "createdAt": "2026-10-17T17:33:40.260Z"
       }
     ]
   }
