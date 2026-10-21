@@ -1827,10 +1827,41 @@ export const hospedesService = {
     // =========================================================================
     // 5. HISTÓRICO DE RESERVAS DO HÓSPEDE (Com seus respectivos hotéis reais)
     // =========================================================================
+    const formatarDataSemFuso = (dataIsoOrStr?: string): string => {
+      if (!dataIsoOrStr) return '';
+      const str = String(dataIsoOrStr).trim();
+      const datePart = str.split('T')[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        const [y, m, d] = datePart.split('-');
+        return `${d}/${m}/${y}`;
+      }
+      try {
+        return new Date(str).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+      } catch {
+        return str;
+      }
+    };
+
+    const calcularDiarias = (checkInStr?: string, checkOutStr?: string): number => {
+      if (!checkInStr || !checkOutStr) return 1;
+      const dInStr = String(checkInStr).split('T')[0];
+      const dOutStr = String(checkOutStr).split('T')[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dInStr) && /^\d{4}-\d{2}-\d{2}$/.test(dOutStr)) {
+        const [y1, m1, day1] = dInStr.split('-').map(Number);
+        const [y2, m2, day2] = dOutStr.split('-').map(Number);
+        const utc1 = Date.UTC(y1, m1 - 1, day1);
+        const utc2 = Date.UTC(y2, m2 - 1, day2);
+        const diff = Math.round((utc2 - utc1) / (1000 * 60 * 60 * 24));
+        return diff > 0 ? diff : 1;
+      }
+      return 1;
+    };
+
     const historicoReservas = reservasReais.map((r: any) => {
       const rHotel = hoteisMap[r.hotel_id];
       const rHotelNome = rHotel?.nome || 'Hotel';
       const rHotelCidadeUf = rHotel ? `${rHotel.cidade || ''} / ${rHotel.uf || ''}`.trim() : '';
+      const rDiarias = r.diarias || calcularDiarias(r.data_checkin, r.data_checkout);
       return {
         id: r.id,
         codigo: `#RES-${r.id.substring(0, 6).toUpperCase()}`,
@@ -1838,9 +1869,9 @@ export const hospedesService = {
         quartoNumero: r.numero_quarto || '—',
         hotel: rHotelNome,
         hotelCidade: rHotelCidadeUf,
-        checkIn: r.data_checkin ? new Date(r.data_checkin).toLocaleDateString('pt-BR') : '',
-        checkOut: r.data_checkout ? new Date(r.data_checkout).toLocaleDateString('pt-BR') : '',
-        diarias: r.diarias || 1,
+        checkIn: formatarDataSemFuso(r.data_checkin),
+        checkOut: formatarDataSemFuso(r.data_checkout),
+        diarias: rDiarias,
         valorTotal: Number(r.valor_total) || 0,
         status: r.status || 'Pendente'
       };
@@ -1897,9 +1928,9 @@ export const hospedesService = {
       quartoFotoCapa: temEstadiaOuReserva ? (quartoData?.foto_capa || (Array.isArray(quartoData?.fotos) && quartoData.fotos[0]) || hotelData?.url_imagem || '') : '',
       statusEstadia,
       reservaCodigo: temEstadiaOuReserva && reservaAtivaPrincipal ? `#RES-${reservaAtivaPrincipal.id.substring(0, 6).toUpperCase()}` : '—',
-      dataCheckin: temEstadiaOuReserva && reservaAtivaPrincipal?.data_checkin ? new Date(reservaAtivaPrincipal.data_checkin).toLocaleDateString('pt-BR') : '—',
-      dataCheckout: temEstadiaOuReserva && reservaAtivaPrincipal?.data_checkout ? new Date(reservaAtivaPrincipal.data_checkout).toLocaleDateString('pt-BR') : '—',
-      totalDiarias: temEstadiaOuReserva ? (reservaAtivaPrincipal?.diarias || 1) : 0,
+      dataCheckin: temEstadiaOuReserva && reservaAtivaPrincipal?.data_checkin ? formatarDataSemFuso(reservaAtivaPrincipal.data_checkin) : '—',
+      dataCheckout: temEstadiaOuReserva && reservaAtivaPrincipal?.data_checkout ? formatarDataSemFuso(reservaAtivaPrincipal.data_checkout) : '—',
+      totalDiarias: temEstadiaOuReserva ? (reservaAtivaPrincipal?.diarias || calcularDiarias(reservaAtivaPrincipal?.data_checkin, reservaAtivaPrincipal?.data_checkout)) : 0,
       diariaAtual: temCheckinAtivo ? 1 : 0,
       totalHospedagens,
       pontosFidelidade,
@@ -1912,9 +1943,9 @@ export const hospedesService = {
         quartoNome: quartoNome,
         hotelNome: hotelNome,
         hotelCidade: hotelCidadeUf,
-        checkIn: reservaAtivaPrincipal.data_checkin ? new Date(reservaAtivaPrincipal.data_checkin).toLocaleDateString('pt-BR') : '',
-        checkOut: reservaAtivaPrincipal.data_checkout ? new Date(reservaAtivaPrincipal.data_checkout).toLocaleDateString('pt-BR') : '',
-        diarias: reservaAtivaPrincipal.diarias || 1,
+        checkIn: formatarDataSemFuso(reservaAtivaPrincipal.data_checkin),
+        checkOut: formatarDataSemFuso(reservaAtivaPrincipal.data_checkout),
+        diarias: reservaAtivaPrincipal.diarias || calcularDiarias(reservaAtivaPrincipal.data_checkin, reservaAtivaPrincipal.data_checkout),
         valorTotal: Number(reservaAtivaPrincipal.valor_total) || 0,
         formaPagamento: 'Confirmado no Hotel',
         hospedes: '1 Hóspede',

@@ -63,7 +63,7 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
               checkIn: r.checkIn || '',
               checkOut: r.checkOut || '',
               diarias: r.diarias || 1,
-              detalheDiaria: isAtiva ? `Dia 1 de ${r.diarias || 1}` : `${r.diarias || 1} diárias`,
+              detalheDiaria: isAtiva ? `Dia 1 de ${r.diarias || 1}` : `${r.diarias || 1} ${(r.diarias || 1) === 1 ? 'diária' : 'diárias'}`,
               hospedes: '1 Hóspede',
               valorTotal: r.valorTotal || 0,
               formaPagamento: 'Confirmado no Hotel',
@@ -605,7 +605,7 @@ export const MinhasReservasHospede: React.FC<MinhasReservasHospedeProps> = ({
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-medium block">Período</span>
                   <span className="font-semibold text-slate-700">{res.checkIn} a {res.checkOut}</span>
-                  <span className="text-[10px] text-slate-400 block">{res.diarias} diárias</span>
+                  <span className="text-[10px] text-slate-400 block">{res.diarias} {res.diarias === 1 ? 'diária' : 'diárias'}</span>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-400 uppercase font-medium block">Valor Total</span>
