@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { reservasService, quartosService } from '../services/supabaseService';
+import { reservasService, quartosService, getTodayYmd, compareReservasPorData } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 import { ModalCheckoutRecebimento } from './ModalCheckoutRecebimento';
 import { ModalCheckinEntrada } from './ModalCheckinEntrada';
@@ -296,9 +296,10 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Filtered Reservas
+  // Filtered Reservas com Ordenação por Data (Priorizando reservas do dia no topo)
   const filteredReservas = useMemo(() => {
-    return reservas.filter((res) => {
+    const todayStr = getTodayYmd();
+    const list = reservas.filter((res) => {
       const matchSearch =
         res.hospedeNome.toLowerCase().includes(searchTerm.toLowerCase()) ||
         res.hospedeEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -314,15 +315,17 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
 
       return matchSearch && matchStatus;
     });
+
+    return list.sort((a, b) => compareReservasPorData(a, b, todayStr));
   }, [reservas, searchTerm, statusFilter]);
 
-  // Paginação
+  // Paginação (Padrão 15 em 15, com seletor de 15, 30, 50 ou 100)
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredReservas.length / itemsPerPage) || 1;
   const paginatedReservas = useMemo(() => {
@@ -703,7 +706,14 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
                 <div>
                   <span className="text-[10px] text-slate-400 block">Período</span>
-                  <span className="font-medium text-slate-700">{reserva.checkIn} a {reserva.checkOut}</span>
+                  <span className="font-medium text-slate-700">
+                    {reserva.checkIn} a {reserva.checkOut}
+                    {reserva.checkIn === getTodayYmd() && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 ml-1.5 border border-emerald-300">
+                        Hoje
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 block">Valor Total</span>
@@ -919,7 +929,14 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                         </span>
                       </td>
                       <td className="px-2 py-3 text-slate-700 whitespace-nowrap text-xs sm:text-sm">
-                        {formatDateBR(reserva.checkIn)}
+                        <div className="flex items-center gap-1.5">
+                          <span>{formatDateBR(reserva.checkIn)}</span>
+                          {reserva.checkIn === getTodayYmd() && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              Hoje
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-2 py-3 text-slate-700 whitespace-nowrap text-xs sm:text-sm">
                         {formatDateBR(reserva.checkOut)}
@@ -1150,11 +1167,32 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
 
         {/* Paginação Padronizada Desktop */}
         <div className="p-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white">
-          <span className="text-sm text-slate-500">
-            Exibindo <span className="font-semibold text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> a{' '}
-            <span className="font-semibold text-slate-800">{Math.min(currentPage * itemsPerPage, filteredReservas.length)}</span> de{' '}
-            <span className="font-semibold text-slate-800">{filteredReservas.length}</span> reservas
-          </span>
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-sm text-slate-500">
+              Exibindo <span className="font-semibold text-slate-800">{filteredReservas.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> a{' '}
+              <span className="font-semibold text-slate-800">{Math.min(currentPage * itemsPerPage, filteredReservas.length)}</span> de{' '}
+              <span className="font-semibold text-slate-800">{filteredReservas.length}</span> reservas
+            </span>
+
+            {/* Seletor dinâmico de itens por página */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="text-slate-400 font-medium">Exibir:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition-all cursor-pointer shadow-xs"
+              >
+                <option value={15}>15 por página</option>
+                <option value={30}>30 por página</option>
+                <option value={50}>50 por página</option>
+                <option value={100}>100 por página</option>
+              </select>
+            </div>
+          </div>
+
           <div className="inline-flex items-center gap-1">
             <button
               type="button"
@@ -1164,20 +1202,61 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
             >
               <span className="material-symbols-outlined text-[18px]">chevron_left</span>
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                type="button"
-                onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
-                  currentPage === page
-                    ? 'bg-[#003400] text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {totalPages <= 7 ? (
+              Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                    currentPage === page
+                      ? 'bg-[#003400] text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(1)}
+                  className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                    currentPage === 1 ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  1
+                </button>
+                {currentPage > 3 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => page > 1 && page < totalPages && Math.abs(page - currentPage) <= 1)
+                  .map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                        currentPage === page
+                          ? 'bg-[#003400] text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                {currentPage < totalPages - 2 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                    currentPage === totalPages ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
             <button
               type="button"
               disabled={currentPage === totalPages}

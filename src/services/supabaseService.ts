@@ -4047,6 +4047,67 @@ interface ReservasCacheEntry {
 let _reservasMemoryCache: ReservasCacheEntry | null = null;
 const RESERVAS_CACHE_TTL_MS = 25000; // 25 segundos de frescor imediato na memória
 
+// =========================================================================
+// FUNÇÕES UTILITÁRIAS DE ORDENAÇÃO DE RESERVAS POR DATA E PRIORIDADE
+// =========================================================================
+export const getTodayYmd = (): string => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const compareReservasPorData = (a: Reserva, b: Reserva, todayStr = getTodayYmd()): number => {
+  const getCleanDate = (dStr?: string) => (dStr ? dStr.split('T')[0] : '');
+
+  const inA = getCleanDate(a.checkIn);
+  const outA = getCleanDate(a.checkOut);
+  const inB = getCleanDate(b.checkIn);
+  const outB = getCleanDate(b.checkOut);
+
+  // Prioridade 1: Do Dia (Check-in hoje OU hóspede hospedado ativo hoje)
+  const isHojeA = inA === todayStr || (a.status === 'Hospedado' && inA <= todayStr && outA >= todayStr);
+  const isHojeB = inB === todayStr || (b.status === 'Hospedado' && inB <= todayStr && outB >= todayStr);
+
+  const getPriority = (res: Reserva, isHoje: boolean, inDate: string) => {
+    if (isHoje) return 1;
+    // Prioridade 2: Próximas reservas futuras ativas (check-in a partir de amanhã)
+    if (inDate > todayStr && res.status !== 'Cancelada' && res.status !== 'Concluída') return 2;
+    // Prioridade 3: Passadas ativas ou pendentes
+    if (res.status !== 'Cancelada' && res.status !== 'Concluída') return 3;
+    // Prioridade 4: Concluídas e Canceladas
+    return 4;
+  };
+
+  const pA = getPriority(a, isHojeA, inA);
+  const pB = getPriority(b, isHojeB, inB);
+
+  if (pA !== pB) {
+    return pA - pB;
+  }
+
+  // Desempate dentro do mesmo grupo:
+  if (pA === 1) {
+    if (inA !== inB) return inA.localeCompare(inB);
+    const qA = a.numero_quarto || a.quartoNome || '';
+    const qB = b.numero_quarto || b.quartoNome || '';
+    return qA.localeCompare(qB, undefined, { numeric: true });
+  }
+
+  if (pA === 2) {
+    // Futuras: ordem cronológica crescente (a mais próxima primeiro)
+    if (inA !== inB) return inA.localeCompare(inB);
+    const qA = a.numero_quarto || a.quartoNome || '';
+    const qB = b.numero_quarto || b.quartoNome || '';
+    return qA.localeCompare(qB, undefined, { numeric: true });
+  }
+
+  // Passadas/canceladas/concluídas: ordem cronológica decrescente (mais recentes primeiro)
+  if (inA !== inB) return inB.localeCompare(inA);
+  return (b.criado_em || '').localeCompare(a.criado_em || '');
+};
+
 // Service para Reservas no Supabase (Tabela: reservas)
 export const reservasService = {
   /**
@@ -4235,6 +4296,10 @@ export const reservasService = {
           formaPagamento: r.forma_pagamento || 'Dinheiro'
         };
       });
+
+      // Ordenar por data priorizando reservas do dia no topo
+      const todayYmdStr = getTodayYmd();
+      result.sort((a, b) => compareReservasPorData(a, b, todayYmdStr));
 
       _reservasMemoryCache = {
         key: cacheKey,
