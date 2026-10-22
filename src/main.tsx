@@ -74,63 +74,112 @@ interface ErrorBoundaryState {
 }
 
 class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  private fallbackTimer?: any;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, isChunkUpdating: false };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    const msg = (error?.message || '').toLowerCase();
-    const isChunkError =
-      msg.includes('dynamically imported module') ||
-      msg.includes('failed to fetch dynamically imported module') ||
-      msg.includes('error loading dynamically imported module') ||
-      error?.name === 'ChunkLoadError';
-
-    if (isChunkError && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       forceCleanReload();
-      return { hasError: true, error, isChunkUpdating: true };
     }
-
-    return { hasError: true, error, isChunkUpdating: false };
+    return { hasError: true, error, isChunkUpdating: true };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Unhandled React Error:', error, errorInfo);
+    console.warn('[RootErrorBoundary] Interceptado:', error?.message || error, errorInfo);
+    if (typeof window !== 'undefined') {
+      forceCleanReload();
+    }
+  }
+
+  componentDidMount() {
+    if (this.state.hasError && typeof window !== 'undefined') {
+      this.fallbackTimer = setTimeout(() => {
+        forceCleanReload(true);
+      }, 3500);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.fallbackTimer) clearTimeout(this.fallbackTimer);
   }
 
   render() {
     if (this.state.hasError) {
-      if (this.state.isChunkUpdating) {
-        return (
-          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0b1c30', color: '#fff', fontFamily: 'sans-serif', padding: '20px' }}>
-            <div style={{ width: '38px', height: '38px', border: '3px solid #10b981', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '16px' }} />
-            <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#10b981', marginBottom: '4px' }}>Sincronizando atualização...</h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8' }}>Carregando a versão mais recente do sistema.</p>
-            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-          </div>
-        );
-      }
-
+      // Exibe SEMPRE a tela de pre-load oficial do Hotel no Zap sem NENHUM texto de erro ou instabilidade
       return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0b1c30', color: '#fff', fontFamily: 'sans-serif', padding: '20px' }}>
-          <div style={{ maxWidth: '480px', width: '100%', background: '#132338', padding: '32px', borderRadius: '16px', textAlign: 'center', border: '1px solid #1e3a5f' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '8px', color: '#10b981' }}>HOTEL NO ZAP</h2>
-            <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '20px' }}>
-              Ocorreu uma instabilidade temporária ao carregar este módulo.
-            </p>
-            <div style={{ textAlign: 'left', background: '#071220', padding: '12px', borderRadius: '8px', fontSize: '11px', color: '#f87171', fontFamily: 'monospace', overflowX: 'auto', marginBottom: '20px' }}>
-              {this.state.error?.message || 'Erro desconhecido'}
-            </div>
-            <button
-              onClick={() => {
-                forceCleanReload(true);
-              }}
-              style={{ background: '#003400', color: '#fff', border: '1px solid #10b981', padding: '10px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}
-            >
-              Recarregar Painel
-            </button>
-          </div>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'linear-gradient(135deg, #003400 0%, #000000 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            userSelect: 'none',
+            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+            padding: '20px'
+          }}
+        >
+          <div
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              border: '4px solid rgba(52, 211, 153, 0.25)',
+              borderTopColor: '#34d399',
+              animation: 'spin 0.8s linear infinite',
+              marginBottom: '20px'
+            }}
+          />
+          <h2
+            style={{
+              color: '#ffffff',
+              fontSize: '22px',
+              fontWeight: 900,
+              letterSpacing: '0.15em',
+              margin: '0 0 6px 0',
+              textTransform: 'uppercase'
+            }}
+          >
+            HOTEL NO ZAP
+          </h2>
+          <p
+            style={{
+              color: '#34d399',
+              fontSize: '13px',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              margin: '0 0 20px 0'
+            }}
+          >
+            Carregando painel...
+          </p>
+          <button
+            type="button"
+            onClick={() => forceCleanReload(true)}
+            style={{
+              background: 'rgba(52, 211, 153, 0.15)',
+              color: '#34d399',
+              border: '1px solid rgba(52, 211, 153, 0.3)',
+              padding: '8px 20px',
+              borderRadius: '9999px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Atualizar agora
+          </button>
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         </div>
       );
     }

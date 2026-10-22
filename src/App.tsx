@@ -1937,6 +1937,17 @@ export const App: React.FC = () => {
     );
   }
 
+  // ── Pre-load prioritário durante restauração de sessão ──
+  if (restoringSession) {
+    return (
+      <div className="fixed inset-0 h-screen w-screen bg-gradient-to-br from-[#003400] to-black flex flex-col items-center justify-center z-[100] select-none">
+        <div className="w-16 h-16 rounded-full border-4 border-emerald-400/30 border-t-emerald-400 animate-spin mb-6" />
+        <h2 className="text-white text-2xl font-black tracking-widest mb-1">HOTEL NO ZAP</h2>
+        <p className="text-emerald-400 text-sm font-semibold tracking-wide">Restaurando sua sessão...</p>
+      </div>
+    );
+  }
+
   // ── Rota: 404 — Página Não Encontrada ──
   const is404Route = activeTab === 'pagina-404' || pathParts[0] === '404' || pathParts[0] === 'pagina-404';
 
@@ -2413,16 +2424,6 @@ export const App: React.FC = () => {
           hotelDemoNome={partnerDemoInfo?.name}
         />
       </Suspense>
-    );
-  }
-
-  if (restoringSession) {
-    return (
-      <div className="fixed inset-0 h-screen w-screen bg-gradient-to-br from-[#003400] to-black flex flex-col items-center justify-center z-[100] select-none">
-        <div className="w-16 h-16 rounded-full border-4 border-emerald-400/30 border-t-emerald-400 animate-spin mb-6" />
-        <h2 className="text-white text-2xl font-black tracking-widest mb-1">HOTEL NO ZAP</h2>
-        <p className="text-emerald-400 text-sm font-semibold tracking-wide">Restaurando sua sessão...</p>
-      </div>
     );
   }
 

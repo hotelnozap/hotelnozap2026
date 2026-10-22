@@ -66,22 +66,21 @@ export function lazyWithRetry<T extends React.ComponentType<any>>(
 
             if (isChunkLoadFailed && typeof window !== 'undefined') {
               console.warn('[lazyWithRetry] Módulo desatualizado detectado após publicação. Sincronizando versão...');
-              const reloadKey = 'hotelnozap_chunk_reload_ts';
-              const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
-              const now = Date.now();
-
-              // Se ainda não tentou recarregar nos últimos 8s, força reload limpo com novo timestamp
-              if (now - lastReload > 8000) {
-                forceCleanReload(true);
-                return;
-              }
+              forceCleanReload(true);
+              // Mantém a Promise pendente sem disparar reject para não estourar erro visual no React
+              return;
             }
 
             // Para outras falhas transitórias de conexão de rede, tenta novamente
             if (remaining > 0) {
               setTimeout(() => attempt(remaining - 1), interval);
             } else {
-              reject(error);
+              // Em caso de falha persistente de rede, aciona reload limpo silenciosamente
+              if (typeof window !== 'undefined') {
+                forceCleanReload(true);
+              } else {
+                reject(error);
+              }
             }
           });
       };
