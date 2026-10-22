@@ -23,6 +23,8 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
   const [statusFilter, setStatusFilter] = useState<'Todos' | 'Ativo' | 'Inativo'>('Todos');
   const [tipoFilter, setTipoFilter] = useState<'Todos' | 'porcentagem' | 'fixo'>('Todos');
   const [escopoFilter, setEscopoFilter] = useState<'Todos' | 'plano_hotel' | 'parceiro' | 'reserva' | 'todos'>('Todos');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
   const [cupomParaExcluir, setCupomParaExcluir] = useState<CupomDesconto | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -84,6 +86,15 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
       return matchBusca && matchStatus && matchTipo && matchEscopo;
     });
   }, [cupons, searchTerm, statusFilter, tipoFilter, escopoFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, tipoFilter, escopoFilter, itemsPerPage]);
+
+  const totalPages = Math.ceil(cuponsFiltrados.length / itemsPerPage) || 1;
+  const paginatedCupons = useMemo(() => {
+    return cuponsFiltrados.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [cuponsFiltrados, currentPage, itemsPerPage]);
 
   // Estatísticas do Topo
   const stats = useMemo(() => {
@@ -381,7 +392,7 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {cuponsFiltrados.map((cupom) => {
+                    {paginatedCupons.map((cupom) => {
                       const expirado = isExpirado(cupom.data_expiracao);
                       const limiteAtingido = cupom.limite_usos && cupom.usos_atuais >= cupom.limite_usos;
 
@@ -566,7 +577,7 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
 
             {/* MODO MOBILE: CARDS RESPONSIVOS ESTILO VOUCHER */}
             <div className="block md:hidden space-y-3.5">
-              {cuponsFiltrados.map((cupom) => {
+              {paginatedCupons.map((cupom) => {
                 const expirado = isExpirado(cupom.data_expiracao);
 
                 return (
@@ -715,6 +726,97 @@ export const ListagemCupons: React.FC<ListagemCuponsProps> = ({
                   </div>
                 );
               })}
+            </div>
+
+            {/* Paginação Padronizada Desktop e Mobile */}
+            <div className="p-4 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 bg-white shadow-xs mt-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="text-sm text-slate-500">
+                  Exibindo <span className="font-semibold text-slate-800">{cuponsFiltrados.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> a{' '}
+                  <span className="font-semibold text-slate-800">{Math.min(currentPage * itemsPerPage, cuponsFiltrados.length)}</span> de{' '}
+                  <span className="font-semibold text-slate-800">{cuponsFiltrados.length}</span> cupons
+                </span>
+
+                {/* Seletor dinâmico de itens por página */}
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span className="text-slate-400 font-medium">Exibir:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition-all cursor-pointer shadow-xs"
+                  >
+                    <option value={15}>15 por página</option>
+                    <option value={30}>30 por página</option>
+                    <option value={50}>50 por página</option>
+                    <option value={100}>100 por página</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className="p-1.5 border border-slate-200 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                </button>
+                {totalPages <= 7 ? (
+                  Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${currentPage === page ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                    >
+                      {page}
+                    </button>
+                  ))
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(1)}
+                      className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${currentPage === 1 ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                    >
+                      1
+                    </button>
+                    {currentPage > 3 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => page > 1 && page < totalPages && Math.abs(page - currentPage) <= 1)
+                      .map(page => (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${currentPage === page ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    {currentPage < totalPages - 2 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(totalPages)}
+                      className={`w-8 h-8 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${currentPage === totalPages ? 'bg-[#003400] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className="p-1.5 border border-slate-200 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                </button>
+              </div>
             </div>
           </>
         )}

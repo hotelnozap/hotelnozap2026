@@ -63,7 +63,11 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
   const [statusFilter, setStatusFilter] = useState('');
   const [viewMode, setViewMode] = useState<'lista' | 'grade'>('lista');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   // Carregar dados reais do Supabase
   const loadUsuarios = async () => {
@@ -1100,8 +1104,28 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
 
           {/* RODAPÉ E PAGINAÇÃO */}
           <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs md:text-sm text-slate-500">
-              Exibindo <span className="font-bold text-slate-900">{(currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-bold text-slate-900">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de <span className="font-bold text-slate-900">{filteredUsers.length}</span> usuários cadastrados
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="text-xs md:text-sm text-slate-500">
+                Exibindo <span className="font-bold text-slate-900">{filteredUsers.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-bold text-slate-900">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de <span className="font-bold text-slate-900">{filteredUsers.length}</span> usuários cadastrados
+              </div>
+
+              {/* Seletor dinâmico de itens por página */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                <span className="text-slate-400 font-medium">Exibir:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition-all cursor-pointer shadow-xs"
+                >
+                  <option value={15}>15 por página</option>
+                  <option value={30}>30 por página</option>
+                  <option value={50}>50 por página</option>
+                  <option value={100}>100 por página</option>
+                </select>
+              </div>
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -1115,20 +1139,61 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
                 <span>Anterior</span>
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
-                    currentPage === page
-                      ? 'bg-[#003400] text-white shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {totalPages <= 7 ? (
+                Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                      currentPage === page
+                        ? 'bg-[#003400] text-white shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                      currentPage === 1 ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    1
+                  </button>
+                  {currentPage > 3 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => page > 1 && page < totalPages && Math.abs(page - currentPage) <= 1)
+                    .map(page => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                          currentPage === page
+                            ? 'bg-[#003400] text-white shadow-xs'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  {currentPage < totalPages - 2 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                      currentPage === totalPages ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
 
               <button
                 type="button"
@@ -1144,6 +1209,7 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
         </div>
       ) : (
         /* MODO GRADE (CARDS DE GRID) */
+        <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {paginatedUsers.map(user => (
             <div key={user.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between gap-4">
@@ -1217,6 +1283,93 @@ export const ListagemUsuarios: React.FC<ListagemUsuariosProps> = ({
               </div>
             </div>
           ))}
+        </div>
+        <div className="bg-slate-50 px-6 py-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="text-xs md:text-sm text-slate-500">
+              Exibindo <span className="font-bold text-slate-900">{filteredUsers.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-bold text-slate-900">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de <span className="font-bold text-slate-900">{filteredUsers.length}</span> usuários cadastrados
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="text-slate-400 font-medium">Exibir:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition-all cursor-pointer shadow-xs"
+              >
+                <option value={15}>15 por página</option>
+                <option value={30}>30 por página</option>
+                <option value={50}>50 por página</option>
+                <option value={100}>100 por página</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-xs font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-base">chevron_left</span>
+              <span>Anterior</span>
+            </button>
+            {totalPages <= 7 ? (
+              Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${currentPage === page ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                >
+                  {page}
+                </button>
+              ))
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(1)}
+                  className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${currentPage === 1 ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                >
+                  1
+                </button>
+                {currentPage > 3 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => page > 1 && page < totalPages && Math.abs(page - currentPage) <= 1)
+                  .map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${currentPage === page ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                {currentPage < totalPages - 2 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${currentPage === totalPages ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'}`}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-xs font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <span>Próximo</span>
+              <span className="material-symbols-outlined text-base">chevron_right</span>
+            </button>
+          </div>
+        </div>
         </div>
       )}
 

@@ -114,7 +114,7 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
 
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
 
   const loggedUserName = useMemo(() => {
     return (typeof window !== 'undefined' ? localStorage.getItem('hotelnozap_user_name') : '') || 'Recepção';
@@ -203,7 +203,7 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, typeFilter, methodFilter]);
+  }, [searchQuery, typeFilter, methodFilter, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredMovimentacoes.length / itemsPerPage) || 1;
   const paginatedMovimentacoes = useMemo(() => {
@@ -935,15 +935,35 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
         </div>
 
         {/* RODAPÉ E SUMÁRIO DE CONCILIAÇÃO DA TABELA DESKTOP */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-            <span>Mostrando <strong className="text-slate-900 font-bold">1 a {filteredMovimentacoes.length}</strong> de {movimentacoes.length} lançamentos</span>
-            <span className="text-slate-300">•</span>
-            <span>Subtotal Dinheiro: <strong className="text-slate-900 font-bold">R$ {subtotalDinheiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></span>
-            <span className="text-slate-300">•</span>
-            <span>PIX: <strong className="text-slate-900 font-bold">R$ {subtotalPix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></span>
-            <span className="text-slate-300">•</span>
-            <span>Cartões: <strong className="text-slate-900 font-bold">R$ {subtotalCartoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></span>
+        <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+              <span>Mostrando <strong className="text-slate-900 font-bold">{filteredMovimentacoes.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, filteredMovimentacoes.length)}</strong> de {filteredMovimentacoes.length} lançamentos</span>
+              <span className="text-slate-300">•</span>
+              <span>Subtotal Dinheiro: <strong className="text-slate-900 font-bold">R$ {subtotalDinheiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></span>
+              <span className="text-slate-300">•</span>
+              <span>PIX: <strong className="text-slate-900 font-bold">R$ {subtotalPix.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></span>
+              <span className="text-slate-300">•</span>
+              <span>Cartões: <strong className="text-slate-900 font-bold">R$ {subtotalCartoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></span>
+            </div>
+
+            {/* Seletor dinâmico de itens por página */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="text-slate-400 font-medium">Exibir:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition-all cursor-pointer shadow-xs"
+              >
+                <option value={15}>15 por página</option>
+                <option value={30}>30 por página</option>
+                <option value={50}>50 por página</option>
+                <option value={100}>100 por página</option>
+              </select>
+            </div>
           </div>
 
           <div className="inline-flex items-center gap-1">
@@ -956,20 +976,61 @@ export const ControleCaixa: React.FC<ControleCaixaProps> = ({ onNavigateToDashbo
             >
               <span className="material-symbols-outlined text-sm">chevron_left</span>
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                type="button"
-                onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
-                  currentPage === page
-                    ? 'bg-[#003400] text-white shadow-xs'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {totalPages <= 7 ? (
+              Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                    currentPage === page
+                      ? 'bg-[#003400] text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(1)}
+                  className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                    currentPage === 1 ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium'
+                  }`}
+                >
+                  1
+                </button>
+                {currentPage > 3 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => page > 1 && page < totalPages && Math.abs(page - currentPage) <= 1)
+                  .map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                        currentPage === page
+                          ? 'bg-[#003400] text-white shadow-xs'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                {currentPage < totalPages - 2 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                    currentPage === totalPages ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium'
+                  }`}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
             <button
               type="button"
               title="Próxima página"

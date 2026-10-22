@@ -113,11 +113,11 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
 
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredGuests.length / itemsPerPage) || 1;
   const paginatedGuests = filteredGuests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -574,10 +574,31 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
             </div>
 
             {/* PAGINAÇÃO DESKTOP */}
-            <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between text-sm">
-              <p className="text-slate-500 font-medium text-xs sm:text-sm">
-                Exibindo <span className="font-semibold text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-semibold text-slate-800">{Math.min(currentPage * itemsPerPage, filteredGuests.length)}</span> de <span className="font-semibold text-slate-800">{filteredGuests.length}</span> resultados
-              </p>
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+              <div className="flex flex-wrap items-center gap-4">
+                <p className="text-slate-500 font-medium text-xs sm:text-sm">
+                  Exibindo <span className="font-semibold text-slate-800">{filteredGuests.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-semibold text-slate-800">{Math.min(currentPage * itemsPerPage, filteredGuests.length)}</span> de <span className="font-semibold text-slate-800">{filteredGuests.length}</span> resultados
+                </p>
+
+                {/* Seletor dinâmico de itens por página */}
+                <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span className="text-slate-400 font-medium">Exibir:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition-all cursor-pointer shadow-xs"
+                  >
+                    <option value={15}>15 por página</option>
+                    <option value={30}>30 por página</option>
+                    <option value={50}>50 por página</option>
+                    <option value={100}>100 por página</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -587,20 +608,61 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
                 >
                   <span className="material-symbols-outlined text-base">chevron_left</span>
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
-                      currentPage === page
-                        ? 'bg-[#000000] text-white shadow-xs'
-                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {totalPages <= 7 ? (
+                  Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                        currentPage === page
+                          ? 'bg-[#003400] text-white shadow-xs'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(1)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                        currentPage === 1 ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      1
+                    </button>
+                    {currentPage > 3 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => page > 1 && page < totalPages && Math.abs(page - currentPage) <= 1)
+                      .map(page => (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                            currentPage === page
+                              ? 'bg-[#003400] text-white shadow-xs'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    {currentPage < totalPages - 2 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(totalPages)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                        currentPage === totalPages ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   disabled={currentPage === totalPages}
@@ -789,10 +851,31 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
           </div>
 
           {/* PAGINAÇÃO GRADE */}
-          <div className="bg-white px-6 py-4 rounded-2xl border border-slate-200 flex items-center justify-between text-sm shadow-xs">
-            <p className="text-slate-500 font-medium text-xs sm:text-sm">
-              Exibindo <span className="font-semibold text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-semibold text-slate-800">{Math.min(currentPage * itemsPerPage, filteredGuests.length)}</span> de <span className="font-semibold text-slate-800">{filteredGuests.length}</span> resultados
-            </p>
+          <div className="bg-white px-6 py-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm shadow-xs">
+            <div className="flex flex-wrap items-center gap-4">
+              <p className="text-slate-500 font-medium text-xs sm:text-sm">
+                Exibindo <span className="font-semibold text-slate-800">{filteredGuests.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-semibold text-slate-800">{Math.min(currentPage * itemsPerPage, filteredGuests.length)}</span> de <span className="font-semibold text-slate-800">{filteredGuests.length}</span> resultados
+              </p>
+
+              {/* Seletor dinâmico de itens por página */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                <span className="text-slate-400 font-medium">Exibir:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition-all cursor-pointer shadow-xs"
+                >
+                  <option value={15}>15 por página</option>
+                  <option value={30}>30 por página</option>
+                  <option value={50}>50 por página</option>
+                  <option value={100}>100 por página</option>
+                </select>
+              </div>
+            </div>
+
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -802,20 +885,61 @@ export const ListagemHospedes: React.FC<ListagemHospedesProps> = ({ onNavigateTo
               >
                 <span className="material-symbols-outlined text-base">chevron_left</span>
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
-                    currentPage === page
-                      ? 'bg-[#000000] text-white shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {totalPages <= 7 ? (
+                Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                      currentPage === page
+                        ? 'bg-[#003400] text-white shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                      currentPage === 1 ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    1
+                  </button>
+                  {currentPage > 3 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => page > 1 && page < totalPages && Math.abs(page - currentPage) <= 1)
+                    .map(page => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                          currentPage === page
+                            ? 'bg-[#003400] text-white shadow-xs'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  {currentPage < totalPages - 2 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                      currentPage === totalPages ? 'bg-[#003400] text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 disabled={currentPage === totalPages}
