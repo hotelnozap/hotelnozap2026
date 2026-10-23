@@ -872,8 +872,8 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
 
         {/* VISUALIZAÇÃO 1: MODO LISTA (TABELA DESKTOP) */}
         {viewMode === 'lista' ? (
-          <div className="w-full overflow-x-auto lg:overflow-x-visible">
-            <table className="w-full text-left text-xs sm:text-sm text-slate-600">
+          <div className="w-full overflow-x-auto table-scrollbar pb-1">
+            <table className="w-full min-w-[1240px] text-left text-xs sm:text-sm text-slate-600">
               <thead className="bg-slate-50 text-[11px] sm:text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
                 <tr>
                   <th scope="col" className="px-2.5 sm:px-3 py-3 whitespace-nowrap">ID</th>
@@ -883,7 +883,7 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                   <th scope="col" className="px-2 py-3 whitespace-nowrap">Check-out</th>
                   <th scope="col" className="px-2 py-3 whitespace-nowrap">Valor Total</th>
                   <th scope="col" className="px-2 py-3 whitespace-nowrap text-center">Status</th>
-                  <th scope="col" className="px-2 sm:px-3 py-3 text-center whitespace-nowrap">Ações</th>
+                  <th scope="col" className="px-3 sm:px-4 py-3 text-center whitespace-nowrap min-w-[340px]">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -947,8 +947,8 @@ export const ListagemReservas: React.FC<ListagemReservasProps> = ({
                       <td className="px-2 py-3 whitespace-nowrap text-center">
                         {getStatusBadge(reserva.status)}
                       </td>
-                      <td className="px-2 sm:px-3 py-3 text-center whitespace-nowrap">
-                        <div className="inline-flex items-center justify-center gap-1">
+                      <td className="px-3 sm:px-4 py-3 text-center whitespace-nowrap min-w-[340px]">
+                        <div className="inline-flex items-center justify-end gap-1.5">
                           {reserva.status === 'Confirmada' && (
                             <button
                               onClick={() => setCheckinModalReserva(reserva)}

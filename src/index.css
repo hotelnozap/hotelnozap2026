@@ -48,3 +48,23 @@ textarea:focus::-moz-placeholder {
   pointer-events: none !important;
 }
 
+
+/* Scrollbar elegante e visível para tabelas com rolagem horizontal */
+.table-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+.table-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+.table-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+.table-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.table-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
