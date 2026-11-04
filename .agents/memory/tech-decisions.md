@@ -14,4 +14,6 @@ updated: 2026-07-18
 - O n8n do portal portaln8n.hotelnozap.com.br é atualizado diretamente via Public API (PUT /api/v1/workflows/{id}). O workflow oficial do agente é EdzWFVAC3AAshCiL (01 - HotelNoZap - Atendente Virtual IA Oficial).
 - Terminologia oficial: O termo 'Concierge' foi substituído pelo termo mais simples e direto 'Atendente Virtual' (ou 'Recepção').
 - Reconhecimento de Voz no n8n: Implementado com nó Switch ('Switch: Texto ou Voz?') roteando tipo === 'texto' (Saída 0) para o Redis Buffer direto, e tipo === 'voz' (Saída 1) para: 'Evolution: Baixar Áudio' (POST /chat/getBase64FromMediaMessage/{instance}) -> 'Preparar Binário do Áudio' -> 'OpenAI: Transcrever Áudio (Whisper)' (credencial 'OpenAI account') -> 'Definir Mensagem Transcrita' -> 'Redis: Ler Buffer Atual' convergindo para o buffer unificado do Atendente Virtual.
+- Configuração de Domínio Vercel & TWA (Android): O domínio raiz `hotelnozap.com.br` na Vercel deve permanecer sempre configurado como Produção direta ('Connect to an environment'), NUNCA como redirecionamento (308) para `www`. Redirecionamentos HTTP quebram a validação do Digital Asset Links (`/.well-known/assetlinks.json`) pelo Google/Android, fazendo a barra verde do navegador aparecer no app.
+
 

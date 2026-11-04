@@ -1222,6 +1222,28 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Recalibra localização via sensor GPS ou IP do dispositivo
+  const handleRefreshGps = async () => {
+    setIsDetectingLocation(true);
+    locationService.clearManualCityOverride();
+    try {
+      const loc = await locationService.autoDetectUserLocation();
+      if (loc?.city) {
+        setUserLocation(loc);
+        const match = findCityBySlug(loc.city, hoteisList);
+        if (match) {
+          handleOpenCityRoute(normalizeCitySlug(match), match);
+        } else {
+          setFocusedCity(null);
+        }
+      }
+    } catch (err) {
+      console.warn('[CatalogoHoteis] Falha ao recalcular GPS:', err);
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
+
   // Seleciona um destino da busca e ativa a rota da cidade
   const handleSelectDestination = (slug: string, cityName: string) => {
     handleOpenCityRoute(slug, cityName);
@@ -1369,43 +1391,59 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             </div>
           </a>
 
-          {/* 2. SEARCH PILL CENTRAL (DESKTOP) */}
-          <div className="flex items-center rounded-full border border-slate-300 shadow-sm hover:shadow-md transition-all divide-x divide-slate-200 bg-white py-1.5 px-2 relative">
-            <button
-              onClick={() => setIsSearchPopoverOpen(prev => !prev)}
-              className="px-4 py-1.5 text-left hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
-            >
-              <span className="block text-[11px] font-extrabold text-slate-900 leading-tight">Onde</span>
-              <span className="block text-xs text-slate-500 truncate max-w-[130px]">
-                {focusedCity || (userLocation?.city ? `${userLocation.city} · ${userLocation.uf}` : 'Buscar destinos')}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setIsSearchPopoverOpen(prev => !prev)}
-              className="px-4 py-1.5 text-left hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
-            >
-              <span className="block text-[11px] font-extrabold text-slate-900 leading-tight">Quando</span>
-              <span className="block text-xs text-slate-500">Insira as datas</span>
-            </button>
-
-            <button
-              onClick={() => setIsSearchPopoverOpen(prev => !prev)}
-              className="px-4 py-1.5 text-left hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
-            >
-              <span className="block text-[11px] font-extrabold text-slate-900 leading-tight">Quem</span>
-              <span className="block text-xs text-slate-500">Hóspedes?</span>
-            </button>
-
-            <div className="pl-2">
+          {/* 2. SEARCH PILL CENTRAL (DESKTOP) + BOTÃO ATUALIZAR GPS */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center rounded-full border border-slate-300 shadow-sm hover:shadow-md transition-all divide-x divide-slate-200 bg-white py-1.5 px-2 relative">
               <button
                 onClick={() => setIsSearchPopoverOpen(prev => !prev)}
-                className="w-9 h-9 rounded-full bg-[#006c49] hover:bg-[#005438] text-white flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
-                aria-label="Buscar"
+                className="px-4 py-1.5 text-left hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[19px]">search</span>
+                <span className="block text-[11px] font-extrabold text-slate-900 leading-tight">Onde</span>
+                <span className="block text-xs text-slate-500 truncate max-w-[130px]">
+                  {focusedCity || (userLocation?.city ? `${userLocation.city} · ${userLocation.uf}` : 'Buscar destinos')}
+                </span>
               </button>
+
+              <button
+                onClick={() => setIsSearchPopoverOpen(prev => !prev)}
+                className="px-4 py-1.5 text-left hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+              >
+                <span className="block text-[11px] font-extrabold text-slate-900 leading-tight">Quando</span>
+                <span className="block text-xs text-slate-500">Insira as datas</span>
+              </button>
+
+              <button
+                onClick={() => setIsSearchPopoverOpen(prev => !prev)}
+                className="px-4 py-1.5 text-left hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+              >
+                <span className="block text-[11px] font-extrabold text-slate-900 leading-tight">Quem</span>
+                <span className="block text-xs text-slate-500">Hóspedes?</span>
+              </button>
+
+              <div className="pl-2">
+                <button
+                  onClick={() => setIsSearchPopoverOpen(prev => !prev)}
+                  className="w-9 h-9 rounded-full bg-[#006c49] hover:bg-[#005438] text-white flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95"
+                  aria-label="Buscar"
+                >
+                  <span className="material-symbols-outlined text-[19px]">search</span>
+                </button>
+              </div>
             </div>
+
+            {/* BOTÃO ATUALIZAR GPS DESKTOP */}
+            <button
+              type="button"
+              onClick={handleRefreshGps}
+              disabled={isDetectingLocation}
+              className="h-11 px-3.5 rounded-full border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1.5 shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              title="Atualizar localização via GPS"
+            >
+              <span className={`material-symbols-outlined text-lg text-emerald-700 ${isDetectingLocation ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                {isDetectingLocation ? 'sync' : 'near_me'}
+              </span>
+              <span>{isDetectingLocation ? 'Calibrando...' : 'Atualizar GPS'}</span>
+            </button>
           </div>
 
           {/* 3. MENU DIREITO (QUEM SOMOS, LOGIN / CONTA) */}
@@ -1523,11 +1561,11 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             </div>
           </div>
 
-          {/* 2. BARRA DE PESQUISA ABAIXO DA LOGO */}
-          <div className="mt-2.5 w-full">
+          {/* 2. BARRA DE PESQUISA ABAIXO DA LOGO + BOTÃO ATUALIZAR GPS */}
+          <div className="mt-2.5 w-full flex items-center gap-2">
             <button
               onClick={() => setIsSearchPopoverOpen(true)}
-              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-full border border-slate-200/90 bg-white shadow-xs hover:shadow-md text-left transition-all active:scale-[0.99]"
+              className="flex-1 min-w-0 flex items-center gap-2.5 px-3.5 py-2 rounded-full border border-slate-200/90 bg-white shadow-xs hover:shadow-md text-left transition-all active:scale-[0.99] cursor-pointer"
             >
               <span className="material-symbols-outlined text-lg text-[#006c49] shrink-0">search</span>
               <div className="flex-1 min-w-0">
@@ -1544,6 +1582,22 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                     : 'Qualquer destino • Qualquer semana'}
                 </p>
               </div>
+            </button>
+
+            {/* BOTÃO ATUALIZAR GPS COMPACTO NO CABEÇALHO */}
+            <button
+              type="button"
+              onClick={handleRefreshGps}
+              disabled={isDetectingLocation}
+              className="h-10 px-3 rounded-full border border-emerald-200/90 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-extrabold flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              title="Atualizar minha localização via GPS"
+            >
+              <span className={`material-symbols-outlined text-lg text-emerald-700 ${isDetectingLocation ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                {isDetectingLocation ? 'sync' : 'near_me'}
+              </span>
+              <span className="font-bold">
+                {isDetectingLocation ? '...' : 'GPS'}
+              </span>
             </button>
           </div>
         </div>
@@ -1687,83 +1741,6 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
       {/* ========================================================================= */}
       <main className="max-w-[1680px] mx-auto px-4 sm:px-8 pt-6 space-y-8">
 
-        {/* BANNER / STATUS DE RECONHECIMENTO DE LOCALIZAÇÃO DO GPS (MOBILE & DESKTOP) */}
-        {!loading && (userLocation?.city || isDetectingLocation) && (
-          <div className="bg-white/95 backdrop-blur-xs border border-emerald-200/90 rounded-2xl p-3 sm:px-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
-                <span className={`material-symbols-outlined text-xl ${isDetectingLocation ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                  {isDetectingLocation ? 'sync' : 'near_me'}
-                </span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
-                    {isDetectingLocation ? 'Detectando GPS' : 'Sua Localização Atual'}
-                  </span>
-                  <p className="text-xs font-bold text-slate-900">
-                    {userLocation?.city ? `${userLocation.city} · ${userLocation.uf || 'Brasil'}` : 'Localizando sua cidade via GPS...'}
-                  </p>
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  {focusedCity
-                    ? `O aplicativo abriu diretamente nos hotéis e pousadas de ${focusedCity}`
-                    : userCityHasHotels
-                      ? `Você está em ${userLocation?.city}. Mostrando hotéis mais próximos de você.`
-                      : `Você está em ${userLocation?.city || 'sua cidade'}. Veja os hotéis e pousadas parceiros mais procurados.`}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
-              <button
-                type="button"
-                onClick={async () => {
-                  setIsDetectingLocation(true);
-                  locationService.clearManualCityOverride();
-                  const loc = await locationService.autoDetectUserLocation();
-                  setIsDetectingLocation(false);
-                  if (loc?.city) {
-                    setUserLocation(loc);
-                    const match = findCityBySlug(loc.city, hoteisList);
-                    if (match) {
-                      handleOpenCityRoute(normalizeCitySlug(match), match);
-                    } else {
-                      setFocusedCity(null);
-                    }
-                  }
-                }}
-                disabled={isDetectingLocation}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-                title="Recalcular localização com o sensor GPS do aparelho"
-              >
-                <span className={`material-symbols-outlined text-base text-emerald-700 ${isDetectingLocation ? 'animate-spin' : ''}`}>my_location</span>
-                <span>{isDetectingLocation ? 'Calibrando...' : 'Atualizar GPS'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsSearchPopoverOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-                title="Escolher outra cidade ou destino no Brasil"
-              >
-                <span className="material-symbols-outlined text-base">travel_explore</span>
-                <span>Trocar Cidade</span>
-              </button>
-
-              {focusedCity && (
-                <button
-                  type="button"
-                  onClick={handleClearCityFilter}
-                  className="px-3 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
-                  title="Exibir todos os hotéis de todas as cidades"
-                >
-                  <span>Ver todas</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
         {loading ? (
           <div className="py-24 text-center space-y-4">

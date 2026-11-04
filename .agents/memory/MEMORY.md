@@ -11,6 +11,7 @@
 - [tech] No Super Agente Vendedor (nWQ8ZJpKeTrYl5Ry), follow-up automático cego foi removido para evitar ban/spam; o agente só responde quando o cliente fala, e gera apenas Alerta VIP para o Everaldo (5565996173004) → tech-decisions.md
 - [tech] Intervenção humana no Atendente Virtual e Super Agente: mensagens enviadas pelo Everaldo (fromMe: true) ativam pausa de 30 minutos no Redis (pausa:atendimento e pausa:vendedor com expire: true, TTL 1800s); o comando #ia reativa na hora → tech-decisions.md
 - [feature] Hotéis Demo para Parceiros: Ocultos do showroom público via CatalogoHoteis (is_demo: true ou tag [DEMO_PARCEIRO]), botão 'Cadastrar Meu Hotel' no cabeçalho do parceiro que desaparece após cadastro dando lugar a 'Entrar no Meu Hotel Demo' + link direto → tech-decisions.md
+- [tech] Domínio raiz hotelnozap.com.br na Vercel deve ser Produção direta ('Connect to an environment'), nunca redirect 308, para evitar quebra do Digital Asset Links no APK/TWA → tech-decisions.md
 
 ## Feedback
 - [feedback] Só fazer deploy/push quando expressamente solicitado/autorizado pelo usuário → feedback-history.md
