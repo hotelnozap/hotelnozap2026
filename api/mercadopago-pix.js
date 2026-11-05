@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { applyCors } from './_cors.js';
 
 // Rate Limiter em memória para proteção contra flooding de Pix por bots (Sliding Window)
 const rateLimitMap = global._mpPixRateLimit || (global._mpPixRateLimit = new Map());
@@ -16,18 +17,7 @@ function isRateLimited(ip, maxRequests = 5, windowMs = 60000) {
 }
 
 export default async function handler(req, res) {
-  // CORS configuration
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (applyCors(req, res, 'GET,POST,OPTIONS')) return;
 
   let body = req.body;
   if (typeof body === 'string') {

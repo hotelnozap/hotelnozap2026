@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { applyCors } from './_cors.js';
 
 // Helper para sanitizar strings e prevenir SQL injection / XSS
 function escapeString(str) {
@@ -64,15 +65,7 @@ function parseCityUf(input) {
 const sessoesPendentesMemory = new Map();
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (applyCors(req, res, 'GET,POST,OPTIONS')) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({
