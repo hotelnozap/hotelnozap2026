@@ -340,12 +340,30 @@ export const ModalCheckinEntrada: React.FC<ModalCheckinEntradaProps> = ({
       const qNumero = reserva.numero_quarto || reserva.quartoNome.replace(/\D/g, '') || reserva.quartoNome;
       const operadorNome = localStorage.getItem('hotelnozap_user_name') || 'Recepção';
 
-      // Regra oficial: Só pode ir para o movimento do caixa uma hospedagem completa (Check-out).
-      // Salva a forma de pagamento selecionada na reserva para pré-preenchimento
+      // 1. Pagamento na Entrada: Lança no caixa e registra na reserva
       if (momentoPagamento === 'entrada' && metodoPagamento && reserva.id) {
         try {
-          await supabase.from('reservas').update({ forma_pagamento: metodoPagamento }).eq('id', reserva.id);
-        } catch {}
+          await supabase.from('reservas').update({ 
+            forma_pagamento: metodoPagamento,
+            status_pagamento: 'pago'
+          }).eq('id', reserva.id);
+
+          if (valorTotalEstadia > 0) {
+            caixaService.registrarRecebimentoCheckin({
+              reservaId: reserva.id,
+              reservaNumber: reserva.reservaNumber,
+              hospedeNome: nomeHospede,
+              quartoNumero: String(qNumero),
+              valorTotal: valorTotalEstadia,
+              metodo: metodoPagamento,
+              operador: operadorNome,
+              observacoes: observacoesCheckin,
+              hotelId: reserva.hotel_id
+            });
+          }
+        } catch (cErr) {
+          console.warn('Aviso ao registrar pagamento no caixa no check-in:', cErr);
+        }
       }
 
       // 2. Executa a virada inteligente de status para 'Hospedado' e quarto para 'ocupado'

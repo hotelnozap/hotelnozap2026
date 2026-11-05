@@ -251,7 +251,7 @@ export const autoNoShowService = {
       try {
         await supabase
           .from('quartos')
-          .update({ status: 'disponivel' })
+          .update({ status: 'livre' })
           .eq('id', quartoId);
         console.info(`[AutoNoShow] Quarto ${res.numero_quarto || quartoId} liberado com sucesso para venda.`);
       } catch (qErr) {
@@ -284,7 +284,8 @@ export const autoNoShowService = {
 
       window.dispatchEvent(new CustomEvent('hotel_reserva_noshow', { detail: eventoDetalhe }));
       window.dispatchEvent(new CustomEvent('hotel_reserva_modificada', { detail: { id: res.id, status: 'Cancelada' } }));
-      window.dispatchEvent(new CustomEvent('quartos_updated', { detail: { quartoId, status: 'disponivel' } }));
+      window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId, numero: res.numero_quarto, status: 'livre' } }));
+      window.dispatchEvent(new CustomEvent('quartos_updated', { detail: { quartoId, status: 'livre' } }));
 
       try {
         localStorage.setItem('hotel_noshow_recente', JSON.stringify(eventoDetalhe));

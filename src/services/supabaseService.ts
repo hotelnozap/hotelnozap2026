@@ -4425,6 +4425,53 @@ export const reservasService = {
         hospede_id: resolvedHospedeId
       };
 
+      // Trava Anti-Overbooking: validação de colisão de datas para o mesmo quarto
+      if (resolvedQuartoId || payload.numero_quarto) {
+        try {
+          const checkinNovo = payload.data_checkin ? payload.data_checkin.split('T')[0] : '';
+          const checkoutNovo = payload.data_checkout ? payload.data_checkout.split('T')[0] : '';
+
+          if (checkinNovo && checkoutNovo) {
+            let resConflictQuery = supabase
+              .from('reservas')
+              .select('id, numero_quarto, data_checkin, data_checkout, status, nome_hospede')
+              .not('status', 'ilike', '%canc%');
+
+            if (resolvedQuartoId) {
+              resConflictQuery = resConflictQuery.eq('quarto_id', resolvedQuartoId);
+            } else if (payload.numero_quarto) {
+              resConflictQuery = resConflictQuery.eq('numero_quarto', String(payload.numero_quarto));
+              if (resolvedHotelId) {
+                resConflictQuery = resConflictQuery.eq('hotel_id', resolvedHotelId);
+              }
+            }
+
+            const { data: conflitosExistentes } = await resConflictQuery;
+
+            if (conflitosExistentes && conflitosExistentes.length > 0) {
+              const temColisao = conflitosExistentes.some((r: any) => {
+                const rSt = (r.status || '').toLowerCase();
+                if (rSt.includes('canc') || rSt.includes('concl')) return false;
+
+                const cIn = (r.data_checkin || '').split('T')[0];
+                const cOut = (r.data_checkout || '').split('T')[0];
+                if (!cIn || !cOut) return false;
+
+                // Colisão: NovoCheckIn < AntigoCheckOut E NovoCheckOut > AntigoCheckIn
+                return (checkinNovo < cOut && checkoutNovo > cIn);
+              });
+
+              if (temColisao) {
+                console.warn(`[Anti-Overbooking] Bloqueio: Quarto ${payload.numero_quarto} já possui reserva ativa no período de ${checkinNovo} até ${checkoutNovo}.`);
+                return null;
+              }
+            }
+          }
+        } catch (ovErr) {
+          console.warn('[Anti-Overbooking] Aviso ao validar conflito de datas:', ovErr);
+        }
+      }
+
       let { data, error } = await supabase
         .from('reservas')
         .insert([dbPayload])

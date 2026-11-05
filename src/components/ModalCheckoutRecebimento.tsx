@@ -20,14 +20,27 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
 }) => {
   if (!isOpen || !reserva) return null;
 
-  // Valor base da diária/estadia
-  const valorBaseDiarias = useMemo(() => {
+  // Detecta se a reserva já teve as diárias pagas (no check-in ou antecipadamente)
+  const jaPagoNaEntrada = useMemo(() => {
+    const sp = String((reserva as any)?.status_pagamento || '').toLowerCase();
+    const obs = String(reserva?.observacoes || (reserva as any)?.observacao || '').toLowerCase();
+    return sp === 'pago' || sp === 'quitado' || obs.includes('pago via') || obs.includes('pagamento da diária recebido na entrada');
+  }, [reserva]);
+
+  // Valor total original da reserva para exibição visual
+  const valorTotalReservaOriginal = useMemo(() => {
     if (!reserva.valorTotal) return 0;
     const num = parseFloat(
       reserva.valorTotal.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()
     );
     return isNaN(num) ? 0 : num;
   }, [reserva.valorTotal]);
+
+  // Valor base das diárias a receber no check-out (0 se já quitado na entrada)
+  const valorBaseDiarias = useMemo(() => {
+    if (jaPagoNaEntrada) return 0;
+    return valorTotalReservaOriginal;
+  }, [jaPagoNaEntrada, valorTotalReservaOriginal]);
 
   // Estados Financeiros
   const [valorConsumoExtra, setValorConsumoExtra] = useState<string>('');
@@ -120,6 +133,10 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
           hotelId: reserva.hotel_id
         });
       }
+
+      // 3. Baixa os pedidos de lavanderia pendentes do quarto
+      const qNumClean = reserva.quartoNome.replace(/\D/g, '') || reserva.quartoNome;
+      lavanderiaService.baixarPedidosLavanderiaPorQuarto(qNumClean, reserva.hotel_id).catch(() => {});
 
       setResumoFinal({
         total: totalReceber,
@@ -345,9 +362,16 @@ export const ModalCheckoutRecebimento: React.FC<ModalCheckoutRecebimentoProps> =
                   <span className="text-slate-600 font-medium">
                     Diárias da Hospedagem ({reserva.noites} noites):
                   </span>
-                  <span className="font-bold text-slate-900">
-                    R$ {valorBaseDiarias.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
+                  <div className="text-right">
+                    <span className={`font-bold ${jaPagoNaEntrada ? 'text-emerald-700' : 'text-slate-900'}`}>
+                      R$ {valorTotalReservaOriginal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                    {jaPagoNaEntrada && (
+                      <span className="block text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 mt-0.5">
+                        ✓ Quitado na Entrada
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Linha 2: Consumo Extra / Frigobar */}

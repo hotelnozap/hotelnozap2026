@@ -483,7 +483,8 @@ export const lavanderiaService = {
       const matchQuarto = String(p.quartoNumero).trim().toLowerCase() === qClean;
       const isCobrancaQuarto = p.formaCobranca === 'quarto';
       const naoCancelado = p.status !== 'cancelado';
-      return matchQuarto && isCobrancaQuarto && naoCancelado;
+      const naoPago = (p as any).pago !== true;
+      return matchQuarto && isCobrancaQuarto && naoCancelado && naoPago;
     });
 
     const totalPendente = pedidosQuarto.reduce((acc, p) => acc + (p.valorTotal || 0), 0);
@@ -492,6 +493,23 @@ export const lavanderiaService = {
       totalPendente,
       pedidos: pedidosQuarto
     };
+  },
+
+  // Baixar pedidos pendentes de lavanderia do quarto no check-out
+  async baixarPedidosLavanderiaPorQuarto(quartoNumero: string, hotelId?: string): Promise<void> {
+    try {
+      const { pedidos } = await this.getConsumoLavanderiaPorQuarto(quartoNumero, hotelId);
+      for (const p of pedidos) {
+        await this.updateStatus(p.id, 'entregue', hotelId);
+        try {
+          if (supabase) {
+            await supabase.from('lavanderia_pedidos').update({ pago: true }).eq('id', p.id);
+          }
+        } catch {}
+      }
+    } catch (bErr) {
+      console.warn('Aviso ao baixar pedidos de lavanderia no check-out:', bErr);
+    }
   },
 
   // Excluir pedido

@@ -15,7 +15,7 @@
  */
 
 import { supabase } from '../lib/supabase';
-import { currentHotelService, reservasService } from './supabaseService';
+import { currentHotelService, reservasService, hotelConfigService } from './supabaseService';
 import { templateMensagemService } from './templateMensagemService';
 
 // Conjunto para evitar processamentos concorrentes ou duplicados na mesma sessão
@@ -142,18 +142,36 @@ export const autoCheckoutService = {
 
         const hotelId = res.hotel_id || (typeof window !== 'undefined' ? currentHotelService.getCurrentHotel()?.id : null);
         const fuso = getFusoHorarioDoHotel(hotelId);
-        const { dataStr: hojeNoFuso, hora: horaNoFuso } = getHoraEDataNoFuso(fuso);
+        const { dataStr: hojeNoFuso, hora: horaNoFuso, minuto: minutoNoFuso } = getHoraEDataNoFuso(fuso);
 
         // Regra Oficial de Negócio:
-        // 1. Data de check-out é anterior a hoje no fuso do hotel (já expirada)
-        // 2. Data de check-out é hoje e já são 07:00 da manhã ou mais no fuso do hotel
+        // 1. Data de check-out é anterior a hoje no fuso do hotel (já expirada em dia anterior)
+        // 2. Data de check-out é hoje e já ultrapassou o horário limite (checkOutHorario + tolerância)
         const isExpiradaAnterior = checkoutIso < hojeNoFuso;
-        const isHojeAposSete = checkoutIso === hojeNoFuso && horaNoFuso >= 7;
+        let isHojeExpirado = false;
 
-        if (isExpiradaAnterior || isHojeAposSete) {
+        if (checkoutIso === hojeNoFuso) {
+          let checkOutHorario = '12:00';
+          let toleranciaMinutos = 30;
+          try {
+            const cfg = await hotelConfigService.getConfig(hotelId);
+            if (cfg?.checkOutHorario) checkOutHorario = cfg.checkOutHorario;
+            if (typeof cfg?.toleranciaCheckOutMinutos === 'number') toleranciaMinutos = cfg.toleranciaCheckOutMinutos;
+          } catch {}
+
+          const [hOutStr, mOutStr] = checkOutHorario.split(':');
+          const hOut = parseInt(hOutStr, 10) || 12;
+          const mOut = parseInt(mOutStr, 10) || 0;
+          const minutosLimite = hOut * 60 + mOut + toleranciaMinutos;
+          const minutosAtuais = horaNoFuso * 60 + minutoNoFuso;
+
+          isHojeExpirado = minutosAtuais >= minutosLimite;
+        }
+
+        if (isExpiradaAnterior || isHojeExpirado) {
           reservasEmProcessamento.add(resId);
           console.info(
-            `[AutoCheckout 07:00] Disparando check-out automático para a reserva #${resId} (${res.nome_hospede || res.hospedeNome}). Data Checkout: ${checkoutIso}, Hoje no fuso (${fuso}): ${hojeNoFuso} às ${horaNoFuso}h.`
+            `[AutoCheckout] Disparando check-out automático para a reserva #${resId} (${res.nome_hospede || res.hospedeNome}). Data Checkout: ${checkoutIso}, Hoje no fuso (${fuso}): ${hojeNoFuso} às ${horaNoFuso}:${minutoNoFuso}h.`
           );
 
           try {
