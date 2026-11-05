@@ -137,53 +137,78 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
   const isHotel = userRole.includes('hotel') || userRole.includes('admin') || userRole.includes('gerent') || userRole.includes('super') || userRole === '';
   const canMarkAsClean = isCamareira || isHotel;
 
+  const fetchRooms = useCallback(() => {
+    Promise.all([
+      quartosService.getQuartos(),
+      reservasService.getReservas().catch(() => [])
+    ]).then(([dataQuartos, dataReservas]) => {
+      const resList = dataReservas || [];
+      setAllReservas(resList);
+
+      const mapped = (dataQuartos || []).map((q: any) => {
+        const qNum = String(q.number || q.numero || '').trim();
+        const qId = String(q.id || '').trim();
+
+        const activeRes = resList.find((r: any) => {
+          const rNum = String(r.numero_quarto || '').trim();
+          const rId = String(r.quarto_id || '').trim();
+          const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
+          if (!matchesRoom) return false;
+          const st = (r.status || '').toLowerCase();
+          return st === 'hospedado';
+        }) || resList.find((r: any) => {
+          const rNum = String(r.numero_quarto || '').trim();
+          const rId = String(r.quarto_id || '').trim();
+          const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
+          if (!matchesRoom) return false;
+          const st = (r.status || '').toLowerCase();
+          return st === 'confirmada' || st === 'pendente' || st.includes('confirm') || st.includes('garant');
+        }) || resList.find((r: any) => {
+          const rNum = String(r.numero_quarto || '').trim();
+          const rId = String(r.quarto_id || '').trim();
+          return (rId && rId === qId) || (rNum && rNum === qNum);
+        });
+
+        const guestName = q.guestName || (q as any).hospede_atual || (q.items && q.items.hospede_atual) || activeRes?.hospedeNome || (activeRes as any)?.nome_hospede || undefined;
+
+        // Determinação dinâmica e precisa do status com base na reserva
+        const rawStatus = String(q.status || 'livre').toLowerCase().trim();
+        let resolvedStatus = q.status || 'livre';
+
+        const resStatus = (activeRes?.status || '').toLowerCase();
+        const isHospedado = resStatus === 'hospedado';
+        const isReservaAtiva = resStatus === 'confirmada' || resStatus === 'pendente' || resStatus.includes('confirm') || resStatus.includes('garant');
+
+        if (isHospedado || rawStatus === 'ocupado') {
+          resolvedStatus = 'ocupado';
+        } else if (isReservaAtiva) {
+          // Se o quarto estiver livre ou sem bloqueio físico impeditivo (como manutenção ou interditado), reflete como reservado
+          if (rawStatus === 'livre' || rawStatus === 'disponivel' || rawStatus === '' || rawStatus === 'reservado') {
+            resolvedStatus = 'reservado';
+          }
+        }
+
+        return {
+          ...q,
+          status: resolvedStatus,
+          guestName,
+          activeReserva: activeRes || undefined
+        };
+      });
+
+      setRooms(mapped);
+      setSelectedRoom(prev => {
+        if (!prev) return null;
+        const up = mapped.find(r => r.id === prev.id || String(r.number).trim() === String(prev.number).trim());
+        return up ? { ...prev, ...up } : prev;
+      });
+    }).catch(err => {
+      console.warn('Erro ao carregar quartos e reservas no Mapa:', err);
+    });
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
-    const fetchRooms = () => {
-      Promise.all([
-        quartosService.getQuartos(),
-        reservasService.getReservas().catch(() => [])
-      ]).then(([dataQuartos, dataReservas]) => {
-        if (!isMounted) return;
-        const resList = dataReservas || [];
-        setAllReservas(resList);
-
-        const mapped = (dataQuartos || []).map((q: any) => {
-          const qNum = String(q.number || q.numero || '').trim();
-          const qId = String(q.id || '').trim();
-
-          const activeRes = resList.find((r: any) => {
-            const rNum = String(r.numero_quarto || '').trim();
-            const rId = String(r.quarto_id || '').trim();
-            const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
-            if (!matchesRoom) return false;
-            const st = (r.status || '').toLowerCase();
-            return st === 'confirmada' || st === 'hospedado' || st === 'pendente';
-          }) || resList.find((r: any) => {
-            const rNum = String(r.numero_quarto || '').trim();
-            const rId = String(r.quarto_id || '').trim();
-            return (rId && rId === qId) || (rNum && rNum === qNum);
-          });
-
-          const guestName = q.guestName || (q as any).hospede_atual || (q.items && q.items.hospede_atual) || activeRes?.hospedeNome || (activeRes as any)?.nome_hospede || undefined;
-
-          return {
-            ...q,
-            guestName,
-            activeReserva: activeRes || undefined
-          };
-        });
-
-        setRooms(mapped);
-        setSelectedRoom(prev => {
-          if (!prev) return null;
-          const up = mapped.find(r => r.id === prev.id || String(r.number).trim() === String(prev.number).trim());
-          return up ? { ...prev, ...up } : prev;
-        });
-      }).catch(err => {
-        console.warn('Erro ao carregar quartos e reservas no Mapa:', err);
-      });
-    };
     fetchRooms();
     loadStatus();
 
@@ -502,7 +527,14 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
         const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
         if (!matchesRoom) return false;
         const st = (r.status || '').toLowerCase();
-        return st === 'confirmada' || st === 'hospedado' || st === 'pendente';
+        return st === 'hospedado';
+      }) || (list || []).find((r: any) => {
+        const rNum = String(r.numero_quarto || '').trim();
+        const rId = String(r.quarto_id || '').trim();
+        const matchesRoom = (rId && rId === qId) || (rNum && rNum === qNum);
+        if (!matchesRoom) return false;
+        const st = (r.status || '').toLowerCase();
+        return st === 'confirmada' || st === 'pendente' || st.includes('confirm') || st.includes('garant');
       }) || (list || []).find((r: any) => {
         const rNum = String(r.numero_quarto || '').trim();
         const rId = String(r.quarto_id || '').trim();
@@ -526,10 +558,19 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
         const freshRes = findRes(freshList);
         if (freshRes) {
           const freshName = freshRes.hospedeNome || (freshRes as any)?.nome_hospede || resolvedGuestName;
+          const freshSt = (freshRes.status || '').toLowerCase();
+          const isFreshHosp = freshSt === 'hospedado';
+          const isFreshRes = freshSt === 'confirmada' || freshSt === 'pendente' || freshSt.includes('confirm') || freshSt.includes('garant');
+
           setSelectedRoom(prev => {
             if (!prev || (prev.id !== room.id && String(prev.number).trim() !== qNum)) return prev;
+            let upSt = prev.status;
+            if (isFreshHosp) upSt = 'ocupado';
+            else if (isFreshRes && (prev.status === 'livre' || prev.status === 'disponivel')) upSt = 'reservado';
+
             return {
               ...prev,
+              status: upSt,
               guestName: freshName,
               activeReserva: freshRes
             };
@@ -1240,13 +1281,20 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
                   if (isOcupadoOuReservado && room.guestName) {
                     const isRes = rSt === 'reservado' || rSt.includes('reserv');
                     return (
-                      <div className="flex items-center gap-1 truncate max-w-[130px]" title={`${isRes ? 'Reserva' : 'Hóspede'}: ${room.guestName}`}>
-                        <span className={`material-symbols-outlined text-base shrink-0 ${isRes ? 'text-purple-700' : 'text-[#ba1a1a]'}`}>
-                          {isRes ? 'bookmark' : 'person'}
-                        </span>
-                        <span className={`text-xs font-semibold truncate ${isRes ? 'text-purple-800' : 'text-[#ba1a1a]'}`}>
-                          {room.guestName}
-                        </span>
+                      <div className="flex flex-col gap-0.5 truncate max-w-[140px]" title={`${isRes ? 'Reserva' : 'Hóspede'}: ${room.guestName}`}>
+                        <div className="flex items-center gap-1 truncate">
+                          <span className={`material-symbols-outlined text-base shrink-0 ${isRes ? 'text-purple-700' : 'text-[#ba1a1a]'}`}>
+                            {isRes ? 'bookmark' : 'person'}
+                          </span>
+                          <span className={`text-xs font-semibold truncate ${isRes ? 'text-purple-800' : 'text-[#ba1a1a]'}`}>
+                            {room.guestName}
+                          </span>
+                        </div>
+                        {isRes && room.activeReserva?.checkIn && (
+                          <span className="text-[10px] text-purple-700 font-bold pl-5 truncate">
+                            Entrada: {new Date(room.activeReserva.checkIn + 'T12:00:00').toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
                       </div>
                     );
                   }
@@ -2368,7 +2416,7 @@ export const MapaQuartos: React.FC<MapaQuartosProps> = ({
         reserva={checkinModalReserva}
         onClose={() => setCheckinModalReserva(null)}
         onSuccess={() => {
-          quartosService.getQuartos().then(data => setRooms(data || []));
+          fetchRooms();
           setCheckinModalReserva(null);
         }}
       />

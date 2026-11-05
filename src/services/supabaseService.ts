@@ -4459,6 +4459,22 @@ export const reservasService = {
         return null;
       }
 
+      // Sincroniza o status do quarto no banco para 'reservado' se a reserva foi criada como confirmada/pendente
+      const statusLowerCriacao = (data.status || '').toLowerCase();
+      if (statusLowerCriacao.includes('confirmad') || statusLowerCriacao.includes('pendent')) {
+        try {
+          if (resolvedQuartoId) {
+            await supabase.from('quartos').update({ status: 'reservado' }).eq('id', resolvedQuartoId);
+          } else if (data.numero_quarto) {
+            let qUp = supabase.from('quartos').update({ status: 'reservado' }).eq('numero', String(data.numero_quarto));
+            if (resolvedHotelId) qUp = qUp.eq('hotel_id', resolvedHotelId);
+            await qUp;
+          }
+        } catch (uErr) {
+          console.warn('Aviso ao sincronizar status do quarto na criacao de reserva:', uErr);
+        }
+      }
+
       // Notificar via CustomEvent em tempo real no window
       if (typeof window !== 'undefined') {
         const notifDetail = {
@@ -4632,7 +4648,13 @@ export const reservasService = {
           window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId: qId, numero: qNum, status: 'ocupado' } }));
         }
       } else if (statusLower.includes('confirmad') || statusLower.includes('pendent')) {
-        // Se a reserva foi reativada ou confirmada, desmarca no-show se houver
+        // Se a reserva foi reativada ou confirmada, desmarca no-show se houver e atualiza quarto para reservado
+        if (qId) await supabase.from('quartos').update({ status: 'reservado' }).eq('id', qId);
+        if (qNum) {
+          let q = supabase.from('quartos').update({ status: 'reservado' }).eq('numero', String(qNum));
+          if (hId) q = q.eq('hotel_id', hId);
+          await q;
+        }
         if (typeof window !== 'undefined') {
           try { localStorage.removeItem(`noshow_reconhecido_${id}`); } catch {}
           window.dispatchEvent(new CustomEvent('hotel_quarto_atualizado', { detail: { quartoId: qId, numero: qNum, status: 'reservado' } }));
