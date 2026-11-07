@@ -36,6 +36,7 @@ export interface AdminMasterDashboardProps {
   onNavigateToUsuarios: () => void;
   onNavigateToConfig?: () => void;
   onNavigateToMercadoPago?: () => void;
+  onNavigateToInfinitePay?: () => void;
   onNavigateToWhatsApp?: () => void;
   onNavigateToDisparador?: () => void;
   onNavigateToCaixa?: () => void;
@@ -58,6 +59,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   onNavigateToUsuarios,
   onNavigateToConfig,
   onNavigateToMercadoPago,
+  onNavigateToInfinitePay,
   onNavigateToWhatsApp,
   onNavigateToDisparador,
   onNavigateToCaixa,
@@ -667,6 +669,17 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                     <span className="material-symbols-outlined text-base">payments</span>
                     <span>Mercado Pago</span>
                   </button>
+
+                  {onNavigateToInfinitePay && (
+                    <button 
+                      type="button"
+                      onClick={onNavigateToInfinitePay}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/80 hover:bg-white/10 hover:text-white transition-all text-left cursor-pointer font-medium"
+                    >
+                      <span className="material-symbols-outlined text-base">bolt</span>
+                      <span>InfinitePay (Pix)</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -852,6 +865,16 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                   >
                     <span className="material-symbols-outlined text-lg">payments</span>
                     <span>Mercado Pago</span>
+                  </button>
+                )}
+
+                {onNavigateToInfinitePay && (
+                  <button 
+                    onClick={() => { setIsMobileMenuOpen(false); onNavigateToInfinitePay(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/5 text-left cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-lg">bolt</span>
+                    <span>InfinitePay (Pix)</span>
                   </button>
                 )}
 

@@ -123,6 +123,7 @@ const ParametrosSistema = lazy(() => import('./components/ParametrosSistema').th
 const LogsSistema = lazy(() => import('./components/LogsSistema').then(m => ({ default: m.LogsSistema })));
 const NotificacoesPushAdmin = lazy(() => import('./components/NotificacoesPushAdmin').then(m => ({ default: m.NotificacoesPushAdmin })));
 const ConfiguracoesMercadoPago = lazy(() => import('./components/ConfiguracoesMercadoPago').then(m => ({ default: m.ConfiguracoesMercadoPago })));
+const ConfiguracoesInfinitePay = lazy(() => import('./components/ConfiguracoesInfinitePay').then(m => ({ default: m.ConfiguracoesInfinitePay })));
 const ConfiguracoesHotel = lazy(() => import('./components/ConfiguracoesHotel').then(m => ({ default: m.ConfiguracoesHotel })));
 const RelatoriosHotel = lazy(() => import('./components/RelatoriosHotel'));
 const Tutoriais = lazy(() => import('./components/Tutoriais'));
@@ -1716,7 +1717,7 @@ export const App: React.FC = () => {
           'categorias-contas-pagar', 'categorias-contas-receber',
           'cadastro-conta-pagar', 'cadastro-conta-receber',
           'cadastro-categoria-conta-pagar', 'cadastro-categoria-conta-receber',
-          'config', 'config-hotel', 'config-mercado-pago',
+          'config', 'config-hotel', 'config-mercado-pago', 'config-infinitepay', 'config-infinitepay',
           'relatorios',
           'lavanderia'
         ];
@@ -3331,13 +3332,13 @@ export const App: React.FC = () => {
                       type="button"
                       onClick={() => setIsAdminConfigSubmenuOpen(!isAdminConfigSubmenuOpen)}
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer ${
-                        activeTab === 'admin-config' || activeTab === 'config-mercado-pago'
+                        activeTab === 'admin-config' || activeTab === 'config-mercado-pago' || activeTab === 'config-infinitepay'
                           ? 'bg-white/10 text-white font-medium border-l-4 border-emerald-400'
                           : 'text-white/80 hover:bg-white/5 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className={`material-symbols-outlined ${(activeTab === 'admin-config' || activeTab === 'config-mercado-pago') ? 'text-emerald-400' : ''}`}>
+                        <span className={`material-symbols-outlined ${(activeTab === 'admin-config' || activeTab === 'config-mercado-pago' || activeTab === 'config-infinitepay') ? 'text-emerald-400' : ''}`}>
                           settings
                         </span>
                         <span>Configurações</span>
@@ -3377,6 +3378,19 @@ export const App: React.FC = () => {
 
                         <button
                           type="button"
+                          onClick={() => { setActiveTab('config-infinitepay'); setIsMobileMenuOpen(false); }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                            activeTab === 'config-infinitepay'
+                              ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-base">bolt</span>
+                          <span>InfinitePay (Pix)</span>
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={() => { setAdminParametrosTab('marketing'); setActiveTab('admin-config'); setIsMobileMenuOpen(false); }}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
                             activeTab === 'admin-config' && adminParametrosTab === 'marketing'
@@ -3411,7 +3425,7 @@ export const App: React.FC = () => {
                     const isConfigMenu = item.id === 'config';
                     const isActive = activeTab === item.id || 
                                      (isProdutoMenu && (activeTab === 'produto-categorias' || activeTab === 'produto-estoque' || activeTab === 'pedidos-cardapio')) ||
-                                     (isConfigMenu && (activeTab === 'config' || activeTab === 'config-hotel' || activeTab === 'config-mercado-pago'));
+                                     (isConfigMenu && (activeTab === 'config' || activeTab === 'config-hotel' || activeTab === 'config-mercado-pago' || activeTab === 'config-infinitepay'));
 
                     return (
                       <div key={item.id} className="flex flex-col gap-0.5 shrink-0">
@@ -3553,6 +3567,23 @@ export const App: React.FC = () => {
                             >
                               <span className="material-symbols-outlined text-base">payments</span>
                               <span>Mercado Pago</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setActiveTab('config-infinitepay');
+                                setIsConfigSubmenuOpen(false);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className={
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors text-left w-full cursor-pointer " +
+                                (activeTab === 'config-infinitepay'
+                                  ? 'bg-[#6cf8bb]/30 text-[#6cf8bb]'
+                                  : 'text-white/80 hover:bg-white/10 hover:text-white')
+                              }
+                            >
+                              <span className="material-symbols-outlined text-base">bolt</span>
+                              <span>InfinitePay</span>
                             </button>
                           </div>
                         )}
@@ -3853,7 +3884,7 @@ export const App: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`material-symbols-outlined ${(activeTab === 'admin-config' || activeTab === 'config-mercado-pago') ? 'text-emerald-400' : ''}`}>
+                    <span className={`material-symbols-outlined ${(activeTab === 'admin-config' || activeTab === 'config-mercado-pago' || activeTab === 'config-infinitepay') ? 'text-emerald-400' : ''}`}>
                       settings
                     </span>
                     <span>Configurações</span>
@@ -3889,6 +3920,19 @@ export const App: React.FC = () => {
                     >
                       <span className="material-symbols-outlined text-base">payments</span>
                       <span>Mercado Pago</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('config-infinitepay')}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer ${
+                        activeTab === 'config-infinitepay'
+                          ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-base">bolt</span>
+                      <span>InfinitePay (Pix)</span>
                     </button>
 
                     <button
@@ -3985,7 +4029,7 @@ export const App: React.FC = () => {
               const isConfigMenu = item.id === 'config';
               const isActive = activeTab === item.id || 
                                (isProdutoMenu && (activeTab === 'produto-categorias' || activeTab === 'produto-estoque' || activeTab === 'pedidos-cardapio')) ||
-                               (isConfigMenu && (activeTab === 'config' || activeTab === 'config-hotel' || activeTab === 'config-mercado-pago'));
+                               (isConfigMenu && (activeTab === 'config' || activeTab === 'config-hotel' || activeTab === 'config-mercado-pago' || activeTab === 'config-infinitepay'));
 
               return (
                 <div key={item.id} className="flex flex-col gap-0.5 shrink-0">
@@ -4123,6 +4167,22 @@ export const App: React.FC = () => {
                       >
                         <span className="material-symbols-outlined text-base">payments</span>
                         <span>Mercado Pago</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setActiveTab('config-infinitepay');
+                          setIsConfigSubmenuOpen(false);
+                        }}
+                        className={
+                          "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer " +
+                          (activeTab === 'config-infinitepay'
+                            ? 'bg-[#6cf8bb]/30 text-[#6cf8bb]'
+                            : 'text-white/80 hover:bg-white/10 hover:text-white')
+                        }
+                      >
+                        <span className="material-symbols-outlined text-base">bolt</span>
+                        <span>InfinitePay</span>
                       </button>
                     </div>
                   )}
@@ -4444,6 +4504,9 @@ export const App: React.FC = () => {
               }}
               onNavigateToMercadoPago={() => {
                 setActiveTab('config-mercado-pago');
+              }}
+              onNavigateToInfinitePay={() => {
+                setActiveTab('config-infinitepay');
               }}
               onNavigateToLogs={() => {
                 setActiveTab('logs-sistema');
@@ -4914,6 +4977,20 @@ export const App: React.FC = () => {
               onBackToDashboard={() => setActiveTab('dashboard')}
             />
           )}
+          {activeTab === 'config-infinitepay' && isMasterAdmin && (
+            <ConfiguracoesInfinitePay 
+              isAdmin={true}
+              onBackToDashboard={() => setActiveTab('admin-dashboard')}
+            />
+          )}
+          {activeTab === 'config-infinitepay' && isHotelUser && !isGerente && (
+            <ConfiguracoesInfinitePay 
+              isAdmin={false}
+              hotelId={activeHotel?.id}
+              hotelNome={activeHotel?.name}
+              onBackToDashboard={() => setActiveTab('dashboard')}
+            />
+          )}
           {activeTab === 'planos' && isMasterAdmin && (
             <ListagemPlanos 
               onNavigateToDashboard={() => setActiveTab('admin-dashboard')}
@@ -5100,7 +5177,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'disparador-google' && activeTab !== 'super-agente-vendedor' && activeTab !== 'admin-notificacoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'logs-sistema' && activeTab !== 'mapa' && activeTab !== 'governanca' && activeTab !== 'lavanderia' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cupons' && activeTab !== 'cadastro-cupom' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
+          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'disparador-google' && activeTab !== 'super-agente-vendedor' && activeTab !== 'admin-notificacoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'logs-sistema' && activeTab !== 'mapa' && activeTab !== 'governanca' && activeTab !== 'lavanderia' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cupons' && activeTab !== 'cadastro-cupom' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config-infinitepay' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
             <div className="p-8 text-center text-[#45464d]">
               <h2 className="text-xl font-bold text-[#0b1c30] mb-2">Tela em construção</h2>
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>

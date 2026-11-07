@@ -3,6 +3,7 @@ import { systemLogsService } from '../services/systemLogsService';
 import { mercadopagoService, MercadoPagoCredentials, getApiBaseUrl } from '../services/mercadopagoService';
 import { currentHotelService, hoteisService } from '../services/supabaseService';
 import { Hotel } from './CadastroHoteis';
+import { paymentGatewayService, GatewayPadrao } from '../services/paymentGatewayService';
 
 export interface ConfiguracoesMercadoPagoProps {
   isAdmin?: boolean;
@@ -29,6 +30,7 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
     : (hoteisList.find(h => h.id === effectiveHotelId)?.name || propHotelNome || currentHotel?.name || 'Hotel');
 
   // Estado do Ambiente
+  const [defaultGateway, setDefaultGatewayState] = useState<GatewayPadrao>('mercadopago');
   const [environment, setEnvironment] = useState<'production' | 'sandbox'>('production');
 
   // Estado das Credenciais
@@ -114,7 +116,17 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
 
   useEffect(() => {
     loadCredentialsForScope(selectedScope);
-  }, [selectedScope]);
+    const def = paymentGatewayService.getDefaultGateway(effectiveHotelId);
+    setDefaultGatewayState(def);
+  }, [selectedScope, effectiveHotelId]);
+
+  const handleSetDefaultGateway = async (gw: GatewayPadrao) => {
+    setDefaultGatewayState(gw);
+    const ok = await paymentGatewayService.setDefaultGateway(gw, effectiveHotelId, effectiveHotelName);
+    if (ok) {
+      showToast(gw === 'infinitepay' ? '⚡ InfinitePay definido como Checkout Padrão!' : 'Mercado Pago definido como Checkout Padrão!');
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -395,7 +407,134 @@ export const ConfiguracoesMercadoPago: React.FC<ConfiguracoesMercadoPagoProps> =
       </div>
 
       {/* FORMULÁRIO DE CONFIGURAÇÕES */}
-      <form onSubmit={handleSave} className="space-y-6">
+            {/* SELETOR DE CHECKOUT PADRÃO (INFINITEPAY VS MERCADO PAGO) */}
+      <div className="bg-white rounded-2xl border-2 border-sky-500/40 shadow-xs p-5 sm:p-6 space-y-4 bg-gradient-to-br from-sky-50/30 via-white to-white">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="material-symbols-outlined text-sky-600 text-xl">tune</span>
+              <h2 className="text-base font-bold text-slate-900">Checkout Principal do Hotel (Gateway Padrão)</h2>
+              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                defaultGateway === 'mercadopago'
+                  ? 'bg-sky-100 text-sky-800 border-sky-300'
+                  : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+              }`}>
+                {defaultGateway === 'mercadopago' ? 'Mercado Pago Selecionado como Padrão' : '⚡ InfinitePay Selecionado como Padrão'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Defina qual checkout integrado será acionado preferencialmente para pagamentos de diárias e reservas online.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          {/* Card InfinitePay */}
+          <div
+            onClick={() => handleSetDefaultGateway('infinitepay')}
+            className={`p-4 rounded-xl border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
+              defaultGateway === 'infinitepay'
+                ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-2 ring-emerald-500/20'
+                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                    <span className="material-symbols-outlined text-xl">bolt</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+                      <span>InfinitePay</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        Taxa 0% PIX
+                      </span>
+                    </h3>
+                    <span className="text-[11px] font-semibold text-emerald-700">Taxa Zero no PIX</span>
+                  </div>
+                </div>
+                {defaultGateway === 'infinitepay' ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white shadow-2xs">
+                    <span className="material-symbols-outlined text-xs">check</span>
+                    Padrão Ativo
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400 font-medium">Clique p/ Ativar</span>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Pix cai na hora na conta InfinitePay do hotel com <strong>0% de taxa</strong>. Suporta parcelamento em cartão até 12x.
+              </p>
+            </div>
+            <div className="mt-4 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+              <span className="text-emerald-700 font-bold">Repasse: Imediato</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleSetDefaultGateway('infinitepay'); }}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs cursor-pointer ${
+                  defaultGateway === 'infinitepay'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white border border-slate-200 hover:bg-emerald-50 text-slate-700'
+                }`}
+              >
+                {defaultGateway === 'infinitepay' ? '✓ Padrão Selecionado' : 'Definir como Padrão'}
+              </button>
+            </div>
+          </div>
+
+          {/* Card Mercado Pago */}
+          <div
+            onClick={() => handleSetDefaultGateway('mercadopago')}
+            className={`p-4 rounded-xl border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
+              defaultGateway === 'mercadopago'
+                ? 'border-sky-600 bg-sky-50/50 shadow-sm ring-2 ring-sky-500/20'
+                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-sky-100 text-sky-800 flex items-center justify-center font-bold">
+                    <span className="material-symbols-outlined text-xl">payments</span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">Mercado Pago</h3>
+                    <span className="text-[11px] font-semibold text-sky-700">Gateway Tradicional</span>
+                  </div>
+                </div>
+                {defaultGateway === 'mercadopago' ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-sky-600 text-white shadow-2xs">
+                    <span className="material-symbols-outlined text-xs">check</span>
+                    Padrão Ativo
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400 font-medium">Clique p/ Ativar</span>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Cobrança tradicional do Mercado Pago com Pix, Cartão de Crédito e saldo em conta Mercado Pago.
+              </p>
+            </div>
+            <div className="mt-4 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+              <span className="text-sky-700 font-bold">Repasse: Conforme plano MP</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleSetDefaultGateway('mercadopago'); }}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs cursor-pointer ${
+                  defaultGateway === 'mercadopago'
+                    ? 'bg-sky-600 text-white'
+                    : 'bg-white border border-slate-200 hover:bg-sky-50 text-slate-700'
+                }`}
+              >
+                {defaultGateway === 'mercadopago' ? '✓ Padrão Selecionado' : 'Definir como Padrão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<form onSubmit={handleSave} className="space-y-6">
         
         {/* SEÇÃO 1: AMBIENTE */}
         <div className="bg-white rounded-2xl p-5 md:p-7 border border-slate-200 shadow-xs space-y-4">

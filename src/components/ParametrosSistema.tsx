@@ -108,7 +108,7 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
   const [showWhatsappToken, setShowWhatsappToken] = useState(false);
   const [isTestingWhatsapp, setIsTestingWhatsapp] = useState(false);
 
-  const [gatewayProvider, setGatewayProvider] = useState<'mercadopago' | 'asaas' | 'stripe'>('mercadopago');
+  const [gatewayProvider, setGatewayProvider] = useState<'infinitepay' | 'mercadopago' | 'asaas' | 'stripe'>('infinitepay');
   const [gatewayEnvironment, setGatewayEnvironment] = useState<'production' | 'sandbox'>('production');
   const [gatewayPixKey, setGatewayPixKey] = useState('');
   const [gatewayToken, setGatewayToken] = useState('');
@@ -870,6 +870,7 @@ export const ParametrosSistema: React.FC<ParametrosSistemaProps> = ({
                         onChange={(e) => setGatewayProvider(e.target.value as any)}
                         className="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 cursor-pointer"
                       >
+                        <option value="infinitepay">⚡ InfinitePay (Checkout Integrado - PIX Taxa 0%)</option>
                         <option value="mercadopago">Mercado Pago</option>
                         <option value="asaas">Asaas</option>
                         <option value="stripe">Stripe</option>

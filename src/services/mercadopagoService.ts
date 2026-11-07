@@ -22,7 +22,7 @@ export interface PixMasterResult {
   qrCodeBase64?: string;
   fallbackQrUrl?: string;
   ticketUrl?: string;
-  gateway: 'mercadopago' | 'pix_chave';
+  gateway: 'mercadopago' | 'pix_chave' | 'infinitepay';
   error?: string;
 }
 
@@ -439,6 +439,40 @@ export const mercadopagoService = {
   // ─────────────────────────────────────────────────────────────────────────
   async criarPagamentoPixMaster(params: CriarPixMasterParams): Promise<PixMasterResult> {
     const { hotelId, hotelNome, planoNome, valor, pagadorEmail, pagadorNome, pagadorDoc } = params;
+
+    // 0. Verifica se o checkout padrão do sistema é InfinitePay (Taxa Zero no PIX)
+    try {
+      const { paymentGatewayService } = await import('./paymentGatewayService');
+      const defaultGw = paymentGatewayService.getDefaultGateway(hotelId);
+      if (defaultGw === 'infinitepay') {
+        const infResp = await fetch(`${getApiBaseUrl()}/api/infinitepay-pix?action=create_link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_nsu: `PLANO-${Date.now().toString().slice(-8)}`,
+            amount: valor,
+            items: [{ description: `Assinatura ${planoNome}`, quantity: 1, price: valor }],
+            customer: { name: pagadorNome, email: pagadorEmail }
+          })
+        });
+        if (infResp.ok) {
+          const infData = await infResp.json();
+          if (infData && infData.success && infData.url) {
+            return {
+              success: true,
+              paymentId: infData.order_nsu || `inf_${Date.now()}`,
+              status: 'pending',
+              qrCode: infData.url,
+              fallbackQrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(infData.url)}`,
+              ticketUrl: infData.url,
+              gateway: 'infinitepay'
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Fallback para Mercado Pago após tentativa InfinitePay:', e);
+    }
     
     // Busca chave PIX e credenciais corretas do sistema
     const configMaster = await this.buscarChavePixMaster();
