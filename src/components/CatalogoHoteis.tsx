@@ -382,28 +382,24 @@ const CityCarousel: React.FC<CityCarouselProps> = ({
   return (
     <section id={`cidade-${group.slug}`} className="space-y-3.5 scroll-mt-28 py-2">
       {/* CABEÇALHO DA SEÇÃO DE CIDADE */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-1">
         <div 
           onClick={handleTitleClick}
-          className="flex items-center gap-2 cursor-pointer group select-none transition-colors"
+          className="flex flex-col cursor-pointer group select-none transition-colors"
           title={`Ver todos os hotéis em ${group.city}`}
         >
-          {group.isPaidWithRooms && (
-            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
-              <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-            </div>
-          )}
-          <h2 className="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1 sm:gap-1.5 group-hover:text-emerald-700 transition-colors">
-            <span>{group.customTitle || `Hotéis e Pousadas em ${group.city} · ${group.uf}`}</span>
-            <span className="material-symbols-outlined text-base sm:text-lg text-slate-400 group-hover:text-emerald-700 group-hover:translate-x-1 transition-all">arrow_forward</span>
-          </h2>
-          {group.isUserLocation && (
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-black flex items-center gap-1 shadow-2xs shrink-0">
-              <span className="material-symbols-outlined text-xs sm:text-sm text-emerald-700" style={{ fontVariationSettings: "'FILL' 1" }}>near_me</span>
-              Sua Cidade
-            </span>
-          )}
-          <span className="text-[11px] sm:text-xs text-slate-500 font-semibold inline shrink-0 bg-slate-100 sm:bg-transparent px-2 py-0.5 sm:p-0 rounded-full sm:rounded-none">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {group.isPaidWithRooms && (
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                <span className="material-symbols-outlined text-base sm:text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+              </div>
+            )}
+            <h2 className="text-base sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1 group-hover:text-emerald-700 transition-colors">
+              <span>{`Hotéis e Pousadas em ${group.city} - ${group.uf}`}</span>
+              <span className="material-symbols-outlined text-base sm:text-lg text-slate-400 group-hover:text-emerald-700 group-hover:translate-x-1 transition-all">arrow_forward</span>
+            </h2>
+          </div>
+          <span className="text-xs text-slate-500 font-medium mt-0.5">
             ({group.hotels.length} {group.hotels.length === 1 ? 'acomodação' : 'acomodações'})
           </span>
         </div>
@@ -434,7 +430,7 @@ const CityCarousel: React.FC<CityCarouselProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className={`flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar ${
+        className={`flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 pt-1 -mx-4 px-6 sm:mx-0 sm:px-0 no-scrollbar ${
           isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -946,7 +942,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         isPaidWithRooms: g.hotels.some(h => h.hasActivePlan),
         hotels: g.hotels,
         isUserLocation,
-        customTitle: isUserLocation ? `Hotéis e Pousadas em ${g.city} · ${g.uf} (Mais próximos de você)` : undefined
+        customTitle: undefined
       };
     });
 
@@ -1254,20 +1250,28 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     return findCityBySlug(pendingDetectedLocation.city, hoteisList);
   }, [pendingDetectedLocation, hoteisList]);
 
-  const handleConfirmDetectedCity = () => {
-    if (!pendingDetectedLocation) return;
-    const city = pendingDetectedLocation.city;
-    sessionStorage.setItem('hotelnozap_location_prompt_seen', city);
-    localStorage.setItem('hotelnozap_location_confirmed_city', city);
-    locationService.setUserLocationInStorage(pendingDetectedLocation);
-    setUserLocation(pendingDetectedLocation);
+  const handleConfirmDetectedCity = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const targetCity = matchedDetectedCity || pendingDetectedLocation?.city;
+    if (targetCity) {
+      sessionStorage.setItem('hotelnozap_location_prompt_seen', targetCity);
+      localStorage.setItem('hotelnozap_location_prompt_seen', targetCity);
+      localStorage.setItem('hotelnozap_location_confirmed_city', targetCity);
+    }
+    if (pendingDetectedLocation) {
+      locationService.setUserLocationInStorage(pendingDetectedLocation);
+      setUserLocation(pendingDetectedLocation);
+    }
 
     if (matchedDetectedCity) {
-      setFocusedCity(matchedDetectedCity);
-      const cleanSlug = normalizeCitySlug(matchedDetectedCity);
-      window.history.replaceState({}, '', `/cidades/${cleanSlug}`);
+      handleOpenCityRoute(normalizeCitySlug(matchedDetectedCity), matchedDetectedCity);
     }
+
     setShowLocationConfirmationModal(false);
+    setPendingDetectedLocation(null);
   };
 
   const handleChooseAnotherCity = () => {
@@ -1774,7 +1778,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
       {/* ========================================================================= */}
       {/* CORPO PRINCIPAL: SEÇÕES DE CARROSSEL HORIZONTAL OU RESULTADO DA BUSCA    */}
       {/* ========================================================================= */}
-      <main className="max-w-[1680px] mx-auto px-4 sm:px-8 pt-6 space-y-8">
+      <main className="max-w-[1680px] mx-auto px-5 sm:px-8 pt-6 space-y-8">
 
 
         {loading ? (
@@ -2365,10 +2369,11 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                 <button
                   type="button"
                   onClick={handleConfirmDetectedCity}
-                  className="w-full py-3.5 px-5 rounded-2xl bg-[#003400] hover:bg-[#002500] text-white font-extrabold text-sm shadow-md shadow-emerald-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  onTouchEnd={handleConfirmDetectedCity}
+                  className="w-full py-3.5 px-5 rounded-2xl bg-[#003400] hover:bg-[#002500] active:bg-[#001f00] text-white font-extrabold text-sm shadow-md shadow-emerald-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                 >
-                  <span className="material-symbols-outlined text-lg">travel_explore</span>
-                  <span>Sim, ver opções em {matchedDetectedCity}</span>
+                  <span className="material-symbols-outlined text-lg">check_circle</span>
+                  <span>Sim, estou em {matchedDetectedCity || pendingDetectedLocation.city}</span>
                 </button>
               ) : (
                 <button
