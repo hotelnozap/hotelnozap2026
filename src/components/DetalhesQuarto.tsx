@@ -1,3 +1,4 @@
+import { getSafeHotelImageUrl } from '../utils/hotelImageHelper';
 import React, { useState, useEffect, useMemo } from 'react';
 import { PublicHotel, isHotelMoradaDaLua } from './CatalogoHoteis';
 import { QuartoCadastrado, slugify } from './PaginaHotel';
@@ -558,7 +559,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
             city: cName,
             uf: ufName,
             neighborhood: h.neighborhood || 'Centro / Orla',
-            imageUrl: h.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+            imageUrl: getSafeHotelImageUrl(h),
             rating: 4.90,
             reviewsCount: 45,
             pricePerNight: 220,

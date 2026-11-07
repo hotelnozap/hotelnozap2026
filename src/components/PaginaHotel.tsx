@@ -1,3 +1,4 @@
+import { getSafeHotelImageUrl } from '../utils/hotelImageHelper';
 import React, { useState, useEffect } from 'react';
 import { PublicHotel, isHotelMoradaDaLua } from './CatalogoHoteis';
 import { hoteisService, quartosService, tiposQuartosService, currentHotelService, comodidadesService, ComodidadeCategoria } from '../services/supabaseService';
@@ -436,7 +437,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
           city: h.city || cName,
           uf: h.uf || ufName,
           neighborhood: h.neighborhood || 'Centro / Orla',
-          imageUrl: h.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+          imageUrl: getSafeHotelImageUrl(h),
           rating: 4.90,
           reviewsCount: 45,
           pricePerNight: isDemo ? 220 : 0,

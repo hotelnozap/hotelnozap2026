@@ -6,6 +6,7 @@ import { navigateSpa } from '../utils/navigation';
 import { ZapHotelLogo } from './ZapHotelLogo';
 import { FALLBACK_HOTEIS_PRELOAD } from '../data/fallbackHoteisPreload';
 import { locationService, UserLocation } from '../services/locationService';
+import { getSafeHotelImageUrl, getHotelFallbackImage, isGoogleExpiredUrl } from '../utils/hotelImageHelper';
 
 export interface PublicHotel {
   id: string;
@@ -208,12 +209,16 @@ const AirbnbHotelCard: React.FC<AirbnbHotelCardProps> = ({
       {/* FOTO 4:3 COM BORDAS ARREDONDADAS (ESTILO AIRBNB) */}
       <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-slate-100 shadow-xs group-hover:shadow-md transition-all duration-300">
         <img
-          src={hotel.imageUrl}
+          src={getSafeHotelImageUrl(hotel)}
           alt={hotel.name}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80';
+            const target = e.currentTarget;
+            if (!target.dataset.hasFallback) {
+              target.dataset.hasFallback = 'true';
+              target.src = getHotelFallbackImage(hotel);
+            }
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
@@ -732,13 +737,14 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         const hotelMinPrice = hasRealRooms ? (minPriceByHotel[h.id] || 0) : 0;
 
         let finalImageUrl = h.imageUrl;
-        if (!h.imageUrl || isUnsplash(h.imageUrl)) {
-          if (realPhotoByHotel[h.id]) {
+        if (!h.imageUrl || isUnsplash(h.imageUrl) || isGoogleExpiredUrl(h.imageUrl)) {
+          if (realPhotoByHotel[h.id] && !isGoogleExpiredUrl(realPhotoByHotel[h.id])) {
             finalImageUrl = realPhotoByHotel[h.id];
+          } else {
+            finalImageUrl = getSafeHotelImageUrl({ id: h.id, name: h.name, category: h.category, imageUrl: h.imageUrl });
           }
-        }
-        if (!finalImageUrl) {
-          finalImageUrl = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80';
+        } else {
+          finalImageUrl = getSafeHotelImageUrl({ id: h.id, name: h.name, category: h.category, imageUrl: h.imageUrl });
         }
 
         const planLower = (h.plan || h.plano || '').toLowerCase().trim();
@@ -2117,7 +2123,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in overflow-y-auto">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col my-auto max-h-[90vh]">
             <div className="relative h-64 w-full bg-slate-900">
-              <img src={selectedHotelDetails.imageUrl} alt={selectedHotelDetails.name} className="w-full h-full object-cover" />
+              <img src={getSafeHotelImageUrl(selectedHotelDetails)} alt={selectedHotelDetails.name} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
               <button
                 onClick={() => setSelectedHotelDetails(null)}

@@ -1,3 +1,4 @@
+import { getSafeHotelImageUrl } from '../utils/hotelImageHelper';
 import { supabase } from '../lib/supabase';
 import { Usuario } from '../components/ListagemUsuarios';
 import { Hotel } from '../components/CadastroHoteis';
@@ -762,7 +763,7 @@ export const hoteisService = {
           managerName: h.nome_gerente || '',
           managerPhone: h.telefone_gerente || '',
           status: h.status || 'ativo',
-          imageUrl: h.url_imagem || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80',
+          imageUrl: getSafeHotelImageUrl({ id: h.id, name: h.nome, category: h.categoria, imageUrl: h.url_imagem }),
           razaoSocial: h.razao_social || '',
           cep: h.cep || '',
           street: h.logradouro || '',
