@@ -506,6 +506,10 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
   const [isDetectingLocation, setIsDetectingLocation] = useState<boolean>(false);
   const autoOpenedCityRef = useRef<string | null>(null);
 
+  // Modal Inteligente de Confirmação de Cidade (substitui o botão técnico de GPS)
+  const [showLocationConfirmationModal, setShowLocationConfirmationModal] = useState<boolean>(false);
+  const [pendingDetectedLocation, setPendingDetectedLocation] = useState<UserLocation | null>(null);
+
   // Escuta evento customizado de atualização de localização (ex: quando GPS conclui)
   useEffect(() => {
     const handleLocationUpdate = (e: any) => {
@@ -528,6 +532,18 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
         const detected = await locationService.autoDetectUserLocation();
         if (isMounted && detected?.city) {
           setUserLocation(detected);
+
+          // Verifica se o usuário já viu o modal nesta sessão ou se já confirmou previamente
+          const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+          const isExplicitCityRoute = (parts[0] === 'cidades' || parts[0] === 'cidade') && Boolean(parts[1]);
+          const hasManualOverride = locationService.hasManualCityOverride();
+          const seenPrompt = sessionStorage.getItem('hotelnozap_location_prompt_seen');
+          const confirmedCity = localStorage.getItem('hotelnozap_location_confirmed_city');
+
+          if (!isExplicitCityRoute && !hasManualOverride && seenPrompt !== detected.city && confirmedCity !== detected.city) {
+            setPendingDetectedLocation(detected);
+            setShowLocationConfirmationModal(true);
+          }
         }
       } catch (err) {
         console.warn('[CatalogoHoteis] Falha na detecção de GPS/IP:', err);
@@ -553,6 +569,10 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
 
     const currentCity = userLocation?.city;
     if (!currentCity) return;
+
+    // Se o usuário já confirmou esta cidade anteriormente, abre direto
+    const confirmedCity = localStorage.getItem('hotelnozap_location_confirmed_city');
+    if (confirmedCity !== currentCity) return;
 
     // Se já abrimos esta cidade automaticamente nesta sessão, não repete
     if (autoOpenedCityRef.current === currentCity) return;
@@ -1228,6 +1248,43 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Determina se a cidade detectada tem acomodações no catálogo
+  const matchedDetectedCity = useMemo(() => {
+    if (!pendingDetectedLocation?.city || !hoteisList || hoteisList.length === 0) return null;
+    return findCityBySlug(pendingDetectedLocation.city, hoteisList);
+  }, [pendingDetectedLocation, hoteisList]);
+
+  const handleConfirmDetectedCity = () => {
+    if (!pendingDetectedLocation) return;
+    const city = pendingDetectedLocation.city;
+    sessionStorage.setItem('hotelnozap_location_prompt_seen', city);
+    localStorage.setItem('hotelnozap_location_confirmed_city', city);
+    locationService.setUserLocationInStorage(pendingDetectedLocation);
+    setUserLocation(pendingDetectedLocation);
+
+    if (matchedDetectedCity) {
+      setFocusedCity(matchedDetectedCity);
+      const cleanSlug = normalizeCitySlug(matchedDetectedCity);
+      window.history.replaceState({}, '', `/cidades/${cleanSlug}`);
+    }
+    setShowLocationConfirmationModal(false);
+  };
+
+  const handleChooseAnotherCity = () => {
+    if (pendingDetectedLocation) {
+      sessionStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+    }
+    setShowLocationConfirmationModal(false);
+    setIsSearchPopoverOpen(true);
+  };
+
+  const handleDismissLocationModal = () => {
+    if (pendingDetectedLocation) {
+      sessionStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+    }
+    setShowLocationConfirmationModal(false);
+  };
+
   // Recalibra localização via sensor GPS ou IP do dispositivo
   const handleRefreshGps = async () => {
     setIsDetectingLocation(true);
@@ -1437,19 +1494,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
               </div>
             </div>
 
-            {/* BOTÃO ATUALIZAR GPS DESKTOP */}
-            <button
-              type="button"
-              onClick={handleRefreshGps}
-              disabled={isDetectingLocation}
-              className="h-11 px-3.5 rounded-full border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1.5 shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-              title="Atualizar localização via GPS"
-            >
-              <span className={`material-symbols-outlined text-lg text-emerald-700 ${isDetectingLocation ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                {isDetectingLocation ? 'sync' : 'near_me'}
-              </span>
-              <span>{isDetectingLocation ? 'Calibrando...' : 'Atualizar GPS'}</span>
-            </button>
+
           </div>
 
           {/* 3. MENU DIREITO (QUEM SOMOS, LOGIN / CONTA) */}
@@ -1567,11 +1612,11 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
             </div>
           </div>
 
-          {/* 2. BARRA DE PESQUISA ABAIXO DA LOGO + BOTÃO ATUALIZAR GPS */}
-          <div className="mt-2.5 w-full flex items-center gap-2">
+          {/* 2. BARRA DE PESQUISA ELEGANTE E COMPLETA */}
+          <div className="mt-2.5 w-full">
             <button
               onClick={() => setIsSearchPopoverOpen(true)}
-              className="flex-1 min-w-0 flex items-center gap-2.5 px-3.5 py-2 rounded-full border border-slate-200/90 bg-white shadow-xs hover:shadow-md text-left transition-all active:scale-[0.99] cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-full border border-slate-200/90 bg-white shadow-xs hover:shadow-md text-left transition-all active:scale-[0.99] cursor-pointer"
             >
               <span className="material-symbols-outlined text-lg text-[#006c49] shrink-0">search</span>
               <div className="flex-1 min-w-0">
@@ -1585,25 +1630,9 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                 <p className="text-[10px] text-slate-500 truncate">
                   {userLocation?.city && !focusedCity
                     ? `${userLocation.city} · ${userLocation.uf || 'Brasil'} • Ver acomodações`
-                    : 'Qualquer destino • Qualquer semana'}
+                    : 'Qualquer destino • Escolher cidade'}
                 </p>
               </div>
-            </button>
-
-            {/* BOTÃO ATUALIZAR GPS COMPACTO NO CABEÇALHO */}
-            <button
-              type="button"
-              onClick={handleRefreshGps}
-              disabled={isDetectingLocation}
-              className="h-10 px-3 rounded-full border border-emerald-200/90 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-extrabold flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-              title="Atualizar minha localização via GPS"
-            >
-              <span className={`material-symbols-outlined text-lg text-emerald-700 ${isDetectingLocation ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                {isDetectingLocation ? 'sync' : 'near_me'}
-              </span>
-              <span className="font-bold">
-                {isDetectingLocation ? '...' : 'GPS'}
-              </span>
             </button>
           </div>
         </div>
@@ -2285,6 +2314,84 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
           </div>
         </div>
       </footer>
+
+      
+      {/* ========================================================================= */}
+      {/* MODAL INTELIGENTE DE CONFIRMAÇÃO DE CIDADE / LOCALIZAÇÃO                 */}
+      {/* ========================================================================= */}
+      {showLocationConfirmationModal && pendingDetectedLocation && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div 
+            className="fixed inset-0" 
+            onClick={handleDismissLocationModal} 
+          />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-100 z-10 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+            {/* Botão Fechar X */}
+            <button
+              onClick={handleDismissLocationModal}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Fechar"
+            >
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+
+            {/* Ícone com Destaque */}
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100/80 shadow-xs mb-3.5">
+              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                location_on
+              </span>
+            </div>
+
+            {/* Tag de Destaque */}
+            <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+              Sua Região
+            </span>
+
+            {/* Título Principal */}
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
+              Você está em {pendingDetectedLocation.city}{pendingDetectedLocation.uf ? ` - ${pendingDetectedLocation.uf}` : ''}?
+            </h3>
+
+            {/* Texto Explicativo */}
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+              {matchedDetectedCity 
+                ? `Encontramos hotéis e pousadas parceiros disponíveis em ${matchedDetectedCity}. Deseja ver as opções desta cidade?`
+                : `Ainda estamos expandindo para ${pendingDetectedLocation.city}, mas você pode explorar todas as acomodações disponíveis em nosso catálogo.`}
+            </p>
+
+            {/* Ações */}
+            <div className="mt-6 flex flex-col gap-2.5">
+              {matchedDetectedCity ? (
+                <button
+                  type="button"
+                  onClick={handleConfirmDetectedCity}
+                  className="w-full py-3.5 px-5 rounded-2xl bg-[#003400] hover:bg-[#002500] text-white font-extrabold text-sm shadow-md shadow-emerald-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-lg">travel_explore</span>
+                  <span>Sim, ver opções em {matchedDetectedCity}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleDismissLocationModal}
+                  className="w-full py-3.5 px-5 rounded-2xl bg-[#003400] hover:bg-[#002500] text-white font-extrabold text-sm shadow-md shadow-emerald-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-lg">explore</span>
+                  <span>Explorar todos os destinos</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleChooseAnotherCity}
+                className="w-full py-3 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Escolher outra cidade
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FEEDBACK FLUTUANTE DE COMPARTILHAMENTO */}
       {shareToast && (
