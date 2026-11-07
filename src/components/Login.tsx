@@ -18,18 +18,7 @@ interface LoginProps {
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   // Modo de Acesso: 'hotel' (Equipe / Hoteleiro com E-mail + Senha) vs 'hospede' (Consulta de Reserva sem Senha)
-  const [loginMode, setLoginMode] = useState<'hotel' | 'hospede'>(() => {
-    if (typeof window !== 'undefined') {
-      // No modo mobile, todos logam na mesma tela unificada
-      if (window.innerWidth < 1024) return 'hotel';
-      const s = (window.location.search || '').toLowerCase();
-      const h = (window.location.hash || '').toLowerCase();
-      if (s.includes('tipo=hospede') || s.includes('hospede') || h.includes('hospede')) {
-        return 'hospede';
-      }
-    }
-    return 'hotel';
-  });
+  const [loginMode, setLoginMode] = useState<'hotel' | 'hospede'>('hotel');
 
   // Estados do modo Hóspede
   const [hospedeIdentifier, setHospedeIdentifier] = useState('');
@@ -1070,43 +1059,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   <span className="text-[10px] text-[#006c49] font-bold uppercase tracking-wider mt-0.5">Hospitalidade Digital</span>
                 </div>
               </a>
-            </div>
-
-            {/* SELETOR DE MODO: HOTEL/EQUIPE vs HÓSPEDE */}
-            <div className="hidden lg:flex p-1 bg-slate-100/90 rounded-2xl mb-5 border border-slate-200/80 shadow-inner">
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginMode('hotel');
-                  setErrorMessage('');
-                  setHospedeNotFound(false);
-                }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                  loginMode === 'hotel'
-                    ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <span className="material-symbols-outlined text-base sm:text-lg">apartment</span>
-                <span>Hotel & Equipe</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginMode('hospede');
-                  setErrorMessage('');
-                  setHospedeNotFound(false);
-                }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                  loginMode === 'hospede'
-                    ? 'bg-white text-emerald-800 shadow-sm border border-slate-200/60'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <span className="material-symbols-outlined text-base sm:text-lg text-emerald-600">luggage</span>
-                <span>Sou Hóspede</span>
-              </button>
             </div>
 
             {loginMode === 'hospede' ? (
