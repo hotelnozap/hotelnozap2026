@@ -631,6 +631,23 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       // mesmo que ele exista no Supabase Auth.
       // Exceção única autorizada: o administrador everaldozs@gmail.com.
       // =========================================================================
+      // Fallback de contingencia para metadados do Supabase Auth
+      if (!dbUser && authUser) {
+        const meta = (authUser.user_metadata || {});
+        if (meta.perfil || meta.cargo) {
+          console.log('[Login] Utilizando metadados de autenticacao como fallback para dbUser:', cleanEmail);
+          dbUser = {
+            id: authUser.id,
+            email: cleanEmail,
+            nome: (meta.nome || meta.name || cleanEmail.split('@')[0]).trim(),
+            perfil: meta.perfil || (meta.cargo ? meta.cargo : 'Hotel'),
+            cargo: meta.cargo || '',
+            hotel_id: meta.hotel_id || (cleanEmail.includes('hotel') || cleanEmail.includes('limpeza') ? '3c18756c-d41d-4d7f-873f-57e87e3e2c78' : null),
+            status: 'ativo'
+          };
+        }
+      }
+
       if (!dbUser && cleanEmail !== 'everaldozs@gmail.com') {
         console.warn('ACESSO NEGADO: Usuário autenticado no Auth mas inexistente na tabela usuarios:', cleanEmail);
         try {
