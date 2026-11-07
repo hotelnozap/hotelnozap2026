@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 import { applyCors } from './_cors.js';
 
 // Helper para sanitizar strings e prevenir SQL injection / XSS
@@ -96,19 +96,7 @@ export default async function handler(req, res) {
   const cleanRemetente = cleanPhoneDigits(telefone_remetente || '5500000000000');
 
   // Supabase Service Role
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-  if (!serviceKey) {
-    return res.status(500).json({
-      success: false,
-      error: 'SUPABASE_SERVICE_ROLE_KEY não configurada no servidor.'
-    });
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  const supabaseAdmin = getSupabaseAdmin();
 
   // ─────────────────────────────────────────────────────────────────────────────
   // AÇÃO 1: PROCESSAR FOTO DA FACHADA COM IA & FAZER UPLOAD DA FOTO PRINCIPAL

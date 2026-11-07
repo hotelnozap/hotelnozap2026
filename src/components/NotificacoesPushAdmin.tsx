@@ -6,6 +6,7 @@ interface NotificacoesPushAdminProps {
   onBackToDashboard: () => void;
   currentUserRole?: string;
   isHotelUser?: boolean;
+  activeHotel?: any;
 }
 
 const TEMPLATE_SUGESTOES = [
@@ -29,12 +30,19 @@ const TEMPLATE_SUGESTOES = [
 export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
   onBackToDashboard,
   currentUserRole,
-  isHotelUser = false
+  isHotelUser = false,
+  activeHotel
 }) => {
-  const [titulo, setTitulo] = useState('');
-  const [mensagem, setMensagem] = useState('');
-  const [url, setUrl] = useState('https://hotelnozap.com.br');
-  const [imageUrl, setImageUrl] = useState('');
+  const hotelNome = activeHotel?.name || activeHotel?.nome || '';
+  const initialUrl = activeHotel 
+    ? (activeHotel.slug ? `https://hotelnozap.com.br/?hotel=${activeHotel.slug}` : `https://hotelnozap.com.br/?hotel=${activeHotel.id}`)
+    : 'https://hotelnozap.com.br';
+  const initialImage = activeHotel?.imageUrl || activeHotel?.imagem_url || '';
+
+  const [titulo, setTitulo] = useState(activeHotel ? `🏨 Oferta Especial no ${hotelNome}!` : '');
+  const [mensagem, setMensagem] = useState(activeHotel ? `Aproveite diárias exclusivas com reserva direta pelo WhatsApp no Hotel no Zap. Toque para conferir!` : '');
+  const [url, setUrl] = useState(initialUrl);
+  const [imageUrl, setImageUrl] = useState(initialImage);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [segmento, setSegmento] = useState<'all' | 'active'>('all');
@@ -45,7 +53,27 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
 
   // Verificação estrita de privilégio administrativo
   const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
-  const isAdmin = !isHotelUser && (roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master'));
+  const isAdmin = roleLower.includes('admin') || roleLower.includes('super') || roleLower.includes('master');
+  const isHotel = isHotelUser || Boolean(activeHotel?.id) || roleLower.includes('hotel') || roleLower.includes('gerente') || roleLower.includes('propriet');
+  const canAccess = isAdmin || isHotel;
+
+  const listaTemplates = activeHotel ? [
+    {
+      titulo: `🏨 Oferta Especial no ${hotelNome}!`,
+      mensagem: `Aproveite diárias exclusivas com reserva direta pelo WhatsApp no Hotel no Zap. Toque para conferir!`,
+      url: initialUrl
+    },
+    {
+      titulo: `⭐ Planejando sua estadia em ${activeHotel.cityUf || activeHotel.cidade || 'nossa região'}?`,
+      mensagem: `Hospede-se no ${hotelNome} com o melhor custo-benefício e confirmação imediata!`,
+      url: initialUrl
+    },
+    {
+      titulo: `🔥 Últimas Acomodações Disponíveis no ${hotelNome}`,
+      mensagem: `Garanta sua reserva antecipada sem taxas extras. Fale agora com nossa recepção!`,
+      url: initialUrl
+    }
+  ] : TEMPLATE_SUGESTOES;
 
   const showToast = (tipo: 'sucesso' | 'erro', texto: string) => {
     setToast({ tipo, texto });
@@ -122,9 +150,11 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
       const result = await pushNotificationService.sendNotification({
         title: titulo.trim(),
         message: mensagem.trim(),
-        url: url.trim() || 'https://hotelnozap.com.br',
+        url: url.trim() || initialUrl,
         imageUrl: imageUrl.trim() || undefined,
-        segment: segmento
+        segment: segmento,
+        hotelId: activeHotel?.id,
+        hotelName: hotelNome || undefined
       });
 
       if (result.success) {
@@ -151,7 +181,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
     }
   };
 
-  if (!isAdmin) {
+  if (!canAccess) {
     return (
       <div className="p-8 max-w-4xl mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700">
@@ -204,10 +234,10 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-                Disparador de Notificações Push
+                {activeHotel ? `Disparador Push • ${hotelNome}` : 'Disparador de Notificações Push'}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                OneSignal
+                {activeHotel ? 'Hotel Painel' : 'OneSignal'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
@@ -250,7 +280,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 Sugestões Rápidas de Mensagens:
               </label>
               <div className="flex flex-wrap gap-2">
-                {TEMPLATE_SUGESTOES.map((tpl, idx) => (
+                {listaTemplates.map((tpl, idx) => (
                   <button
                     key={idx}
                     type="button"

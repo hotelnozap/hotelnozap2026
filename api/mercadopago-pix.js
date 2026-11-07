@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 import { applyCors } from './_cors.js';
 
 // Rate Limiter em memória para proteção contra flooding de Pix por bots (Sliding Window)
@@ -25,22 +25,7 @@ export default async function handler(req, res) {
   }
 
   const action = req.query?.action || body?.action || 'check';
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  console.log(`[MP-PIX] Início requisição action=${action} method=${req.method} serviceKey_present=${!!serviceKey} serviceKey_length=${serviceKey?.length || 0}`);
-
-  if (!serviceKey) {
-    console.error('[MP-PIX] ERRO CRÍTICO: SUPABASE_SERVICE_ROLE_KEY ausente em runtime Vercel');
-    return res.status(500).json({
-      success: false,
-      error: 'SUPABASE_SERVICE_ROLE_KEY não configurada no ambiente do servidor.'
-    });
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  const supabaseAdmin = getSupabaseAdmin();
 
   // Busca credenciais na tabela parametros_sistema
   let dbParams = null;

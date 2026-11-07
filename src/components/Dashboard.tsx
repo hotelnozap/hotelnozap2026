@@ -355,7 +355,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab, currentUser
 
       </div>
 
-      {/* Main Charts Bento Section */}
+      {/* Banner de Disparo de Notificações Push para o Hotel */}
+      {onNavigateTab && (
+        <div 
+          onClick={() => onNavigateTab('hotel-notificacoes')}
+          className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 border border-emerald-500/40 rounded-2xl p-4 sm:p-5 text-white shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+              <span className="material-symbols-outlined text-2xl">campaign</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-sm sm:text-base text-white">Disparador de Notificações Push</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  OneSignal
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5 max-w-2xl">
+                Envie alertas instantâneos de vagas, promoções e fotos do {currentHotelName} direto para a tela de quem tem o app instalado.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-sm"
+          >
+            <span>Disparar Notificação</span>
+            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Weekly Revenue Chart */}

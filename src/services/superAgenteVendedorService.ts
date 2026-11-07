@@ -590,7 +590,7 @@ export const superAgenteVendedorService = {
   async apontarWebhookEvolutionParaN8n(instanceName: string, webhookUrl: string): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
       const evolutionUrl = (evolutionApiService as any).apiUrl || 'https://painelevolution.hotelnozap.com.br';
-      const apiKey = (evolutionApiService as any).apiKey || 'D45D6901E2E9-4218-A667-AA493D7E80EE';
+      const apiKey = (evolutionApiService as any).apiKey || '';
 
       const res = await fetch(`${evolutionUrl}/webhook/set/${encodeURIComponent(instanceName.trim())}`, {
         method: 'POST',

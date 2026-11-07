@@ -1826,6 +1826,7 @@ export const App: React.FC = () => {
     { id: 'produto', label: 'Cadastro de Produtos', icon: 'inventory_2' },
     { id: 'cupons', label: 'Cupom de Desconto', icon: 'confirmation_number' },
     { id: 'conexao', label: 'Conexão WhatsApp', icon: 'sync' },
+    { id: 'hotel-notificacoes', label: 'Notificações Push', icon: 'campaign' },
     { id: 'relatorios', label: 'Relatórios', icon: 'assessment' },
     { id: 'config', label: 'Configurações', icon: 'settings' },
     { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
@@ -4496,6 +4497,9 @@ export const App: React.FC = () => {
               onNavigateToDisparador={() => {
                 setActiveTab('disparador-google');
               }}
+              onNavigateToNotificacoes={() => {
+                setActiveTab('admin-notificacoes');
+              }}
               onNavigateToCaixa={() => {
                 setActiveTab('admin-financeiro');
               }}
@@ -5097,9 +5101,12 @@ export const App: React.FC = () => {
               onBackToDashboard={() => setActiveTab('admin-dashboard')}
             />
           )}
-          {activeTab === 'admin-notificacoes' && isMasterAdmin && (
+          {(activeTab === 'admin-notificacoes' || activeTab === 'hotel-notificacoes') && (
             <NotificacoesPushAdmin
-              onBackToDashboard={() => setActiveTab('admin-dashboard')}
+              onBackToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
+              currentUserRole={currentUserRole}
+              isHotelUser={!isMasterAdmin}
+              activeHotel={activeHotel}
             />
           )}
 
@@ -5177,7 +5184,7 @@ export const App: React.FC = () => {
               }}
             />
           )}
-          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'disparador-google' && activeTab !== 'super-agente-vendedor' && activeTab !== 'admin-notificacoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'logs-sistema' && activeTab !== 'mapa' && activeTab !== 'governanca' && activeTab !== 'lavanderia' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cupons' && activeTab !== 'cadastro-cupom' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config-infinitepay' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
+          {activeTab !== 'dashboard' && activeTab !== 'admin-dashboard' && activeTab !== 'admin-conexoes' && activeTab !== 'disparador-google' && activeTab !== 'super-agente-vendedor' && activeTab !== 'admin-notificacoes' && activeTab !== 'hotel-notificacoes' && activeTab !== 'admin-financeiro' && activeTab !== 'admin-config' && activeTab !== 'logs-sistema' && activeTab !== 'mapa' && activeTab !== 'governanca' && activeTab !== 'lavanderia' && activeTab !== 'cadastro-quarto' && activeTab !== 'destaques-quarto' && activeTab !== 'itens-quartos' && activeTab !== 'cadastro-item' && activeTab !== 'categorias-quartos' && activeTab !== 'cadastro-categoria' && activeTab !== 'hospedes' && activeTab !== 'cadastro-hospede' && activeTab !== 'cupons' && activeTab !== 'cadastro-cupom' && activeTab !== 'cadastro-hoteis' && activeTab !== 'cadastro-novo-hotel' && activeTab !== 'categorias-hoteis' && activeTab !== 'cadastro-categoria-hotel' && activeTab !== 'status-quartos' && activeTab !== 'produto' && activeTab !== 'produto-categorias' && activeTab !== 'produto-estoque' && activeTab !== 'pedidos-cardapio' && activeTab !== 'cadastro-movimentacao-estoque' && activeTab !== 'cadastro-produto' && activeTab !== 'cadastro-categoria-produto' && activeTab !== 'reservas' && activeTab !== 'cadastro-reserva' && activeTab !== 'tipos-quartos' && activeTab !== 'cadastro-tipo-quarto' && activeTab !== 'caixa' && activeTab !== 'controle-caixa' && activeTab !== 'contas-pagar' && activeTab !== 'categorias-contas-pagar' && activeTab !== 'cadastro-categoria-conta-pagar' && activeTab !== 'cadastro-conta-pagar' && activeTab !== 'contas-receber' && activeTab !== 'categorias-contas-receber' && activeTab !== 'cadastro-categoria-conta-receber' && activeTab !== 'cadastro-conta-receber' && activeTab !== 'conexao' && activeTab !== 'conexoes-whatsapp' && activeTab !== 'parceiros' && activeTab !== 'cadastro-parceiro' && activeTab !== 'config-mercado-pago' && activeTab !== 'config-infinitepay' && activeTab !== 'config' && activeTab !== 'config-hotel' && activeTab !== 'planos' && activeTab !== 'cadastro-plano' && activeTab !== 'creditos-saas' && activeTab !== 'relatorios' && activeTab !== 'tutoriais' && activeTab !== 'perfil' && activeTab !== 'minhaconta' && activeTab !== 'usuarios' && activeTab !== 'cadastro-usuario' && activeTab !== 'tipos-usuarios' && activeTab !== 'cadastro-tipo-usuario' && (
             <div className="p-8 text-center text-[#45464d]">
               <h2 className="text-xl font-bold text-[#0b1c30] mb-2">Tela em construção</h2>
               <p className="text-sm">Envie a imagem/especificação desta tela para darmos início ao desenvolvimento.</p>

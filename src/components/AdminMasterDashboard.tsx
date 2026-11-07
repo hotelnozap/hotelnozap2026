@@ -39,6 +39,7 @@ export interface AdminMasterDashboardProps {
   onNavigateToInfinitePay?: () => void;
   onNavigateToWhatsApp?: () => void;
   onNavigateToDisparador?: () => void;
+  onNavigateToNotificacoes?: () => void;
   onNavigateToCaixa?: () => void;
   onNavigateToLogs?: () => void;
   onLogout: () => void;
@@ -62,6 +63,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
   onNavigateToInfinitePay,
   onNavigateToWhatsApp,
   onNavigateToDisparador,
+  onNavigateToNotificacoes,
   onNavigateToCaixa,
   onNavigateToLogs,
   onLogout,
@@ -602,6 +604,20 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
               <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">0</span>
             </button>
 
+            {onNavigateToNotificacoes && (
+              <button 
+                type="button"
+                onClick={onNavigateToNotificacoes}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-emerald-400">campaign</span>
+                <span>Notificações Push</span>
+                <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                  OneSignal
+                </span>
+              </button>
+            )}
+
             {onNavigateToDisparador && (
               <button 
                 type="button"
@@ -835,7 +851,21 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                   <span>WhatsApp Gateway</span>
                 </button>
 
-                {onNavigateToDisparador && (
+                {onNavigateToNotificacoes && (
+              <button 
+                type="button"
+                onClick={onNavigateToNotificacoes}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-emerald-400">campaign</span>
+                <span>Notificações Push</span>
+                <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                  OneSignal
+                </span>
+              </button>
+            )}
+
+            {onNavigateToDisparador && (
                   <button 
                     onClick={() => { setIsMobileMenuOpen(false); onNavigateToDisparador?.(); }}
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/5 text-left"

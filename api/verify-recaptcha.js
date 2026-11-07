@@ -30,25 +30,19 @@ export default async function handler(req, res) {
   if (process.env.RECAPTCHA_SECRET_KEY) candidateKeys.push(process.env.RECAPTCHA_SECRET_KEY.trim());
 
   if (candidateKeys.length === 0) {
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (serviceKey) {
-      try {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-          auth: { autoRefreshToken: false, persistSession: false }
-        });
-        const { data: dbParams } = await supabaseAdmin
-          .from('parametros_sistema')
-          .select('recaptcha_secret_key')
-          .limit(1)
-          .maybeSingle();
-        if (dbParams?.recaptcha_secret_key && dbParams.recaptcha_secret_key.trim().length > 10) {
-          candidateKeys.push(dbParams.recaptcha_secret_key.trim());
-        }
-      } catch (e) {
-        console.warn('[RECAPTCHA] Erro ao consultar parametros_sistema:', e);
+    try {
+      const { getSupabaseAdmin } = await import('./_supabase.js');
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: dbParams } = await supabaseAdmin
+        .from('parametros_sistema')
+        .select('recaptcha_secret_key')
+        .limit(1)
+        .maybeSingle();
+      if (dbParams?.recaptcha_secret_key && dbParams.recaptcha_secret_key.trim().length > 10) {
+        candidateKeys.push(dbParams.recaptcha_secret_key.trim());
       }
+    } catch (e) {
+      console.warn('[RECAPTCHA] Erro ao consultar parametros_sistema:', e);
     }
   }
 

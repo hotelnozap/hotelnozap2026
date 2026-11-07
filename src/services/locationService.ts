@@ -120,6 +120,13 @@ export const locationService = {
   },
 
   /**
+   * Alias de compatibilidade para salvar localização no storage
+   */
+  setUserLocationInStorage(loc: UserLocation): void {
+    this.saveUserLocation(loc);
+  },
+
+  /**
    * Verifica se as permissões já foram solicitadas na primeira abertura
    */
   hasAskedPermissions(): boolean {

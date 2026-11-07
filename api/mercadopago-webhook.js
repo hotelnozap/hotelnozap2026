@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 
 // Utilitário para calcular os dias e créditos a partir do plano e valor
 function parsePlanDays(planName, amount) {
@@ -60,22 +60,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ status: 'ok', message: 'Mercado Pago Webhook endpoint active' });
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  console.log(`[MP-WEBHOOK] Início method=${req.method} query=${JSON.stringify(req.query || {})} serviceKey_present=${!!serviceKey}`);
-
-  if (!serviceKey) {
-    console.error('[MP-WEBHOOK] ERRO CRÍTICO: SUPABASE_SERVICE_ROLE_KEY ausente em runtime Vercel.');
-    return res.status(500).json({
-      success: false,
-      error: 'SUPABASE_SERVICE_ROLE_KEY não configurada no ambiente do servidor.'
-    });
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  const supabaseAdmin = getSupabaseAdmin();
 
   // Extrai o ID do pagamento enviado pelo Mercado Pago
   let body = req.body;

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 
 function slugify(text) {
   return String(text || '')
@@ -75,13 +75,7 @@ export default async function handler(req, res) {
   // 3. Busca hotéis do Supabase
   let hotelRoutes = [];
   try {
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-    if (supabaseKey) {
-      const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-        auth: { autoRefreshToken: false, persistSession: false }
-      });
+    const supabaseAdmin = getSupabaseAdmin();
 
       const { data: dbHoteis } = await supabaseAdmin
         .from('hoteis')
@@ -113,7 +107,6 @@ export default async function handler(req, res) {
           }
         });
       }
-    }
   } catch (err) {
     console.warn('[SITEMAP] Aviso ao carregar hotéis dinâmicos:', err);
   }

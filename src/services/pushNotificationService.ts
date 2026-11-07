@@ -7,6 +7,8 @@ export interface PushNotificationPayload {
   url?: string;
   imageUrl?: string;
   segment?: 'all' | 'active';
+  hotelId?: string;
+  hotelName?: string;
 }
 
 export interface PushNotificationHistoryItem {
@@ -21,6 +23,8 @@ export interface PushNotificationHistoryItem {
   senderEmail: string;
   status: 'sent' | 'failed';
   errorDetails?: string;
+  hotelId?: string;
+  hotelName?: string;
 }
 
 const STORAGE_KEY = 'hotelnozap_push_history';
@@ -71,7 +75,9 @@ class PushNotificationService {
           sentAt: new Date().toISOString(),
           senderEmail,
           status: 'failed',
-          errorDetails: errorMsg
+          errorDetails: errorMsg,
+          hotelId: payload.hotelId,
+          hotelName: payload.hotelName
         });
 
         await systemLogsService.addLog({
@@ -98,7 +104,9 @@ class PushNotificationService {
         recipients,
         sentAt: new Date().toISOString(),
         senderEmail,
-        status: 'sent'
+        status: 'sent',
+        hotelId: payload.hotelId,
+        hotelName: payload.hotelName
       });
 
       await systemLogsService.addLog({

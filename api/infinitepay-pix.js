@@ -4,7 +4,7 @@
  * A chave de API secreta (inchk_...) NUNCA é exposta no frontend.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 import { applyCors } from './_cors.js';
 
 // Rate Limiter em memória para proteção contra flooding
@@ -46,18 +46,11 @@ export default async function handler(req, res) {
   }
 
   const action = req.query?.action || body?.action || 'test';
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   let supabaseAdmin = null;
-  if (serviceKey) {
-    try {
-      supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-        auth: { autoRefreshToken: false, persistSession: false }
-      });
-    } catch (e) {
-      console.warn('[InfinitePay] Falha ao instanciar Supabase Admin:', e);
-    }
+  try {
+    supabaseAdmin = getSupabaseAdmin();
+  } catch (e) {
+    console.warn('[InfinitePay] Falha ao obter Supabase Admin:', e.message);
   }
 
   // Obter chave da API do InfinitePay:

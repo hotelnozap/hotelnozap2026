@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 import { applyCors } from './_cors.js';
 
 async function verifyIsAdmin(req, supabaseAdmin) {
@@ -46,27 +46,7 @@ export default async function handler(req, res) {
 
   const DEFAULT_PIX_KEY = process.env.DEFAULT_PIX_KEY || '';
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!serviceKey) {
-    if (req.method === 'POST') {
-      return res.status(500).json({
-        success: false,
-        error: 'SUPABASE_SERVICE_ROLE_KEY não configurada no ambiente do servidor.'
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      chavePix: DEFAULT_PIX_KEY,
-      provider: 'mercadopago',
-      source: DEFAULT_PIX_KEY ? 'env_default' : 'missing'
-    });
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  const supabaseAdmin = getSupabaseAdmin();
 
   // 1. SALVAR CHAVE PIX MASTER OU CREDENCIAIS (POST) - APENAS ADMINISTRADORES
   if (req.method === 'POST') {

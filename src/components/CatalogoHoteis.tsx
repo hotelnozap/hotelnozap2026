@@ -464,7 +464,7 @@ export interface CatalogoHoteisProps {
 
 const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogin, onNavigateToHotel }) => {
   // Cache local para carregamento instantâneo (0 segundos)
-  const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v5';
+  const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v6';
 
   // Lista geral de hotéis com inicialização imediata via cache ou preload embutido (Zero tempo de espera)
   const [hoteisList, setHoteisList] = useState<PublicHotel[]>(() => {
@@ -832,21 +832,10 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
       }).filter(h => !isHotelMoradaDaLua(h));
 
       if (mappedDbHoteis && mappedDbHoteis.length > 0) {
-        setHoteisList(prev => {
-          // Se já temos a mesma quantidade de hotéis e o primeiro e último IDs são iguais, preserva o estado estável
-          if (
-            prev &&
-            prev.length === mappedDbHoteis.length &&
-            prev[0]?.id === mappedDbHoteis[0]?.id &&
-            prev[prev.length - 1]?.id === mappedDbHoteis[mappedDbHoteis.length - 1]?.id
-          ) {
-            return prev;
-          }
-          try {
-            localStorage.setItem(CACHE_KEY_PUBLIC_HOTEIS, JSON.stringify(mappedDbHoteis));
-          } catch {}
-          return mappedDbHoteis;
-        });
+        setHoteisList(mappedDbHoteis);
+        try {
+          localStorage.setItem(CACHE_KEY_PUBLIC_HOTEIS, JSON.stringify(mappedDbHoteis));
+        } catch {}
       }
     } catch (err) {
       console.error('Erro ao carregar hotéis no catálogo:', err);
@@ -1252,41 +1241,67 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
 
   const handleConfirmDetectedCity = (e?: React.MouseEvent | React.TouchEvent) => {
     if (e) {
-      e.preventDefault();
-      e.stopPropagation();
+      try { e.preventDefault(); } catch {}
+      try { e.stopPropagation(); } catch {}
     }
-    const targetCity = matchedDetectedCity || pendingDetectedLocation?.city;
-    if (targetCity) {
-      sessionStorage.setItem('hotelnozap_location_prompt_seen', targetCity);
-      localStorage.setItem('hotelnozap_location_prompt_seen', targetCity);
-      localStorage.setItem('hotelnozap_location_confirmed_city', targetCity);
-    }
-    if (pendingDetectedLocation) {
-      locationService.setUserLocationInStorage(pendingDetectedLocation);
-      setUserLocation(pendingDetectedLocation);
-    }
+    try {
+      const targetCity = matchedDetectedCity || pendingDetectedLocation?.city;
+      if (targetCity) {
+        sessionStorage.setItem('hotelnozap_location_prompt_seen', targetCity);
+        localStorage.setItem('hotelnozap_location_prompt_seen', targetCity);
+        localStorage.setItem('hotelnozap_location_confirmed_city', targetCity);
+      }
+      if (pendingDetectedLocation) {
+        try {
+          locationService.saveUserLocation(pendingDetectedLocation);
+        } catch {}
+        setUserLocation(pendingDetectedLocation);
+      }
 
-    if (matchedDetectedCity) {
-      handleOpenCityRoute(normalizeCitySlug(matchedDetectedCity), matchedDetectedCity);
+      if (matchedDetectedCity) {
+        try {
+          handleOpenCityRoute(normalizeCitySlug(matchedDetectedCity), matchedDetectedCity);
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('[CatalogoHoteis] Erro ao confirmar localizacao:', err);
+    } finally {
+      setShowLocationConfirmationModal(false);
+      setPendingDetectedLocation(null);
     }
-
-    setShowLocationConfirmationModal(false);
-    setPendingDetectedLocation(null);
   };
 
-  const handleChooseAnotherCity = () => {
-    if (pendingDetectedLocation) {
-      sessionStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+  const handleChooseAnotherCity = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      try { e.preventDefault(); } catch {}
+      try { e.stopPropagation(); } catch {}
     }
-    setShowLocationConfirmationModal(false);
-    setIsSearchPopoverOpen(true);
+    try {
+      if (pendingDetectedLocation) {
+        sessionStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+        localStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+      }
+    } catch {} finally {
+      setShowLocationConfirmationModal(false);
+      setPendingDetectedLocation(null);
+      setIsSearchPopoverOpen(true);
+    }
   };
 
-  const handleDismissLocationModal = () => {
-    if (pendingDetectedLocation) {
-      sessionStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+  const handleDismissLocationModal = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      try { e.preventDefault(); } catch {}
+      try { e.stopPropagation(); } catch {}
     }
-    setShowLocationConfirmationModal(false);
+    try {
+      if (pendingDetectedLocation) {
+        sessionStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+        localStorage.setItem('hotelnozap_location_prompt_seen', pendingDetectedLocation.city);
+      }
+    } catch {} finally {
+      setShowLocationConfirmationModal(false);
+      setPendingDetectedLocation(null);
+    }
   };
 
   // Recalibra localização via sensor GPS ou IP do dispositivo
@@ -2369,8 +2384,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
                 <button
                   type="button"
                   onClick={handleConfirmDetectedCity}
-                  onTouchEnd={handleConfirmDetectedCity}
-                  className="w-full py-3.5 px-5 rounded-2xl bg-[#003400] hover:bg-[#002500] active:bg-[#001f00] text-white font-extrabold text-sm shadow-md shadow-emerald-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
+                                    className="w-full py-3.5 px-5 rounded-2xl bg-[#003400] hover:bg-[#002500] active:bg-[#001f00] text-white font-extrabold text-sm shadow-md shadow-emerald-950/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                 >
                   <span className="material-symbols-outlined text-lg">check_circle</span>
                   <span>Sim, estou em {matchedDetectedCity || pendingDetectedLocation.city}</span>

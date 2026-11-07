@@ -4,7 +4,7 @@
  * Resposta padrão exigida pela InfinitePay: { "success": true, "message": null } com HTTP 200.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 import { applyCors } from './_cors.js';
 
 export default async function handler(req, res) {
@@ -19,6 +19,16 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Método não permitido' });
+  }
+
+  // Validação de segurança: se houver segredo configurado, valida a requisição
+  const webhookSecret = process.env.INFINITEPAY_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const provided = req.headers['x-api-key'] || req.headers['x-webhook-secret'] || req.query?.secret || req.query?.token;
+    if (provided !== webhookSecret) {
+      console.warn('[InfinitePay-Webhook] Rejeitado: segredo do webhook inválido ou ausente.');
+      return res.status(401).json({ success: false, message: 'Não autorizado' });
+    }
   }
 
   let body = req.body;
@@ -36,20 +46,13 @@ export default async function handler(req, res) {
     capture_method,
     receipt_url,
     invoice_slug
-  } = body;
+  } = body || {};
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!serviceKey) {
-    console.error('[InfinitePay-Webhook] SUPABASE_SERVICE_ROLE_KEY não configurada.');
-    // Retorna 200 para a InfinitePay não ficar reenviando em loop caso falte env local
-    return res.status(200).json({ success: true, message: null });
+  if (!order_nsu) {
+    return res.status(200).json({ success: true, message: 'Sem order_nsu' });
   }
 
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  const supabaseAdmin = getSupabaseAdmin();
 
   try {
     // 1. Se order_nsu foi informado, tenta localizar reserva ou plano

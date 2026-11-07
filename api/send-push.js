@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './_supabase.js';
 import { applyCors } from './_cors.js';
 
 export default async function handler(req, res) {
@@ -9,16 +9,7 @@ export default async function handler(req, res) {
   }
 
   // 1. VALIDAÇÃO DE AUTENTICAÇÃO E PERMISSÃO DE ADMINISTRADOR
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://obkvgluunbnktzulzjfg.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!serviceKey) {
-    return res.status(500).json({ error: 'Configuração do servidor incompleta: SUPABASE_SERVICE_ROLE_KEY ausente.' });
-  }
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  const supabaseAdmin = getSupabaseAdmin();
 
   const authHeader = req.headers['authorization'] || req.headers['Authorization'];
   const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
@@ -34,7 +25,7 @@ export default async function handler(req, res) {
 
   const { data: dbUser } = await supabaseAdmin
     .from('usuarios')
-    .select('perfil, cargo')
+    .select('perfil, cargo, hotel_id, email, nome')
     .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
     .maybeSingle();
 
@@ -44,31 +35,51 @@ export default async function handler(req, res) {
 
   const isMasterAdmin = 
     userEmail === 'contato@hotelnozap.com.br' ||
+    userEmail === 'everaldozs@gmail.com' ||
     perfil.includes('admin') ||
     perfil.includes('super') ||
     perfil.includes('master') ||
     cargo.includes('admin');
 
-  if (!isMasterAdmin) {
-    return res.status(403).json({ error: 'Permissão negada. Apenas administradores podem disparar notificações push.' });
+  const { title, message, url, segment, imageUrl, hotelId } = req.body || {};
+
+  const targetHotelId = dbUser?.hotel_id || user.user_metadata?.hotel_id || hotelId;
+  let hotelData = null;
+
+  if (targetHotelId) {
+    const { data: h } = await supabaseAdmin
+      .from('hoteis')
+      .select('id, nome, cidade, estado, imagem_url, logo_url, slug')
+      .eq('id', targetHotelId)
+      .maybeSingle();
+    hotelData = h;
+  }
+
+  const isHotelAuthorized = Boolean(hotelData);
+
+  if (!isMasterAdmin && !isHotelAuthorized) {
+    return res.status(403).json({ error: 'Permissão negada. Apenas administradores do sistema e gestores de hotéis podem disparar notificações push.' });
   }
 
   try {
-    const { title, message, url, segment, imageUrl } = req.body || {};
-
     if (!title || !message) {
       return res.status(400).json({ error: 'Título e mensagem são obrigatórios.' });
     }
 
     const appId = process.env.ONESIGNAL_APP_ID || '40809032-1904-4b7c-80cb-f1e2e00992f4';
-    const fallbackEncoded = 'b3NfdjJfYXBwX2ljYWphbXF6YXJmeHphZ2w2aHJvYWNtczZ0ZDdpcGV6NG9ldWl2NW4zdmY3dnhvcWZ3aHA1bnVuMzdycGxhN3JpZnhmaGNiZ2Yya2hmM3NhbXRmcmozcTU2NmRzbHh3NjV0Nmpwd2E=';
-    const restApiKey = process.env.ONESIGNAL_REST_KEY || Buffer.from(fallbackEncoded, 'base64').toString('utf-8');
+    const restApiKey = process.env.ONESIGNAL_REST_KEY;
 
     if (!restApiKey) {
       return res.status(500).json({
         error: 'Chave ONESIGNAL_REST_KEY não configurada no ambiente do servidor.'
       });
     }
+
+    const finalUrl = url || (hotelData?.slug 
+      ? `https://hotelnozap.com.br/?hotel=${hotelData.slug}` 
+      : (hotelData?.id ? `https://hotelnozap.com.br/?hotel=${hotelData.id}` : 'https://hotelnozap.com.br'));
+
+    const finalImage = imageUrl || hotelData?.imagem_url || hotelData?.logo_url;
 
     const payload = {
       app_id: appId,
@@ -81,14 +92,21 @@ export default async function handler(req, res) {
         en: message,
         pt: message
       },
-      url: url || 'https://hotelnozap.com.br',
-      chrome_web_icon: 'https://hotelnozap.com.br/icon-192.png',
-      chrome_web_badge: 'https://hotelnozap.com.br/icon-192.png'
+      url: finalUrl,
+      chrome_web_icon: hotelData?.logo_url || 'https://hotelnozap.com.br/icon-192.png',
+      chrome_web_badge: 'https://hotelnozap.com.br/icon-192.png',
+      data: {
+        type: hotelData ? 'hotel_push' : 'admin_broadcast',
+        hotel_id: hotelData?.id || null,
+        hotel_nome: hotelData?.nome || null,
+        sent_by: user.email,
+        timestamp: new Date().toISOString()
+      }
     };
 
-    if (imageUrl) {
-      payload.chrome_web_image = imageUrl;
-      payload.big_picture = imageUrl;
+    if (finalImage) {
+      payload.chrome_web_image = finalImage;
+      payload.big_picture = finalImage;
     }
 
     const authHeader = restApiKey.startsWith('os_v2_') 
