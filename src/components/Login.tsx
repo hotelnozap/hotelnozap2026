@@ -20,6 +20,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   // Modo de Acesso: 'hotel' (Equipe / Hoteleiro com E-mail + Senha) vs 'hospede' (Consulta de Reserva sem Senha)
   const [loginMode, setLoginMode] = useState<'hotel' | 'hospede'>(() => {
     if (typeof window !== 'undefined') {
+      // No modo mobile, todos logam na mesma tela unificada
+      if (window.innerWidth < 1024) return 'hotel';
       const s = (window.location.search || '').toLowerCase();
       const h = (window.location.hash || '').toLowerCase();
       if (s.includes('tipo=hospede') || s.includes('hospede') || h.includes('hospede')) {
@@ -1071,7 +1073,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </div>
 
             {/* SELETOR DE MODO: HOTEL/EQUIPE vs HÓSPEDE */}
-            <div className="flex p-1 bg-slate-100/90 rounded-2xl mb-5 border border-slate-200/80 shadow-inner">
+            <div className="hidden lg:flex p-1 bg-slate-100/90 rounded-2xl mb-5 border border-slate-200/80 shadow-inner">
               <button
                 type="button"
                 onClick={() => {
@@ -1178,7 +1180,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 <div className="mb-5 sm:mb-6">
                   <h2 className="text-2xl sm:text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight">Bem-vindo de volta! 👋</h2>
                   <p className="text-slate-500 text-xs sm:text-sm mt-1.5 leading-relaxed">
-                    Insira suas credenciais corporativas para acessar o painel de gerenciamento.
+                    Insira suas credenciais para acessar sua conta.
                   </p>
                 </div>
 
