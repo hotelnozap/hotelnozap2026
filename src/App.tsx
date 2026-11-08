@@ -5321,7 +5321,7 @@ export const App: React.FC = () => {
       />
 
       {/* BANNER PROATIVO DE NOTIFICAÇÕES PUSH NATIVAS (PWA / APP / WEB) */}
-      <NativePushBanner hotelId={activeHotel?.id} hotelNome={activeHotel?.name || activeHotel?.nome} />
+      <NativePushBanner hotelId={activeHotel?.id} hotelNome={activeHotel?.name} />
 
       {/* MODAL PROATIVO DE RESERVAS DO DIA & ALERTAS DE NO-SHOW (EXCLUSIVO PARA HOTEL, GERENTE E RECEPÇÃO) */}
       {!isMasterAdmin && (isPerfilHotel || isGerente || isRecepcao) && (

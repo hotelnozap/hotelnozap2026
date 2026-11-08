@@ -87,7 +87,7 @@ class NativePushService {
       if (!subscription) {
         subscription = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey
+          applicationServerKey: applicationServerKey as any
         });
       }
 
