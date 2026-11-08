@@ -22,24 +22,36 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && action === 'stats') {
     const hotelId = req.query.hotelId || null;
     try {
-      let queryTotal = supabaseAdmin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('ativo', true);
-      let queryApp = supabaseAdmin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('tipo_dispositivo', 'app');
-      let queryWeb = supabaseAdmin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('tipo_dispositivo', 'web');
+      // 1. Dispositivos móveis com o App instalado (APK/PWA da rede)
+      const resApp = await supabaseAdmin
+        .from('push_subscriptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('ativo', true)
+        .eq('tipo_dispositivo', 'app');
 
-      if (hotelId) {
-        queryTotal = queryTotal.eq('hotel_id', hotelId);
-        queryApp = queryApp.eq('hotel_id', hotelId);
-        queryWeb = queryWeb.eq('hotel_id', hotelId);
+      // 2. Visitantes de navegador web
+      let queryWeb = supabaseAdmin
+        .from('push_subscriptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('ativo', true)
+        .eq('tipo_dispositivo', 'web');
+
+      if (hotelId && hotelId !== 'all') {
+        queryWeb = queryWeb.or(`hotel_id.eq.${hotelId},hotel_id.is.null`);
       }
 
-      const [resTotal, resApp, resWeb] = await Promise.all([queryTotal, queryApp, queryWeb]);
+      const resWeb = await queryWeb;
+
+      const appCount = resApp.count ?? 0;
+      const webCount = resWeb.count ?? 0;
 
       return res.status(200).json({
-        total: resTotal.count ?? 0,
-        app: resApp.count ?? 0,
-        web: resWeb.count ?? 0
+        total: appCount + webCount,
+        app: appCount,
+        web: webCount
       });
     } catch (err) {
+      console.error('[send-push:stats] Erro:', err);
       return res.status(200).json({ total: 0, app: 0, web: 0 });
     }
   }
@@ -165,7 +177,7 @@ export default async function handler(req, res) {
   if (targetHotelId) {
     const { data: h } = await supabaseAdmin
       .from('hoteis')
-      .select('id, nome, cidade, estado, imagem_url, logo_url, slug')
+      .select('id, nome, cidade, uf, url_imagem, link')
       .eq('id', targetHotelId)
       .maybeSingle();
     hotelData = h;
@@ -200,16 +212,21 @@ export default async function handler(req, res) {
     .select('id, endpoint, p256dh, auth, tipo_dispositivo, hotel_id')
     .eq('ativo', true);
 
-  if (!isMasterAdmin && hotelData) {
-    query = query.eq('hotel_id', hotelData.id);
-  } else if (hotelId && hotelId !== 'all') {
-    query = query.eq('hotel_id', hotelId);
-  }
-
   if (publicoAlvo === 'app') {
+    // Apenas celulares com o aplicativo baixado (APK/PWA): entrega garantida para todos que instalaram o App
     query = query.eq('tipo_dispositivo', 'app');
   } else if (publicoAlvo === 'web') {
+    // Apenas visitantes de navegador web
     query = query.eq('tipo_dispositivo', 'web');
+    if (hotelId && hotelId !== 'all') {
+      query = query.or(`hotel_id.eq.${hotelId},hotel_id.is.null`);
+    }
+  } else {
+    // Todos (App Baixado + Navegadores Web):
+    // Aparelhos com o App instalado recebem sempre + navegadores web do hotel ou globais
+    if (hotelId && hotelId !== 'all') {
+      query = query.or(`tipo_dispositivo.eq.app,hotel_id.eq.${hotelId},hotel_id.is.null`);
+    }
   }
 
   const { data: subscriptions, error: subsError } = await query;
@@ -223,20 +240,20 @@ export default async function handler(req, res) {
 
   if (!subscriptions || subscriptions.length === 0) {
     return res.status(200).json({
-      success: true,
+      success: false,
       recipients: 0,
       sent: 0,
       failed: 0,
-      message: 'Nenhum inscrito encontrado para o filtro selecionado.'
+      error: 'Nenhum inscrito encontrado para o filtro selecionado.'
     });
   }
 
   // 4. Preparação do payload nativo
-  const finalUrl = url || (hotelData?.slug 
-    ? `https://hotelnozap.com.br/?hotel=${hotelData.slug}` 
-    : (hotelData?.id ? `https://hotelnozap.com.br/?hotel=${hotelData.id}` : 'https://hotelnozap.com.br'));
+  const finalUrl = url || (hotelData?.link 
+    ? (hotelData.link.startsWith('http') ? hotelData.link : `https://hotelnozap.com.br${hotelData.link}`) 
+    : 'https://hotelnozap.com.br');
 
-  const finalImage = imageUrl || hotelData?.imagem_url || hotelData?.logo_url || null;
+  const finalImage = imageUrl || hotelData?.url_imagem || null;
 
   const pushPayload = JSON.stringify({
     title,

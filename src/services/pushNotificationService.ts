@@ -99,6 +99,32 @@ class PushNotificationService {
       }
 
       const recipients = data.recipients ?? 0;
+
+      if (!data.success || recipients === 0) {
+        const errDesc = data.error || data.message || 'Nenhum dispositivo encontrado para o público selecionado.';
+        this.saveHistory({
+          id: `empty-${Date.now()}`,
+          title: payload.title,
+          message: payload.message,
+          url: payload.url,
+          imageUrl: payload.imageUrl,
+          segment: publicoAlvoNome,
+          publicoAlvo: payload.publicoAlvo || 'all',
+          recipients: 0,
+          sentAt: new Date().toISOString(),
+          senderEmail,
+          status: 'failed',
+          errorDetails: errDesc,
+          hotelId: payload.hotelId,
+          hotelName: payload.hotelName
+        });
+        return {
+          success: false,
+          recipients: 0,
+          error: errDesc
+        };
+      }
+
       const notifId = data.id || `notif-${Date.now()}`;
 
       this.saveHistory({

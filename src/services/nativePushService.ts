@@ -60,7 +60,18 @@ class NativePushService {
   async isSubscribed(): Promise<boolean> {
     if (!isPushSupported()) return false;
     try {
-      const reg = await navigator.serviceWorker.ready;
+      let reg: ServiceWorkerRegistration;
+      if ('serviceWorker' in navigator) {
+        const existing = await navigator.serviceWorker.getRegistration();
+        if (existing) {
+          reg = existing;
+        } else {
+          reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        }
+      } else {
+        return false;
+      }
+      await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       return Boolean(sub);
     } catch {
@@ -82,7 +93,18 @@ class NativePushService {
       const vapidKey = await this.getVapidPublicKey();
       const applicationServerKey = urlBase64ToUint8Array(vapidKey);
 
-      const reg = await navigator.serviceWorker.ready;
+      let reg: ServiceWorkerRegistration;
+      if ('serviceWorker' in navigator) {
+        const existing = await navigator.serviceWorker.getRegistration();
+        if (existing) {
+          reg = existing;
+        } else {
+          reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        }
+      } else {
+        return false;
+      }
+      await navigator.serviceWorker.ready;
       let subscription = await reg.pushManager.getSubscription();
 
       const VAPID_MARKER = 'hotelnozap_vapid_active_key';
@@ -136,7 +158,18 @@ class NativePushService {
   async unsubscribeUser(): Promise<{ success: boolean; error?: string }> {
     if (!isPushSupported()) return { success: false };
     try {
-      const reg = await navigator.serviceWorker.ready;
+      let reg: ServiceWorkerRegistration;
+      if ('serviceWorker' in navigator) {
+        const existing = await navigator.serviceWorker.getRegistration();
+        if (existing) {
+          reg = existing;
+        } else {
+          reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        }
+      } else {
+        return false;
+      }
+      await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         const endpoint = sub.endpoint;
