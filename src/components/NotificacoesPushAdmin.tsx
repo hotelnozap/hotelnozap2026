@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { pushNotificationService, PushNotificationHistoryItem } from '../services/pushNotificationService';
+import { nativePushService, PushStats, isAppInstalled } from '../services/nativePushService';
 import { uploadImageToStorage } from '../services/storageService';
 
 interface NotificacoesPushAdminProps {
@@ -45,11 +46,16 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
   const [imageUrl, setImageUrl] = useState(initialImage);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [segmento, setSegmento] = useState<'all' | 'active'>('all');
+  
+  // Público-alvo: 'all' | 'app' (Apenas app baixado/APK/PWA) | 'web' (Apenas navegadores)
+  const [publicoAlvo, setPublicoAlvo] = useState<'all' | 'app' | 'web'>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTestingDevice, setIsTestingDevice] = useState(false);
   const [toast, setToast] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
   const [historico, setHistorico] = useState<PushNotificationHistoryItem[]>([]);
   const [isConfirmingSend, setIsConfirmingSend] = useState(false);
+  const [stats, setStats] = useState<PushStats>({ total: 0, app: 0, web: 0 });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   // Verificação estrita de privilégio administrativo
   const roleLower = (currentUserRole || localStorage.getItem('hotelnozap_user_role') || '').toLowerCase();
@@ -84,14 +90,30 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
     setHistorico(pushNotificationService.getHistory());
   };
 
+  const loadStats = async () => {
+    setIsLoadingStats(true);
+    try {
+      const data = await nativePushService.fetchStats(activeHotel?.id);
+      setStats(data);
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
   useEffect(() => {
     loadHistory();
-    const handleUpdate = () => loadHistory();
+    loadStats();
+    const handleUpdate = () => {
+      loadHistory();
+      loadStats();
+    };
     window.addEventListener('hotel_push_history_updated', handleUpdate);
     return () => {
       window.removeEventListener('hotel_push_history_updated', handleUpdate);
     };
-  }, []);
+  }, [activeHotel?.id]);
 
   const handleApplyTemplate = (tpl: typeof TEMPLATE_SUGESTOES[0]) => {
     setTitulo(tpl.titulo);
@@ -152,7 +174,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
         message: mensagem.trim(),
         url: url.trim() || initialUrl,
         imageUrl: imageUrl.trim() || undefined,
-        segment: segmento,
+        publicoAlvo,
         hotelId: activeHotel?.id,
         hotelName: hotelNome || undefined
       });
@@ -163,6 +185,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
         setMensagem('');
         setImageUrl('');
         loadHistory();
+        loadStats();
       } else {
         showToast('erro', result.error || 'Falha ao enviar notificação.');
       }
@@ -170,6 +193,40 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
       showToast('erro', err?.message || 'Erro inesperado.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleTestOnThisDevice = async () => {
+    setIsTestingDevice(true);
+    try {
+      const subRes = await nativePushService.subscribeUser(activeHotel?.id);
+      if (!subRes.success) {
+        showToast('erro', subRes.error || 'Permissão de notificação negada no seu navegador.');
+        return;
+      }
+
+      await loadStats();
+
+      // Dispara push de teste para o próprio aparelho
+      const testRes = await pushNotificationService.sendNotification({
+        title: '🔔 Teste de Notificação Nativa',
+        message: 'Parabéns! O seu dispositivo está recebendo notificações push nativas em segundo plano.',
+        url: initialUrl,
+        imageUrl: imageUrl.trim() || undefined,
+        publicoAlvo: 'all',
+        hotelId: activeHotel?.id,
+        hotelName: hotelNome || undefined
+      });
+
+      if (testRes.success) {
+        showToast('sucesso', 'Notificação de teste enviada para este aparelho!');
+      } else {
+        showToast('erro', testRes.error || 'Falha ao enviar teste.');
+      }
+    } catch (err: any) {
+      showToast('erro', err?.message || 'Erro ao testar dispositivo.');
+    } finally {
+      setIsTestingDevice(false);
     }
   };
 
@@ -234,28 +291,94 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-                {activeHotel ? `Disparador Push • ${hotelNome}` : 'Disparador de Notificações Push'}
+                {activeHotel ? `Disparador Push • ${hotelNome}` : 'Disparador de Notificações Push Próprio'}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                {activeHotel ? 'Hotel Painel' : 'OneSignal'}
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Motor Nativo
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Envio instantâneo de alertas para celulares (Android/iOS) e navegadores dos hóspedes
+              Notificações push entregues diretamente no celular (Android/iOS) mesmo com o app ou navegador 100% fechados
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <a
-            href="https://dashboard.onesignal.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition cursor-pointer shadow-sm"
+          <button
+            type="button"
+            onClick={handleTestOnThisDevice}
+            disabled={isTestingDevice}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer shadow-sm disabled:opacity-50"
+            title="Ativar e receber notificação de teste neste dispositivo"
           >
-            <span className="material-symbols-outlined text-sm">open_in_new</span>
-            Painel OneSignal
-          </a>
+            {isTestingDevice ? (
+              <>
+                <span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                <span>Testando...</span>
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-sm">phonelink_ring</span>
+                <span>Testar no Meu Aparelho</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Cards de Métricas e Base de Inscritos */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Total Geral */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total de Inscritos</span>
+            <div className="text-2xl font-black text-slate-900">
+              {isLoadingStats ? '...' : stats.total}
+            </div>
+            <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+              <span className="material-symbols-outlined text-xs">verified</span>
+              Dispositivos ativos
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl">campaign</span>
+          </div>
+        </div>
+
+        {/* Usuários com App Baixado */}
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 shadow-sm flex items-center justify-between border border-slate-700/50">
+          <div className="space-y-1">
+            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              App Instalado (APK / PWA)
+            </span>
+            <div className="text-2xl font-black text-white">
+              {isLoadingStats ? '...' : stats.app}
+            </div>
+            <span className="text-[11px] text-slate-300">
+              Recebem sem abrir navegador
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-white/10 text-emerald-400 flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl">smartphone</span>
+          </div>
+        </div>
+
+        {/* Usuários do Navegador */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Navegadores Web</span>
+            <div className="text-2xl font-black text-slate-900">
+              {isLoadingStats ? '...' : stats.web}
+            </div>
+            <span className="text-[11px] text-slate-400">
+              Chrome, Safari, Edge
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl">language</span>
+          </div>
         </div>
       </div>
 
@@ -263,17 +386,16 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Coluna do Formulário (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Card de Configuração e Disparo */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2 text-slate-800 font-bold text-base">
                 <span className="material-symbols-outlined text-emerald-600">campaign</span>
-                <span>Nova Campanha Push</span>
+                <span>Nova Campanha Push Nativa</span>
               </div>
-              <span className="text-xs text-slate-400">Público: Web &amp; Mobile</span>
+              <span className="text-xs text-slate-400">Entrega Direta sem Intermediários</span>
             </div>
 
-            {/* Modelos Rápidos */}
+            {/* Sugestões Rápidas */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-sm text-amber-500">magic_button</span>
@@ -291,6 +413,91 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* SELETOR EXCLUSIVO DE PÚBLICO-ALVO */}
+            <div className="space-y-2 pt-2">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-emerald-600">tune</span>
+                Público-Alvo do Disparo <span className="text-red-500">*</span>
+              </label>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {/* Opção 1: Todos */}
+                <button
+                  type="button"
+                  onClick={() => setPublicoAlvo('all')}
+                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col gap-1.5 ${
+                    publicoAlvo === 'all'
+                      ? 'border-emerald-500 bg-emerald-50/60 text-emerald-950 font-bold ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-lg ${publicoAlvo === 'all' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      groups
+                    </span>
+                    <span className="text-xs font-bold">Todos</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 leading-tight">
+                    App Baixado + Navegadores ({stats.total})
+                  </span>
+                </button>
+
+                {/* Opção 2: Apenas App Baixado (Destaque) */}
+                <button
+                  type="button"
+                  onClick={() => setPublicoAlvo('app')}
+                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col gap-1.5 relative overflow-hidden ${
+                    publicoAlvo === 'app'
+                      ? 'border-emerald-600 bg-slate-900 text-white font-bold ring-2 ring-emerald-500/30 shadow-md'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-lg ${publicoAlvo === 'app' ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                      smartphone
+                    </span>
+                    <span className="text-xs font-bold">Apenas App</span>
+                    <span className="text-[9px] font-extrabold uppercase px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400 ml-auto">
+                      APK/PWA
+                    </span>
+                  </div>
+                  <span className={`text-[10px] leading-tight ${publicoAlvo === 'app' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    Celulares com app baixado ({stats.app})
+                  </span>
+                </button>
+
+                {/* Opção 3: Apenas Navegadores */}
+                <button
+                  type="button"
+                  onClick={() => setPublicoAlvo('web')}
+                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col gap-1.5 ${
+                    publicoAlvo === 'web'
+                      ? 'border-emerald-500 bg-emerald-50/60 text-emerald-950 font-bold ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-lg ${publicoAlvo === 'web' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      language
+                    </span>
+                    <span className="text-xs font-bold">Apenas Web</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 leading-tight">
+                    Visitantes de navegador ({stats.web})
+                  </span>
+                </button>
+              </div>
+
+              {publicoAlvo === 'app' && (
+                <div className="p-2.5 rounded-xl bg-slate-900/90 text-emerald-300 text-[11px] flex items-center gap-2 border border-emerald-500/30">
+                  <span className="material-symbols-outlined text-base text-emerald-400 shrink-0">check_circle</span>
+                  <span>
+                    A notificação chegará direto na tela do celular mesmo se o app estiver <strong>100% fechado</strong>.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Campo: Título */}
@@ -333,7 +540,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-sm text-slate-400">link</span>
-                Link de Destino ao Clicar
+                Link de Destino ao Tocar
               </label>
               <input
                 type="url"
@@ -343,16 +550,16 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium text-slate-800 transition outline-none font-mono"
               />
               <p className="text-[11px] text-slate-400">
-                O usuário será direcionado para esta URL ao clicar na notificação.
+                Ao tocar na notificação, o usuário será direcionado para esta página dentro do app.
               </p>
             </div>
 
-            {/* Campo: Imagem / Banner com Upload Direto (Estilo Serasa) */}
+            {/* Campo: Imagem / Banner com Upload Direto */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-sm text-emerald-600">photo_library</span>
-                  Banner / Imagem Grande (Estilo Serasa / Rich Push)
+                  Banner / Imagem Grande (Rich Push)
                 </label>
                 {imageUrl && (
                   <button
@@ -402,50 +609,8 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 </button>
               </div>
               <p className="text-[11px] text-slate-400">
-                Esta foto aparecerá expandida na tela de bloqueio e na barra de notificações do Android.
+                Esta foto aparecerá expandida na barra de notificações e na tela de bloqueio do celular.
               </p>
-            </div>
-
-            {/* Segmento de Destinatários */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Público Destinatário</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSegmento('all')}
-                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-3 ${
-                    segmento === 'all'
-                      ? 'border-emerald-500 bg-emerald-50/50 text-emerald-950 font-bold shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                  }`}
-                >
-                  <span className={`material-symbols-outlined text-lg ${segmento === 'all' ? 'text-emerald-600' : 'text-slate-400'}`}>
-                    public
-                  </span>
-                  <div>
-                    <div className="text-xs font-bold">Todos os Inscritos</div>
-                    <div className="text-[10px] text-slate-500 font-normal">Base completa de usuários</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSegmento('active')}
-                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-3 ${
-                    segmento === 'active'
-                      ? 'border-emerald-500 bg-emerald-50/50 text-emerald-950 font-bold shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                  }`}
-                >
-                  <span className={`material-symbols-outlined text-lg ${segmento === 'active' ? 'text-emerald-600' : 'text-slate-400'}`}>
-                    bolt
-                  </span>
-                  <div>
-                    <div className="text-xs font-bold">Inscritos Ativos</div>
-                    <div className="text-[10px] text-slate-500 font-normal">Engajamento recente</div>
-                  </div>
-                </button>
-              </div>
             </div>
 
             {/* Botão de Envio */}
@@ -459,12 +624,14 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 {isSubmitting ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Enviando pelo OneSignal...</span>
+                    <span>Disparando via Motor Nativo...</span>
                   </>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-lg">send</span>
-                    <span>Disparar Notificação Push Agora</span>
+                    <span className="material-symbols-outlined text-lg">rocket_launch</span>
+                    <span>
+                      Disparar para {publicoAlvo === 'app' ? 'quem tem o App Baixado' : (publicoAlvo === 'web' ? 'Visitantes da Web' : 'Todos os Inscritos')} Agora
+                    </span>
                   </>
                 )}
               </button>
@@ -482,13 +649,12 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 <span>Prévia em Tempo Real</span>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                Mockup Celular &amp; PC
+                Mockup Celular
               </span>
             </div>
 
-            {/* Card fiel estilo Notificação Android (Estilo Serasa / Rich Push) */}
+            {/* Card estilo Notificação Android nativa */}
             <div className="bg-[#f2f4f7] rounded-3xl p-3.5 sm:p-4 shadow-md border border-slate-200/90 space-y-2.5">
-              {/* Header do App Android */}
               <div className="flex items-center justify-between text-xs text-slate-600">
                 <div className="flex items-center gap-2">
                   <img
@@ -496,7 +662,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                     alt="Hotel no Zap"
                     className="w-5 h-5 rounded-full object-cover border border-slate-300 shadow-2xs"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/logo.png';
+                      (e.currentTarget as HTMLImageElement).src = '/favicon.png';
                     }}
                   />
                   <span className="font-bold text-slate-800 text-xs">Hotel no Zap</span>
@@ -508,7 +674,6 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 </div>
               </div>
 
-              {/* Título e Conteúdo da Notificação */}
               <div className="space-y-1 px-0.5">
                 <p className="font-extrabold text-sm text-slate-900 leading-snug">
                   {titulo.trim() || 'Economize nas suas diárias 🏨'}
@@ -518,7 +683,6 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 </p>
               </div>
 
-              {/* Banner / Foto Grande (Igual Serasa / Inter) */}
               {imageUrl.trim() ? (
                 <div className="rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs aspect-video w-full bg-slate-100">
                   <img
@@ -537,12 +701,11 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                     Sem banner anexado (notificação simples).
                   </p>
                   <p className="text-[10px] text-slate-400">
-                    Ao adicionar uma imagem, ela aparecerá grande aqui igual à notificação da Serasa!
+                    Ao adicionar uma imagem, ela aparecerá grande aqui na tela de bloqueio!
                   </p>
                 </div>
               )}
 
-              {/* Rodapé de Ação */}
               <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-[11px]">
                 <span className="text-slate-400 truncate max-w-[200px]">
                   {url.trim() || 'hotelnozap.com.br'}
@@ -554,41 +717,48 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
               </div>
             </div>
 
-            {/* Dica Informativa */}
             <div className="bg-emerald-50/70 rounded-2xl p-3.5 border border-emerald-200/80 text-[11px] text-emerald-950 leading-relaxed">
-              <strong>Como chega no celular?</strong> O cliente recebe na tela de bloqueio e na central do Android exatamente com essa imagem ampla, o ícone do Hotel no Zap e botão direto para o app!
+              <strong>Como chega no aparelho?</strong> O usuário recebe na tela de bloqueio e na central de notificações mesmo com o app 100% fechado, com o ícone do Hotel no Zap e som nativo!
             </div>
           </div>
 
-          {/* Card com Detalhes da Conexão OneSignal */}
+          {/* Card com Detalhes da Infraestrutura Própria */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
-              Status da Conexão OneSignal
+            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm text-emerald-500">lock</span>
+              Segurança &amp; Infraestrutura Própria
             </h3>
 
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">App ID:</span>
-                <span className="font-mono font-semibold text-slate-800">40809032-1904-4b7c...</span>
+                <span className="text-slate-500">Protocolo:</span>
+                <span className="font-semibold text-slate-800">W3C Web Push &amp; VAPID RFC 8292</span>
               </div>
 
               <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Provedor:</span>
-                <span className="font-semibold text-slate-800">OneSignal REST API v1</span>
+                <span className="text-slate-500">Dependência de Terceiros:</span>
+                <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[11px]">
+                  Zero (100% Próprio)
+                </span>
+              </div>
+
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500">Banco de Dados:</span>
+                <span className="font-semibold text-slate-800">Supabase (push_subscriptions)</span>
               </div>
 
               <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="text-slate-500">Service Worker:</span>
                 <span className="font-semibold text-emerald-600 flex items-center gap-1">
                   <span className="material-symbols-outlined text-sm">check_circle</span>
-                  Ativo e Certificado
+                  Nativo &amp; PWABuilder Ativo
                 </span>
               </div>
 
               <div className="flex justify-between py-1.5">
-                <span className="text-slate-500">Ambiente de Envio:</span>
-                <span className="font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[11px]">
-                  Produção / Serverless
+                <span className="text-slate-500">Entrega em 2º Plano:</span>
+                <span className="font-semibold text-slate-800">
+                  Google FCM / Apple APNs
                 </span>
               </div>
             </div>
@@ -699,9 +869,9 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
                 <p className="text-slate-600">{mensagem}</p>
               </div>
               <div>
-                <strong className="text-slate-700">Público:</strong>
-                <p className="text-slate-600">
-                  {segmento === 'all' ? 'Todos os Inscritos' : 'Inscritos Ativos Recentes'}
+                <strong className="text-slate-700">Público Destinatário:</strong>
+                <p className="text-slate-900 font-bold">
+                  {publicoAlvo === 'app' ? '📱 Apenas quem tem o App Baixado (APK/PWA)' : (publicoAlvo === 'web' ? '🌐 Apenas Navegadores Web' : '🚀 Todos os Inscritos (App + Web)')}
                 </p>
               </div>
             </div>

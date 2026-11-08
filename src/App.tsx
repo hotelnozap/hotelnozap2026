@@ -6,6 +6,7 @@ import { ZapHotelLogo } from './components/ZapHotelLogo';
 import NotificationSystem from './components/NotificationSystem';
 import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInatividadeModal';
 import { ModalPermissoesApp } from './components/ModalPermissoesApp';
+import { NativePushBanner } from './components/NativePushBanner';
 import { ModalReservasDoDia } from './components/ModalReservasDoDia';
 import { ModalAlternarAmbientes, type TipoAmbiente } from './components/ModalAlternarAmbientes';
 import { ModalAlertaExpiracaoPlano } from './components/ModalAlertaExpiracaoPlano';
@@ -3297,7 +3298,7 @@ export const App: React.FC = () => {
                     <span className={`material-symbols-outlined ${activeTab === 'admin-notificacoes' ? 'text-emerald-400' : ''}`}>campaign</span>
                     <span>Notificações Push</span>
                     <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300">
-                      OneSignal
+                      Nativo
                     </span>
                   </button>
 
@@ -3843,7 +3844,7 @@ export const App: React.FC = () => {
                 <span className={`material-symbols-outlined ${activeTab === 'admin-notificacoes' ? 'text-emerald-400' : ''}`}>campaign</span>
                 <span>Notificações Push</span>
                 <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300">
-                  OneSignal
+                  Nativo
                 </span>
               </button>
 
@@ -5318,6 +5319,9 @@ export const App: React.FC = () => {
         isOpen={isPermissionsModalOpen}
         onClose={() => setIsPermissionsModalOpen(false)}
       />
+
+      {/* BANNER PROATIVO DE NOTIFICAÇÕES PUSH NATIVAS (PWA / APP / WEB) */}
+      <NativePushBanner hotelId={activeHotel?.id} hotelNome={activeHotel?.name || activeHotel?.nome} />
 
       {/* MODAL PROATIVO DE RESERVAS DO DIA & ALERTAS DE NO-SHOW (EXCLUSIVO PARA HOTEL, GERENTE E RECEPÇÃO) */}
       {!isMasterAdmin && (isPerfilHotel || isGerente || isRecepcao) && (

@@ -1,5 +1,5 @@
-// Service Worker para Hotel no Zap PWA (PWABuilder Certified)
-const CACHE_NAME = 'hotelnozap-pwa-v14';
+// Service Worker para Hotel no Zap PWA & APK Nativo (PWABuilder Certified)
+const CACHE_NAME = 'hotelnozap-pwa-v15';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -31,7 +31,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.map((key) => caches.delete(key))
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
       );
     }).then(() => self.clients.claim())
   );
@@ -131,7 +135,6 @@ self.addEventListener('fetch', (event) => {
 // 4. Background Sync (Sincronização em 2º Plano)
 // ==========================================
 self.addEventListener('sync', (event) => {
-  console.log('[SW] Evento sync recebido:', event.tag);
   event.waitUntil(
     (async () => {
       try {
@@ -154,7 +157,6 @@ self.addEventListener('sync', (event) => {
 // 5. Periodic Sync (Sincronização Periódica)
 // ==========================================
 self.addEventListener('periodicsync', (event) => {
-  console.log('[SW] Evento periodicsync recebido:', event.tag);
   event.waitUntil(
     (async () => {
       try {
@@ -164,65 +166,76 @@ self.addEventListener('periodicsync', (event) => {
           await cache.put('/', response);
         }
       } catch (err) {
-        console.warn('[SW] Falha na sincronização periódica de dados:', err);
+        console.warn('[SW] Falha na sincronização periódica:', err);
       }
     })()
   );
 });
 
 // ==========================================
-// 6. Push Notifications (OneSignal & Web Push)
+// 6. Notificações Push Nativas (Web Push W3C / PWA / Android APK via Service Worker)
+// Funciona em segundo plano mesmo com app/navegador fechado
 // ==========================================
-try {
-  importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-} catch (e) {
-  console.warn('[SW] OneSignal worker import ignorado no contexto local:', e);
-}
-
 self.addEventListener('push', (event) => {
-  console.log('[SW] Notificação Push recebida:', event);
+  let title = 'Hotel no Zap';
+  let options = {
+    body: 'Você tem uma nova notificação do Hotel no Zap!',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [200, 100, 200],
+    data: { url: '/' }
+  };
+
   if (event.data) {
     try {
       const data = event.data.json();
-      const title = data.title || 'Hotel no Zap';
-      const options = {
-        body: data.body || data.message || 'Nova notificação de reserva!',
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        data: data.url || '/'
+      title = data.title || title;
+      const targetUrl = data.url || data.data?.url || '/';
+
+      options = {
+        body: data.body || data.message || options.body,
+        icon: data.icon || '/icon-192.png',
+        badge: data.badge || '/icon-192.png',
+        image: data.image || null,
+        vibrate: data.vibrate || [200, 100, 200],
+        tag: data.tag || 'hotelnozap-notif',
+        renotify: true,
+        data: {
+          url: targetUrl,
+          hotelId: data.data?.hotelId || null
+        }
       };
-      event.waitUntil(self.registration.showNotification(title, options));
     } catch (err) {
       const text = event.data.text();
-      event.waitUntil(
-        self.registration.showNotification('Hotel no Zap', {
-          body: text,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png'
-        })
-      );
+      options.body = text || options.body;
     }
   }
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const urlToOpen = (event.notification.data && typeof event.notification.data === 'string')
-    ? event.notification.data
-    : '/';
+
+  let targetUrl = '/';
+  if (event.notification.data) {
+    if (typeof event.notification.data === 'string') {
+      targetUrl = event.notification.data;
+    } else if (event.notification.data.url) {
+      targetUrl = event.notification.data.url;
+    }
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (let client of windowClients) {
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url === targetUrl && 'focus' in client) {
           return client.focus();
         }
       }
       if (self.clients.openWindow) {
-        return self.clients.openWindow(urlToOpen);
+        return self.clients.openWindow(targetUrl);
       }
     })
   );
 });
-
-

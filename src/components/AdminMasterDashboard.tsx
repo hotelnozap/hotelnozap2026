@@ -613,7 +613,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                 <span className="material-symbols-outlined text-emerald-400">campaign</span>
                 <span>Notificações Push</span>
                 <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
-                  OneSignal
+                  Nativo
                 </span>
               </button>
             )}
@@ -860,7 +860,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                 <span className="material-symbols-outlined text-emerald-400">campaign</span>
                 <span>Notificações Push</span>
                 <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
-                  OneSignal
+                  Nativo
                 </span>
               </button>
             )}

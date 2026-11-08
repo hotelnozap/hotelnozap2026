@@ -2,6 +2,7 @@
 // SERVIÇO DE LOCALIZAÇÃO E PERMISSÕES DO APP (PWA / MOBILE)
 // Gerencia geolocalização por GPS, geocodificação reversa e permissões
 // =========================================================================
+import { nativePushService } from './nativePushService';
 
 export interface UserLocation {
   city: string;
@@ -428,11 +429,10 @@ export const locationService = {
         }
       }
 
-      // OneSignal sync se ativo
-      const oneSignal = (window as any).OneSignal;
-      if (oneSignal?.Notifications) {
+      // Registro Push Nativo Próprio (Web Push W3C / PWA / APK)
+      if (notificationGranted) {
         try {
-          await oneSignal.Notifications.requestPermission();
+          await nativePushService.subscribeUser();
         } catch {}
       }
     } catch (e) {

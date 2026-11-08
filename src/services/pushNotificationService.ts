@@ -7,6 +7,7 @@ export interface PushNotificationPayload {
   url?: string;
   imageUrl?: string;
   segment?: 'all' | 'active';
+  publicoAlvo?: 'all' | 'app' | 'web';
   hotelId?: string;
   hotelName?: string;
 }
@@ -18,6 +19,7 @@ export interface PushNotificationHistoryItem {
   url?: string;
   imageUrl?: string;
   segment: string;
+  publicoAlvo?: 'all' | 'app' | 'web';
   recipients: number;
   sentAt: string;
   senderEmail: string;
@@ -31,7 +33,7 @@ const STORAGE_KEY = 'hotelnozap_push_history';
 
 class PushNotificationService {
   /**
-   * Envia uma notificação push via OneSignal (endpoint serverless /api/send-push)
+   * Envia uma notificação push via Infraestrutura Própria Nativa (Web Push / PWA / APK)
    */
   async sendNotification(payload: PushNotificationPayload): Promise<{
     success: boolean;
@@ -46,6 +48,10 @@ class PushNotificationService {
         return 'admin@hotelnozap.com.br';
       }
     })();
+
+    const publicoAlvoNome = 
+      payload.publicoAlvo === 'app' ? 'Apenas App (APK/PWA)' :
+      payload.publicoAlvo === 'web' ? 'Apenas Navegador' : 'Todos (App + Navegador)';
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -70,7 +76,8 @@ class PushNotificationService {
           message: payload.message,
           url: payload.url,
           imageUrl: payload.imageUrl,
-          segment: payload.segment === 'active' ? 'Assinantes Ativos' : 'Todos os Inscritos',
+          segment: publicoAlvoNome,
+          publicoAlvo: payload.publicoAlvo || 'all',
           recipients: 0,
           sentAt: new Date().toISOString(),
           senderEmail,
@@ -83,7 +90,7 @@ class PushNotificationService {
         await systemLogsService.addLog({
           module: 'sistema',
           level: 'error',
-          action: 'Falha no Disparo de Notificação Push',
+          action: 'Falha no Disparo de Notificação Push Nativa',
           details: `Tentativa de envio por ${senderEmail} falhou: ${errorMsg}`,
           metadata: { payload, error: data }
         });
@@ -100,7 +107,8 @@ class PushNotificationService {
         message: payload.message,
         url: payload.url,
         imageUrl: payload.imageUrl,
-        segment: payload.segment === 'active' ? 'Assinantes Ativos' : 'Todos os Inscritos',
+        segment: publicoAlvoNome,
+        publicoAlvo: payload.publicoAlvo || 'all',
         recipients,
         sentAt: new Date().toISOString(),
         senderEmail,
@@ -112,8 +120,8 @@ class PushNotificationService {
       await systemLogsService.addLog({
         module: 'sistema',
         level: 'success',
-        action: 'Notificação Push Disparada',
-        details: `Push "${payload.title}" enviado para ${recipients} destinatário(s) via OneSignal.`,
+        action: 'Notificação Push Nativa Disparada',
+        details: `Push "${payload.title}" enviado para ${recipients} destinatário(s) (${publicoAlvoNome}) via motor nativo próprio.`,
         metadata: { id: notifId, recipients, payload }
       });
 
@@ -131,7 +139,8 @@ class PushNotificationService {
         message: payload.message,
         url: payload.url,
         imageUrl: payload.imageUrl,
-        segment: payload.segment === 'active' ? 'Assinantes Ativos' : 'Todos os Inscritos',
+        segment: publicoAlvoNome,
+        publicoAlvo: payload.publicoAlvo || 'all',
         recipients: 0,
         sentAt: new Date().toISOString(),
         senderEmail,
