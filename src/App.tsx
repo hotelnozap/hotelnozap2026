@@ -7,6 +7,7 @@ import NotificationSystem from './components/NotificationSystem';
 import { ConfiguracaoInatividadeModal } from './components/ConfiguracaoInatividadeModal';
 import { ModalPermissoesApp } from './components/ModalPermissoesApp';
 import { NativePushBanner } from './components/NativePushBanner';
+import { nativePushService, isAppInstalled, isPushSupported } from './services/nativePushService';
 import { ModalReservasDoDia } from './components/ModalReservasDoDia';
 import { ModalAlternarAmbientes, type TipoAmbiente } from './components/ModalAlternarAmbientes';
 import { ModalAlertaExpiracaoPlano } from './components/ModalAlertaExpiracaoPlano';
@@ -1004,6 +1005,21 @@ export const App: React.FC = () => {
       }
     }).catch(() => {});
   }, []);
+
+  // Sincronização e registro automático de Push Nativo no App instalado (APK/PWA)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isPushSupported()) {
+      if (Notification.permission === 'granted' || isAppInstalled()) {
+        nativePushService.subscribeUser(activeHotel?.id).then((res) => {
+          if (res.success) {
+            console.log('[NativePush] Dispositivo registrado com sucesso no banco!');
+          }
+        }).catch((err) => {
+          console.warn('[NativePush] Falha na auto-sincronizacao:', err);
+        });
+      }
+    }
+  }, [activeHotel?.id]);
 
   useEffect(() => {
     const syncActiveHotel = async () => {

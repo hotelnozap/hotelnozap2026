@@ -22,7 +22,8 @@ export const isAppInstalled = (): boolean => {
   const isStandalone = Boolean(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   const isIOSStandalone = Boolean((window.navigator as any).standalone);
   const isAndroidApp = typeof document !== 'undefined' && document.referrer.includes('android-app://');
-  return isStandalone || isIOSStandalone || isAndroidApp;
+  const isWebView = typeof navigator !== 'undefined' && (navigator.userAgent.includes('wv') || navigator.userAgent.includes('Version/'));
+  return isStandalone || isIOSStandalone || isAndroidApp || isWebView;
 };
 
 export const isPushSupported = (): boolean => {
@@ -84,11 +85,23 @@ class NativePushService {
       const reg = await navigator.serviceWorker.ready;
       let subscription = await reg.pushManager.getSubscription();
 
+      const VAPID_MARKER = 'hotelnozap_vapid_active_key';
+      const storedKey = localStorage.getItem(VAPID_MARKER);
+
+      // Se a assinatura era legada (OneSignal) ou com outra chave, desinscreve para renovar nativamente
+      if (subscription && storedKey !== vapidKey) {
+        try {
+          await subscription.unsubscribe();
+        } catch {}
+        subscription = null;
+      }
+
       if (!subscription) {
         subscription = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: applicationServerKey as any
         });
+        localStorage.setItem(VAPID_MARKER, vapidKey);
       }
 
       const tipoDispositivo = isAppInstalled() ? 'app' : 'web';
