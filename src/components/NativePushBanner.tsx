@@ -14,6 +14,17 @@ export const NativePushBanner: React.FC<NativePushBannerProps> = ({ hotelId, hot
   useEffect(() => {
     if (!isPushSupported()) return;
 
+    // Se o usuário estiver autenticado na Área Administrativa ou Gestão de Hotel, nunca exibe o banner
+    try {
+      const userRole = localStorage.getItem('hotelnozap_user_role') || '';
+      const userEmail = localStorage.getItem('hotelnozap_user_email') || '';
+      if (userRole || userEmail) {
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
     // Se já foi concedida ou bloqueada a permissão
     if (typeof Notification !== 'undefined') {
       if (Notification.permission === 'granted' || Notification.permission === 'denied') {
