@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from './_supabase.js';
 import { applyCors } from './_cors.js';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 
 export default async function handler(req, res) {
   if (applyCors(req, res, 'GET,OPTIONS,POST,DELETE')) return;
