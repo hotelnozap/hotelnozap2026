@@ -102,7 +102,7 @@ class NativePushService {
           reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
         }
       } else {
-        return false;
+        return { success: false, error: 'Service Worker não suportado neste navegador.' };
       }
       await navigator.serviceWorker.ready;
       let subscription = await reg.pushManager.getSubscription();
@@ -167,7 +167,7 @@ class NativePushService {
           reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
         }
       } else {
-        return false;
+        return { success: false, error: 'Service Worker não suportado neste navegador.' };
       }
       await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
