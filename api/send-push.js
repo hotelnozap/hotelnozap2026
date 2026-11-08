@@ -3,15 +3,123 @@ import { applyCors } from './_cors.js';
 import webpush from 'web-push';
 
 export default async function handler(req, res) {
-  if (applyCors(req, res, 'GET,OPTIONS,POST')) return;
+  if (applyCors(req, res, 'GET,OPTIONS,POST,DELETE')) return;
 
+  const supabaseAdmin = getSupabaseAdmin();
+  const action = req.query.action || req.body?.action;
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AÇÃO 1: OBTER CHAVE PÚBLICA VAPID
+  // ──────────────────────────────────────────────────────────────────────────
+  if (req.method === 'GET' && action === 'vapid-public-key') {
+    const publicKey = process.env.VAPID_PUBLIC_KEY || 'BNssYPXA_K4D951xVf3i7Uc__CzL_roft6oTXiJ27t3JvNbT_ftbGaqPvVaBc6CHpUZP1nfA8xqUZqosT_hlxzA';
+    return res.status(200).json({ publicKey });
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AÇÃO 2: ESTATÍSTICAS DE INSCRITOS (APP VS WEB)
+  // ──────────────────────────────────────────────────────────────────────────
+  if (req.method === 'GET' && action === 'stats') {
+    const hotelId = req.query.hotelId || null;
+    try {
+      let queryTotal = supabaseAdmin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('ativo', true);
+      let queryApp = supabaseAdmin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('tipo_dispositivo', 'app');
+      let queryWeb = supabaseAdmin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('ativo', true).eq('tipo_dispositivo', 'web');
+
+      if (hotelId) {
+        queryTotal = queryTotal.eq('hotel_id', hotelId);
+        queryApp = queryApp.eq('hotel_id', hotelId);
+        queryWeb = queryWeb.eq('hotel_id', hotelId);
+      }
+
+      const [resTotal, resApp, resWeb] = await Promise.all([queryTotal, queryApp, queryWeb]);
+
+      return res.status(200).json({
+        total: resTotal.count ?? 0,
+        app: resApp.count ?? 0,
+        web: resWeb.count ?? 0
+      });
+    } catch (err) {
+      return res.status(200).json({ total: 0, app: 0, web: 0 });
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AÇÃO 3: INSCREVER DISPOSITIVO (POST) OU CANCELAR (DELETE)
+  // ──────────────────────────────────────────────────────────────────────────
+  if (action === 'subscribe') {
+    if (req.method === 'POST') {
+      try {
+        const { subscription, tipoDispositivo = 'web', hotelId = null, userAgent = '' } = req.body || {};
+
+        if (!subscription || !subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
+          return res.status(400).json({ error: 'Assinatura Push inválida ou incompleta.' });
+        }
+
+        const tipo = tipoDispositivo === 'app' ? 'app' : 'web';
+
+        const payload = {
+          endpoint: subscription.endpoint,
+          p256dh: subscription.keys.p256dh,
+          auth: subscription.keys.auth,
+          tipo_dispositivo: tipo,
+          hotel_id: hotelId || null,
+          user_agent: userAgent || (req.headers['user-agent'] || ''),
+          ativo: true,
+          updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabaseAdmin
+          .from('push_subscriptions')
+          .upsert(payload, { onConflict: 'endpoint' })
+          .select('id, tipo_dispositivo, hotel_id')
+          .single();
+
+        if (error) {
+          console.error('[send-push:subscribe] Erro ao salvar inscrição:', error);
+          return res.status(500).json({ error: 'Erro ao gravar inscrição no banco: ' + error.message });
+        }
+
+        return res.status(200).json({
+          success: true,
+          id: data?.id,
+          tipoDispositivo: data?.tipo_dispositivo
+        });
+      } catch (err) {
+        console.error('[send-push:subscribe] Erro interno:', err);
+        return res.status(500).json({ error: 'Falha interna: ' + err.message });
+      }
+    }
+
+    if (req.method === 'DELETE') {
+      try {
+        const { endpoint } = req.body || {};
+        if (!endpoint) {
+          return res.status(400).json({ error: 'Endpoint obrigatório para cancelamento.' });
+        }
+
+        await supabaseAdmin
+          .from('push_subscriptions')
+          .delete()
+          .eq('endpoint', endpoint);
+
+        return res.status(200).json({ success: true, message: 'Inscrição removida.' });
+      } catch (err) {
+        return res.status(500).json({ error: 'Falha ao remover inscrição: ' + err.message });
+      }
+    }
+
+    return res.status(405).json({ error: 'Método não permitido para subscribe.' });
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AÇÃO 4: DISPARO DE NOTIFICAÇÃO PUSH NATIVA
+  // ──────────────────────────────────────────────────────────────────────────
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido.' });
   }
 
-  // 1. VALIDAÇÃO DE AUTENTICAÇÃO E PERMISSÃO
-  const supabaseAdmin = getSupabaseAdmin();
-
+  // 1. Validação de autenticação de administrador ou hotel
   const authHeader = req.headers['authorization'] || req.headers['Authorization'];
   const token = typeof authHeader === 'string' ? authHeader.replace(/^Bearer\s+/i, '').trim() : '';
 
@@ -73,7 +181,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Título e mensagem são obrigatórios.' });
   }
 
-  // 2. CONFIGURAÇÃO VAPID NATIVA
+  // 2. Configuração VAPID
   const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:contato@hotelnozap.com.br';
   const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 'BNssYPXA_K4D951xVf3i7Uc__CzL_roft6oTXiJ27t3JvNbT_ftbGaqPvVaBc6CHpUZP1nfA8xqUZqosT_hlxzA';
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
@@ -86,7 +194,7 @@ export default async function handler(req, res) {
 
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
-  // 3. CONSULTA DE INSCRITOS NO SUPABASE
+  // 3. Consulta de inscritos filtrados
   let query = supabaseAdmin
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth, tipo_dispositivo, hotel_id')
@@ -123,7 +231,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // 4. PREPARAÇÃO DO PAYLOAD NATIVO (W3C PUSH)
+  // 4. Preparação do payload nativo
   const finalUrl = url || (hotelData?.slug 
     ? `https://hotelnozap.com.br/?hotel=${hotelData.slug}` 
     : (hotelData?.id ? `https://hotelnozap.com.br/?hotel=${hotelData.id}` : 'https://hotelnozap.com.br'));
@@ -148,7 +256,7 @@ export default async function handler(req, res) {
     }
   });
 
-  // 5. DISPARO EM LOTES CONCORRENTES COM LIMPEZA DE DISPOSITIVOS EXPIRADOS
+  // 5. Disparo em lotes com limpeza de endpoints expirados
   let sentCount = 0;
   let failCount = 0;
   const expiredEndpoints = [];
@@ -169,24 +277,21 @@ export default async function handler(req, res) {
 
         try {
           await webpush.sendNotification(pushSubscription, pushPayload, {
-            TTL: 86400, // 24 horas no cache do Google FCM / Apple APNs se aparelho estiver offline
+            TTL: 86400,
             urgency: 'high'
           });
           sentCount++;
         } catch (err) {
           failCount++;
-          // Se o dispositivo desinstalou o app ou cancelou a permissão (404/410 Gone)
           if (err.statusCode === 404 || err.statusCode === 410) {
             expiredEndpoints.push(sub.endpoint);
-          } else {
-            console.warn('[send-push] Erro ao enviar para endpoint:', sub.id, err.message);
           }
         }
       })
     );
   }
 
-  // 6. LIMPEZA AUTOMÁTICA DE DISPOSITIVOS INATIVOS NO BANCO
+  // 6. Limpeza automática de inativos
   if (expiredEndpoints.length > 0) {
     await supabaseAdmin
       .from('push_subscriptions')

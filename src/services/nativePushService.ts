@@ -36,7 +36,7 @@ class NativePushService {
   async getVapidPublicKey(): Promise<string> {
     if (this.vapidPublicKeyCache) return this.vapidPublicKeyCache;
     try {
-      const res = await fetch('/api/push-vapid-public-key');
+      const res = await fetch('/api/send-push?action=vapid-public-key');
       if (res.ok) {
         const data = await res.json();
         if (data.publicKey) {
@@ -94,7 +94,7 @@ class NativePushService {
       const tipoDispositivo = isAppInstalled() ? 'app' : 'web';
 
       // Envia os dados para a API serverless gravar no Supabase
-      const response = await fetch('/api/push-subscribe', {
+      const response = await fetch('/api/send-push?action=subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -128,7 +128,7 @@ class NativePushService {
       if (sub) {
         const endpoint = sub.endpoint;
         await sub.unsubscribe();
-        await fetch('/api/push-subscribe', {
+        await fetch('/api/send-push?action=subscribe', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint })
@@ -143,7 +143,9 @@ class NativePushService {
 
   async fetchStats(hotelId?: string): Promise<PushStats> {
     try {
-      const url = hotelId ? `/api/push-stats?hotelId=${encodeURIComponent(hotelId)}` : '/api/push-stats';
+      const url = hotelId 
+        ? `/api/send-push?action=stats&hotelId=${encodeURIComponent(hotelId)}` 
+        : '/api/send-push?action=stats';
       const res = await fetch(url);
       if (res.ok) {
         return await res.json();
