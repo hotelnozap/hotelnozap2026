@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   // AÇÃO 1: OBTER CHAVE PÚBLICA VAPID
   // ──────────────────────────────────────────────────────────────────────────
   if (req.method === 'GET' && action === 'vapid-public-key') {
-    const publicKey = process.env.VAPID_PUBLIC_KEY || 'BNssYPXA_K4D951xVf3i7Uc__CzL_roft6oTXiJ27t3JvNbT_ftbGaqPvVaBc6CHpUZP1nfA8xqUZqosT_hlxzA';
+    const publicKey = (process.env.VAPID_PUBLIC_KEY || 'BNssYPXA_K4D951xVf3i7Uc__CzL_roft6oTXiJ27t3JvNbT_ftbGaqPvVaBc6CHpUZP1nfA8xqUZqosT_hlxzA').trim();
     return res.status(200).json({ publicKey });
   }
 
@@ -182,9 +182,9 @@ export default async function handler(req, res) {
   }
 
   // 2. Configuração VAPID
-  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:contato@hotelnozap.com.br';
-  const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 'BNssYPXA_K4D951xVf3i7Uc__CzL_roft6oTXiJ27t3JvNbT_ftbGaqPvVaBc6CHpUZP1nfA8xqUZqosT_hlxzA';
-  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+  const vapidSubject = (process.env.VAPID_SUBJECT || 'mailto:contato@hotelnozap.com.br').trim();
+  const vapidPublicKey = (process.env.VAPID_PUBLIC_KEY || 'BNssYPXA_K4D951xVf3i7Uc__CzL_roft6oTXiJ27t3JvNbT_ftbGaqPvVaBc6CHpUZP1nfA8xqUZqosT_hlxzA').trim();
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY?.trim();
 
   if (!vapidPrivateKey) {
     return res.status(500).json({
