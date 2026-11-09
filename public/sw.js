@@ -1,5 +1,5 @@
 // Service Worker para Hotel no Zap PWA & APK Nativo (PWABuilder Certified)
-const CACHE_NAME = 'hotelnozap-pwa-v15';
+const CACHE_NAME = 'hotelnozap-pwa-v16';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -9,6 +9,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.svg',
   '/favicon.png',
+  '/badge.png',
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png'
@@ -180,8 +181,7 @@ self.addEventListener('push', (event) => {
   let title = 'Hotel no Zap';
   let options = {
     body: 'Você tem uma nova notificação do Hotel no Zap!',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    badge: '/badge.png',
     vibrate: [200, 100, 200],
     data: { url: '/' }
   };
@@ -194,8 +194,7 @@ self.addEventListener('push', (event) => {
 
       options = {
         body: data.body || data.message || options.body,
-        icon: data.icon || '/icon-192.png',
-        badge: data.badge || '/icon-192.png',
+        badge: data.badge || '/badge.png',
         image: data.image || null,
         vibrate: data.vibrate || [200, 100, 200],
         tag: data.tag || 'hotelnozap-notif',
@@ -205,6 +204,10 @@ self.addEventListener('push', (event) => {
           hotelId: data.data?.hotelId || null
         }
       };
+
+      if (data.icon) {
+        options.icon = data.icon;
+      }
     } catch (err) {
       const text = event.data.text();
       options.body = text || options.body;

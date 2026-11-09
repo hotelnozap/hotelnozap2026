@@ -253,14 +253,14 @@ export default async function handler(req, res) {
     ? (hotelData.link.startsWith('http') ? hotelData.link : `https://hotelnozap.com.br${hotelData.link}`) 
     : 'https://hotelnozap.com.br');
 
-  const finalImage = imageUrl || hotelData?.url_imagem || null;
+  // Só inclui imagem de banner se o usuário preencheu o campo explicitamente
+  const finalImage = (typeof imageUrl === 'string' && imageUrl.trim()) ? imageUrl.trim() : null;
 
   const pushPayload = JSON.stringify({
     title,
     body: message,
     message,
-    icon: hotelData?.logo_url || 'https://hotelnozap.com.br/icon-192.png',
-    badge: 'https://hotelnozap.com.br/icon-192.png',
+    badge: 'https://hotelnozap.com.br/badge.png',
     image: finalImage,
     url: finalUrl,
     vibrate: [200, 100, 200],
