@@ -46,6 +46,10 @@ populate_live_data.js
 *.apk
 *.aab
 *.keystore
+keystore/
+android/
+build_apk_aab.bat
+imagens para play store/
 1 Telas do Sistema/
 .vercel
 json_n8n/

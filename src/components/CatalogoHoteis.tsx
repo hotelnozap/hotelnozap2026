@@ -109,16 +109,14 @@ export const findCityBySlug = (slug: string, hotels: PublicHotel[]): string | nu
   return null;
 };
 
-// Identifica se um hotel é o Hotel Morada da Lua ou Hotel Demo de Parceiro (oculta do showroom público)
+// Identifica se um hotel é Hotel Demo de Parceiro (oculta do showroom público)
+// Obs: Hotel Morada da Lua liberado para exibição pública na vitrine
 export const isHotelMoradaDaLua = (h: { id?: string; name?: string; link?: string; is_demo?: boolean; isDemo?: boolean; notes?: string } | null | undefined): boolean => {
   if (!h) return false;
   if ((h as any).is_demo === true || (h as any).isDemo === true) return true;
   if ((h.notes || '').includes('[DEMO_PARCEIRO')) return true;
-  if (h.id === '3c18756c-d41d-4d7f-873f-57e87e3e2c78') return true;
   const name = (h.name || '').toLowerCase();
-  if (name.includes('morada da lua') || name.includes('[demo]') || name.includes('(demo)')) return true;
-  const link = (h.link || '').toLowerCase();
-  if (link.includes('hotelmoradadalua') || link.includes('moradadalua')) return true;
+  if (name.includes('[demo]') || name.includes('(demo)')) return true;
   return false;
 };
 
@@ -464,7 +462,7 @@ export interface CatalogoHoteisProps {
 
 const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLogin, onNavigateToHotel }) => {
   // Cache local para carregamento instantâneo (0 segundos)
-  const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v6';
+  const CACHE_KEY_PUBLIC_HOTEIS = 'hotelnozap_public_hoteis_v7';
 
   // Lista geral de hotéis com inicialização imediata via cache ou preload embutido (Zero tempo de espera)
   const [hoteisList, setHoteisList] = useState<PublicHotel[]>(() => {
