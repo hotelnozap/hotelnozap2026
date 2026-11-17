@@ -99,9 +99,12 @@ class PushNotificationService {
       }
 
       const recipients = data.recipients ?? 0;
+      const sentCount = data.sent ?? 0;
 
-      if (!data.success || recipients === 0) {
-        const errDesc = data.error || data.message || 'Nenhum dispositivo encontrado para o público selecionado.';
+      if (!data.success || recipients === 0 || (recipients > 0 && sentCount === 0)) {
+        const errDesc = data.error || data.message || (recipients > 0 && sentCount === 0 
+          ? `Dispositivo(s) não alcançado(s) (${data.failed || recipients} aparelho(s) com inscrição expirada ou desinstalada).`
+          : 'Nenhum dispositivo encontrado para o público selecionado.');
         this.saveHistory({
           id: `empty-${Date.now()}`,
           title: payload.title,

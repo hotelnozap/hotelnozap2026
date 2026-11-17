@@ -19,11 +19,16 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 export const isAppInstalled = (): boolean => {
   if (typeof window === 'undefined') return false;
+  const isCapacitor = Boolean(
+    (window as any).Capacitor?.isNativePlatform?.() || 
+    (window as any).Capacitor?.getPlatform?.() === 'android' ||
+    (window as any).Capacitor?.platform === 'android'
+  );
   const isStandalone = Boolean(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   const isIOSStandalone = Boolean((window.navigator as any).standalone);
   const isAndroidApp = typeof document !== 'undefined' && document.referrer.includes('android-app://');
   const isWebView = typeof navigator !== 'undefined' && (navigator.userAgent.includes('wv') || navigator.userAgent.includes('Version/'));
-  return isStandalone || isIOSStandalone || isAndroidApp || isWebView;
+  return isCapacitor || isStandalone || isIOSStandalone || isAndroidApp || isWebView;
 };
 
 export const isPushSupported = (): boolean => {
@@ -79,7 +84,7 @@ class NativePushService {
     }
   }
 
-  async subscribeUser(hotelId?: string): Promise<{ success: boolean; error?: string }> {
+  async subscribeUser(hotelId?: string, forceRenew: boolean = false): Promise<{ success: boolean; error?: string }> {
     if (!isPushSupported()) {
       return { success: false, error: 'Notificações push não são suportadas neste navegador/dispositivo.' };
     }
@@ -110,8 +115,8 @@ class NativePushService {
       const VAPID_MARKER = 'hotelnozap_vapid_active_key';
       const storedKey = localStorage.getItem(VAPID_MARKER);
 
-      // Se a assinatura era legada (OneSignal) ou com outra chave, desinscreve para renovar nativamente
-      if (subscription && storedKey !== vapidKey) {
+      // Se foi solicitado renovação forçada ou a assinatura era legada/com outra chave
+      if (subscription && (forceRenew || storedKey !== vapidKey)) {
         try {
           await subscription.unsubscribe();
         } catch {}

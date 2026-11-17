@@ -199,7 +199,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
   const handleTestOnThisDevice = async () => {
     setIsTestingDevice(true);
     try {
-      const subRes = await nativePushService.subscribeUser(activeHotel?.id);
+      const subRes = await nativePushService.subscribeUser(activeHotel?.id, true);
       if (!subRes.success) {
         showToast('erro', subRes.error || 'Permissão de notificação negada no seu navegador.');
         return;

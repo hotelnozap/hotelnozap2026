@@ -317,12 +317,17 @@ export default async function handler(req, res) {
       .catch((err) => console.error('[send-push] Falha ao inativar endpoints expirados:', err));
   }
 
+  const isActuallyDelivered = sentCount > 0;
+
   return res.status(200).json({
-    success: true,
+    success: isActuallyDelivered,
     recipients: subscriptions.length,
     sent: sentCount,
     failed: failCount,
     cleaned: expiredEndpoints.length,
-    id: `push-${Date.now()}`
+    id: `push-${Date.now()}`,
+    error: !isActuallyDelivered && failCount > 0
+      ? `Nenhum dispositivo recebeu a notificação (${failCount} dispositivo(s) com assinatura expirada ou desinstalada).`
+      : undefined
   });
 }

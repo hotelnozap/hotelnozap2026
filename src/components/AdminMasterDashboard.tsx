@@ -125,18 +125,18 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
     setIsLoading(true);
     try {
       const [dbHoteis, dbParceiros, dbPlanos, dbReservas, dbQuartosRede, dbCupons] = await Promise.all([
-        hoteisService.getHoteis(),
-        parceirosService.getParceiros(),
-        planosService.getPlanos(),
-        reservasService.getAllReservas ? reservasService.getAllReservas() : reservasService.getReservas('ALL'),
-        quartosService.getAllQuartosRede ? quartosService.getAllQuartosRede() : [],
-        cuponsService.getCuponsHotel()
+        hoteisService.getHoteis().catch((e) => { console.warn('[AdminDashboard] Erro hoteis:', e); return []; }),
+        parceirosService.getParceiros().catch((e) => { console.warn('[AdminDashboard] Erro parceiros:', e); return []; }),
+        planosService.getPlanos().catch((e) => { console.warn('[AdminDashboard] Erro planos:', e); return []; }),
+        (reservasService.getAllReservas ? reservasService.getAllReservas() : reservasService.getReservas('ALL')).catch((e) => { console.warn('[AdminDashboard] Erro reservas:', e); return []; }),
+        (quartosService.getAllQuartosRede ? quartosService.getAllQuartosRede() : Promise.resolve([])).catch((e) => { console.warn('[AdminDashboard] Erro quartos:', e); return []; }),
+        cuponsService.getCuponsHotel().catch((e) => { console.warn('[AdminDashboard] Erro cupons:', e); return []; })
       ]);
 
-      if (dbHoteis) setHoteis(dbHoteis);
-      if (dbParceiros) setParceiros(dbParceiros);
-      if (dbPlanos) setPlanos(dbPlanos);
-      if (dbReservas) setReservas(dbReservas);
+      if (Array.isArray(dbHoteis) && dbHoteis.length > 0) setHoteis(dbHoteis);
+      if (Array.isArray(dbParceiros)) setParceiros(dbParceiros);
+      if (Array.isArray(dbPlanos)) setPlanos(dbPlanos);
+      if (Array.isArray(dbReservas)) setReservas(dbReservas);
       if (Array.isArray(dbQuartosRede)) setQuartosRede(dbQuartosRede as QuartoRede[]);
       if (Array.isArray(dbCupons)) setTotalCupons(dbCupons.length);
     } catch (err) {
