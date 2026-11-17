@@ -5123,7 +5123,7 @@ export const App: React.FC = () => {
               onBackToDashboard={() => setActiveTab(isMasterAdmin ? 'admin-dashboard' : 'dashboard')}
               currentUserRole={currentUserRole}
               isHotelUser={!isMasterAdmin}
-              activeHotel={activeHotel}
+              activeHotel={activeTab === 'admin-notificacoes' ? null : activeHotel}
             />
           )}
 
