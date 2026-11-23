@@ -433,7 +433,7 @@ export const FormUsuario: React.FC<FormUsuarioProps> = ({
                     <option value="administracao">Administração & Gerência</option>
                     <option value="recepcao">Recepção & Reservas</option>
                     <option value="financeiro">Financeiro & Caixa</option>
-                    <option value="governanca">Governança & Camareiras</option>
+                    <option value="governanca">Controle de Limpeza</option>
                     <option value="manutencao">Manutenção & Operações</option>
                   </select>
                 </div>

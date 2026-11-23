@@ -244,7 +244,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700">
           <span className="material-symbols-outlined text-4xl mb-2 text-red-500">lock</span>
           <h2 className="text-xl font-bold">Acesso Restrito</h2>
-          <p className="text-sm mt-1">Apenas administradores do sistema SaaS têm permissão para acessar o painel de Notificações Push.</p>
+          <p className="text-sm mt-1">Apenas administradores do sistema SaaS têm permissão para acessar o painel de Notificações.</p>
           <button
             onClick={onBackToDashboard}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition"
@@ -291,7 +291,7 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-                {activeHotel ? `Disparador Push • ${hotelNome}` : 'Disparador de Notificações Push Próprio'}
+                {activeHotel ? `Disparador de Notificações • ${hotelNome}` : 'Disparador de Notificações Próprio'}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -722,47 +722,49 @@ export const NotificacoesPushAdmin: React.FC<NotificacoesPushAdminProps> = ({
             </div>
           </div>
 
-          {/* Card com Detalhes da Infraestrutura Própria */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-sm text-emerald-500">lock</span>
-              Segurança &amp; Infraestrutura Própria
-            </h3>
+          {/* Card com Detalhes da Infraestrutura Própria (Apenas visível para Super Admin Global, oculto para usuários de hotéis) */}
+          {!isHotel && (
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-emerald-500">lock</span>
+                Segurança &amp; Infraestrutura Própria
+              </h3>
 
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Protocolo:</span>
-                <span className="font-semibold text-slate-800">W3C Web Push &amp; VAPID RFC 8292</span>
-              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Protocolo:</span>
+                  <span className="font-semibold text-slate-800">W3C Web Push &amp; VAPID RFC 8292</span>
+                </div>
 
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Dependência de Terceiros:</span>
-                <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[11px]">
-                  Zero (100% Próprio)
-                </span>
-              </div>
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Dependência de Terceiros:</span>
+                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[11px]">
+                    Zero (100% Próprio)
+                  </span>
+                </div>
 
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Banco de Dados:</span>
-                <span className="font-semibold text-slate-800">Supabase (push_subscriptions)</span>
-              </div>
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Banco de Dados:</span>
+                  <span className="font-semibold text-slate-800">Supabase (push_subscriptions)</span>
+                </div>
 
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="text-slate-500">Service Worker:</span>
-                <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">check_circle</span>
-                  Nativo &amp; PWABuilder Ativo
-                </span>
-              </div>
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Service Worker:</span>
+                  <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    Nativo &amp; PWABuilder Ativo
+                  </span>
+                </div>
 
-              <div className="flex justify-between py-1.5">
-                <span className="text-slate-500">Entrega em 2º Plano:</span>
-                <span className="font-semibold text-slate-800">
-                  Google FCM / Apple APNs
-                </span>
+                <div className="flex justify-between py-1.5">
+                  <span className="text-slate-500">Entrega em 2º Plano:</span>
+                  <span className="font-semibold text-slate-800">
+                    Google FCM / Apple APNs
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

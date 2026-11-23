@@ -554,7 +554,7 @@ export const App: React.FC = () => {
         document.title = 'Minha Conta';
         break;
       case 'governanca':
-        document.title = 'Governança & Higienização';
+        document.title = 'Controle de Limpeza';
         break;
       case 'lavanderia':
         document.title = 'Lavanderia de Hóspedes';
@@ -1838,12 +1838,12 @@ export const App: React.FC = () => {
     { id: 'caixa', label: 'Controle de Caixa', icon: 'account_balance_wallet' },
     { id: 'usuarios', label: 'Usuários da Equipe', icon: 'manage_accounts' },
     { id: 'hospedes', label: 'Hóspedes', icon: 'group' },
-    { id: 'governanca', label: 'Governança & Camareiras', icon: 'cleaning_services' },
+    { id: 'governanca', label: 'Controle de Limpeza', icon: 'cleaning_services' },
     { id: 'lavanderia', label: 'Lavanderia de Hóspedes', icon: 'dry_cleaning' },
     { id: 'produto', label: 'Cadastro de Produtos', icon: 'inventory_2' },
     { id: 'cupons', label: 'Cupom de Desconto', icon: 'confirmation_number' },
     { id: 'conexao', label: 'Conexão WhatsApp', icon: 'sync' },
-    { id: 'hotel-notificacoes', label: 'Notificações Push', icon: 'campaign' },
+    { id: 'hotel-notificacoes', label: 'Notificações', icon: 'campaign' },
     { id: 'relatorios', label: 'Relatórios', icon: 'assessment' },
     { id: 'config', label: 'Configurações', icon: 'settings' },
     { id: 'tutoriais', label: 'Tutoriais', icon: 'school' },
@@ -1869,7 +1869,7 @@ export const App: React.FC = () => {
     { id: 'usuarios', label: 'Usuários do Sistema', icon: 'manage_accounts' },
     { id: 'admin-conexoes', label: 'Conexões WhatsApp', icon: 'sync_alt' },
     { id: 'disparador-google', label: 'Disparador Google Maps', icon: 'send_to_mobile' },
-    { id: 'admin-notificacoes', label: 'Notificações Push', icon: 'campaign' },
+    { id: 'admin-notificacoes', label: 'Notificações', icon: 'campaign' },
     { id: 'admin-financeiro', label: 'Receita & Repasses', icon: 'payments' },
     { id: 'admin-config', label: 'Parâmetros do Sistema', icon: 'settings_suggest' },
     { id: 'logs-sistema', label: 'Logs do Sistema', icon: 'manage_search' },
@@ -3312,7 +3312,7 @@ export const App: React.FC = () => {
                     }`}
                   >
                     <span className={`material-symbols-outlined ${activeTab === 'admin-notificacoes' ? 'text-emerald-400' : ''}`}>campaign</span>
-                    <span>Notificações Push</span>
+                    <span>Notificações</span>
                     <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300">
                       Nativo
                     </span>
@@ -3858,7 +3858,7 @@ export const App: React.FC = () => {
                 }`}
               >
                 <span className={`material-symbols-outlined ${activeTab === 'admin-notificacoes' ? 'text-emerald-400' : ''}`}>campaign</span>
-                <span>Notificações Push</span>
+                <span>Notificações</span>
                 <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300">
                   Nativo
                 </span>

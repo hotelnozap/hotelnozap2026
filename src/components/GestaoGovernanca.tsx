@@ -312,7 +312,7 @@ export const GestaoGovernanca: React.FC<GestaoGovernancaProps> = ({
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#0b1c30] tracking-tight flex items-center gap-2.5">
             <span className="material-symbols-outlined text-emerald-700 text-3xl">cleaning_services</span>
-            Governança &amp; Higienização
+            Controle de Limpeza
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
             Acompanhamento em tempo real dos quartos sendo higienizados, equipe responsável e tempo de conclusão.

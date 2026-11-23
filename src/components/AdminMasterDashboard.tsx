@@ -611,7 +611,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
               >
                 <span className="material-symbols-outlined text-emerald-400">campaign</span>
-                <span>Notificações Push</span>
+                <span>Notificações</span>
                 <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
                   Nativo
                 </span>
@@ -858,7 +858,7 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-all text-left cursor-pointer"
               >
                 <span className="material-symbols-outlined text-emerald-400">campaign</span>
-                <span>Notificações Push</span>
+                <span>Notificações</span>
                 <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
                   Nativo
                 </span>
@@ -998,6 +998,24 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
             </div>
 
             <button 
+              onClick={handleExportRelatorio}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              title="Exportar Relatório Geral CSV"
+            >
+              <span className="material-symbols-outlined text-base text-amber-600">download</span>
+              <span>Exportar</span>
+            </button>
+
+            <button 
+              onClick={handleBackup}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              title="Backup do Sistema"
+            >
+              <span className="material-symbols-outlined text-base text-emerald-600">database</span>
+              <span>Backup</span>
+            </button>
+
+            <button 
               onClick={() => showToast('Todos os serviços em alta disponibilidade.')}
               className="relative p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
               title="Notificações Globais"
@@ -1030,52 +1048,17 @@ export const AdminMasterDashboard: React.FC<AdminMasterDashboardProps> = ({
                 <p className="text-[11px] text-slate-500">Controle Global da Plataforma • {adminEmail}</p>
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-              SaaS Ativo
-            </span>
-          </div>
-
-          {/* BANNER DE BOAS-VINDAS / CENTRO DE GESTÃO GLOBAL SAAS (DESKTOP & MOBILE) */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#003400] via-[#002400] to-black p-5 sm:p-6 text-white shadow-md">
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between md:justify-start gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] sm:text-xs font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Operação Nacional Estável • Multi-tenant Ativo
-                  </span>
-                  <span className="md:hidden text-[11px] text-emerald-200/80">{currentDateFormatted}</span>
-                </div>
-                <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">Centro de Gestão Global SaaS</h3>
-                <p className="text-xs sm:text-sm text-emerald-100/80 max-w-2xl leading-relaxed">
-                  Você está no comando do ecossistema <strong>Hotel no Zap</strong>. Acompanhe a expansão da base de <strong>{totalHoteis} hotéis</strong>, a infraestrutura de comunicação e a receita da plataforma em tempo real.
-                </p>
-              </div>
-
-              {/* Botões de Ação */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                <button 
-                  onClick={onNavigateToCreateHotel}
-                  className="lg:hidden w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                >
-                  <span className="material-symbols-outlined text-base">add_business</span>
-                  <span>Cadastrar Novo Hotel / Cliente</span>
-                </button>
-                <button 
-                  onClick={handleExportRelatorio}
-                  className="px-3.5 py-2 rounded-xl bg-[#FDB116] hover:bg-[#e5a013] text-slate-950 text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-base text-slate-950">download</span>
-                  <span>Exportar Relatório Geral</span>
-                </button>
-                <button 
-                  onClick={handleBackup}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-base">database</span>
-                  <span>Backup do Sistema</span>
-                </button>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                SaaS Ativo
+              </span>
+              <button 
+                onClick={onNavigateToCreateHotel}
+                className="p-1.5 rounded-lg bg-[#003400] text-white flex items-center justify-center shadow-xs active:scale-95 cursor-pointer"
+                title="Cadastrar Novo Hotel / Cliente"
+              >
+                <span className="material-symbols-outlined text-base">add_business</span>
+              </button>
             </div>
           </div>
 
