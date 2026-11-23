@@ -812,7 +812,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
     <div className="bg-[#f8f9ff] text-slate-800 font-sans min-h-screen pb-24 selection:bg-emerald-500 selection:text-white">
       
       {/* HEADER SUPERIOR */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs pt-[env(safe-area-inset-top,0px)]">
         <div className="h-16 w-full max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between">
           
           {/* Logo Hotel no Zap */}
@@ -855,7 +855,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
 
       {/* HEADER COMPACTO DO HOTEL (oculto para hotéis importados do Google Maps tanto em desktop quanto em mobile) */}
       {!isHotelImportadoGoogle && (
-        <section className="pt-20 pb-2 px-4 sm:px-8 max-w-7xl mx-auto">
+        <section className="pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-2 px-4 sm:px-8 max-w-7xl mx-auto">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
             
             {/* Foto thumb */}
@@ -901,7 +901,7 @@ export const PaginaHotel: React.FC<PaginaHotelProps> = ({
       )}
 
       {/* SEÇÃO PRINCIPAL: QUARTOS AGRUPADOS POR CATEGORIA */}
-      <main className={`px-4 sm:px-8 max-w-7xl mx-auto space-y-8 ${isHotelImportadoGoogle ? 'pt-24' : 'mt-8'}`}>
+      <main className={`px-4 sm:px-8 max-w-7xl mx-auto space-y-8 ${isHotelImportadoGoogle ? 'pt-[calc(5.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(6rem+env(safe-area-inset-top,0px))]' : 'mt-8'}`}>
 
         {/* BARRA DE DATAS DE HOSPEDAGEM INTELIGENTE */}
         {!isHotelImportadoGoogle && (

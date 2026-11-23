@@ -1465,7 +1465,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       )}
 
       {/* HEADER SUPERIOR FIXO */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs pt-[env(safe-area-inset-top,0px)]">
         <div className="h-16 w-full max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between">
           
           {/* Logo & Voltar */}
@@ -1506,7 +1506,7 @@ export const DetalhesQuarto: React.FC<DetalhesQuartoProps> = ({
       </header>
 
       {/* BREADCRUMB NAVEGAÇÃO */}
-      <section className="pt-20 pb-3 px-4 sm:px-8 max-w-7xl mx-auto border-b border-slate-200/80">
+      <section className="pt-[calc(5rem+env(safe-area-inset-top,0px))] pb-3 px-4 sm:px-8 max-w-7xl mx-auto border-b border-slate-200/80">
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 font-medium">
           <div className="flex items-center gap-2 overflow-x-auto text-nowrap">
             <button onClick={() => { if (onNavigateToCatalog) onNavigateToCatalog(); else navigateSpa('/hoteis'); }} className="hover:text-slate-900 transition-colors">Lista de Hotéis</button>

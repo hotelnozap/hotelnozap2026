@@ -1451,7 +1451,7 @@ const CatalogoHoteisComponent: React.FC<CatalogoHoteisProps> = ({ onNavigateToLo
       {/* ========================================================================= */}
       {/* HEADER SUPERIOR COM BARRA EM CÁPSULA (ESTILO AIRBNB)                      */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 left-0 right-0 w-full z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+      <header className="sticky top-0 left-0 right-0 w-full z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs pt-[env(safe-area-inset-top,0px)]">
         {/* ========================================================================= */}
         {/* LAYOUT DESKTOP (md:flex)                                                 */}
         {/* ========================================================================= */}
